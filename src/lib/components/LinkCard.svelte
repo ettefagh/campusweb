@@ -10,6 +10,7 @@
 		category_name?: string;
 	};
 	export let isFavorite: boolean = false;
+	export let useViewer: boolean = false;
 	
 	const dispatch = createEventDispatcher();
 	
@@ -19,12 +20,14 @@
 		dispatch('toggleFavorite', { linkId: link.id });
 	}
 
-	$: viewerUrl = `/viewer?url=${encodeURIComponent(link.url)}&title=${encodeURIComponent(link.title)}`;
+	$: finalUrl = useViewer 
+		? `/viewer?url=${encodeURIComponent(link.url)}&title=${encodeURIComponent(link.title)}`
+		: link.url;
 </script>
 
 <div class="link-card-container">
 	<a 
-		href={viewerUrl}
+		href={finalUrl}
 		class="link-card"
 	>
 		<span class="icon" aria-hidden="true">{link.icon}</span>

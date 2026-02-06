@@ -5,7 +5,7 @@
 		{ path: '/', label: 'Home', icon: '🏠', ariaLabel: 'Home page' },
 		{ path: '/favorites', label: 'Favorites', icon: '⭐', ariaLabel: 'My favorites' },
 		{ path: '/search', label: 'Search', icon: '🔍', ariaLabel: 'Search links' },
-		{ path: '/profile', label: 'Profile', icon: '👤', ariaLabel: 'User profile' }
+		{ path: '/tools', label: 'Tools', icon: '🛠️', ariaLabel: 'Student tools' }
 	];
 </script>
 

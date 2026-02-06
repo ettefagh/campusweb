@@ -36,31 +36,25 @@
 			<p class="coming-soon">⚙️ User preferences coming soon</p>
 			<ul class="feature-list">
 				<li>Hand preference (left/right/center)</li>
-				<li>Theme preference (light/dark/auto)</li>
-				<li>Default view selection</li>
-			</ul>
-		</div>
+	<section class="tools-section">
+		{#each tools as tool (tool.id)}
+			<LinkCard 
+				link={tool} 
+				isFavorite={false}
+				on:toggleFavorite={handleToggleFavorite}
+			/>
+		{/each}
 	</section>
-	
-	<section class="profile-section">
-		<h2>About</h2>
-		<div class="about-card">
-			<p><strong>SRH Campus Hub</strong></p>
-			<p>Version 1.0.0</p>
-			<p class="description">
-				A mobile-optimized navigation hub for quick access to SRH University resources.
-				Built with accessibility and one-handed mobile use in mind.
-			</p>
-		</div>
 	</section>
 </div>
 
 <style>
-	.profile-page {
+	.tools-page {
 		padding-bottom: var(--spacing-xl);
 	}
 	
 	.page-header {
+		text-align: center;
 		padding: var(--spacing-lg) 0;
 		border-bottom: 2px solid var(--border-color);
 		margin-bottom: var(--spacing-lg);
@@ -81,24 +75,6 @@
 		}
 	}
 	
-	.profile-section {
-		margin-bottom: var(--spacing-xl);
-	}
-	
-	.profile-section h2 {
-		font-size: 1.25rem;
-		margin-bottom: var(--spacing-md);
-		color: var(--primary-color);
-	}
-	
-	.info-card,
-	.preference-card,
-	.about-card {
-		background: var(--card-bg);
-		border: 1px solid var(--border-color);
-		border-radius: var(--radius-md);
-		padding: var(--spacing-lg);
-		box-shadow: var(--shadow-sm);
 	}
 	
 	.info-row {
