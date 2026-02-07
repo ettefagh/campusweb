@@ -11,9 +11,17 @@
 	};
 	export let isFavorite: boolean = false;
 	export let useViewer: boolean = false;
+	export let editMode: boolean = false;
 	
 	const dispatch = createEventDispatcher();
 	
+	function handleClick(e: MouseEvent) {
+		if (editMode) {
+			e.preventDefault();
+			dispatch('toggleFavorite', { linkId: link.id });
+		}
+	}
+
 	function toggleFavorite(e: MouseEvent) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -25,10 +33,18 @@
 		: link.url;
 </script>
 
-<div class="link-card-container">
+<div 
+	class="link-card-container" 
+	class:edit-mode={editMode}
+	class:not-favorite={editMode && !isFavorite}
+>
 	<a 
 		href={finalUrl}
 		class="link-card"
+		class:clickable={editMode}
+		on:click={handleClick}
+		role={editMode ? 'button' : undefined}
+		tabindex={editMode ? 0 : undefined}
 	>
 		<span class="icon" aria-hidden="true">{link.icon}</span>
 		<div class="content">
@@ -40,17 +56,25 @@
 				<span class="category">{link.category_name}</span>
 			{/if}
 		</div>
+		
+		{#if editMode}
+			<div class="edit-indicator">
+				{isFavorite ? '✓' : '+'}
+			</div>
+		{/if}
 	</a>
 	
-	<button
-		class="favorite-btn"
-		class:is-favorite={isFavorite}
-		on:click={toggleFavorite}
-		aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-		aria-pressed={isFavorite}
-	>
-		{isFavorite ? '⭐' : '☆'}
-	</button>
+	{#if !editMode}
+		<button
+			class="favorite-btn"
+			class:is-favorite={isFavorite}
+			on:click={toggleFavorite}
+			aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+			aria-pressed={isFavorite}
+		>
+			{isFavorite ? '⭐' : '☆'}
+		</button>
+	{/if}
 </div>
 
 <style>
@@ -59,6 +83,15 @@
 		align-items: stretch;
 		gap: var(--spacing-sm);
 		margin-bottom: var(--spacing-md);
+		transition: opacity 0.2s;
+	}
+
+	.link-card-container.edit-mode {
+		opacity: 1;
+	}
+
+	.link-card-container.not-favorite {
+		opacity: 0.5;
 	}
 	
 	.link-card {
@@ -68,13 +101,25 @@
 		gap: var(--spacing-md);
 		min-height: var(--touch-target-min);
 		padding: var(--spacing-md);
-		background: var(--card-bg);
-		border: 1px solid var(--border-color);
+		background: #F5F0E6; /* SRH Cream/Beige */
+		border: 1px solid transparent;
 		border-radius: var(--radius-md);
 		text-decoration: none;
 		color: var(--text-color);
 		transition: all 0.2s ease;
 		box-shadow: var(--shadow-sm);
+	}
+
+	/* Dark mode override for card background */
+	@media (prefers-color-scheme: dark) {
+		.link-card {
+			background: var(--card-bg); /* Keep existing dark theme background */
+			border-color: var(--border-color);
+		}
+	}
+
+	.link-card.clickable {
+		cursor: pointer;
 	}
 	
 	.link-card:hover,
@@ -123,6 +168,17 @@
 		color: var(--primary-color);
 		border-radius: 4px;
 		font-weight: 500;
+	}
+
+	.edit-indicator {
+		font-size: 1.5rem;
+		font-weight: bold;
+		color: var(--primary-color);
+		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 32px;
 	}
 	
 	.favorite-btn {

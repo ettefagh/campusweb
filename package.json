@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "deploy": "npm run build && wrangler pages deploy build"
+    "deploy": "npm run build && wrangler pages deploy .svelte-kit/cloudflare"
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "^4.0.0",
@@ -24,6 +24,7 @@
     "wrangler": "^3.0.0"
   },
   "dependencies": {
-    "@tsndr/cloudflare-worker-jwt": "^2.4.0"
+    "@tsndr/cloudflare-worker-jwt": "^2.4.0",
+    "fast-xml-parser": "^5.3.4"
   }
 }

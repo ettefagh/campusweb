@@ -3,9 +3,9 @@
 	
 	const navItems = [
 		{ path: '/', label: 'Home', icon: '🏠', ariaLabel: 'Home page' },
-		{ path: '/favorites', label: 'Favorites', icon: '⭐', ariaLabel: 'My favorites' },
-		{ path: '/search', label: 'Search', icon: '🔍', ariaLabel: 'Search links' },
-		{ path: '/tools', label: 'Tools', icon: '🛠️', ariaLabel: 'Student tools' }
+		{ path: '/explore', label: 'Explore', icon: '🧭', ariaLabel: 'Explore all links' },
+		{ path: '/feed', label: 'Feed', icon: '📰', ariaLabel: 'News feed' },
+		{ path: '/search', label: 'Search', icon: '🔍', ariaLabel: 'Search links' }
 	];
 </script>
 

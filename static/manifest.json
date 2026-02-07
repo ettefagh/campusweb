@@ -1,6 +1,6 @@
 {
-	"name": "SRH Campus Hub",
-	"short_name": "SRH Hub",
+	"name": "Campusweb",
+	"short_name": "Campusweb",
 	"description": "Quick access to SRH University resources - optimized for mobile",
 	"start_url": "/",
 	"display": "standalone",

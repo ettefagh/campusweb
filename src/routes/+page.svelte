@@ -1,99 +1,30 @@
 <script lang="ts">
 	import LinkCard from '$lib/components/LinkCard.svelte';
+	import { favorites } from '$lib/stores/favorites';
+	import { allLinks } from '$lib/data/links';
 	
-	// SRH CampusWeb links with specific URLs
-	const srhLinks = [
-		{
-			id: 'campusweb',
-			title: 'CampusWeb Portal',
-			url: 'https://srh-community.campusweb.cloud',
-			icon: '🎓',
-			description: 'Main portal for all services',
-			category_name: 'Academic'
-		},
-		{
-			id: 'schedule',
-			title: 'My Schedule',
-			url: 'https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php',
-			icon: '📅',
-			description: 'View your class schedule',
-			category_name: 'Academic'
-		},
-		{
-			id: 'grades',
-			title: 'My Grades',
-			url: 'https://srh-community.campusweb.cloud/en/mein-studium/meine-notenuebersicht.php',
-			icon: '📊',
-			description: 'Check your grades and results',
-			category_name: 'Academic'
-		},
-		{
-			id: 'profile',
-			title: 'My Profile',
-			url: 'https://srh-community.campusweb.cloud/en/mein-profil.php',
-			icon: '👤',
-			description: 'Manage your profile settings',
-			category_name: 'Academic'
-		},
-		{
-			id: 'moodle',
-			title: 'Moodle',
-			url: 'https://moodle.srh.de',
-			icon: '📚',
-			description: 'Course materials and assignments',
-			category_name: 'Academic'
-		},
-		{
-			id: 'library',
-			title: 'Library',
-			url: 'https://www.srh-hochschule-heidelberg.de/en/university/library',
-			icon: '📖',
-			description: 'Search books and journals',
-			category_name: 'Resources'
-		},
-		{
-			id: 'email',
-			title: 'SRH Email',
-			url: 'https://outlook.office.com',
-			icon: '📧',
-			description: 'Access your university email',
-			category_name: 'Services'
-		},
-		{
-			id: 'it-support',
-			title: 'IT Support',
-			url: 'https://www.srh-hochschule-heidelberg.de/en/university/it-services',
-			icon: '💻',
-			description: 'Technical help and support',
-			category_name: 'Services'
-		},
-		{
-			id: 'campus-map',
-			title: 'Campus Map',
-			url: 'https://www.srh-hochschule-heidelberg.de/en/university/campus',
-			icon: '🗺️',
-			description: 'Navigate the campus',
-			category_name: 'Resources'
-		},
-		{
-			id: 'student-services',
-			title: 'Student Services',
-			url: 'https://www.srh-hochschule-heidelberg.de/en/study/student-services',
-			icon: '🛠️',
-			description: 'Counseling and support services',
-			category_name: 'Services'
-		}
-	];
-	
-	let favorites: string[] = [];
-	
+	let isEditMode = false;
+	let searchQuery = '';
+
+	// Reactive filtered links
+    $: displayLinks = isEditMode
+        ? allLinks.filter(link => {
+            const query = searchQuery.toLowerCase().trim();
+            if (!query) return true;
+            return (
+                link.title.toLowerCase().includes(query) ||
+                link.description.toLowerCase().includes(query)
+            );
+        })
+        : allLinks.filter(link => $favorites.includes(link.id));
+
+	function toggleEditMode() {
+		isEditMode = !isEditMode;
+		searchQuery = '';
+	}
+
 	function handleToggleFavorite(event: CustomEvent<{ linkId: string }>) {
-		const { linkId } = event.detail;
-		if (favorites.includes(linkId)) {
-			favorites = favorites.filter(id => id !== linkId);
-		} else {
-			favorites = [...favorites, linkId];
-		}
+		favorites.toggle(event.detail.linkId);
 	}
 </script>
 
@@ -120,20 +51,49 @@
 				height="48"
 			/>
 		</div>
-		<h1>SRH Campus Hub</h1>
+		<h1>Campusweb</h1>
 		<p class="subtitle">Quick access to university resources</p>
 	</header>
+
+	{#if isEditMode}
+		<!-- Search Box in Edit Mode -->
+		<div class="search-container">
+			<input 
+				type="text" 
+				placeholder="Search links..." 
+				bind:value={searchQuery}
+				class="search-input"
+			/>
+		</div>
+	{/if}
 	
 	<section class="links-section">
 		<h2 class="sr-only">University Links</h2>
-		{#each srhLinks as link (link.id)}
-			<LinkCard 
-				{link} 
-				isFavorite={favorites.includes(link.id)}
-				on:toggleFavorite={handleToggleFavorite}
-			/>
-		{/each}
+		{#if displayLinks.length === 0}
+			<div class="empty-state">
+				<p>No favorites yet. Click Edit below to add some!</p>
+			</div>
+		{:else}
+			{#each displayLinks as link (link.id)}
+				<LinkCard 
+					{link} 
+					isFavorite={$favorites.includes(link.id)}
+					editMode={isEditMode}
+					on:toggleFavorite={handleToggleFavorite}
+				/>
+			{/each}
+		{/if}
 	</section>
+
+	<footer class="page-footer">
+		<button 
+			class="edit-link" 
+			class:editing={isEditMode}
+			on:click={toggleEditMode}
+		>
+			{isEditMode ? 'Done' : 'Edit Favorites'}
+		</button>
+	</footer>
 </div>
 
 <style>
@@ -178,12 +138,65 @@
 	.subtitle {
 		color: #666;
 		font-size: 1rem;
+		margin-bottom: var(--spacing-md);
 	}
 	
 	@media (prefers-color-scheme: dark) {
 		.subtitle {
 			color: #aaa;
 		}
+	}
+
+	.page-footer {
+		text-align: center;
+		margin-top: var(--spacing-xl);
+		padding-bottom: var(--spacing-lg);
+	}
+
+	.edit-link {
+		background: none;
+		border: none;
+		color: var(--text-color-secondary);
+		font-size: 0.9rem;
+		text-decoration: underline;
+		cursor: pointer;
+		padding: var(--spacing-sm);
+	}
+
+	.edit-link:hover {
+		color: var(--primary-color);
+	}
+
+	.edit-link.editing {
+		color: var(--primary-color);
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.search-container {
+		margin: 0 0 var(--spacing-md) 0;
+		padding: 0 var(--spacing-md);
+	}
+
+	.search-input {
+		width: 100%;
+		padding: var(--spacing-md);
+		border: 2px solid var(--border-color);
+		border-radius: var(--radius-md);
+		font-size: 1rem;
+		background: var(--card-bg);
+		color: var(--text-color);
+	}
+
+	.search-input:focus {
+		outline: none;
+		border-color: var(--primary-color);
+	}
+
+	.empty-state {
+		text-align: center;
+		padding: var(--spacing-xl);
+		color: var(--text-color-secondary);
 	}
 	
 	.links-section {
