@@ -15,7 +15,10 @@
 		'srh-university.de',
 		'www.srh-university.de',
 		'srh.de',
-		'www.srh.de'
+		'www.srh.de',
+		'ecampus.srh-university.de',
+		'webopac.srh-hochschulen.de',
+		'srh-store.de'
 	];
 
 	$: url = $page.url.searchParams.get('url');

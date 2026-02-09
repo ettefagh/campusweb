@@ -8,9 +8,10 @@ const DEFAULT_FAVORITES = [
 	'campusweb',
 	'schedule',
 	'grades',
-	'moodle',
-	'library',
-	'email'
+	'ecampus',
+	'library-catalogue',
+	'calendar-enhancer',
+	'pdf-tools'
 ];
 
 function createFavoritesStore() {

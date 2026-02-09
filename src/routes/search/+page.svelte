@@ -1,51 +1,132 @@
-```
 <script lang="ts">
 	let searchQuery = '';
+	let searchSource: 'srh' | 'ecampus' | 'library' | 'team' = 'srh';
+	
+	const searchSources = [
+		{
+			id: 'srh' as const,
+			name: 'University Website',
+```typescript
+			icon: '🎓',
+```
+			searchable: true
+		},
+		{
+			id: 'ecampus' as const,
+			name: 'E-Campus Portal',
+			icon: '💻',
+			searchable: true
+		},
+		{
+			id: 'library' as const,
+			name: 'Library Catalogue',
+			icon: '📚',
+			searchable: false,
+			staticUrl: 'https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB'
+		},
+		{
+			id: 'team' as const,
+			name: 'University Team',
+			icon: '👥',
+			searchable: false,
+			staticUrl: 'https://www.srh-university.de/en/srh-university/faculty-and-team/'
+		}
+	];
 	
 	function handleSearch(event: Event) {
-		event.preventDefault(); // Prevent default form submission
-		const trimmedQuery = searchQuery.trim();
-		if (trimmedQuery.length >= 1) {
-			const targetUrl = `https://www.srh-university.de/en/search/?q=${encodeURIComponent(trimmedQuery)}`;
-			const viewerUrl = `/viewer?url=${encodeURIComponent(targetUrl)}&title=SRH%20Search`;
-			window.location.href = viewerUrl;
+		event.preventDefault();
+		const source = searchSources.find(s => s.id === searchSource)!;
+		
+		if (source.searchable) {
+			const trimmedQuery = searchQuery.trim();
+			if (trimmedQuery.length >= 1) {
+				let targetUrl = '';
+				
+				if (searchSource === 'srh') {
+					targetUrl = `https://www.srh-university.de/en/search/?q=${encodeURIComponent(trimmedQuery)}`;
+				} else if (searchSource === 'ecampus') {
+					targetUrl = `https://ecampus.srh-university.de/search/index.php?q=${encodeURIComponent(trimmedQuery)}`;
+				}
+				
+				const viewerUrl = `/viewer?url=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent(source.name + ' Search')}`;
+				window.location.href = viewerUrl;
+			}
+		} else {
+			// For static links (library, team), go directly
+			if (source.staticUrl) {
+				const viewerUrl = `/viewer?url=${encodeURIComponent(source.staticUrl)}&title=${encodeURIComponent(source.name)}`;
+				window.location.href = viewerUrl;
+			}
 		}
 	}
+	
+	$: selectedSource = searchSources.find(s => s.id === searchSource)!;
+	$: isSearchable = selectedSource.searchable;
 </script>
 
 <svelte:head>
-	<title>Search - SRH Campus Hub</title>
+	<title>Search - Campusweb</title>
 </svelte:head>
 
 <div class="search-page">
 	<header class="page-header">
-		<h1>🔍 SRH Search</h1>
-		<p class="subtitle">Search the official university website</p>
+		<h1>🔍 Search</h1>
+		<p class="subtitle">Search university resources</p>
 	</header>
 	
 	<form class="search-container" on:submit={handleSearch}>
-		<label for="search-input" class="sr-only">Search university website</label>
-		<div class="input-wrapper">
-			<input
-				id="search-input"
-				type="search"
-				placeholder="e.g. student visa, library, exams"
-				bind:value={searchQuery}
-				class="search-input"
-				autocomplete="off"
-			/>
-			<button type="submit" class="search-btn" disabled={!searchQuery.trim()}>
-				Search
-			</button>
+		<div class="source-selection">
+			<label class="source-label">Search in:</label>
+			<div class="radio-group">
+				{#each searchSources as source}
+					<label class="radio-option">
+						<input
+							type="radio"
+							name="search-source"
+							value={source.id}
+							bind:group={searchSource}
+						/>
+						<span class="radio-label">
+							<span class="radio-icon">{source.icon}</span>
+							{source.name}
+						</span>
+					</label>
+				{/each}
+			</div>
 		</div>
+		
+		{#if isSearchable}
+			<label for="search-input" class="sr-only">Search {selectedSource.name}</label>
+			<div class="input-wrapper">
+				<input
+					id="search-input"
+					type="search"
+					placeholder={`Search ${selectedSource.name}...`}
+					bind:value={searchQuery}
+					class="search-input"
+					autocomplete="off"
+				/>
+				<button type="submit" class="search-btn" disabled={!searchQuery.trim()}>
+					Search
+				</button>
+			</div>
+		{:else}
+			<div class="static-link-info">
+				<p>Click to browse {selectedSource.name}</p>
+				<button type="submit" class="browse-btn">
+					Open {selectedSource.name}
+				</button>
+			</div>
+		{/if}
 	</form>
 	
 	<div class="search-tips">
-		<h2>Search Tips</h2>
+		<h2>Quick Links</h2>
 		<ul>
-			<li>This searches the official SRH University website</li>
-			<li>Try terms like "student visa", "academic calendar"</li>
-			<li>Results will open in the viewer or external browser</li>
+			<li><strong>SRH Website:</strong> General info, programs, admissions</li>
+			<li><strong>E-Campus:</strong> Course materials, announcements</li>
+			<li><strong>Library:</strong> Books, journals, academic resources</li>
+			<li><strong>Team:</strong> Faculty and staff directory</li>
 		</ul>
 	</div>
 </div>
@@ -53,7 +134,7 @@
 <style>
 	.search-page {
 		padding-bottom: var(--spacing-xl);
-		max-width: 600px;
+		max-width: 700px;
 		margin: 0 auto;
 	}
 	
@@ -74,6 +155,62 @@
 	
 	.search-container {
 		margin-bottom: var(--spacing-xl);
+	}
+	
+	.source-selection {
+		margin-bottom: var(--spacing-lg);
+	}
+	
+	.source-label {
+		display: block;
+		font-weight: 600;
+		margin-bottom: var(--spacing-sm);
+		color: var(--text-color);
+	}
+	
+	.radio-group {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: var(--spacing-sm);
+	}
+	
+	.radio-option {
+		position: relative;
+		cursor: pointer;
+	}
+	
+	.radio-option input[type="radio"] {
+		position: absolute;
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+	
+	.radio-label {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-xs);
+		padding: var(--spacing-sm) var(--spacing-md);
+		background: var(--card-bg);
+		border: 2px solid var(--border-color);
+		border-radius: var(--radius-md);
+		transition: all 0.2s;
+		font-size: 0.95rem;
+	}
+	
+	.radio-icon {
+		font-size: 1.2rem;
+	}
+	
+	.radio-option input[type="radio"]:checked + .radio-label {
+		border-color: var(--primary-color);
+		background: rgba(212, 68, 7, 0.05);
+		font-weight: 600;
+	}
+	
+	.radio-option:hover .radio-label {
+		border-color: var(--primary-color);
+		transform: translateY(-1px);
 	}
 	
 	.input-wrapper {
@@ -98,7 +235,7 @@
 		outline: none;
 	}
 	
-	.search-btn {
+	.search-btn, .browse-btn {
 		background: var(--primary-color);
 		color: white;
 		border: none;
@@ -107,6 +244,7 @@
 		font-weight: 600;
 		cursor: pointer;
 		transition: opacity 0.2s;
+		min-height: var(--touch-target-min);
 	}
 	
 	.search-btn:disabled {
@@ -114,11 +252,28 @@
 		cursor: not-allowed;
 	}
 	
-	.search-tips {
+	.browse-btn:hover {
+		opacity: 0.9;
+	}
+	
+	.static-link-info {
+		text-align: center;
 		padding: var(--spacing-lg);
-		background: rgba(212, 68, 7, 0.05); /* SRH Orange tint */
+		background: rgba(212, 68, 7, 0.05);
 		border-radius: var(--radius-md);
 		border: 1px solid rgba(212, 68, 7, 0.1);
+	}
+	
+	.static-link-info p {
+		margin-bottom: var(--spacing-md);
+		color: var(--text-color);
+	}
+	
+	.search-tips {
+		padding: var(--spacing-lg);
+		background: var(--card-bg);
+		border-radius: var(--radius-md);
+		border: 1px solid var(--border-color);
 	}
 	
 	.search-tips h2 {
@@ -145,5 +300,17 @@
 		position: absolute;
 		left: 0;
 		color: var(--primary-color);
+	}
+	
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border-width: 0;
 	}
 </style>
