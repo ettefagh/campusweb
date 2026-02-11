@@ -6,9 +6,7 @@
 		{
 			id: 'srh' as const,
 			name: 'University Website',
-```typescript
 			icon: '🎓',
-```
 			searchable: true
 		},
 		{

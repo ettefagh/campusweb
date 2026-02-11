@@ -4,6 +4,7 @@
 	const navItems = [
 		{ path: '/', label: 'Home', icon: '🏠', ariaLabel: 'Home page' },
 		{ path: '/explore', label: 'Explore', icon: '🧭', ariaLabel: 'Explore all links' },
+		{ path: '/calendar', label: 'Calendar', icon: '📅', ariaLabel: 'University calendar' },
 		{ path: '/feed', label: 'Feed', icon: '📰', ariaLabel: 'News feed' },
 		{ path: '/search', label: 'Search', icon: '🔍', ariaLabel: 'Search links' }
 	];
