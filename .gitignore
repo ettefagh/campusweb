@@ -12,3 +12,4 @@ vite.config.ts.timestamp-*
 wrangler.toml.bak
 Documents/
 src/Documents/
+.npm-cache/
