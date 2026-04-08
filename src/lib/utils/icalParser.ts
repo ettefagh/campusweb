@@ -2,25 +2,26 @@ import ICAL from 'ical.js';
 
 export interface CalendarEvent {
 	id: string;
-	calendarId: string;
 	title: string;
 	start: Date;
 	end: Date;
-	isAllDay: boolean;
-	category: 'time' | 'allday';
-	location?: string;
+	allDay: boolean;
 	backgroundColor?: string;
-	borderColor?: string;
+	extendedProps?: {
+		location?: string;
+		shortLocation?: string;
+		calendarId?: string;
+	};
 }
 
 /**
- * Parse iCal file content and convert to TUI Calendar events
+ * Parse iCal file content and convert to Event Calendar compatible events
  */
 export function parseICalEvents(
 	icalContent: string,
 	calendarId: string,
 	backgroundColor: string,
-	borderColor: string
+	_borderColor: string
 ): CalendarEvent[] {
 	const events: CalendarEvent[] = [];
 
@@ -47,17 +48,27 @@ export function parseICalEvents(
 			const startDate = dtstart.toJSDate();
 			const endDate = dtend.toJSDate();
 
+			// Extract short location label (room code) from the full address
+			// ical.js already unescapes \, → , so we split on regular comma
+			// e.g. "B0.07 - SHED, Sonnenallee 221C, 12059 Berlin" → "B0.07 - SHED"
+			// e.g. "Online" → "Online"
+			const fullLocation = location || '';
+			const shortLocation = fullLocation.includes(',')
+				? fullLocation.split(',')[0].trim()
+				: fullLocation;
+
 			events.push({
 				id: uid,
-				calendarId,
 				title: summary,
-				location,
 				start: startDate,
 				end: endDate,
-				isAllDay,
-				category: isAllDay ? 'allday' : 'time',
+				allDay: isAllDay,
 				backgroundColor,
-				borderColor
+				extendedProps: {
+					location: fullLocation,
+					shortLocation,
+					calendarId
+				}
 			});
 		});
 	} catch (error) {

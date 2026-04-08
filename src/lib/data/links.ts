@@ -109,6 +109,14 @@ export const eCampusLinks = [
 		category_name: 'E-Campus'
 	},
 	{
+		id: 'career-center-events',
+		title: 'Career Center Events',
+		url: 'https://srh-university.jobteaser.com/en/events?exclusive=true',
+		icon: '🧠',
+		description: 'SRH Career Center exclusive events on JobTeaser',
+		category_name: 'Career Service'
+	},
+	{
 		id: 'ecampus-tools',
 		title: 'Tools & Services',
 		url: 'https://ecampus.srh-university.de/course/view.php?id=4637',

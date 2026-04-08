@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 
-	export let data;
+	export const data: any = undefined;
 
 	// Domains allowed to be displayed in the iframe
 	const ALLOWED_DOMAINS = [
@@ -96,9 +96,19 @@
 <style>
 	.viewer-page {
 		display: flex;
-		flex-direction: column;
-		height: 100vh;
+		flex-direction: column-reverse;
+		height: calc(100vh - 120px);
+		height: calc(100dvh - 120px);
 		background: var(--bg-color);
+		border-radius: var(--radius-md);
+		overflow: hidden;
+	}
+
+	@media (min-height: 800px) {
+		.viewer-page {
+			height: calc(100vh - 120px);
+			height: calc(100dvh - 120px);
+		}
 	}
 
 	.viewer-header {
