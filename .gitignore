@@ -13,3 +13,8 @@ wrangler.toml.bak
 Documents/
 src/Documents/
 .npm-cache/
+
+# Editor and Logs
+.vscode/
+.idea/
+*.log

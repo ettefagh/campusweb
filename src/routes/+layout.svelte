@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import BottomNav from '$lib/components/BottomNav.svelte';
+	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
 </script>
 
 <a href="#main" class="skip-to-main">Skip to main content</a>
@@ -11,6 +12,7 @@
 	</main>
 	
 	<BottomNav />
+	<UpdatePrompt />
 </div>
 
 <style>

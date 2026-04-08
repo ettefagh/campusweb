@@ -9,40 +9,40 @@
 	--srh-copper: #B7410E;
 	--srh-cream: #F5F0E6;
 	--srh-grey: #E8E8E8;
-	
+
 	/* Semantic Colors */
 	--primary-color: var(--srh-orange);
 	--bg-color: #ffffff;
 	--text-color: #1a1a1a;
 	--border-color: #cccccc;
 	--card-bg: #ffffff;
-	
+
 	/* Dark Mode */
 	--dark-bg: #1a1a1a;
 	--dark-text: #f5f5f5;
 	--dark-card-bg: #2a2a2a;
 	--dark-border: #444;
-	
+
 	/* Thumb Zone Measurements */
 	--thumb-zone-easy: 40vh;
 	--thumb-zone-stretch: 60vh;
-	
+
 	/* Touch Targets (WCAG 2.2 Compliant) */
 	--touch-target-min: 48px;
 	--touch-target-spacing: 8px;
-	
+
 	/* Spacing */
 	--spacing-xs: 4px;
 	--spacing-sm: 8px;
 	--spacing-md: 16px;
 	--spacing-lg: 24px;
 	--spacing-xl: 32px;
-	
+
 	/* Border Radius */
 	--radius-sm: 8px;
 	--radius-md: 12px;
 	--radius-lg: 16px;
-	
+
 	/* Shadows */
 	--shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
 	--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -62,7 +62,7 @@
 /* Reset & Base Styles */
 * {
 	margin: 0;
-	padding: 0;
+	padding: 1px;
 	box-sizing: border-box;
 }
 
@@ -125,7 +125,7 @@ body {
 
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
-	font-weight: 600;
+	font-weight: 700;
 	line-height: 1.2;
 	margin-bottom: var(--spacing-md);
 }
@@ -170,7 +170,9 @@ button:disabled {
 }
 
 /* Form Elements */
-input, textarea, select {
+input,
+textarea,
+select {
 	font-family: inherit;
 	font-size: 1rem;
 	padding: var(--spacing-sm) var(--spacing-md);
@@ -181,7 +183,9 @@ input, textarea, select {
 	width: 100%;
 }
 
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
 	outline: 2px solid var(--primary-color);
 	outline-offset: 2px;
 	border-color: var(--primary-color);
@@ -204,9 +208,26 @@ input:focus, textarea:focus, select:focus {
 	text-align: center;
 }
 
-.mt-sm { margin-top: var(--spacing-sm); }
-.mt-md { margin-top: var(--spacing-md); }
-.mt-lg { margin-top: var(--spacing-lg); }
-.mb-sm { margin-bottom: var(--spacing-sm); }
-.mb-md { margin-bottom: var(--spacing-md); }
-.mb-lg { margin-bottom: var(--spacing-lg); }
+.mt-sm {
+	margin-top: var(--spacing-sm);
+}
+
+.mt-md {
+	margin-top: var(--spacing-md);
+}
+
+.mt-lg {
+	margin-top: var(--spacing-lg);
+}
+
+.mb-sm {
+	margin-bottom: var(--spacing-sm);
+}
+
+.mb-md {
+	margin-bottom: var(--spacing-md);
+}
+
+.mb-lg {
+	margin-bottom: var(--spacing-lg);
+}

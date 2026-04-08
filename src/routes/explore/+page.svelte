@@ -1,8 +1,8 @@
 <script lang="ts">
-	import LinkCard from '$lib/components/LinkCard.svelte';
-	import { allLinks, categoryOrder } from '$lib/data/links';
-	import { favorites } from '$lib/stores/favorites';
-	
+	import LinkCard from "$lib/components/LinkCard.svelte";
+	import { allLinks, categoryOrder } from "$lib/data/links";
+	import { favorites } from "$lib/stores/favorites";
+
 	function handleToggleFavorite(event: CustomEvent<{ linkId: string }>) {
 		favorites.toggle(event.detail.linkId);
 	}
@@ -17,14 +17,14 @@
 		<h1>🧭 Explore</h1>
 		<p class="subtitle">Discover all university resources and tools</p>
 	</header>
-	
+
 	{#each categoryOrder as category}
 		<section class="category-section">
 			<h2 class="category-title">{category}</h2>
 			<div class="links-grid">
-				{#each allLinks.filter(link => link.category_name === category) as link (link.id)}
-					<LinkCard 
-						{link} 
+				{#each allLinks.filter((link) => link.category_name === category) as link (link.id)}
+					<LinkCard
+						{link}
 						isFavorite={$favorites.includes(link.id)}
 						on:toggleFavorite={handleToggleFavorite}
 					/>
@@ -38,33 +38,32 @@
 	.explore-page {
 		padding-bottom: var(--spacing-xl);
 	}
-	
+
 	.page-header {
 		text-align: center;
 		padding: var(--spacing-lg) 0;
-		border-bottom: 2px solid var(--border-color);
 		margin-bottom: var(--spacing-lg);
 	}
-	
+
 	h1 {
 		margin-bottom: var(--spacing-sm);
 	}
-	
+
 	.subtitle {
 		color: #666;
 		font-size: 1rem;
 	}
-	
+
 	@media (prefers-color-scheme: dark) {
 		.subtitle {
 			color: #aaa;
 		}
 	}
-	
+
 	.category-section {
 		margin-bottom: var(--spacing-xl);
 	}
-	
+
 	.category-title {
 		font-size: 1.25rem;
 		font-weight: 700;
@@ -73,7 +72,7 @@
 		border-left: 4px solid var(--primary-color);
 		color: var(--text-color);
 	}
-	
+
 	.links-grid {
 		display: flex;
 		flex-direction: column;

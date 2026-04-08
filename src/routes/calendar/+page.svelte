@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
-	import Calendar from '@toast-ui/calendar';
-	import '@toast-ui/calendar/dist/toastui-calendar.min.css';
-	import { loadCalendarEvents } from '$lib/utils/icalParser';
-	import type { CalendarEvent } from '$lib/utils/icalParser';
-	import { calendarStore } from '$lib/stores/calendarStore';
-	import SecureCalendarInput from '$lib/components/SecureCalendarInput.svelte';
+	import { onMount, onDestroy } from "svelte";
+	import Calendar from "@toast-ui/calendar";
+	import "@toast-ui/calendar/dist/toastui-calendar.min.css";
+	import { loadCalendarEvents } from "$lib/utils/icalParser";
+	import type { CalendarEvent } from "$lib/utils/icalParser";
+	import { calendarStore } from "$lib/stores/calendarStore";
+	import SecureCalendarInput from "$lib/components/SecureCalendarInput.svelte";
 
 	let calendarContainer: HTMLDivElement;
 	let calendar: Calendar | null = null;
@@ -14,45 +14,45 @@
 
 	// State for events
 	let currentSubs: any[] = [];
-	
+
 	function renderCalendar() {
 		if (!calendar) return;
-		
+
 		// Update calendar definitions whenever we render
 		const calendars = [
 			{
-				id: 'lecture-free',
-				name: 'Lecture-Free Periods',
-				backgroundColor: '#3b82f6',
-				borderColor: '#2563eb',
-				dragBackgroundColor: '#3b82f6'
+				id: "lecture-free",
+				name: "Lecture-Free Periods",
+				backgroundColor: "#3b82f6",
+				borderColor: "#2563eb",
+				dragBackgroundColor: "#3b82f6",
 			},
 			{
-				id: 'exams',
-				name: 'Exams',
-				backgroundColor: '#ef4444',
-				borderColor: '#dc2626',
-				dragBackgroundColor: '#ef4444'
+				id: "exams",
+				name: "Exams",
+				backgroundColor: "#ef4444",
+				borderColor: "#dc2626",
+				dragBackgroundColor: "#ef4444",
 			},
-			...currentSubs.map(sub => ({
+			...currentSubs.map((sub) => ({
 				id: sub.id,
 				name: sub.name,
 				backgroundColor: sub.color,
 				borderColor: sub.color,
-				dragBackgroundColor: sub.color
-			}))
+				dragBackgroundColor: sub.color,
+			})),
 		];
-		
+
 		calendar.setCalendars(calendars);
-		
+
 		// Combine and render
-		const subEvents = currentSubs.flatMap(s => s.cachedEvents);
+		const subEvents = currentSubs.flatMap((s) => s.cachedEvents);
 		calendar.clear();
 		calendar.createEvents([...staticEvents, ...subEvents]);
 	}
 
 	// Subscribe to the store
-	const unsubscribe = calendarStore.subscribe(subs => {
+	const unsubscribe = calendarStore.subscribe((subs) => {
 		currentSubs = subs;
 		renderCalendar();
 	});
@@ -63,13 +63,13 @@
 		const init = async () => {
 			// Initialize the calendar
 			calendar = new Calendar(calendarContainer, {
-				defaultView: 'week',
+				defaultView: "week",
 				useFormPopup: false,
 				useDetailPopup: true,
 				isReadOnly: true,
 				week: {
 					startDayOfWeek: 1, // Monday
-					dayNames: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+					dayNames: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
 					narrowWeekend: false,
 					workweek: true, // Shows Mon-Fri (5 days) - closest standard option
 					showNowIndicator: true,
@@ -78,126 +78,126 @@
 					hourStart: 0,
 					hourEnd: 24,
 					eventView: true,
-					taskView: false
+					taskView: false,
 				},
 				timezone: {
 					zones: [
 						{
-							timezoneName: 'Europe/Berlin',
-							displayLabel: 'Berlin'
-						}
-					]
+							timezoneName: "Europe/Berlin",
+							displayLabel: "Berlin",
+						},
+					],
 				},
 				theme: {
 					common: {
-						backgroundColor: 'transparent',
-						border: '1px solid var(--border-color)',
+						backgroundColor: "transparent",
+						border: "1px solid var(--border-color)",
 						gridSelection: {
-							backgroundColor: 'rgba(212, 68, 7, 0.1)',
-							border: '1px solid var(--primary-color)'
+							backgroundColor: "rgba(212, 68, 7, 0.1)",
+							border: "1px solid var(--primary-color)",
 						},
 						dayName: {
-							color: 'var(--text-color)'
+							color: "var(--text-color)",
 						},
 						holiday: {
-							color: '#ff4757'
+							color: "#ff4757",
 						},
 						saturday: {
-							color: 'var(--text-color-secondary)'
+							color: "var(--text-color-secondary)",
 						},
 						sunday: {
-							color: '#ff4757'
+							color: "#ff4757",
 						},
 						today: {
-							color: 'var(--primary-color)'
-						}
+							color: "var(--primary-color)",
+						},
 					},
 					week: {
 						today: {
-							color: 'var(--primary-color)',
-							backgroundColor: 'rgba(212, 68, 7, 0.05)'
+							color: "var(--primary-color)",
+							backgroundColor: "rgba(212, 68, 7, 0.05)",
 						},
 						dayName: {
-							borderLeft: '1px solid var(--border-color)',
-							backgroundColor: 'var(--card-bg)'
+							borderLeft: "1px solid var(--border-color)",
+							backgroundColor: "var(--card-bg)",
 						},
 						dayGrid: {
-							borderRight: '1px solid var(--border-color)'
+							borderRight: "1px solid var(--border-color)",
 						},
 						timeGrid: {
-							borderRight: '1px solid var(--border-color)'
+							borderRight: "1px solid var(--border-color)",
 						},
 						timeGridLeft: {
-							backgroundColor: 'var(--card-bg)',
-							borderRight: '1px solid var(--border-color)'
+							backgroundColor: "var(--card-bg)",
+							borderRight: "1px solid var(--border-color)",
 						},
 						timeGridLeftAdditionalTimezone: {
-							backgroundColor: 'var(--card-bg)'
+							backgroundColor: "var(--card-bg)",
 						},
 						timeGridHourLine: {
-							borderBottom: '1px solid var(--border-color)'
+							borderBottom: "1px solid var(--border-color)",
 						},
 						timeGridHalfHourLine: {
-							borderBottom: '1px dashed rgba(0, 0, 0, 0.1)'
+							borderBottom: "1px dashed rgba(0, 0, 0, 0.1)",
 						},
 						nowIndicatorLabel: {
-							color: 'var(--primary-color)'
+							color: "var(--primary-color)",
 						},
 						nowIndicatorPast: {
-							border: '1px dashed var(--primary-color)'
+							border: "1px dashed var(--primary-color)",
 						},
 						nowIndicatorBullet: {
-							backgroundColor: 'var(--primary-color)'
+							backgroundColor: "var(--primary-color)",
 						},
 						nowIndicatorToday: {
-							border: '1px solid var(--primary-color)'
+							border: "1px solid var(--primary-color)",
 						},
 						nowIndicatorFuture: {
-							border: 'none'
+							border: "none",
 						},
 						pastTime: {
-							color: 'var(--text-color-secondary)'
+							color: "var(--text-color-secondary)",
 						},
 						futureTime: {
-							color: 'var(--text-color)'
+							color: "var(--text-color)",
 						},
 						weekend: {
-							backgroundColor: 'rgba(0, 0, 0, 0.02)'
-						}
-					}
+							backgroundColor: "rgba(0, 0, 0, 0.02)",
+						},
+					},
 				},
 				template: {
-					time: function(event: any) {
-						const locationHtml = event.location 
-							? `<div class="event-location">📍 ${event.location}</div>` 
-							: '';
-						
+					time: function (event: any) {
+						const locationHtml = event.location
+							? `<div class="event-location">📍 ${event.location}</div>`
+							: "";
+
 						// Removed custom time div to avoid duplication with TUI default
 						return `<div class="custom-event-template">
-							<div class="event-time">${event.start.getHours()}:${event.start.getMinutes().toString().padStart(2, '0')}</div>
+							<div class="event-time">${event.start.getHours()}:${event.start.getMinutes().toString().padStart(2, "0")}</div>
 							<div class="event-title">${event.title}</div>
 							${locationHtml}
 						</div>`;
-					}
-				}
+					},
+				},
 			});
 
 			// Load data
 			try {
 				// 1. Trigger subscription refresh
 				calendarStore.refreshAll();
-				
+
 				// 2. Load static events
 				staticEvents = await loadCalendarEvents();
-				
+
 				if (!isMounted) return;
 
 				// 3. Initial render with combined data
 				renderCalendar();
-				
+
 				isLoading = false;
 			} catch (error) {
-				console.error('Failed to load calendar events:', error);
+				console.error("Failed to load calendar events:", error);
 				if (isMounted) isLoading = false;
 			}
 		};
@@ -244,7 +244,11 @@
 	</header>
 
 	<div class="calendar-controls">
-		<button class="control-btn" on:click={goToPrev} aria-label="Previous week">
+		<button
+			class="control-btn"
+			on:click={goToPrev}
+			aria-label="Previous week"
+		>
 			← Previous
 		</button>
 		<button class="control-btn today-btn" on:click={goToToday}>
@@ -257,11 +261,13 @@
 
 	<div class="calendar-legend">
 		<div class="legend-item">
-			<span class="legend-color" style="background-color: #3b82f6;"></span>
+			<span class="legend-color" style="background-color: #3b82f6;"
+			></span>
 			<span>Lecture-Free Periods</span>
 		</div>
 		<div class="legend-item">
-			<span class="legend-color" style="background-color: #ef4444;"></span>
+			<span class="legend-color" style="background-color: #ef4444;"
+			></span>
 			<span>Exams</span>
 		</div>
 	</div>
@@ -288,7 +294,6 @@
 	.page-header {
 		text-align: center;
 		padding: var(--spacing-lg) 0;
-		border-bottom: 2px solid var(--border-color);
 		margin-bottom: var(--spacing-md);
 	}
 

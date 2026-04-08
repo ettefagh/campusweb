@@ -1,26 +1,26 @@
 <script lang="ts">
-	import LinkCard from '$lib/components/LinkCard.svelte';
-	import { favorites } from '$lib/stores/favorites';
-	import { allLinks } from '$lib/data/links';
-	
+	import LinkCard from "$lib/components/LinkCard.svelte";
+	import { favorites } from "$lib/stores/favorites";
+	import { allLinks } from "$lib/data/links";
+
 	let isEditMode = false;
-	let searchQuery = '';
+	let searchQuery = "";
 
 	// Reactive filtered links
-    $: displayLinks = isEditMode
-        ? allLinks.filter(link => {
-            const query = searchQuery.toLowerCase().trim();
-            if (!query) return true;
-            return (
-                link.title.toLowerCase().includes(query) ||
-                link.description.toLowerCase().includes(query)
-            );
-        })
-        : allLinks.filter(link => $favorites.includes(link.id));
+	$: displayLinks = isEditMode
+		? allLinks.filter((link) => {
+				const query = searchQuery.toLowerCase().trim();
+				if (!query) return true;
+				return (
+					link.title.toLowerCase().includes(query) ||
+					link.description.toLowerCase().includes(query)
+				);
+			})
+		: allLinks.filter((link) => $favorites.includes(link.id));
 
 	function toggleEditMode() {
 		isEditMode = !isEditMode;
-		searchQuery = '';
+		searchQuery = "";
 	}
 
 	function handleToggleFavorite(event: CustomEvent<{ linkId: string }>) {
@@ -30,22 +30,25 @@
 
 <svelte:head>
 	<title>SRH Campus Hub - Quick Access to University Resources</title>
-	<meta name="description" content="Quick access to SRH University resources - optimized for mobile" />
+	<meta
+		name="description"
+		content="Quick access to SRH University resources - optimized for mobile"
+	/>
 </svelte:head>
 
 <div class="home-page">
 	<header class="page-header">
 		<div class="logo-container">
-			<img 
-				src="/icon-light.png" 
-				alt="SRH University Logo" 
+			<img
+				src="/icon-light.png"
+				alt="SRH University Logo"
 				class="logo light-mode"
 				width="48"
 				height="48"
 			/>
-			<img 
-				src="/icon-dark.png" 
-				alt="SRH University Logo" 
+			<img
+				src="/icon-dark.png"
+				alt="SRH University Logo"
 				class="logo dark-mode"
 				width="48"
 				height="48"
@@ -58,15 +61,15 @@
 	{#if isEditMode}
 		<!-- Search Box in Edit Mode -->
 		<div class="search-container">
-			<input 
-				type="text" 
-				placeholder="Search links..." 
+			<input
+				type="text"
+				placeholder="Search links..."
 				bind:value={searchQuery}
 				class="search-input"
 			/>
 		</div>
 	{/if}
-	
+
 	<section class="links-section">
 		<h2 class="sr-only">University Links</h2>
 		{#if displayLinks.length === 0}
@@ -75,8 +78,8 @@
 			</div>
 		{:else}
 			{#each displayLinks as link (link.id)}
-				<LinkCard 
-					{link} 
+				<LinkCard
+					{link}
 					isFavorite={$favorites.includes(link.id)}
 					editMode={isEditMode}
 					on:toggleFavorite={handleToggleFavorite}
@@ -86,12 +89,12 @@
 	</section>
 
 	<footer class="page-footer">
-		<button 
-			class="edit-link" 
+		<button
+			class="edit-link"
 			class:editing={isEditMode}
 			on:click={toggleEditMode}
 		>
-			{isEditMode ? 'Done' : 'Edit Favorites'}
+			{isEditMode ? "Done" : "Edit Favorites"}
 		</button>
 	</footer>
 </div>
@@ -100,28 +103,29 @@
 	.home-page {
 		padding-bottom: var(--spacing-xl);
 	}
-	
+
 	.page-header {
 		text-align: center;
 		padding: var(--spacing-xl) 0;
-		border-bottom: 2px solid var(--border-color);
 		margin-bottom: var(--spacing-lg);
+		margin-top: 15%;
 	}
-	
+
 	.logo-container {
 		margin-bottom: var(--spacing-md);
 	}
-	
+
 	.logo {
 		width: 64px;
 		height: 64px;
 		object-fit: contain;
+		border-radius: var(--radius-md);
 	}
-	
+
 	.logo.dark-mode {
 		display: none;
 	}
-	
+
 	@media (prefers-color-scheme: dark) {
 		.logo.light-mode {
 			display: none;
@@ -130,17 +134,17 @@
 			display: inline-block;
 		}
 	}
-	
+
 	h1 {
 		margin-bottom: var(--spacing-sm);
 	}
-	
+
 	.subtitle {
 		color: #666;
 		font-size: 1rem;
 		margin-bottom: var(--spacing-md);
 	}
-	
+
 	@media (prefers-color-scheme: dark) {
 		.subtitle {
 			color: #aaa;
@@ -198,7 +202,7 @@
 		padding: var(--spacing-xl);
 		color: var(--text-color-secondary);
 	}
-	
+
 	.links-section {
 		margin-top: var(--spacing-lg);
 	}

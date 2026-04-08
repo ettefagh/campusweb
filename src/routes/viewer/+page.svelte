@@ -1,29 +1,31 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from "$app/stores";
 
 	export let data;
 
 	// Domains allowed to be displayed in the iframe
 	const ALLOWED_DOMAINS = [
-		'srh-community.campusweb.cloud',
-		'moodle.srh.de',
-		'srh-hochschule-heidelberg.de',
-		'outlook.office.com',
-		'tools.pdf24.org',
-		'srh-berlin.idm.oclc.org',
-		'srh-calendar-enhancer.padarhava.workers.dev',
-		'srh-university.de',
-		'www.srh-university.de',
-		'srh.de',
-		'www.srh.de',
-		'ecampus.srh-university.de',
-		'webopac.srh-hochschulen.de',
-		'srh-store.de'
+		"srh-community.campusweb.cloud",
+		"moodle.srh.de",
+		"srh-hochschule-heidelberg.de",
+		"outlook.office.com",
+		"tools.pdf24.org",
+		"srh-berlin.idm.oclc.org",
+		"srh-calendar-enhancer.padarhava.workers.dev",
+		"srh-university.de",
+		"www.srh-university.de",
+		"srh.de",
+		"www.srh.de",
+		"ecampus.srh-university.de",
+		"webopac.srh-hochschulen.de",
+		"srh-store.de",
 	];
 
-	$: url = $page.url.searchParams.get('url');
-	$: title = $page.url.searchParams.get('title');
-	$: isValidUrl = url ? ALLOWED_DOMAINS.some(d => new URL(url!).hostname.endsWith(d)) : false;
+	$: url = $page.url.searchParams.get("url");
+	$: title = $page.url.searchParams.get("title");
+	$: isValidUrl = url
+		? ALLOWED_DOMAINS.some((d) => new URL(url!).hostname.endsWith(d))
+		: false;
 
 	let isLoading = true;
 
@@ -35,13 +37,13 @@
 		if (window.history.length > 1) {
 			window.history.back();
 		} else {
-			window.location.href = '/';
+			window.location.href = "/";
 		}
 	}
 </script>
 
 <svelte:head>
-	<title>{title || 'Viewer'} - Campusweb</title>
+	<title>{title || "Viewer"} - Campusweb</title>
 </svelte:head>
 
 <div class="viewer-page">
@@ -50,11 +52,16 @@
 			<button class="back-btn" on:click={goBack} aria-label="Go back">
 				← Back
 			</button>
-			<h1 class="viewer-title">{title || 'External Link'}</h1>
+			<h1 class="viewer-title">{title || "External Link"}</h1>
 		</div>
 		<div class="header-right">
 			{#if url && isValidUrl}
-				<a href={url} target="_blank" rel="noopener noreferrer" class="external-link">
+				<a
+					href={url}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="external-link"
+				>
 					Open in Browser ↗
 				</a>
 			{/if}
@@ -68,11 +75,11 @@
 				<p>Loading...</p>
 			</div>
 		{/if}
-		
+
 		{#if url && isValidUrl}
-			<iframe 
-				src={url} 
-				title={title || 'Content'}
+			<iframe
+				src={url}
+				title={title || "Content"}
 				class:loaded={!isLoading}
 				on:load={handleIframeLoad}
 				sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
@@ -100,7 +107,6 @@
 		justify-content: space-between;
 		padding: var(--spacing-md);
 		background: var(--card-bg);
-		border-bottom: 1px solid var(--border-color);
 		box-shadow: var(--shadow-sm);
 		z-index: 10;
 		height: 60px;
@@ -129,7 +135,7 @@
 		border: none;
 		cursor: pointer;
 	}
-	
+
 	.back-btn:hover {
 		background-color: var(--hover-bg);
 		color: var(--primary-color);
@@ -168,7 +174,8 @@
 		opacity: 1;
 	}
 
-	.loading-state, .error-state {
+	.loading-state,
+	.error-state {
 		position: absolute;
 		top: 50%;
 		left: 50%;
@@ -187,9 +194,11 @@
 	}
 
 	@keyframes spin {
-		to { transform: rotate(360deg); }
+		to {
+			transform: rotate(360deg);
+		}
 	}
-	
+
 	@media (prefers-color-scheme: dark) {
 		.back-btn:hover {
 			background: rgba(255, 255, 255, 0.1);
