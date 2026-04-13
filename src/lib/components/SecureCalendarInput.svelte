@@ -15,7 +15,25 @@
         error = '';
 
         try {
-            const success = await calendarStore.add(url, name || 'My Calendar');
+            let finalUrl = url;
+            
+            // Auto-enhance SRH campus web URLs using the calendar enhancer API
+            if (finalUrl.includes('srh-community.campusweb.cloud')) {
+                try {
+                    const response = await fetch(`https://calendarsub.padarhava.workers.dev/api/generate?url=${encodeURIComponent(finalUrl)}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.enhancedUrl) {
+                            finalUrl = data.enhancedUrl;
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Failed to automatically enhance calendar URL:", err);
+                    // Fall back to the original URL if enhancement fails
+                }
+            }
+
+            const success = await calendarStore.add(finalUrl, name || 'My Calendar');
             if (success) {
                 url = '';
                 name = '';

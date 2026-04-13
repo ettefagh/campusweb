@@ -167,6 +167,82 @@ export const resourceLinks = [
 		icon: '🌐',
 		description: 'Main university website',
 		category_name: 'Resources'
+	},
+	{
+		id: 'accommodation',
+		title: 'Accommodation',
+		url: 'https://www.srh-university.de/en/your-studies/accommodation/',
+		icon: '🏠',
+		description: 'Housing and residence options',
+		category_name: 'Resources'
+	},
+	{
+		id: 'study-advisors',
+		title: 'Study Advisors',
+		url: 'https://www.srh-university.de/en/you-want-to-study/meet-our-study-advisors/',
+		icon: '🗣️',
+		description: 'Contact our student advisory team',
+		category_name: 'Resources'
+	},
+	{
+		id: 'our-campuses',
+		title: 'Our Campuses',
+		url: 'https://www.srh-university.de/en/our-campuses/',
+		icon: '🏛️',
+		description: 'Explore our campus locations',
+		category_name: 'Resources'
+	},
+	{
+		id: 'financing',
+		title: 'Financing',
+		url: 'https://www.srh-university.de/en/you-want-to-study/financing/',
+		icon: '💰',
+		description: 'Tuition fees and funding options',
+		category_name: 'Resources'
+	}
+];
+
+// International Office
+export const internationalOfficeLinks = [
+	{
+		id: 'study-abroad',
+		title: 'Study Abroad',
+		url: 'https://www.srh-university.de/en/your-studies/international-office/study-abroad/',
+		icon: '🌍',
+		description: 'Information on studying abroad',
+		category_name: 'International Office'
+	},
+	{
+		id: 'semester-abroad',
+		title: 'Semester Abroad at SRH',
+		url: 'https://www.srh-university.de/en/your-studies/international-office/semester-abroad-at-srh-university/',
+		icon: '🏫',
+		description: 'Incoming exchange students',
+		category_name: 'International Office'
+	},
+	{
+		id: 'scholarships',
+		title: 'Scholarships',
+		url: 'https://www.srh-university.de/en/your-studies/international-office/scholarships/',
+		icon: '💶',
+		description: 'Funding and financial aid',
+		category_name: 'International Office'
+	},
+	{
+		id: 'partner-universities',
+		title: 'Partner Universities',
+		url: 'https://www.srh-university.de/en/your-studies/international-office/our-partner-universities/',
+		icon: '🤝',
+		description: 'Global university network',
+		category_name: 'International Office'
+	},
+	{
+		id: 'visa-residence',
+		title: 'Visa & Residence Permit',
+		url: 'https://www.srh-university.de/en/your-studies/international-office/visa-and-residence-permit/',
+		icon: '🛂',
+		description: 'Visa and legal requirements',
+		category_name: 'International Office'
 	}
 ];
 
@@ -223,6 +299,7 @@ export const allLinks = [
 	...campusWebLinks,
 	...eCampusLinks,
 	...resourceLinks,
+	...internationalOfficeLinks,
 	...serviceLinks,
 	...utilityLinks
 ];
@@ -233,6 +310,7 @@ export const categoryOrder = [
 	'Academic Services',
 	'E-Campus Learning',
 	'Resources',
+	'International Office',
 	'Services',
 	'Utilities'
 ];

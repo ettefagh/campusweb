@@ -1,13 +1,16 @@
 <script lang="ts">
     import { onMount } from "svelte";
 
+    let innerWidth = 0;
+    let contactSheetOpen = false;
+    $: isPortraitMobile = innerWidth < 600;
+
     onMount(() => {
         // Force reload of Instagram embeds when component mounts
         const w = window as any;
         if (w.instgrm) {
             w.instgrm.Embeds.process();
         } else {
-            // If script hasn't loaded yet, it will process automatically when it does
             const script = document.createElement("script");
             script.src = "//www.instagram.com/embed.js";
             script.async = true;
@@ -15,32 +18,77 @@
         }
     });
 
+    function openContactSheet() {
+        contactSheetOpen = true;
+    }
+    function closeContactSheet() {
+        contactSheetOpen = false;
+    }
+
+    const newsCards = [
+        {
+            tag: "Events",
+            emoji: "📅",
+            title: "Upcoming University Events",
+            desc: "Explore workshops, career fairs, and cultural events hosted by SRH this semester.",
+            url: "/viewer?url=https://www.srh-university.de/en/events/",
+            color: "#3b82f6",
+        },
+        {
+            tag: "News",
+            emoji: "📰",
+            title: "Latest Campus News",
+            desc: "Stay up to date with announcements, research highlights, and campus updates.",
+            url: "/viewer?url=https://www.srh-university.de/en/news/",
+            color: "#ef4444",
+        },
+        {
+            tag: "Merch",
+            emoji: "🛒",
+            title: "Official Brand Store",
+            desc: "Grab official SRH merchandise — hoodies, notebooks, and more.",
+            url: "/viewer?url=https://srh-store.de/employees/bildung.html&title=Brand Store",
+            color: "#8b5cf6",
+        },
+    ];
+
     const socialMedia = [
         {
             name: "Instagram",
             url: "https://www.instagram.com/srh_university_international/",
             icon: "📷",
+            color: "#E1306C",
         },
         {
             name: "Facebook",
             url: "http://facebook.com/srhuniversityinternational",
             icon: "📘",
+            color: "#1877F2",
         },
         {
             name: "TikTok",
             url: "https://www.tiktok.com/@srhuniversity",
             icon: "🎵",
+            color: "#000000",
         },
         {
             name: "YouTube",
             url: "https://www.youtube.com/@srhuniversity",
             icon: "📺",
+            color: "#FF0000",
         },
         {
             name: "LinkedIn",
             url: "https://www.linkedin.com/school/srh-university/posts/",
             icon: "🔗",
+            color: "#0A66C2",
         },
+    ];
+
+    const contacts = [
+        { icon: "📞", label: "Phone", value: "+49 30 515650 200", href: "tel:+493051565020" },
+        { icon: "📧", label: "Email", value: "info.hsg@srh.de", href: "mailto:info.hsg@srh.de" },
+        { icon: "🏢", label: "Address", value: "Ludwig Guttmann Str. 6\n69123 Heidelberg, Germany", href: "" },
     ];
 </script>
 
@@ -48,302 +96,613 @@
     <title>Campus News | Campusweb</title>
 </svelte:head>
 
+<svelte:window bind:innerWidth />
+
 <div class="feed-container">
     <header class="page-header">
-        <h1>Campus News</h1>
-        <p>Latest updates from SRH University</p>
-        <div class="header-actions">
-            <a
-                href="/viewer?url=https://www.srh-university.de/en/events/"
-                class="action-button events-button"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"
-                    ></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                Events
-            </a>
-            <a
-                href="/viewer?url=https://www.srh-university.de/en/news/"
-                class="action-button news-button"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path
-                        d="M19 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2z"
-                    ></path>
-                    <path d="M16 2v4"></path>
-                    <path d="M8 2v4"></path>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                News
-            </a>
-        </div>
+        <h1>📰 Campus News</h1>
+        <p class="subtitle">Latest updates from SRH University</p>
     </header>
 
-    <div class="instagram-feeds-container">
-        <blockquote
-            class="instagram-media"
-            data-instgrm-permalink="https://www.instagram.com/srh.students/"
-            data-instgrm-version="14"
-            style="background:#FFF; border:0; border-radius:8px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:48%; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"
-        ></blockquote>
-        <blockquote
-            class="instagram-media"
-            data-instgrm-permalink="https://www.instagram.com/srh_university_international/"
-            data-instgrm-version="14"
-            style="background:#FFF; border:0; border-radius:8px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:48%; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);"
-        ></blockquote>
-    </div>
+    <!-- Feature 4: Modernized Instagram Embed Wrapper -->
+    <section class="embed-section">
+        <h2 class="section-title">📸 Instagram Feeds</h2>
+        <div class="embed-wrapper">
+            <div class="embed-card">
+                <div class="embed-label">@srh.students</div>
+                <blockquote
+                    class="instagram-media"
+                    data-instgrm-permalink="https://www.instagram.com/srh.students/"
+                    data-instgrm-version="14"
+                    style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:0; width:100%;"
+                ></blockquote>
+            </div>
+            <div class="embed-card">
+                <div class="embed-label">@srh_university_international</div>
+                <blockquote
+                    class="instagram-media"
+                    data-instgrm-permalink="https://www.instagram.com/srh_university_international/"
+                    data-instgrm-version="14"
+                    style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:0; width:100%;"
+                ></blockquote>
+            </div>
+        </div>
+    </section>
 
-    <section class="social-media-section">
-        <h2>Follow SRH Official Channels</h2>
-        <div class="social-grid">
+    <!-- Feature 1: News Preview Cards -->
+    <section class="news-cards">
+        {#each newsCards as card}
+            <a href={card.url} class="news-card">
+                <span class="news-card-tag" style="background: {card.color};">{card.tag}</span>
+                <span class="news-card-emoji">{card.emoji}</span>
+                <h3 class="news-card-title">{card.title}</h3>
+                <p class="news-card-desc">{card.desc}</p>
+                <span class="news-card-cta">
+                    Read more
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </span>
+            </a>
+        {/each}
+    </section>
+
+    <!-- Feature 2: Horizontal Scroll Social Chips -->
+    <section class="social-section">
+        <h2 class="section-title">🌐 Follow SRH</h2>
+        <div class="social-scroll">
             {#each socialMedia as platform}
                 <a
                     href={platform.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="social-link"
+                    class="social-chip"
+                    style="--chip-color: {platform.color};"
                 >
-                    <span class="social-icon">{platform.icon}</span>
-                    <span class="social-name">{platform.name}</span>
+                    <span class="chip-icon">{platform.icon}</span>
+                    <span class="chip-name">{platform.name}</span>
                 </a>
             {/each}
         </div>
     </section>
 
-    <section class="contact-section">
-        <h2>📞 SRH Contact Information</h2>
-        <div class="contact-card">
-            <div class="contact-item">
-                <span class="contact-icon">📞</span>
-                <div class="contact-details">
-                    <span class="contact-label">Phone</span>
-                    <a href="tel:+493051565020" class="contact-value"
-                        >+49 30 515650 200</a
-                    >
-                </div>
+    <!-- Feature 3: Contact Hub Button -->
+    <section class="contact-trigger-section">
+        <button class="contact-trigger" on:click={openContactSheet}>
+            <span class="contact-trigger-icon">📞</span>
+            <div class="contact-trigger-text">
+                <span class="contact-trigger-title">University Directory</span>
+                <span class="contact-trigger-sub">Phone, email & address</span>
             </div>
-            <div class="contact-item">
-                <span class="contact-icon">📧</span>
-                <div class="contact-details">
-                    <span class="contact-label">Email</span>
-                    <a href="mailto:info.hsg@srh.de" class="contact-value"
-                        >info.hsg@srh.de</a
-                    >
-                </div>
-            </div>
-            <div class="contact-item">
-                <span class="contact-icon">🏢</span>
-                <div class="contact-details">
-                    <span class="contact-label">Address</span>
-                    <span class="contact-value"
-                        >Ludwig Guttmann Str. 6<br />69123 Heidelberg, Germany</span
-                    >
-                </div>
-            </div>
-            <div class="contact-item">
-                <span class="contact-icon">🛒</span>
-                <div class="contact-details">
-                    <span class="contact-label">Brand Store</span>
-                    <a
-                        href="/viewer?url=https://srh-store.de/employees/bildung.html&title=Brand Store"
-                        class="contact-value">Official Merchandise</a
-                    >
-                </div>
-            </div>
-        </div>
+            <span class="contact-trigger-arrow">›</span>
+        </button>
     </section>
 </div>
 
+<!-- Feature 3: Contact Bottom Sheet / Modal -->
+{#if contactSheetOpen}
+    {#if isPortraitMobile}
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <div class="sheet-overlay" on:click={closeContactSheet} role="presentation">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <div class="sheet" on:click|stopPropagation role="dialog" aria-label="Contact Information">
+                <div class="sheet-handle"></div>
+                <button class="sheet-close" on:click={closeContactSheet} aria-label="Close">✕</button>
+                <h3 class="sheet-title">📞 SRH Contact</h3>
+                <div class="contact-list">
+                    {#each contacts as c}
+                        <div class="contact-row">
+                            <span class="contact-row-icon">{c.icon}</span>
+                            <div class="contact-row-body">
+                                <span class="contact-row-label">{c.label}</span>
+                                {#if c.href}
+                                    <a href={c.href} class="contact-row-value">{c.value}</a>
+                                {:else}
+                                    <span class="contact-row-value">{@html c.value.replace('\n', '<br/>')}</span>
+                                {/if}
+                            </div>
+                        </div>
+                    {/each}
+                </div>
+            </div>
+        </div>
+    {:else}
+        <!-- Desktop / Tablet Modal -->
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <div class="sheet-overlay" on:click={closeContactSheet} role="presentation">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <div class="contact-modal" on:click|stopPropagation role="dialog" aria-label="Contact Information">
+                <button class="sheet-close" on:click={closeContactSheet} aria-label="Close">✕</button>
+                <h3 class="sheet-title">📞 SRH Contact Information</h3>
+                <div class="contact-list">
+                    {#each contacts as c}
+                        <div class="contact-row">
+                            <span class="contact-row-icon">{c.icon}</span>
+                            <div class="contact-row-body">
+                                <span class="contact-row-label">{c.label}</span>
+                                {#if c.href}
+                                    <a href={c.href} class="contact-row-value">{c.value}</a>
+                                {:else}
+                                    <span class="contact-row-value">{@html c.value.replace('\n', '<br/>')}</span>
+                                {/if}
+                            </div>
+                        </div>
+                    {/each}
+                </div>
+            </div>
+        </div>
+    {/if}
+{/if}
+
 <style>
+    /* ─── Layout ──────────────────────────────────────────────────── */
     .feed-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: var(--spacing-lg) var(--spacing-md) 100px; /* Bottom padding for nav */
+        padding: var(--spacing-lg) var(--spacing-md) 100px;
     }
 
     .page-header {
-        margin-bottom: var(--spacing-xl);
         text-align: center;
+        padding: var(--spacing-lg) 0 var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
     }
 
-    .page-header h1 {
-        font-size: 2rem;
+    h1 {
         margin-bottom: var(--spacing-xs);
-        background: linear-gradient(
-            135deg,
-            var(--primary-color),
-            var(--secondary-color)
-        );
-        background-clip: text;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 1.75rem;
     }
 
-    .page-header p {
-        color: var(--text-color-secondary);
+    .subtitle {
+        color: #666;
+        font-size: 1rem;
     }
 
-    .header-actions {
-        margin-top: var(--spacing-md);
-        display: flex;
-        gap: var(--spacing-sm);
-        justify-content: center;
-        flex-direction: column;
-        flex-wrap: wrap;
+    @media (prefers-color-scheme: dark) {
+        .subtitle {
+            color: #aaa;
+        }
     }
 
-    .action-button {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--spacing-xs);
-        padding: var(--spacing-sm) var(--spacing-md);
-        background-color: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-full);
-        color: var(--text-color);
-        text-decoration: none;
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-
-    .action-button:hover {
-        background-color: var(--hover-bg);
-        border-color: var(--primary-color);
-        color: var(--primary-color);
-        transform: translateY(-1px);
-    }
-
-    .instagram-feeds-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: var(--spacing-lg);
-        margin-bottom: var(--spacing-xl);
-    }
-
-    .social-media-section,
-    .contact-section {
-        margin-bottom: var(--spacing-xl);
-        padding: var(--spacing-lg);
-        background: var(--card-bg);
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--border-color);
-    }
-
-    .social-media-section h2,
-    .contact-section h2 {
-        font-size: 1.3rem;
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
         margin-bottom: var(--spacing-md);
         color: var(--text-color);
     }
 
-    .social-grid {
+    /* ─── Feature 1: News Preview Cards ──────────────────────────── */
+    .news-cards {
         display: grid;
-        gap: var(--spacing-sm);
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
     }
 
-    .social-link {
+    @media (min-width: 640px) {
+        .news-cards {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    .news-card {
+        position: relative;
         display: flex;
-        margin-bottom: var(--spacing-xl);
+        flex-direction: column;
         padding: var(--spacing-lg);
         background: var(--card-bg);
-        border-radius: var(--radius-lg);
         border: 1px solid var(--border-color);
-        flex-direction: column;
-        align-items: center;
-        flex-wrap: wrap;
-        max-width: stretch;
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        color: var(--text-color);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
     }
 
-    .social-link:hover {
-        background: rgba(212, 68, 7, 0.05);
+    .news-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary-color);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .news-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
         border-color: var(--primary-color);
-        transform: translateY(-2px);
     }
 
-    .social-icon {
-        font-size: 1.5rem;
+    .news-card:hover::before {
+        opacity: 1;
     }
 
-    .social-name {
-        font-weight: 500;
+    .news-card-tag {
+        align-self: flex-start;
+        padding: 2px 10px;
+        border-radius: 99px;
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: var(--spacing-sm);
     }
 
-    .contact-card {
+    .news-card-emoji {
+        font-size: 2rem;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .news-card-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
+        line-height: 1.3;
+        color: var(--text-color);
+    }
+
+    .news-card-desc {
+        font-size: 0.85rem;
+        color: var(--text-color-secondary, #888);
+        line-height: 1.5;
+        flex: 1;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .news-card-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-top: auto;
+    }
+
+    /* ─── Feature 4: Embed Wrapper ───────────────────────────────── */
+    .embed-section {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .embed-wrapper {
         display: grid;
         gap: var(--spacing-md);
     }
 
-    .contact-item {
+    @media (min-width: 768px) {
+        .embed-wrapper {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    .embed-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow 0.2s ease;
+    }
+
+    .embed-card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .embed-label {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text-color-secondary, #888);
+        border-bottom: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.02);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .embed-label {
+            background: rgba(255, 255, 255, 0.03);
+        }
+    }
+
+    /* ─── Feature 2: Horizontal Social Pills ─────────────────────── */
+    .social-section {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .social-scroll {
+        display: flex;
+        gap: var(--spacing-sm);
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: var(--spacing-sm);
+        scrollbar-width: none;
+    }
+
+    .social-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .social-chip {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 99px;
+        text-decoration: none;
+        color: var(--text-color);
+        white-space: nowrap;
+        font-size: 0.88rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        min-height: var(--touch-target-min);
+    }
+
+    .social-chip:hover {
+        border-color: var(--chip-color, var(--primary-color));
+        background: color-mix(in srgb, var(--chip-color, var(--primary-color)) 8%, transparent);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .chip-icon {
+        font-size: 1.2rem;
+    }
+
+    .chip-name {
+        font-weight: 600;
+    }
+
+    /* ─── Feature 3: Contact Trigger Button ──────────────────────── */
+    .contact-trigger-section {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .contact-trigger {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        width: 100%;
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        color: var(--text-color);
+    }
+
+    .contact-trigger:hover {
+        border-color: var(--primary-color);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .contact-trigger-icon {
+        font-size: 1.6rem;
+        flex-shrink: 0;
+    }
+
+    .contact-trigger-text {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .contact-trigger-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    .contact-trigger-sub {
+        font-size: 0.8rem;
+        color: var(--text-color-secondary, #888);
+    }
+
+    .contact-trigger-arrow {
+        font-size: 1.4rem;
+        color: var(--text-color-secondary, #888);
+        flex-shrink: 0;
+    }
+
+    /* ─── Contact Sheet / Modal (shared) ──────────────────────────── */
+    .sheet-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 999;
+        animation: overlayIn 0.2s ease;
+    }
+
+    @keyframes overlayIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .sheet {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: var(--card-bg);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-xl);
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+
+    .sheet-handle {
+        width: 36px;
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 2px;
+        margin: 0 auto var(--spacing-md);
+    }
+
+    .contact-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg) var(--spacing-xl);
+        box-shadow: var(--shadow-lg);
+        min-width: 340px;
+        max-width: 480px;
+        width: 90%;
+        animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalIn {
+        from { opacity: 0; transform: translate(-50%, -48%); }
+        to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+
+    .sheet-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: none;
+        border: none;
+        font-size: 1.1rem;
+        cursor: pointer;
+        color: var(--text-color);
+        opacity: 0.6;
+        padding: 4px;
+        min-width: auto;
+        min-height: auto;
+    }
+
+    .sheet-close:hover {
+        opacity: 1;
+    }
+
+    .sheet-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-color);
+    }
+
+    .contact-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .contact-row {
         display: flex;
         align-items: flex-start;
         gap: var(--spacing-md);
         padding: var(--spacing-md);
-        background: var(--hover-bg);
+        background: var(--hover-bg, rgba(0,0,0,0.03));
         border-radius: var(--radius-md);
     }
 
-    .contact-icon {
-        font-size: 1.5rem;
+    .contact-row-icon {
+        font-size: 1.3rem;
         flex-shrink: 0;
+        margin-top: 2px;
     }
 
-    .contact-details {
+    .contact-row-body {
         display: flex;
         flex-direction: column;
-        gap: var(--spacing-xs);
+        gap: 2px;
     }
 
-    .contact-label {
-        font-size: 0.85rem;
+    .contact-row-label {
+        font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
-        color: var(--text-color-secondary);
+        letter-spacing: 0.04em;
+        color: var(--text-color-secondary, #888);
     }
 
-    .contact-value {
-        font-size: 0.95rem;
+    .contact-row-value {
+        font-size: 0.92rem;
         color: var(--text-color);
         text-decoration: none;
     }
 
-    .contact-value:hover {
+    a.contact-row-value {
         color: var(--primary-color);
-    }
-
-    a.contact-value {
         text-decoration: underline;
         text-decoration-color: transparent;
-        transition: text-decoration-color 0.2s;
+        transition: text-decoration-color 0.2s ease;
     }
 
-    a.contact-value:hover {
+    a.contact-row-value:hover {
         text-decoration-color: var(--primary-color);
+    }
+
+    /* ─── Feature 5: Masonry‐like Dynamic Layout ────────────────── */
+    @media (min-width: 1024px) {
+        .feed-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+            align-items: start;
+        }
+
+        .feed-container > * {
+            min-width: 0;
+        }
+
+        /* Header spans full width */
+        .page-header {
+            grid-column: 1 / -1;
+        }
+
+        /* Embeds span full width and stay at top */
+        .embed-section {
+            grid-column: 1 / -1;
+        }
+
+        /* News cards take left column */
+        .news-cards {
+            grid-column: 1;
+            grid-template-columns: 1fr; /* Stack news vertically in the column */
+        }
+
+        /* Social + contact stack on right */
+        .social-section {
+            grid-column: 2;
+        }
+
+        .contact-trigger-section {
+            grid-column: 2;
+        }
+    }
+
+    /* ─── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 639px) {
+        .news-cards {
+            gap: var(--spacing-sm);
+        }
+
+        .news-card {
+            padding: var(--spacing-md);
+        }
+
+        .news-card-emoji {
+            font-size: 1.6rem;
+        }
     }
 </style>

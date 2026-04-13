@@ -11,6 +11,7 @@ export interface CalendarEvent {
 		location?: string;
 		shortLocation?: string;
 		calendarId?: string;
+		description?: string;
 	};
 }
 
@@ -38,6 +39,7 @@ export function parseICalEvents(
 			const uid = event.uid;
 			const summary = event.summary;
 			const location = event.location;
+			const description = event.description;
 			const dtstart = event.startDate;
 			const dtend = event.endDate;
 
@@ -67,7 +69,8 @@ export function parseICalEvents(
 				extendedProps: {
 					location: fullLocation,
 					shortLocation,
-					calendarId
+					calendarId,
+					description
 				}
 			});
 		});
