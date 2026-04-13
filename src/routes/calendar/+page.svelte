@@ -612,22 +612,22 @@
 	<section class="quick-links-section">
 		<h2 class="section-title">🔗 Quick Links</h2>
 		<div class="quick-links-grid">
-			<a href="/viewer?url=https://srh-calendar-enhancer.padarhava.workers.dev&title=Calendar Enhancer" class="quick-link-card">
+			<a href="https://calendarsub.padarhava.workers.dev/" target="_blank" rel="noopener noreferrer" class="quick-link-card">
 				<span class="ql-icon">📅</span>
 				<span class="ql-title">Calendar Enhancer</span>
 				<span class="ql-desc">Enhance your university calendar</span>
 			</a>
-			<a href="/viewer?url=https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php&title=My Schedule" class="quick-link-card">
+			<a href="https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php" target="_blank" rel="noopener noreferrer" class="quick-link-card">
 				<span class="ql-icon">🗓️</span>
 				<span class="ql-title">My Schedule</span>
 				<span class="ql-desc">View class timetable</span>
 			</a>
-			<a href="/viewer?url=https://srh-community.campusweb.cloud/en/mein-studium/meine-pruefungsanmeldung.php&title=Exam Registration" class="quick-link-card">
+			<a href="https://srh-community.campusweb.cloud/en/mein-studium/meine-pruefungsanmeldung.php" target="_blank" rel="noopener noreferrer" class="quick-link-card">
 				<span class="ql-icon">🎓</span>
 				<span class="ql-title">Exam Registration</span>
 				<span class="ql-desc">Register for exams</span>
 			</a>
-			<a href="/viewer?url=https://www.srh-university.de/en/events/&title=University Events" class="quick-link-card">
+			<a href="https://www.srh-university.de/en/events/" target="_blank" rel="noopener noreferrer" class="quick-link-card">
 				<span class="ql-icon">🎪</span>
 				<span class="ql-title">University Events</span>
 				<span class="ql-desc">Workshops, fairs & more</span>
