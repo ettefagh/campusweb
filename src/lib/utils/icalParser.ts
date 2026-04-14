@@ -1,5 +1,10 @@
 import ICAL from 'ical.js';
 
+export function extractCalendarName(icalContent: string): string | null {
+	const match = icalContent.match(/^X-WR-CALNAME:(.*)$/m);
+	return match ? match[1].trim() : null;
+}
+
 export interface CalendarEvent {
 	id: string;
 	title: string;

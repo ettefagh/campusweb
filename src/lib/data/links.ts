@@ -279,7 +279,7 @@ export const utilityLinks = [
 	{
 		id: 'calendar-enhancer',
 		title: 'Calendar Enhancer',
-		url: 'https://srh-calendar-enhancer.padarhava.workers.dev',
+		url: 'https://calendarsub.padarhava.workers.dev',
 		icon: '📅',
 		description: 'Enhance your university calendar',
 		category_name: 'Utilities'

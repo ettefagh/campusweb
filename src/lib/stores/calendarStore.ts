@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import type { CalendarEvent } from '$lib/utils/icalParser';
-import { parseICalEvents } from '$lib/utils/icalParser';
+import { parseICalEvents, extractCalendarName } from '$lib/utils/icalParser';
 
 export interface CalendarSubscription {
     id: string;
@@ -45,20 +45,27 @@ function createCalendarStore() {
         
         add: async (url: string, name: string = 'My Calendar') => {
             const id = crypto.randomUUID();
-            const color = '#10b981'; // Default green for personal calendars
+            let color = '#10b981'; // Default green for personal calendars
+            
+            update(subs => {
+                const usedColors = subs.map(s => s.color);
+                const PRESET_COLORS = ['#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#eab308'];
+                color = PRESET_COLORS.find(c => !usedColors.includes(c)) || PRESET_COLORS[subs.length % PRESET_COLORS.length];
+                return subs;
+            });
             
             // Initial fetch
             try {
-                const events = await fetchCalendarEvents(url, id, color);
+                const result = await fetchCalendarEvents(url, id, color);
                 
                 update(subs => {
                     const newSubs = [...subs, {
                         id,
                         url,
-                        name,
+                        name: result.name || name,
                         color,
                         lastUpdated: Date.now(),
-                        cachedEvents: events
+                        cachedEvents: result.events
                     }];
                     if (browser) localStorage.setItem(STORAGE_KEY, JSON.stringify(newSubs));
                     return newSubs;
@@ -86,11 +93,11 @@ function createCalendarStore() {
                 subs.forEach(async (sub) => {
                     if (now - sub.lastUpdated > UPDATE_INTERVAL) {
                         try {
-                            const newEvents = await fetchCalendarEvents(sub.url, sub.id, sub.color);
+                            const result = await fetchCalendarEvents(sub.url, sub.id, sub.color);
                             update(currentSubs => {
                                 const updated = currentSubs.map(s => 
                                     s.id === sub.id 
-                                        ? { ...s, lastUpdated: now, cachedEvents: newEvents }
+                                        ? { ...s, lastUpdated: now, cachedEvents: result.events, name: result.name || s.name }
                                         : s
                                 );
                                 if (browser) localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -127,7 +134,7 @@ async function fetchWithTimeout(resource: string, options: RequestInit = {}) {
     }
 }
 
-async function fetchCalendarEvents(url: string, id: string, color: string): Promise<CalendarEvent[]> {
+async function fetchCalendarEvents(url: string, id: string, color: string): Promise<{events: CalendarEvent[], name: string|null}> {
     let error: any;
     
     // Strategy 1: Direct Fetch (Best if server supports CORS)
@@ -136,7 +143,10 @@ async function fetchCalendarEvents(url: string, id: string, color: string): Prom
         const response = await fetchWithTimeout(url);
         if (response.ok) {
             const text = await response.text();
-            return parseICalEvents(text, id, color, color);
+            return {
+                events: parseICalEvents(text, id, color, color),
+                name: extractCalendarName(text)
+            };
         }
     } catch (e) {
         console.warn('Direct fetch failed, trying proxy...', e);
@@ -149,7 +159,10 @@ async function fetchCalendarEvents(url: string, id: string, color: string): Prom
         const response = await fetchWithTimeout(proxyUrl);
         if (response.ok) {
             const text = await response.text();
-            return parseICalEvents(text, id, color, color);
+            return {
+                events: parseICalEvents(text, id, color, color),
+                name: extractCalendarName(text)
+            };
         }
     } catch (e) {
         console.warn('corsproxy.io failed, trying alternative...', e);
@@ -162,7 +175,10 @@ async function fetchCalendarEvents(url: string, id: string, color: string): Prom
         const response = await fetchWithTimeout(proxyUrl);
         if (response.ok) {
             const text = await response.text();
-            return parseICalEvents(text, id, color, color);
+            return {
+                events: parseICalEvents(text, id, color, color),
+                name: extractCalendarName(text)
+            };
         }
     } catch (e) {
         console.error('All fetch strategies failed', e);
