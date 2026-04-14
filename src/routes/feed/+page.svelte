@@ -326,14 +326,20 @@
 
   /* ─── Feature 1: News Preview Cards ──────────────────────────── */
   .news-cards {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-xl);
   }
 
+  .news-card {
+    flex: 1 1 100%;
+    /* Remaining properties of .news-card are below */
+  }
+
   @media (min-width: 640px) {
-    .news-cards {
-      grid-template-columns: repeat(3, 1fr);
+    .news-card {
+      flex: 1 1 calc(33.333% - var(--spacing-md));
     }
   }
 
@@ -422,13 +428,19 @@
   }
 
   .embed-wrapper {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
     gap: var(--spacing-md);
   }
 
+  .embed-card {
+    flex: 1 1 100%;
+    /* Remaining properties of .embed-card are below */
+  }
+
   @media (min-width: 768px) {
-    .embed-wrapper {
-      grid-template-columns: 1fr 1fr;
+    .embed-card {
+      flex: 1 1 calc(50% - var(--spacing-md));
     }
   }
 
@@ -730,8 +742,8 @@
     }
 
     /* News card adjustments for larger screens */
-    .news-cards {
-      grid-template-columns: 1fr;
+    .news-card {
+      flex: 1 1 100%;
     }
   }
 

@@ -1,192 +1,103 @@
-# SRH Campus Hub
+# CampusWeb
 
-A mobile-optimized navigation hub for quick access to SRH University resources. Built with accessibility and one-handed mobile use in mind.
+A mobile-first progressive web app for quick access to SRH University resources. Built with SvelteKit and deployed on Cloudflare Pages.
 
 ## Features
 
-✅ **Thumb-Zone Optimized** - All interactive elements positioned for easy one-handed use  
-✅ **WCAG 2.2 Level AA Compliant** - Fully accessible with screen readers and keyboard navigation  
-✅ **SRH Branded** - Official SRH University color palette (#D44407 orange)  
-✅ **Progressive Web App** - Install on your phone for app-like experience  
-✅ **Dark Mode Support** - Automatic theme switching  
-✅ **Fast & Lightweight** - Built with SvelteKit for optimal performance  
+- 📱 **Mobile-First PWA** — installable on any device with offline support
+- 📅 **Integrated Calendar** — university events, exams, and personal iCal subscriptions with auto-naming and color coding
+- 📰 **Campus News Feed** — Instagram embeds, news cards, and social media links
+- 🔍 **Universal Search** — search across all university links and resources
+- ⭐ **Custom Favorites** — pin your most-used links to the home screen
+- 🌙 **Dark Mode** — automatic theme switching based on system preference
+- ♿ **Accessible** — WCAG 2.2 Level AA compliant with 48px touch targets
 
-## Quick Links
+## Tech Stack
 
-- 🎓 CampusWeb Portal
-- 📚 Moodle
-- 📖 Library
-- 📧 SRH Email
-- 📅 Academic Calendar
-- 💻 IT Support
-- 🗺️ Campus Map
-- 🛠️ Student Services
-
-## Installation
-
-### Prerequisites
-
-- Node.js 20+ (check with `node --version`)
-- npm (comes with Node.js)
-
-### Setup
-
-1. **Fix npm cache permissions** (if needed):
-   ```bash
-   sudo chown -R $(whoami) ~/.npm
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Run development server**:
-   ```bash
-   npm run dev
-   ```
-
-4. **Open in browser**:
-   Navigate to `http://localhost:5173`
-
-## Deployment to Cloudflare Pages
-
-### 1. Create Cloudflare D1 Database
-
-```bash
-npx wrangler d1 create srh-campus-hub-db
-```
-
-Copy the database ID and update `wrangler.toml`:
-
-```toml
-[[d1_databases]]
-binding = "DB"
-database_name = "srh-campus-hub-db"
-database_id = "YOUR_DATABASE_ID_HERE"
-```
-
-### 2. Create Cloudflare KV Namespace (Optional)
-
-```bash
-npx wrangler kv:namespace create CACHE
-```
-
-Update `wrangler.toml` with the KV namespace ID.
-
-### 3. Build for Production
-
-```bash
-npm run build
-```
-
-### 4. Deploy to Cloudflare Pages
-
-```bash
-npx wrangler pages deploy build
-```
-
-> **Note:** We are using `adapter-static` for the frontend MVP to ensure fast, reliable deployment. The database bindings in `wrangler.toml` are currently commented out until backend API development begins.
+| Layer | Technology |
+|-------|-----------|
+| Framework | SvelteKit 2.x + TypeScript |
+| Styling | Vanilla CSS with custom properties |
+| Calendar | @event-calendar (TimeGrid, DayGrid, List) |
+| iCal Parsing | ical.js |
+| Hosting | Cloudflare Pages |
+| PWA | Service Worker with cache-first strategy |
 
 ## Project Structure
 
 ```
-srh-campus-hub/
+campusweb/
 ├── src/
 │   ├── routes/
-│   │   ├── +layout.svelte          # App shell with bottom nav
-│   │   ├── +page.svelte            # Home page with links
-│   │   ├── favorites/
-│   │   │   └── +page.svelte        # Favorites page
-│   │   ├── search/
-│   │   │   └── +page.svelte        # Search page
-│   │   └── profile/
-│   │       └── +page.svelte        # Profile page
+│   │   ├── +page.svelte            # Home — favorites & link grid
+│   │   ├── calendar/+page.svelte   # Calendar with subscriptions
+│   │   ├── feed/+page.svelte       # News, social, contacts
+│   │   ├── explore/+page.svelte    # Browse all links by category
+│   │   ├── search/+page.svelte     # Full-text search
+│   │   └── viewer/+page.svelte     # Domain-restricted iframe viewer
 │   ├── lib/
-│   │   └── components/
-│   │       ├── BottomNav.svelte    # Bottom navigation
-│   │       └── LinkCard.svelte     # Link card component
-│   ├── app.css                     # Global styles
-│   └── app.html                    # HTML template
-├── static/
-│   ├── manifest.json               # PWA manifest
-│   ├── icon-192.png                # App icon (light mode)
-│   ├── icon-512.png                # App icon (light mode)
-│   └── favicon.png                 # Favicon
-├── wrangler.toml                   # Cloudflare config
-├── svelte.config.js                # SvelteKit config
+│   │   ├── components/             # BottomNav, LinkCard, SecureCalendarInput, UpdatePrompt
+│   │   ├── data/links.ts           # Curated SRH link database
+│   │   ├── stores/                 # Svelte stores (favorites, calendar subscriptions)
+│   │   └── utils/icalParser.ts     # iCal parsing & calendar name extraction
+│   ├── service-worker.ts           # Offline-first caching
+│   ├── app.css                     # Design system & global styles
+│   └── app.html                    # HTML shell
+├── static/                         # Icons, manifest, favicon
+├── wrangler.toml.example           # Cloudflare config template
 └── package.json
 ```
 
-## Tech Stack
+## Getting Started
 
-- **Framework**: SvelteKit 2.x
-- **Hosting**: Cloudflare Pages
-- **Backend**: Cloudflare Workers
-- **Database**: Cloudflare D1 (SQLite)
-- **Cache**: Cloudflare KV
-- **Styling**: Vanilla CSS with CSS Variables
-- **PWA**: Service Workers (coming soon)
+### Prerequisites
 
-## Color Palette (SRH University)
+- Node.js 20+
+- npm
 
-| Color | HEX | Usage |
-|-------|-----|-------|
-| SRH Orange | `#D44407` | Primary brand color |
-| Orange Light | `#F28C3E` | Hover states, accents |
-| Orange Dark | `#A33005` | Active states |
-| Copper | `#B7410E` | Secondary accents |
-| Cream | `#F5F0E6` | Backgrounds (light mode) |
-| Grey | `#E8E8E8` | Borders, dividers |
+### Setup
 
-## Accessibility Features
+```bash
+# Install dependencies
+npm install
 
-- ✅ WCAG 2.2 Level AA compliant
-- ✅ Minimum 48x48px touch targets
-- ✅ 4.5:1 contrast ratios
-- ✅ Keyboard navigation support
-- ✅ Screen reader optimized
-- ✅ Focus indicators
-- ✅ Skip to main content link
+# Copy the Cloudflare config template
+cp wrangler.toml.example wrangler.toml
 
-## Development Roadmap
+# Start dev server
+npm run dev
+```
 
-### Phase 1: MVP (Current) ✅
-- [x] Project setup
-- [x] SRH branding and color palette
-- [x] Thumb-zone optimized layout
-- [x] Bottom navigation
-- [x] Link cards with favorites
-- [x] All main pages (Home, Favorites, Search, Profile)
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-### Phase 2: Database & API (Next)
-- [ ] D1 database schema
-- [ ] Seed SRH links
-- [ ] Favorites API endpoints
-- [ ] Search functionality
+### Deploy to Cloudflare Pages
 
-### Phase 3: Authentication
-- [ ] Email/password auth
-- [ ] JWT session management
-- [ ] User preferences
+```bash
+npm run deploy
+```
 
-### Phase 4: PWA & Offline
-- [ ] Service worker
-- [ ] Offline support
-- [ ] Install prompts
+This runs `vite build` and deploys via `wrangler pages deploy`.
 
-### Phase 5: Testing & Launch
-- [ ] Accessibility audit
-- [ ] Performance testing
-- [ ] Production deployment
+## Calendar Subscriptions
+
+CampusWeb integrates with the [Calendar Subscription Enhancer](https://github.com/ettefagh/calendar-subscription-enhancer) — an open-source Cloudflare Worker that:
+
+- Adds GPS coordinates for campus navigation
+- Cleans formatting and removes redundant data
+- Encrypts calendar URLs with AES-GCM (zero-knowledge)
+
+When users add an SRH iCal URL, CampusWeb automatically routes it through the enhancer for a better experience.
+
+## Privacy
+
+- **Zero analytics** — no tracking, cookies, or telemetry
+- **Local-only storage** — favorites and calendar subscriptions stay in `localStorage`
+- **No server-side data** — the app is a static PWA with no backend database
+- See [SECURITY.md](SECURITY.md) for full details
 
 ## License
 
-MIT
-
-## Support
-
-For issues or questions, contact IT Support at SRH University.
+[MIT](LICENSE)
 
 ---
 

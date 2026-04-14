@@ -1,16 +1,3 @@
-declare module '@toast-ui/calendar' {
-	export default class Calendar {
-		constructor(container: HTMLElement, options: any);
-		createEvents(events: any[]): void;
-		destroy(): void;
-		today(): void;
-		prev(): void;
-		next(): void;
-		setCalendars(calendars: any[]): void;
-		clear(): void;
-	}
-}
-
 declare module 'ical.js' {
 	export function parse(icalContent: string): any;
 	export class Component {
