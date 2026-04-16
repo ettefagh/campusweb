@@ -210,8 +210,12 @@
 {#if contactSheetOpen}
   {#if isPortraitMobile}
     <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class="sheet-overlay" on:click={closeContactSheet} role="presentation">
       <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div
         class="sheet"
         on:click|stopPropagation
@@ -247,8 +251,12 @@
   {:else}
     <!-- Desktop / Tablet Modal -->
     <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div class="sheet-overlay" on:click={closeContactSheet} role="presentation">
       <!-- svelte-ignore a11y-click-events-have-key-events -->
+      <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div
         class="contact-modal"
         on:click|stopPropagation
