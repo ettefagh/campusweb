@@ -23,6 +23,9 @@
 	--dark-card-bg: #2a2a2a;
 	--dark-border: #444;
 
+	/* Layout */
+	--sidebar-width: 220px;
+
 	/* Thumb Zone Measurements */
 	--thumb-zone-easy: 40vh;
 	--thumb-zone-stretch: 60vh;
@@ -121,6 +124,22 @@ body {
 @media (min-height: 800px) {
 	.app-container {
 		padding-bottom: 120px;
+	}
+}
+
+/* Desktop: wider content, no bottom padding, reduced touch targets */
+@media (min-width: 1024px) {
+	.content-area {
+		max-width: 1200px;
+		padding: var(--spacing-lg) var(--spacing-xl);
+	}
+
+	.app-container {
+		padding-bottom: 0;
+	}
+
+	:root {
+		--touch-target-min: 36px;
 	}
 }
 

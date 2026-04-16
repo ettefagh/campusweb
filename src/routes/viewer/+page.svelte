@@ -104,6 +104,12 @@
 		overflow: hidden;
 	}
 
+	@media (min-width: 1024px) {
+		.viewer-page {
+			flex-direction: column;
+		}
+	}
+
 	@media (min-height: 800px) {
 		.viewer-page {
 			height: calc(100vh - 120px);

@@ -334,306 +334,186 @@
 		<p class="subtitle">University events and your schedule</p>
 	</header>
 
-	<div class="toolbar-center">
-		<span class="toolbar-title">{currentTitleText}</span>
-	</div>
-
-	{#if isLoading}
-		<div class="loading-state">
-			<div class="loading-spinner"></div>
-			<p>Loading calendar events...</p>
-		</div>
-	{/if}
-
-	<div class="calendar-container" class:loading={isLoading}>
-		<Calendar bind:this={ecComponent} {plugins} {options} />
-
-		<!-- Feature 4: Empty State -->
-		{#if !isLoading && currentEventsCount === 0}
-			<div class="empty-state">
-				<div class="empty-icon">📭</div>
-				<p class="empty-title">No events to show</p>
-				<p class="empty-subtitle">Try a different date range or add a calendar subscription.</p>
+	<div class="calendar-page-layout">
+		<div class="calendar-main">
+			<div class="toolbar-center">
+				<span class="toolbar-title">{currentTitleText}</span>
 			</div>
-		{/if}
-	</div>
 
-	<!-- Custom Bottom Toolbar -->
-	<div class="calendar-toolbar">
-		<div class="toolbar-end">
-			{#if isDesktop}
-				<button
-					class="view-btn"
-					class:active={currentViewLabel === "dayGridMonth"}
-					on:click={() => switchView("dayGridMonth")}
-					>{t.month}</button
-				>
-				<button
-					class="view-btn"
-					class:active={currentViewLabel === "timeGridWeek"}
-					on:click={() => switchView("timeGridWeek")}>{t.week}</button
-				>
-				<button
-					class="view-btn"
-					class:active={currentViewLabel === "timeGridDay"}
-					on:click={() => switchView("timeGridDay")}>{t.day}</button
-				>
-			{:else if isLandscapeMobile}
-				<button
-					class="view-btn"
-					class:active={currentViewLabel === "dayGridMonth"}
-					on:click={() => switchView("dayGridMonth")}
-					>{t.month}</button
-				>
-				<button
-					class="view-btn"
-					class:active={currentViewLabel === "timeGridWeek"}
-					on:click={() => switchView("timeGridWeek")}>{t.week}</button
-				>
-				<button
-					class="view-btn"
-					class:active={currentViewLabel === "timeGridDay"}
-					on:click={() => switchView("timeGridDay")}>{t.day}</button
-				>
-				<button
-					class="view-btn"
-					class:active={currentViewLabel === "listWeek"}
-					on:click={() => switchView("listWeek")}>{t.list}</button
-				>
-			{:else}
-				<button
-					class="view-btn"
-					class:active={currentViewLabel === "dayGridMonth"}
-					on:click={() => switchView("dayGridMonth")}
-					>{t.month}</button
-				>
-				<button
-					class="view-btn"
-					class:active={currentViewLabel === "listWeek"}
-					on:click={() => switchView("listWeek")}>{t.list}</button
-				>
-				<button
-					class="view-btn"
-					class:active={currentViewLabel === "timeGridDay"}
-					on:click={() => switchView("timeGridDay")}>{t.day}</button
-				>
+			{#if isLoading}
+				<div class="loading-state">
+					<div class="loading-spinner"></div>
+					<p>Loading calendar events...</p>
+				</div>
 			{/if}
-		</div>
-		<div class="toolbar-start">
-			<button class="nav-btn" on:click={goToPrev} aria-label="Previous"
-				>{t.prev}</button
-			>
-			<button class="nav-btn today-btn" on:click={goToToday}
-				>{t.today}</button
-			>
-			<button class="nav-btn" on:click={goToNext} aria-label="Next"
-				>{t.next}</button
-			>
-		</div>
-	</div>
 
-	<!-- Feature 2: Event Detail — Bottom Sheet on mobile, Popup on desktop -->
-	{#if popupEvent}
-		{#if isPortraitMobile}
-			<!-- Mobile Bottom Sheet -->
-			<!-- svelte-ignore a11y-click-events-have-key-events -->
-			<div class="bottom-sheet-overlay" on:click={closePopup} role="presentation">
-				<!-- svelte-ignore a11y-click-events-have-key-events -->
-				<div
-					bind:this={popupElement}
-					class="bottom-sheet"
-					on:click|stopPropagation
-					role="dialog"
-					aria-label="Event details"
-				>
-					<div class="sheet-handle"></div>
-					<button
-						class="popup-close"
-						on:click={closePopup}
-						aria-label="Close popup">✕</button
-					>
-					<h4 class="popup-title">{popupEvent.title}</h4>
-					{#if popupEvent.extendedProps?.shortLocation}
-						<span class="popup-location-badge"
-							>{popupEvent.extendedProps.shortLocation}</span
-						>
-					{/if}
-					{#if popupEvent.extendedProps?.location && popupEvent.extendedProps.location !== popupEvent.extendedProps.shortLocation}
-						<p class="popup-location">
-							📍 {popupEvent.extendedProps.location}
-						</p>
-					{:else if popupEvent.extendedProps?.location}
-						<p class="popup-location">
-							📍 {popupEvent.extendedProps.location}
-						</p>
-					{/if}
-					<p class="popup-time">
-						{#if popupEvent.allDay}
-							All day
-						{:else}
-							{new Date(popupEvent.start).toLocaleTimeString(locale, {
-								hour: "2-digit",
-								minute: "2-digit",
-							})}
-							–
-							{new Date(popupEvent.end).toLocaleTimeString(locale, {
-								hour: "2-digit",
-								minute: "2-digit",
-							})}
-						{/if}
-					</p>
-					<p class="popup-date">
-						{new Date(popupEvent.start).toLocaleDateString(locale, {
-							weekday: "long",
-							month: "long",
-							day: "numeric",
-							year: "numeric",
-						})}
-					</p>
-					{#if popupEvent.extendedProps?.description}
-						<div class="popup-description">
-							{@html popupEvent.extendedProps.description}
-						</div>
-					{/if}
-				</div>
+			<div class="calendar-container" class:loading={isLoading}>
+				<Calendar bind:this={ecComponent} {plugins} {options} />
+
+				<!-- Feature 4: Empty State -->
+				{#if !isLoading && currentEventsCount === 0}
+					<div class="empty-state">
+						<div class="empty-icon">📭</div>
+						<p class="empty-title">No events to show</p>
+						<p class="empty-subtitle">Try a different date range or add a calendar subscription.</p>
+					</div>
+				{/if}
 			</div>
-		{:else}
-			<!-- Desktop / Tablet Floating Popup -->
-			<div
-				bind:this={popupElement}
-				class="event-popup"
-				style="left: {popupPosition.x}px; top: {popupPosition.y}px;"
-				role="dialog"
-				aria-label="Event details"
-			>
-				<button
-					class="popup-close"
-					on:click={closePopup}
-					aria-label="Close popup">✕</button
-				>
-				<h4 class="popup-title">{popupEvent.title}</h4>
-				{#if popupEvent.extendedProps?.shortLocation}
-					<span class="popup-location-badge"
-						>{popupEvent.extendedProps.shortLocation}</span
-					>
-				{/if}
-				{#if popupEvent.extendedProps?.location && popupEvent.extendedProps.location !== popupEvent.extendedProps.shortLocation}
-					<p class="popup-location">
-						📍 {popupEvent.extendedProps.location}
-					</p>
-				{:else if popupEvent.extendedProps?.location}
-					<p class="popup-location">
-						📍 {popupEvent.extendedProps.location}
-					</p>
-				{/if}
-				<p class="popup-time">
-					{#if popupEvent.allDay}
-						All day
+
+			<!-- Custom Bottom Toolbar -->
+			<div class="calendar-toolbar">
+				<div class="toolbar-end">
+					{#if isDesktop}
+						<button
+							class="view-btn"
+							class:active={currentViewLabel === "dayGridMonth"}
+							on:click={() => switchView("dayGridMonth")}
+							>{t.month}</button
+						>
+						<button
+							class="view-btn"
+							class:active={currentViewLabel === "timeGridWeek"}
+							on:click={() => switchView("timeGridWeek")}>{t.week}</button
+						>
+						<button
+							class="view-btn"
+							class:active={currentViewLabel === "timeGridDay"}
+							on:click={() => switchView("timeGridDay")}>{t.day}</button
+						>
+					{:else if isLandscapeMobile}
+						<button
+							class="view-btn"
+							class:active={currentViewLabel === "dayGridMonth"}
+							on:click={() => switchView("dayGridMonth")}
+							>{t.month}</button
+						>
+						<button
+							class="view-btn"
+							class:active={currentViewLabel === "timeGridWeek"}
+							on:click={() => switchView("timeGridWeek")}>{t.week}</button
+						>
+						<button
+							class="view-btn"
+							class:active={currentViewLabel === "timeGridDay"}
+							on:click={() => switchView("timeGridDay")}>{t.day}</button
+						>
+						<button
+							class="view-btn"
+							class:active={currentViewLabel === "listWeek"}
+							on:click={() => switchView("listWeek")}>{t.list}</button
+						>
 					{:else}
-						{new Date(popupEvent.start).toLocaleTimeString(locale, {
-							hour: "2-digit",
-							minute: "2-digit",
-						})}
-						–
-						{new Date(popupEvent.end).toLocaleTimeString(locale, {
-							hour: "2-digit",
-							minute: "2-digit",
-						})}
+						<button
+							class="view-btn"
+							class:active={currentViewLabel === "dayGridMonth"}
+							on:click={() => switchView("dayGridMonth")}
+							>{t.month}</button
+						>
+						<button
+							class="view-btn"
+							class:active={currentViewLabel === "listWeek"}
+							on:click={() => switchView("listWeek")}>{t.list}</button
+						>
+						<button
+							class="view-btn"
+							class:active={currentViewLabel === "timeGridDay"}
+							on:click={() => switchView("timeGridDay")}>{t.day}</button
+						>
 					{/if}
-				</p>
-				<p class="popup-date">
-					{new Date(popupEvent.start).toLocaleDateString(locale, {
-						weekday: "long",
-						month: "long",
-						day: "numeric",
-						year: "numeric",
-					})}
-				</p>
-				{#if popupEvent.extendedProps?.description}
-					<div class="popup-description">
-						{@html popupEvent.extendedProps.description}
-					</div>
-				{/if}
-			</div>
-		{/if}
-	{/if}
-
-	<!-- Feature 3: Calendar Settings Accordion -->
-	<section class="settings-card">
-		<button class="settings-header" on:click={() => settingsOpen = !settingsOpen}>
-			<span>⚙️ Calendar Settings</span>
-			<span class="chevron" class:open={settingsOpen}>▾</span>
-		</button>
-		<div class="settings-body" class:open={settingsOpen}>
-			<div class="settings-inner">
-				<!-- Interactive Legend -->
-				<div class="settings-legend">
-					<h4 class="settings-section-title">Legend</h4>
-					<div class="calendar-legend">
-						<button
-							class="legend-item"
-							class:legend-item--hidden={hiddenSources.has('lecture-free')}
-							on:click={() => toggleSource('lecture-free')}
-						>
-							<span class="legend-color" style="background-color: #3b82f6;"></span>
-							<span>Lecture-Free Periods</span>
-						</button>
-						<button
-							class="legend-item"
-							class:legend-item--hidden={hiddenSources.has('exams')}
-							on:click={() => toggleSource('exams')}
-						>
-							<span class="legend-color" style="background-color: #ef4444;"></span>
-							<span>Exams</span>
-						</button>
-						{#each currentSubs as sub}
-							<button
-								class="legend-item"
-								class:legend-item--hidden={hiddenSources.has(sub.id)}
-								on:click={() => toggleSource(sub.id)}
-							>
-								<span class="legend-color" style="background-color: {sub.color};"></span>
-								<span>{sub.name}</span>
-							</button>
-						{/each}
-					</div>
 				</div>
-
-				<!-- Subscription Management -->
-				<div class="settings-subscriptions">
-					<h4 class="settings-section-title">Manage Subscriptions</h4>
-					<SecureCalendarInput />
+				<div class="toolbar-start">
+					<button class="nav-btn" on:click={goToPrev} aria-label="Previous"
+						>{t.prev}</button
+					>
+					<button class="nav-btn today-btn" on:click={goToToday}
+						>{t.today}</button
+					>
+					<button class="nav-btn" on:click={goToNext} aria-label="Next"
+						>{t.next}</button
+					>
 				</div>
 			</div>
 		</div>
-	</section>
 
-	<!-- Calendar Quick Links -->
-	<section class="quick-links-section">
-		<h2 class="section-title">🔗 Quick Links</h2>
-		<div class="quick-links-grid">
-			<a href="https://calendarsub.padarhava.workers.dev/" target="_blank" rel="noopener noreferrer" class="quick-link-card">
-				<span class="ql-icon">📅</span>
-				<span class="ql-title">Calendar Enhancer</span>
-				<span class="ql-desc">Enhance your university calendar</span>
-			</a>
-			<a href="https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php" target="_blank" rel="noopener noreferrer" class="quick-link-card">
-				<span class="ql-icon">🗓️</span>
-				<span class="ql-title">My Schedule</span>
-				<span class="ql-desc">View class timetable</span>
-			</a>
-			<a href="https://srh-community.campusweb.cloud/en/mein-studium/meine-pruefungsanmeldung.php" target="_blank" rel="noopener noreferrer" class="quick-link-card">
-				<span class="ql-icon">🎓</span>
-				<span class="ql-title">Exam Registration</span>
-				<span class="ql-desc">Register for exams</span>
-			</a>
-			<a href="https://www.srh-university.de/en/events/" target="_blank" rel="noopener noreferrer" class="quick-link-card">
-				<span class="ql-icon">🎪</span>
-				<span class="ql-title">University Events</span>
-				<span class="ql-desc">Workshops, fairs & more</span>
-			</a>
-		</div>
-	</section>
+		<aside class="calendar-sidebar">
+			<!-- Feature 3: Calendar Settings Accordion -->
+			<section class="settings-card">
+				<button class="settings-header" on:click={() => settingsOpen = !settingsOpen}>
+					<span>⚙️ Calendar Settings</span>
+					<span class="chevron" class:open={settingsOpen}>▾</span>
+				</button>
+				<div class="settings-body" class:open={settingsOpen}>
+					<div class="settings-inner">
+						<!-- Interactive Legend -->
+						<div class="settings-legend">
+							<h4 class="settings-section-title">Legend</h4>
+							<div class="calendar-legend">
+								<button
+									class="legend-item"
+									class:legend-item--hidden={hiddenSources.has('lecture-free')}
+									on:click={() => toggleSource('lecture-free')}
+								>
+									<span class="legend-color" style="background-color: #3b82f6;"></span>
+									<span>Lecture-Free Periods</span>
+								</button>
+								<button
+									class="legend-item"
+									class:legend-item--hidden={hiddenSources.has('exams')}
+									on:click={() => toggleSource('exams')}
+								>
+									<span class="legend-color" style="background-color: #ef4444;"></span>
+									<span>Exams</span>
+								</button>
+								{#each currentSubs as sub}
+									<button
+										class="legend-item"
+										class:legend-item--hidden={hiddenSources.has(sub.id)}
+										on:click={() => toggleSource(sub.id)}
+									>
+										<span class="legend-color" style="background-color: {sub.color};"></span>
+										<span>{sub.name}</span>
+									</button>
+								{/each}
+							</div>
+						</div>
+
+						<!-- Subscription Management -->
+						<div class="settings-subscriptions">
+							<h4 class="settings-section-title">Manage Subscriptions</h4>
+							<SecureCalendarInput />
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Calendar Quick Links -->
+			<section class="quick-links-section">
+				<h2 class="section-title">🔗 Quick Links</h2>
+				<div class="quick-links-grid">
+					<a href="https://calendarsub.padarhava.workers.dev/" target="_blank" rel="noopener noreferrer" class="quick-link-card">
+						<span class="ql-icon">📅</span>
+						<span class="ql-title">Calendar Enhancer</span>
+						<span class="ql-desc">Enhance your university calendar</span>
+					</a>
+					<a href="https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php" target="_blank" rel="noopener noreferrer" class="quick-link-card">
+						<span class="ql-icon">🗓️</span>
+						<span class="ql-title">My Schedule</span>
+						<span class="ql-desc">View class timetable</span>
+					</a>
+					<a href="https://srh-community.campusweb.cloud/en/mein-studium/meine-pruefungsanmeldung.php" target="_blank" rel="noopener noreferrer" class="quick-link-card">
+						<span class="ql-icon">🎓</span>
+						<span class="ql-title">Exam Registration</span>
+						<span class="ql-desc">Register for exams</span>
+					</a>
+					<a href="https://www.srh-university.de/en/events/" target="_blank" rel="noopener noreferrer" class="quick-link-card">
+						<span class="ql-icon">🎪</span>
+						<span class="ql-title">University Events</span>
+						<span class="ql-desc">Workshops, fairs & more</span>
+					</a>
+				</div>
+			</section>
+		</aside>
+	</div>
 </div>
 
 
@@ -1272,6 +1152,19 @@
 	}
 
 	@media (min-width: 1024px) {
+		.calendar-page-layout {
+			display: grid;
+			grid-template-columns: 1fr 340px;
+			gap: var(--spacing-xl);
+			align-items: start;
+		}
+
+		.calendar-main {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-sm);
+		}
+
 		.toolbar-end {
 			order: 1;
 		}
@@ -1280,7 +1173,24 @@
 		}
 
 		.calendar-container {
-			height: calc(100vh - 370px);
+			height: calc(100vh - 280px); /* Taller on desktop */
+		}
+
+		/* Reset sidebar spacing */
+		.settings-card {
+			margin: 0;
+		}
+		
+		.quick-links-section {
+			margin: var(--spacing-lg) 0 0;
+		}
+
+		/* Keep settings open initially on desktop */
+		.settings-body {
+			max-height: 800px; /* Force open */
+		}
+		.chevron {
+			transform: rotate(180deg); /* Force chevron open */
 		}
 	}
 

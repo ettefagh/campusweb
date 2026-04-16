@@ -294,7 +294,6 @@
     align-items: stretch;
   }
 
-
   .page-header {
     text-align: center;
     padding: var(--spacing-lg) 0 var(--spacing-sm);
@@ -484,6 +483,14 @@
     -webkit-overflow-scrolling: touch;
     padding-bottom: var(--spacing-sm);
     scrollbar-width: none;
+  }
+
+  @media (min-width: 1024px) {
+    .social-scroll {
+      flex-wrap: wrap;
+      justify-content: center;
+      overflow-x: hidden;
+    }
   }
 
   .social-scroll::-webkit-scrollbar {
@@ -737,8 +744,32 @@
 
   /* ─── Feature 5: Masonry‐like Dynamic Layout ────────────────── */
   @media (min-width: 1024px) {
+    .feed-container {
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+      gap: var(--spacing-xl);
+    }
+
+    .feed-container > .page-header {
+      width: 100%;
+    }
+
     .feed-container > * {
       min-width: 0;
+    }
+
+    .embed-section {
+      flex: 1 1 calc(50% - var(--spacing-xl) / 2);
+    }
+
+    .news-cards {
+      flex: 1 1 calc(50% - var(--spacing-xl) / 2);
+    }
+
+    .social-section,
+    .contact-trigger-section {
+      width: 100%;
     }
 
     /* News card adjustments for larger screens */
@@ -746,7 +777,6 @@
       flex: 1 1 100%;
     }
   }
-
 
   /* ─── Responsive ─────────────────────────────────────────────── */
   @media (max-width: 639px) {

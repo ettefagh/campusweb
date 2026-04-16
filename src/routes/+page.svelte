@@ -111,6 +111,13 @@
 		margin-top: 15%;
 	}
 
+	/* Desktop: reduce the large mobile thumb-zone spacing */
+	@media (min-width: 1024px) {
+		.page-header {
+			margin-top: var(--spacing-lg);
+		}
+	}
+
 	.logo-container {
 		margin-bottom: var(--spacing-md);
 	}
@@ -205,5 +212,20 @@
 
 	.links-section {
 		margin-top: var(--spacing-lg);
+	}
+
+	/* Desktop: grid layout for link cards */
+	@media (min-width: 640px) {
+		.links-section {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: var(--spacing-md);
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.links-section {
+			grid-template-columns: repeat(3, 1fr);
+		}
 	}
 </style>

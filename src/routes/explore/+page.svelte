@@ -78,4 +78,18 @@
 		flex-direction: column;
 		gap: var(--spacing-sm);
 	}
+
+	@media (min-width: 640px) {
+		.links-grid {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: var(--spacing-md);
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.links-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
 </style>

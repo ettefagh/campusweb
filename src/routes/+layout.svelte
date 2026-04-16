@@ -7,16 +7,26 @@
 <a href="#main" class="skip-to-main">Skip to main content</a>
 
 <div class="app-container">
+	<BottomNav />
 	<main id="main" class="content-area">
 		<slot />
 	</main>
-	
-	<BottomNav />
 	<UpdatePrompt />
 </div>
 
 <style>
 	.app-container {
 		position: relative;
+		min-height: 100vh;
+		/* Mobile: pad bottom for bottom nav */
+		padding-bottom: calc(var(--touch-target-min) + var(--spacing-lg) + var(--spacing-lg));
+	}
+
+	/* Desktop: shift content right for sidebar, remove bottom padding */
+	@media (min-width: 1024px) {
+		.app-container {
+			margin-left: var(--sidebar-width, 220px);
+			padding-bottom: 0;
+		}
 	}
 </style>
