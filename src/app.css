@@ -134,7 +134,7 @@ body {
 }
 
 /* Desktop: wider content, no bottom padding, reduced touch targets */
-@media (min-width: 1024px) {
+@media (min-width: 1244px) {
 	.content-area {
 		max-width: 1200px;
 		padding: var(--spacing-lg) var(--spacing-xl);

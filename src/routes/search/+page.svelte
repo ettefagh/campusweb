@@ -132,14 +132,24 @@
 
     <aside class="search-sidebar">
       <div class="search-tips">
-        <h2>Quick Links</h2>
+        <h2>Search Options Legend</h2>
         <ul>
           <li>
-            <strong>SRH Website:</strong> General info, programs, admissions
+            <strong>🎓 University Website:</strong> Public information, study programs,
+            admissions, and campus news.
           </li>
-          <li><strong>E-Campus:</strong> Course materials, announcements</li>
-          <li><strong>Library:</strong> Books, journals, academic resources</li>
-          <li><strong>Team:</strong> Faculty and staff directory</li>
+          <li>
+            <strong>💻 E-Campus Portal:</strong> Internal student resources, course
+            materials, assignments, and announcements.
+          </li>
+          <li>
+            <strong>📚 Library Catalogue:</strong> Academic resources, physical books,
+            e-books, and journals via WebOPAC.
+          </li>
+          <li>
+            <strong>👥 University Team:</strong> Staff directory, faculty profiles,
+            and contact information.
+          </li>
         </ul>
       </div>
     </aside>
@@ -194,13 +204,13 @@
     display: block;
     font-weight: 600;
     margin-bottom: var(--spacing-sm);
-    color: var(--text-color);
+    color: var(--srh-copper);
   }
 
   .radio-group {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
     gap: var(--spacing-sm);
+    flex-direction: column;
   }
 
   .radio-option {

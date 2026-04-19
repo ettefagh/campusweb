@@ -1151,13 +1151,13 @@
 		}
 	}
 
+	.calendar-page-layout {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
 	@media (min-width: 1024px) {
-		.calendar-page-layout {
-			display: grid;
-			grid-template-columns: 1fr 340px;
-			gap: var(--spacing-xl);
-			align-items: start;
-		}
 
 		.calendar-main {
 			display: flex;
