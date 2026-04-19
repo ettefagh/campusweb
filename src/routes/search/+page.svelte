@@ -43,18 +43,22 @@
 
         if (searchSource === "srh") {
           targetUrl = `https://www.srh-university.de/en/search/?q=${encodeURIComponent(trimmedQuery)}`;
+          const viewerUrl = `/viewer?url=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent(source.name + " Search")}`;
+          window.location.href = viewerUrl;
         } else if (searchSource === "ecampus") {
           targetUrl = `https://ecampus.srh-university.de/search/index.php?q=${encodeURIComponent(trimmedQuery)}`;
+          window.open(targetUrl, "_blank");
         }
-
-        const viewerUrl = `/viewer?url=${encodeURIComponent(targetUrl)}&title=${encodeURIComponent(source.name + " Search")}`;
-        window.location.href = viewerUrl;
       }
     } else {
       // For static links (library, team), go directly
       if (source.staticUrl) {
-        const viewerUrl = `/viewer?url=${encodeURIComponent(source.staticUrl)}&title=${encodeURIComponent(source.name)}`;
-        window.location.href = viewerUrl;
+        if (source.id === "library") {
+          window.open(source.staticUrl, "_blank");
+        } else {
+          const viewerUrl = `/viewer?url=${encodeURIComponent(source.staticUrl)}&title=${encodeURIComponent(source.name)}`;
+          window.location.href = viewerUrl;
+        }
       }
     }
   }

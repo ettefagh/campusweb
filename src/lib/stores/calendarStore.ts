@@ -114,10 +114,8 @@ function createCalendarStore() {
     };
 }
 
-// Helper to fetch and parse events with fallback strategies
-async function fetchWithTimeout(resource: string, options: RequestInit = {}) {
-    const { timeout = 15000 } = options as any;
-    
+// Helper to fetch with a timeout
+async function fetchWithTimeout(resource: string, options: RequestInit = {}, timeout = 10000) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     
@@ -135,11 +133,26 @@ async function fetchWithTimeout(resource: string, options: RequestInit = {}) {
 }
 
 async function fetchCalendarEvents(url: string, id: string, color: string): Promise<{events: CalendarEvent[], name: string|null}> {
-    let error: any;
-    
-    // Strategy 1: Direct Fetch (Best if server supports CORS)
+    // Strategy 1: Server-side proxy (bypasses CORS via Cloudflare Worker)
     try {
-        console.log('Attempting direct fetch...');
+        const proxyUrl = `/api/ical-proxy?url=${encodeURIComponent(url)}`;
+        const response = await fetchWithTimeout(proxyUrl, {}, 12000);
+        if (response.ok) {
+            const text = await response.text();
+            return {
+                events: parseICalEvents(text, id, color, color),
+                name: extractCalendarName(text)
+            };
+        }
+        // If proxy returned an error, log it and try direct
+        const errBody = await response.text().catch(() => '');
+        console.warn(`Proxy returned ${response.status}: ${errBody}`);
+    } catch (e) {
+        console.warn('Server proxy failed, trying direct fetch...', e);
+    }
+
+    // Strategy 2: Direct fetch (works if the calendar server has permissive CORS)
+    try {
         const response = await fetchWithTimeout(url);
         if (response.ok) {
             const text = await response.text();
@@ -149,46 +162,10 @@ async function fetchCalendarEvents(url: string, id: string, color: string): Prom
             };
         }
     } catch (e) {
-        console.warn('Direct fetch failed, trying proxy...', e);
+        console.warn('Direct fetch also failed', e);
     }
 
-    // Strategy 2: corsproxy.io
-    try {
-        console.log('Attempting corsproxy.io...');
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-        const response = await fetchWithTimeout(proxyUrl);
-        if (response.ok) {
-            const text = await response.text();
-            return {
-                events: parseICalEvents(text, id, color, color),
-                name: extractCalendarName(text)
-            };
-        }
-    } catch (e) {
-        console.warn('corsproxy.io failed, trying alternative...', e);
-    }
-
-    // Strategy 3: allorigins.win
-    try {
-        console.log('Attempting allorigins.win...');
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        const response = await fetchWithTimeout(proxyUrl);
-        if (response.ok) {
-            const text = await response.text();
-            return {
-                events: parseICalEvents(text, id, color, color),
-                name: extractCalendarName(text)
-            };
-        }
-    } catch (e) {
-        console.error('All fetch strategies failed', e);
-        error = e;
-    }
-
-    // If we get here, all failed
-    const errorMsg = error ? (error.message || JSON.stringify(error)) : 'Unknown error';
-    console.error(`All fetch strategies failed. Last error: ${errorMsg}`);
-    throw new Error(`Failed to add calendar. (Last Error: ${errorMsg})`);
+    throw new Error('Failed to fetch calendar. Please check the URL and try again.');
 }
 
 export const calendarStore = createCalendarStore();

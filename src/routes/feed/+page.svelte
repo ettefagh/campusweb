@@ -47,7 +47,7 @@
       emoji: "🛒",
       title: "Official Brand Store",
       desc: "Grab official SRH merchandise — hoodies, notebooks, and more.",
-      url: "/viewer?url=https://srh-store.de/employees/bildung.html",
+      url: "https://srh-store.de/employees/bildung.html",
       color: "#8b5cf6",
     },
   ];

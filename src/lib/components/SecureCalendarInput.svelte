@@ -6,6 +6,7 @@
     let name = '';
     let isSubmitting = false;
     let error = '';
+    let loadingStatus = '';
     let showForm = false;
 
     async function handleSubmit() {
@@ -13,12 +14,14 @@
         
         isSubmitting = true;
         error = '';
+        loadingStatus = 'Preparing...';
 
         try {
             let finalUrl = url;
             
             // Auto-enhance SRH campus web URLs using the calendar enhancer API
             if (finalUrl.includes('srh-community.campusweb.cloud')) {
+                loadingStatus = 'Enhancing SRH calendar URL...';
                 try {
                     const response = await fetch(`https://calendarsub.padarhava.workers.dev/api/generate?url=${encodeURIComponent(finalUrl)}`);
                     if (response.ok) {
@@ -33,18 +36,21 @@
                 }
             }
 
+            loadingStatus = 'Fetching calendar data...';
             const success = await calendarStore.add(finalUrl, name || 'My Calendar');
             if (success) {
+                loadingStatus = '';
                 url = '';
                 name = '';
                 showForm = false;
             } else {
                 error = 'Failed to add calendar. Please check the URL.';
             }
-        } catch (e) {
-            error = 'An unexpected error occurred.';
+        } catch (e: any) {
+            error = e?.message || 'An unexpected error occurred.';
         } finally {
             isSubmitting = false;
+            loadingStatus = '';
         }
     }
 </script>
@@ -92,12 +98,19 @@
                 <p class="error-message" transition:fade>{error}</p>
             {/if}
 
+            {#if loadingStatus}
+                <div class="loading-status" transition:fade>
+                    <span class="loading-dot"></span>
+                    <span>{loadingStatus}</span>
+                </div>
+            {/if}
+
             <div class="form-actions">
                 <button class="cancel-btn" on:click={() => { showForm = false; error = ''; }} disabled={isSubmitting}>
                     Cancel
                 </button>
                 <button class="submit-btn" on:click={handleSubmit} disabled={isSubmitting || !url}>
-                    {isSubmitting ? 'Adding...' : 'Subscribe'}
+                    {isSubmitting ? loadingStatus || 'Adding...' : 'Subscribe'}
                 </button>
             </div>
         </div>
@@ -300,5 +313,32 @@
     .secure-input {
         -webkit-text-security: disc;
         font-family: text-security-disc; /* Fallback */
+    }
+
+    .loading-status {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: rgba(16, 185, 129, 0.08);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        color: var(--text-color);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .loading-dot {
+        width: 8px;
+        height: 8px;
+        background: #10b981;
+        border-radius: 50%;
+        animation: pulse 1s ease-in-out infinite;
+        flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 0.4; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
     }
 </style>
