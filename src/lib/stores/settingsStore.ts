@@ -46,8 +46,6 @@ export interface AppSettings {
   campusId: string | null;
   departmentId: string | null;
   weekStartsOn: WeekStart;
-  /** Whether to auto-add the selected campus/department's official iCal on first setup */
-  autoImportCampusCalendar: boolean;
   /** Compact card layout on home page */
   compactCards: boolean;
   /** Show seconds in time displays */
@@ -96,7 +94,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   campusId: null,
   departmentId: null,
   weekStartsOn: 1, // Monday
-  autoImportCampusCalendar: true,
   compactCards: false,
   showSeconds: false,
 };

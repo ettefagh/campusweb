@@ -178,22 +178,7 @@
 			</select>
 		</div>
 
-		<div class="setting-row toggle-row">
-			<div class="toggle-info">
-				<span class="setting-label">{$t.settings.autoImport}</span>
-				<span class="toggle-desc">{$t.settings.autoImportDesc}</span>
-			</div>
-			<button
-				class="toggle"
-				class:on={$settingsStore.autoImportCampusCalendar}
-				role="switch"
-				aria-checked={$settingsStore.autoImportCampusCalendar}
-				aria-label="Auto-import campus calendar"
-				on:click={() => settingsStore.patch({ autoImportCampusCalendar: !$settingsStore.autoImportCampusCalendar })}
-			>
-				<span class="toggle-knob" />
-			</button>
-		</div>
+
 	</section>
 
 	<!-- ── Accessibility ─────────────────────── -->

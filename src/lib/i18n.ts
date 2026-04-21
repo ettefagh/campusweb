@@ -79,6 +79,8 @@ const translations = {
       close: 'Close',
       refresh: 'Refresh',
       openInMaps: 'Open in Maps',
+      suggestImport: 'Add official schedule',
+      suggestImportDesc: 'Would you like to add your department\'s official iCal feed?',
     },
 
     // ── Feed page ──
@@ -226,6 +228,8 @@ const translations = {
       close: 'Schließen',
       refresh: 'Aktualisieren',
       openInMaps: 'In Karten öffnen',
+      suggestImport: 'Offiziellen Plan hinzufügen',
+      suggestImportDesc: 'Möchtest du den offiziellen iCal-Feed deines Fachbereichs hinzufügen?',
     },
 
     // ── Feed page ──
