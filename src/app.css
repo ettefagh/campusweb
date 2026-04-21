@@ -1,5 +1,7 @@
 /* SRH Campus Hub - Global Styles */
-/* Based on SRH University Color Palette */
+/* Liquid Glass Theme — Apple visionOS inspired */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
 	/* SRH Brand Colors */
@@ -14,14 +16,35 @@
 	--primary-color: var(--srh-orange);
 	--bg-color: #ffffff;
 	--text-color: #1a1a1a;
-	--border-color: #cccccc;
-	--card-bg: #ffffff;
+	--text-color-secondary: #5a5a6a;
+	--border-color: rgba(0, 0, 0, 0.12);
+	--card-bg: rgba(255, 255, 255, 0.72);
 
-	/* Dark Mode */
-	--dark-bg: #1a1a1a;
-	--dark-text: #f5f5f5;
-	--dark-card-bg: #2a2a2a;
-	--dark-border: #444;
+	/* ── Liquid Glass Variables ── */
+	--glass-bg-light: rgba(255, 255, 255, 0.62);
+	--glass-bg-strong: rgba(255, 255, 255, 0.82);
+	--glass-border: rgba(255, 255, 255, 0.55);
+	--glass-border-subtle: rgba(255, 255, 255, 0.28);
+	--glass-blur: blur(28px) saturate(180%);
+	--glass-blur-strong: blur(40px) saturate(200%);
+	--glass-shadow: 0 8px 32px rgba(212, 68, 7, 0.08), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+	--glass-shadow-hover: 0 16px 48px rgba(212, 68, 7, 0.14), 0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+	--glass-shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(212, 68, 7, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+	/* Body gradient — light mode */
+	--body-gradient: linear-gradient(135deg,
+		#fff7f2 0%,
+		#fce8d5 25%,
+		#f0e8f8 55%,
+		#e8f0fc 80%,
+		#f5f0ff 100%
+	);
+
+	/* Dark Mode tokens (applied in media query below) */
+	--dark-bg: #0d0d14;
+	--dark-text: #f0f0f8;
+	--dark-card-bg: rgba(255, 255, 255, 0.07);
+	--dark-border: rgba(255, 255, 255, 0.12);
 
 	/* Layout */
 	--sidebar-width: 220px;
@@ -42,30 +65,52 @@
 	--spacing-xl: 32px;
 
 	/* Border Radius */
-	--radius-sm: 8px;
-	--radius-md: 12px;
-	--radius-lg: 16px;
+	--radius-sm: 10px;
+	--radius-md: 16px;
+	--radius-lg: 22px;
+	--radius-xl: 28px;
 
 	/* Shadows */
-	--shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-	--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-	--shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+	--shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+	--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.55);
+	--shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.14), 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 
-/* Dark Mode */
+/* ── Dark Mode ──────────────────────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
 	:root {
 		--bg-color: var(--dark-bg);
 		--text-color: var(--dark-text);
+		--text-color-secondary: rgba(240, 240, 248, 0.55);
 		--card-bg: var(--dark-card-bg);
 		--border-color: var(--dark-border);
+
+		--glass-bg-light: rgba(255, 255, 255, 0.07);
+		--glass-bg-strong: rgba(255, 255, 255, 0.11);
+		--glass-border: rgba(255, 255, 255, 0.16);
+		--glass-border-subtle: rgba(255, 255, 255, 0.09);
+		--glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+		--glass-shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.45), 0 4px 16px rgba(212, 68, 7, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+		--glass-shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+		--body-gradient: linear-gradient(135deg,
+			#0d0d14 0%,
+			#1a0f1f 20%,
+			#0f1a2e 50%,
+			#1a1228 75%,
+			#0d1420 100%
+		);
+
+		--shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+		--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+		--shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
 	}
 }
 
-/* Reset & Base Styles */
+/* ── Reset & Base ────────────────────────────────────────────────────── */
 * {
 	margin: 0;
-	padding: 0.2px;
+	padding: 0;
 	box-sizing: border-box;
 }
 
@@ -83,21 +128,22 @@ body {
 	min-height: 100%;
 	max-width: 100vw;
 	overflow-x: hidden;
-	background: var(--bg-color);
+	background: var(--body-gradient);
+	background-attachment: fixed;
 	color: var(--text-color);
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+	font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	line-height: 1.6;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 }
 
-/* Focus Styles (Accessibility) */
+/* ── Focus Styles (Accessibility) ─────────────────────────────────── */
 *:focus-visible {
 	outline: 2px solid var(--primary-color);
 	outline-offset: 2px;
 }
 
-/* Skip to Main Content (Accessibility) */
+/* ── Skip to Main Content ─────────────────────────────────────────── */
 .skip-to-main {
 	position: absolute;
 	left: -9999px;
@@ -114,7 +160,7 @@ body {
 	top: 1em;
 }
 
-/* Main Layout */
+/* ── Main Layout ──────────────────────────────────────────────────── */
 .app-container {
 	min-height: 100vh;
 	padding-bottom: calc(var(--touch-target-min) + var(--spacing-lg) + var(--spacing-lg));
@@ -126,14 +172,23 @@ body {
 	padding: var(--spacing-md);
 }
 
-/* Large Phone Adjustments */
+/* ── Glass Utility ────────────────────────────────────────────────── */
+.glass {
+	background: var(--glass-bg-light);
+	backdrop-filter: var(--glass-blur);
+	-webkit-backdrop-filter: var(--glass-blur);
+	border: 1px solid var(--glass-border);
+	box-shadow: var(--glass-shadow);
+}
+
+/* ── Large Phone Adjustments ──────────────────────────────────────── */
 @media (min-height: 800px) {
 	.app-container {
 		padding-bottom: 120px;
 	}
 }
 
-/* Desktop: wider content, no bottom padding, reduced touch targets */
+/* ── Desktop ──────────────────────────────────────────────────────── */
 @media (min-width: 1244px) {
 	.content-area {
 		max-width: 1200px;
@@ -149,9 +204,9 @@ body {
 	}
 }
 
-/* Headings */
+/* ── Headings ─────────────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
-	font-weight: 400;
+	font-weight: 600;
 	line-height: 1.2;
 	margin-bottom: var(--spacing-md);
 }
@@ -159,6 +214,7 @@ h1, h2, h3, h4, h5, h6 {
 h1 {
 	font-size: 2rem;
 	color: var(--primary-color);
+	font-weight: 700;
 }
 
 h2 {
@@ -169,7 +225,7 @@ h3 {
 	font-size: 1.25rem;
 }
 
-/* Links */
+/* ── Links ────────────────────────────────────────────────────────── */
 a {
 	color: var(--primary-color);
 	text-decoration: none;
@@ -180,7 +236,7 @@ a:hover {
 	opacity: 0.8;
 }
 
-/* Buttons */
+/* ── Buttons ──────────────────────────────────────────────────────── */
 button {
 	font-family: inherit;
 	font-size: 1rem;
@@ -195,18 +251,21 @@ button:disabled {
 	cursor: not-allowed;
 }
 
-/* Form Elements */
+/* ── Form Elements ────────────────────────────────────────────────── */
 input,
 textarea,
 select {
 	font-family: inherit;
 	font-size: 1rem;
 	padding: var(--spacing-sm) var(--spacing-md);
-	border: 1px solid var(--border-color);
+	border: 1px solid var(--glass-border);
 	border-radius: var(--radius-sm);
-	background: var(--card-bg);
+	background: var(--glass-bg-light);
+	backdrop-filter: var(--glass-blur);
+	-webkit-backdrop-filter: var(--glass-blur);
 	color: var(--text-color);
 	width: 100%;
+	transition: all 0.2s ease;
 }
 
 input:focus,
@@ -215,9 +274,10 @@ select:focus {
 	outline: 2px solid var(--primary-color);
 	outline-offset: 2px;
 	border-color: var(--primary-color);
+	background: var(--glass-bg-strong);
 }
 
-/* Utility Classes */
+/* ── Utility Classes ──────────────────────────────────────────────── */
 .sr-only {
 	position: absolute;
 	width: 1px;
@@ -234,26 +294,109 @@ select:focus {
 	text-align: center;
 }
 
-.mt-sm {
-	margin-top: var(--spacing-sm);
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ACCESSIBILITY OVERRIDES
+   Applied when the corresponding toggle is ON in the accessibility store.
+   Each block targets html.a11y-{feature} so they compose cleanly.
+   Future Settings UI: import { accessibility } from '$lib/stores/accessibility'
+   and call accessibility.toggle('reduceMotion') etc.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Reduce Motion ───────────────────────────────────────────────────── */
+/*    Kills all animations & transitions. Respects users with vestibular      */
+/*    disorders. Also honours the OS-level prefers-reduced-motion preference. */
+html.a11y-reduce-motion *,
+html.a11y-reduce-motion *::before,
+html.a11y-reduce-motion *::after {
+	animation-duration: 0.01ms !important;
+	animation-iteration-count: 1 !important;
+	transition-duration: 0.01ms !important;
+	scroll-behavior: auto !important;
 }
 
-.mt-md {
-	margin-top: var(--spacing-md);
+@media (prefers-reduced-motion: reduce) {
+	/* Auto-enable via OS preference even without the store toggle */
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }
 
-.mt-lg {
-	margin-top: var(--spacing-lg);
+/* ── 2. High Contrast ───────────────────────────────────────────────────── */
+/*    Replaces translucent glass with solid surfaces. Removes blurs.         */
+/*    Raises text contrast to pass WCAG AAA (7:1) where possible.            */
+html.a11y-high-contrast {
+	/* Solid surfaces instead of glass */
+	--glass-bg-light: rgba(255, 255, 255, 0.97);
+	--glass-bg-strong: rgba(255, 255, 255, 1);
+	--glass-border: rgba(0, 0, 0, 0.5);
+	--glass-border-subtle: rgba(0, 0, 0, 0.3);
+	/* Kill blur — it wastes GPU and obscures content */
+	--glass-blur: none;
+	--glass-blur-strong: none;
+	/* Max text contrast */
+	--text-color: #000000;
+	--text-color-secondary: #1a1a1a;
+	--border-color: #000000;
+	/* Stronger shadows for depth without relying on blur */
+	--glass-shadow: 0 2px 0 #000, 0 4px 8px rgba(0,0,0,0.3);
+	--glass-shadow-hover: 0 4px 0 #000, 0 8px 16px rgba(0,0,0,0.4);
+	--glass-shadow-lg: 0 4px 0 #000, 0 12px 24px rgba(0,0,0,0.4);
 }
 
-.mb-sm {
-	margin-bottom: var(--spacing-sm);
+@media (prefers-color-scheme: dark) {
+	html.a11y-high-contrast {
+		--glass-bg-light: rgba(0, 0, 0, 0.97);
+		--glass-bg-strong: rgba(0, 0, 0, 1);
+		--glass-border: rgba(255, 255, 255, 0.7);
+		--text-color: #ffffff;
+		--text-color-secondary: #e8e8e8;
+		--border-color: #ffffff;
+	}
 }
 
-.mb-md {
-	margin-bottom: var(--spacing-md);
+/* ── 3. Large Text ──────────────────────────────────────────────────────── */
+/*    Scales the root font-size by 120% so all rem-based sizes grow.         */
+/*    WCAG 1.4.4: Text can be resized up to 200% without loss of content.    */
+html.a11y-large-text {
+	font-size: 120%;
 }
 
-.mb-lg {
-	margin-bottom: var(--spacing-lg);
+/* ── 4. Always Visible Focus Ring ───────────────────────────────────────── */
+/*    Forces focus outline on ALL interactive elements, not just keyboard.   */
+/*    Helps users with motor disabilities who may use both pointer & keyboard.*/
+html.a11y-focus-visible *:focus,
+html.a11y-focus-visible *:focus-within {
+	outline: 3px solid var(--primary-color) !important;
+	outline-offset: 3px !important;
+}
+
+html.a11y-focus-visible a:focus,
+html.a11y-focus-visible button:focus,
+html.a11y-focus-visible input:focus,
+html.a11y-focus-visible select:focus,
+html.a11y-focus-visible textarea:focus {
+	outline: 3px solid var(--primary-color) !important;
+	outline-offset: 3px !important;
+	box-shadow: 0 0 0 6px rgba(212, 68, 7, 0.2) !important;
+}
+
+/* ── 5. Screen Reader Hints ─────────────────────────────────────────────── */
+/*    When enabled, components should render verbose labels.                 */
+/*    This CSS class is a signal for components — no direct style impact.    */
+/*    Components read: document.documentElement.classList.has('a11y-screen-reader') */
+/*    or subscribe to the store directly.                                    */
+html.a11y-screen-reader {
+	/* Intentionally empty — behaviour is driven by Svelte component logic */
 }

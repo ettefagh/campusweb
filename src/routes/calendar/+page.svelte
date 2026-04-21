@@ -9,6 +9,8 @@
 	import type { CalendarEvent } from "$lib/utils/icalParser";
 	import { calendarStore } from "$lib/stores/calendarStore";
 	import SecureCalendarInput from "$lib/components/SecureCalendarInput.svelte";
+	import { focusTrap } from "$lib/utils/focusTrap";
+	import { browser } from "$app/environment";
 
 	// ─── i18n Preparation ─────────────────────────────────────────────
 	// Future: this will come from a global locale store
@@ -87,7 +89,13 @@
 	$: currentEventsCount = options.events?.length ?? 0;
 
 	function getDefaultView(): string {
-		if (isPortraitMobile) return "listWeek";
+		const breakpoint = isDesktop ? "desktop" : isLandscapeMobile ? "landscape" : "portrait";
+		if (browser) {
+			const saved = localStorage.getItem(`preferredCalendarView_${breakpoint}`);
+			if (saved) return saved;
+		}
+
+		if (isPortraitMobile) return "dayGridMonth";
 		if (isLandscapeMobile) return "timeGridWeek";
 		return "timeGridWeek";
 	}
@@ -244,14 +252,33 @@
 		if (!ecComponent) return;
 		popupEvent = null;
 		options = { ...options, view: viewName };
+		
+		if (browser) {
+			const breakpoint = isDesktop ? "desktop" : isLandscapeMobile ? "landscape" : "portrait";
+			localStorage.setItem(`preferredCalendarView_${breakpoint}`, viewName);
+		}
+
 		setTimeout(() => {
 			updateToolbarState();
-			const indicator = document.querySelector(".ec-now-indicator");
+			const indicator = document.querySelector(".ec-now-indicator") as HTMLElement;
 			if (indicator) {
-				indicator.scrollIntoView({
-					behavior: "smooth",
-					block: "center",
-				});
+				// Find the closest scrollable container to avoid scrolling the whole page
+				let parent = indicator.parentElement;
+				while (parent && parent !== document.body) {
+					const style = window.getComputedStyle(parent);
+					if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+						const parentRect = parent.getBoundingClientRect();
+						const indicatorRect = indicator.getBoundingClientRect();
+						const relativeTop = indicatorRect.top - parentRect.top + parent.scrollTop;
+						
+						parent.scrollTo({
+							top: relativeTop - parentRect.height / 2,
+							behavior: "smooth"
+						});
+						break;
+					}
+					parent = parent.parentElement;
+				}
 			}
 		}, 80);
 	}
@@ -341,7 +368,7 @@
 			</div>
 
 			{#if isLoading}
-				<div class="loading-state">
+				<div class="loading-state" aria-live="polite" aria-busy="true">
 					<div class="loading-spinner"></div>
 					<p>Loading calendar events...</p>
 				</div>
@@ -361,66 +388,29 @@
 			</div>
 
 			<!-- Custom Bottom Toolbar -->
-			<div class="calendar-toolbar">
-				<div class="toolbar-end">
-					{#if isDesktop}
+				<div class="calendar-toolbar">
+					<div class="toolbar-end">
 						<button
 							class="view-btn"
 							class:active={currentViewLabel === "dayGridMonth"}
 							on:click={() => switchView("dayGridMonth")}
-							>{t.month}</button
-						>
+						>{t.month}</button>
 						<button
 							class="view-btn"
 							class:active={currentViewLabel === "timeGridWeek"}
-							on:click={() => switchView("timeGridWeek")}>{t.week}</button
-						>
+							on:click={() => switchView("timeGridWeek")}
+						>{t.week}</button>
 						<button
 							class="view-btn"
 							class:active={currentViewLabel === "timeGridDay"}
-							on:click={() => switchView("timeGridDay")}>{t.day}</button
-						>
-					{:else if isLandscapeMobile}
-						<button
-							class="view-btn"
-							class:active={currentViewLabel === "dayGridMonth"}
-							on:click={() => switchView("dayGridMonth")}
-							>{t.month}</button
-						>
-						<button
-							class="view-btn"
-							class:active={currentViewLabel === "timeGridWeek"}
-							on:click={() => switchView("timeGridWeek")}>{t.week}</button
-						>
-						<button
-							class="view-btn"
-							class:active={currentViewLabel === "timeGridDay"}
-							on:click={() => switchView("timeGridDay")}>{t.day}</button
-						>
+							on:click={() => switchView("timeGridDay")}
+						>{t.day}</button>
 						<button
 							class="view-btn"
 							class:active={currentViewLabel === "listWeek"}
-							on:click={() => switchView("listWeek")}>{t.list}</button
-						>
-					{:else}
-						<button
-							class="view-btn"
-							class:active={currentViewLabel === "dayGridMonth"}
-							on:click={() => switchView("dayGridMonth")}
-							>{t.month}</button
-						>
-						<button
-							class="view-btn"
-							class:active={currentViewLabel === "listWeek"}
-							on:click={() => switchView("listWeek")}>{t.list}</button
-						>
-						<button
-							class="view-btn"
-							class:active={currentViewLabel === "timeGridDay"}
-							on:click={() => switchView("timeGridDay")}>{t.day}</button
-						>
-					{/if}
-				</div>
+							on:click={() => switchView("listWeek")}
+						>{t.list}</button>
+					</div>
 				<div class="toolbar-start">
 					<button class="nav-btn" on:click={goToPrev} aria-label="Previous"
 						>{t.prev}</button
@@ -433,12 +423,10 @@
 					>
 				</div>
 			</div>
-		</div>
 
-		<aside class="calendar-sidebar">
 			<!-- Feature 3: Calendar Settings Accordion -->
 			<section class="settings-card">
-				<button class="settings-header" on:click={() => settingsOpen = !settingsOpen}>
+				<button class="settings-header" on:click={() => settingsOpen = !settingsOpen} aria-expanded={settingsOpen}>
 					<span>⚙️ Calendar Settings</span>
 					<span class="chevron" class:open={settingsOpen}>▾</span>
 				</button>
@@ -512,10 +500,58 @@
 					</a>
 				</div>
 			</section>
-		</aside>
+		</div>
 	</div>
 </div>
 
+{#if popupEvent}
+	<div
+		class="event-popup"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="popup-title"
+		use:focusTrap
+		style="top: {popupPosition.y}px; left: {popupPosition.x}px;"
+		bind:this={popupElement}
+	>
+		<button class="popup-close" on:click={closePopup} aria-label="Close event details">✖</button>
+		<h3 id="popup-title" class="popup-title">{popupEvent.title}</h3>
+		
+		{#if !popupEvent.allDay && popupEvent.start}
+			<div class="popup-time">
+				{new Date(popupEvent.start).toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})} 
+				{#if popupEvent.end}
+					- {new Date(popupEvent.end).toLocaleTimeString(locale, {hour: '2-digit', minute:'2-digit'})}
+				{/if}
+			</div>
+			<div class="popup-date">
+				{new Date(popupEvent.start).toLocaleDateString(locale, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}
+			</div>
+		{:else if popupEvent.allDay}
+			<div class="popup-time">All Day</div>
+			<div class="popup-date">
+				{new Date(popupEvent.start).toLocaleDateString(locale, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}
+			</div>
+		{/if}
+
+		{#if popupEvent.extendedProps?.location || popupEvent.extendedProps?.shortLocation}
+			<div class="popup-location-badge">📍 {popupEvent.extendedProps?.shortLocation || popupEvent.extendedProps?.location}</div>
+			<a 
+				href="https://maps.google.com/?q={encodeURIComponent(popupEvent.extendedProps?.location)}" 
+				target="_blank" 
+				rel="noopener noreferrer" 
+				class="popup-location clickable-location"
+				aria-label="Open location in Google Maps"
+			>
+				{popupEvent.extendedProps?.location}
+			</a>
+		{/if}
+
+		{#if popupEvent.extendedProps?.description}
+			<div class="popup-description">{popupEvent.extendedProps?.description}</div>
+		{/if}
+	</div>
+{/if}
 
 <style>
 	.calendar-page {
@@ -535,14 +571,8 @@
 	}
 
 	.subtitle {
-		color: #666;
+		color: var(--text-color-secondary);
 		font-size: 1rem;
-	}
-
-	@media (prefers-color-scheme: dark) {
-		.subtitle {
-			color: #aaa;
-		}
 	}
 
 	/* ─── Legend (inside Settings) ───────────────────────────────── */
@@ -620,14 +650,17 @@
 		pointer-events: none;
 	}
 
-	/* ─── Calendar Container ─────────────────────────────────────── */
+	/* ─── Calendar Container — Liquid Glass ──────────────────────── */
 	.calendar-container {
 		position: relative;
 		margin: 0 var(--spacing-sm);
-		background: var(--card-bg);
-		border-radius: var(--radius-md);
+		background: var(--glass-bg-strong);
+		backdrop-filter: var(--glass-blur);
+		-webkit-backdrop-filter: var(--glass-blur);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-lg);
 		overflow: hidden;
-		box-shadow: var(--shadow-md);
+		box-shadow: var(--glass-shadow-lg);
 		height: calc(100vh - 380px);
 		min-height: 400px;
 		transition: opacity 0.3s ease;
@@ -679,7 +712,7 @@
 		50% { transform: translateY(-6px); }
 	}
 
-	/* ─── Custom Bottom Toolbar ───────────────────────────────────── */
+	/* ─── Custom Bottom Toolbar — Liquid Glass ────────────────────── */
 	.calendar-toolbar {
 		display: flex;
 		align-items: center;
@@ -688,9 +721,12 @@
 		gap: var(--spacing-sm);
 		padding: var(--spacing-sm) var(--spacing-md);
 		margin: var(--spacing-sm) var(--spacing-sm) 0;
-		background: #2a2a2a21;
+		background: var(--glass-bg-light);
+		backdrop-filter: var(--glass-blur);
+		-webkit-backdrop-filter: var(--glass-blur);
+		border: 1px solid var(--glass-border);
 		border-radius: var(--radius-md);
-		box-shadow: var(--shadow-sm);
+		box-shadow: var(--glass-shadow);
 	}
 
 	.toolbar-center {
@@ -698,16 +734,24 @@
 		margin-bottom: var(--spacing-xs);
 	}
 
+	.toolbar-end,
+	.toolbar-start {
+		display: flex;
+		border-radius: var(--radius-sm);
+		overflow: hidden;
+		box-shadow: var(--shadow-sm);
+		border: 1px solid var(--glass-border);
+		background: var(--glass-bg-light);
+		backdrop-filter: var(--glass-blur);
+		-webkit-backdrop-filter: var(--glass-blur);
+	}
+
 	.toolbar-end {
 		order: 2;
-		display: flex;
-		gap: 10px;
 	}
 
 	.toolbar-start {
 		order: 3;
-		display: flex;
-		gap: 10px;
 		margin-left: auto;
 	}
 
@@ -720,9 +764,10 @@
 	.nav-btn,
 	.view-btn {
 		padding: var(--spacing-xs) var(--spacing-sm);
-		border: 1px solid var(--border-color);
-		border-radius: var(--radius-sm);
-		background: var(--card-bg);
+		border: none;
+		border-right: 1px solid var(--glass-border);
+		border-radius: 0;
+		background: transparent;
 		color: var(--text-color);
 		font-size: 0.85rem;
 		font-weight: 500;
@@ -735,16 +780,20 @@
 		justify-content: center;
 	}
 
+	.nav-btn:last-child,
+	.view-btn:last-child {
+		border-right: none;
+	}
+
 	.nav-btn:hover,
 	.view-btn:hover {
-		background: rgba(212, 68, 7, 0.08);
-		border-color: var(--primary-color);
+		background: rgba(212, 68, 7, 0.1);
 	}
 
 	.view-btn.active {
 		background: var(--primary-color);
 		color: white;
-		border-color: var(--primary-color);
+		box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
 	}
 
 	.today-btn {
@@ -752,15 +801,17 @@
 		color: var(--primary-color);
 	}
 
-	/* ─── Event Popup (Desktop) ───────────────────────────────────── */
+	/* ─── Event Popup (Desktop) — Liquid Glass ────────────────────── */
 	.event-popup {
 		position: fixed;
 		z-index: 1000;
-		background: var(--card-bg);
-		border: 1px solid var(--border-color);
-		border-radius: var(--radius-md);
+		background: var(--glass-bg-strong);
+		backdrop-filter: var(--glass-blur-strong);
+		-webkit-backdrop-filter: var(--glass-blur-strong);
+		border: 1px solid var(--glass-border);
+		border-radius: var(--radius-lg);
 		padding: var(--spacing-md);
-		box-shadow: var(--shadow-lg);
+		box-shadow: var(--glass-shadow-lg);
 		min-width: 240px;
 		max-width: 320px;
 		animation: popupFadeIn 0.15s ease-out;
@@ -800,10 +851,13 @@
 		left: 0;
 		right: 0;
 		z-index: 1000;
-		background: var(--card-bg);
-		border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+		background: var(--glass-bg-strong);
+		backdrop-filter: var(--glass-blur-strong);
+		-webkit-backdrop-filter: var(--glass-blur-strong);
+		border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+		border-top: 1px solid var(--glass-border);
 		padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-xl);
-		box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+		box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255,255,255,0.3);
 		animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 		max-height: 70vh;
 		overflow-y: auto;
@@ -867,6 +921,20 @@
 		color: var(--text-color-secondary, #888);
 		margin-bottom: var(--spacing-xs);
 		word-break: break-word;
+		display: block;
+	}
+
+	.clickable-location {
+		color: var(--primary-color);
+		text-decoration: underline;
+		text-decoration-color: rgba(212, 68, 7, 0.4);
+		text-underline-offset: 2px;
+		transition: all 0.2s ease;
+	}
+
+	.clickable-location:hover {
+		color: var(--srh-orange-dark);
+		text-decoration-color: var(--srh-orange-dark);
 	}
 
 	.popup-time {
@@ -894,13 +962,15 @@
 		word-break: break-word;
 	}
 
-	/* ─── Feature 3: Calendar Settings Accordion ──────────────────── */
+	/* ─── Feature 3: Calendar Settings Accordion — Liquid Glass ───── */
 	.settings-card {
 		margin: var(--spacing-md) var(--spacing-sm) 0;
-		background: var(--card-bg);
-		border-radius: var(--radius-md);
-		border: 1px solid var(--border-color);
-		box-shadow: var(--shadow-sm);
+		background: var(--glass-bg-light);
+		backdrop-filter: var(--glass-blur);
+		-webkit-backdrop-filter: var(--glass-blur);
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--glass-border);
+		box-shadow: var(--glass-shadow);
 		overflow: hidden;
 	}
 
@@ -1094,7 +1164,7 @@
 	/* Dark Mode */
 	@media (prefers-color-scheme: dark) {
 		:global(.ec) {
-			--ec-bg-color: var(--card-bg) !important;
+			--ec-bg-color: transparent !important;
 			--ec-text-color: var(--text-color) !important;
 		}
 
@@ -1102,14 +1172,6 @@
 		:global(.ec-event-title),
 		:global(.ec-event-time) {
 			color: var(--text-color) !important;
-		}
-
-		.calendar-container {
-			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-		}
-
-		.calendar-toolbar {
-			box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 		}
 	}
 
@@ -1176,13 +1238,13 @@
 			height: calc(100vh - 280px); /* Taller on desktop */
 		}
 
-		/* Reset sidebar spacing */
+		/* Reset margins since they are now stacked */
 		.settings-card {
-			margin: 0;
+			margin: var(--spacing-sm) var(--spacing-sm) 0;
 		}
 		
 		.quick-links-section {
-			margin: var(--spacing-lg) 0 0;
+			margin: var(--spacing-md) var(--spacing-sm) 0;
 		}
 
 		/* Keep settings open initially on desktop */
@@ -1218,22 +1280,40 @@
 		}
 	}
 
+	/* ─── Quick Link Cards — Liquid Glass ────────────────────────── */
 	.quick-link-card {
 		display: flex;
 		flex-direction: column;
 		padding: var(--spacing-md);
-		background: var(--card-bg);
-		border: 1px solid var(--border-color);
+		background: var(--glass-bg-light);
+		backdrop-filter: var(--glass-blur);
+		-webkit-backdrop-filter: var(--glass-blur);
+		border: 1px solid var(--glass-border);
 		border-radius: var(--radius-md);
 		text-decoration: none;
 		color: var(--text-color);
-		transition: all 0.2s ease;
+		transition: all 0.22s ease;
+		box-shadow: var(--glass-shadow);
+		position: relative;
+		overflow: hidden;
+	}
+
+	.quick-link-card::before {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 10%;
+		right: 10%;
+		height: 1px;
+		background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
+		pointer-events: none;
 	}
 
 	.quick-link-card:hover {
-		border-color: var(--primary-color);
-		transform: translateY(-2px);
-		box-shadow: var(--shadow-md);
+		border-color: rgba(212, 68, 7, 0.35);
+		transform: translateY(-3px);
+		box-shadow: var(--glass-shadow-hover);
+		background: var(--glass-bg-strong);
 	}
 
 	.ql-icon {

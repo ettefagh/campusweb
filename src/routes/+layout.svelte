@@ -2,6 +2,23 @@
 	import '../app.css';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
+	import { browser } from '$app/environment';
+	import { activeA11yClasses, A11Y_CLASS_MAP } from '$lib/stores/accessibility';
+
+	// Bridge: sync accessibility store → <html> class list.
+	// All CSS a11y overrides target html.a11y-* classes, so this is the
+	// only place the store needs to be wired in — no prop drilling.
+	if (browser) {
+		activeA11yClasses.subscribe((activeClasses) => {
+			const allClasses = Object.values(A11Y_CLASS_MAP);
+			const html = document.documentElement;
+			// Remove all a11y classes first, then re-apply active ones
+			html.classList.remove(...allClasses);
+			if (activeClasses.length > 0) {
+				html.classList.add(...activeClasses);
+			}
+		});
+	}
 </script>
 
 <a href="#main" class="skip-to-main">Skip to main content</a>

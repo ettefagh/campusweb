@@ -16,7 +16,6 @@
       ariaLabel: "University calendar",
     },
     { path: "/feed", label: "Feed", icon: "📰", ariaLabel: "News feed" },
-    { path: "/search", label: "Search", icon: "🔍", ariaLabel: "Search links" },
   ];
 </script>
 
@@ -76,7 +75,7 @@
 
 <style>
   /* ═══════════════════════════════════════════════════════════════
-     MOBILE: Bottom Tab Bar (< 1024px)
+     MOBILE: Bottom Tab Bar (< 1024px) — Liquid Glass
      ═══════════════════════════════════════════════════════════════ */
   .bottom-nav {
     position: fixed;
@@ -84,14 +83,16 @@
     left: 0;
     right: 0;
     height: calc(var(--touch-target-min) + var(--spacing-md) * 4);
-    background: var(--card-bg);
-    border-top: 1px solid var(--border-color);
+    background: var(--glass-bg-strong);
+    backdrop-filter: var(--glass-blur-strong);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    border-top: 1px solid var(--glass-border);
     display: flex;
     justify-content: space-around;
     align-items: center;
     z-index: 100;
     padding: var(--spacing-md) var(--spacing-sm);
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.1), 0 -1px 0 var(--glass-border-subtle);
   }
 
   .nav-item {
@@ -117,7 +118,7 @@
 
   .nav-item.active {
     color: var(--primary-color);
-    background: rgba(212, 68, 7, 0.15);
+    background: rgba(212, 68, 7, 0.12);
   }
 
   .nav-item.active::before {
@@ -130,6 +131,7 @@
     height: 3px;
     background: var(--primary-color);
     border-radius: 0 0 3px 3px;
+    box-shadow: 0 0 8px rgba(212, 68, 7, 0.5);
   }
 
   .bottom-nav .icon {
@@ -151,7 +153,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     DESKTOP: Sidebar (hidden on mobile)
+     DESKTOP: Sidebar (hidden on mobile) — Liquid Glass
      ═══════════════════════════════════════════════════════════════ */
   .sidebar-nav {
     display: none;
@@ -172,11 +174,13 @@
       left: 0;
       bottom: 0;
       width: var(--sidebar-width, 220px);
-      background: var(--card-bg);
-      border-right: 1px solid var(--border-color);
+      background: var(--glass-bg-strong);
+      backdrop-filter: var(--glass-blur-strong);
+      -webkit-backdrop-filter: var(--glass-blur-strong);
+      border-right: 1px solid var(--glass-border);
       z-index: 100;
       padding: var(--spacing-lg) 0;
-      box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04);
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.06), 1px 0 0 var(--glass-border-subtle);
     }
 
     .sidebar-brand {
@@ -221,7 +225,7 @@
       color: var(--text-color);
       text-decoration: none;
       border-radius: var(--radius-sm);
-      transition: all 0.15s ease;
+      transition: all 0.18s ease;
       font-size: 0.95rem;
       font-weight: 500;
       position: relative;
@@ -239,14 +243,16 @@
     }
 
     .sidebar-item:hover {
-      background: rgba(212, 68, 7, 0.06);
+      background: rgba(212, 68, 7, 0.08);
       color: var(--primary-color);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
     }
 
     .sidebar-item.active {
-      background: rgba(212, 68, 7, 0.1);
+      background: rgba(212, 68, 7, 0.12);
       color: var(--primary-color);
       font-weight: 600;
+      box-shadow: var(--shadow-sm);
     }
 
     .sidebar-item.active::before {
@@ -259,17 +265,18 @@
       height: 24px;
       background: var(--primary-color);
       border-radius: 0 3px 3px 0;
+      box-shadow: 0 0 8px rgba(212, 68, 7, 0.5);
     }
 
     .sidebar-footer {
       padding: var(--spacing-md) var(--spacing-lg);
-      border-top: 1px solid var(--border-color);
+      border-top: 1px solid var(--glass-border-subtle);
       margin-top: auto;
     }
 
     .sidebar-footer-text {
       font-size: 0.75rem;
-      color: var(--text-color-secondary, #888);
+      color: var(--text-color-secondary);
       font-weight: 500;
     }
   }
@@ -286,7 +293,7 @@
     }
 
     .sidebar-nav {
-      box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
     }
   }
 
