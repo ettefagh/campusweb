@@ -82,7 +82,8 @@ export const DEPARTMENTS: Department[] = CAMPUSES.flatMap(campus =>
     id: `${major.id}_${campus.id}`,
     campusId: campus.id,
     name: major.name,
-    shortName: major.shortName
+    shortName: major.shortName,
+    icalUrl: `https://ical.srh.de/${major.id}/${campus.id}.ics`
   }))
 );
 

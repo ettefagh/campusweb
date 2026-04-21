@@ -11,7 +11,7 @@
 	import SecureCalendarInput from "$lib/components/SecureCalendarInput.svelte";
 	import { focusTrap } from "$lib/utils/focusTrap";
 	import { browser } from "$app/environment";
-	import { settingsStore } from "$lib/stores/settingsStore";
+	import { settingsStore, activeDepartment } from "$lib/stores/settingsStore";
 
 	import { t } from "$lib/i18n";
 
@@ -56,6 +56,20 @@
 
 	// ─── Feature 3: Calendar Settings Accordion ─────────────────────
 	let settingsOpen = false;
+
+	// ─── Feature 5: Import Suggestion ──────────────────────────────
+	let dismissedSuggestion = false;
+
+	function handleImportSuggestion() {
+		if ($activeDepartment?.icalUrl) {
+			calendarStore.addSubscription(
+				$activeDepartment.icalUrl,
+				$activeDepartment.shortName,
+				"#d44407" // SRH Orange
+			);
+			dismissedSuggestion = true;
+		}
+	}
 
 	// ─── Feature 4: Empty State ─────────────────────────────────────
 	$: currentEventsCount = options.events?.length ?? 0;
@@ -381,6 +395,24 @@
 				<span class="toolbar-title">{currentTitleText}</span>
 			</div>
 
+			{#if isMounted && currentSubs.length === 0 && $activeDepartment?.icalUrl && !dismissedSuggestion}
+				<div class="suggestion-banner">
+					<div class="suggestion-icon">💡</div>
+					<div class="suggestion-content">
+						<p class="suggestion-title">{$t.calendar.suggestImport}</p>
+						<p class="suggestion-desc">{$t.calendar.suggestImportDesc}</p>
+					</div>
+					<div class="suggestion-actions">
+						<button class="suggestion-btn suggestion-btn--primary" on:click={handleImportSuggestion}>
+							Add Now
+						</button>
+						<button class="suggestion-btn suggestion-btn--secondary" on:click={() => dismissedSuggestion = true}>
+							Dismiss
+						</button>
+					</div>
+				</div>
+			{/if}
+
 			{#if isLoading}
 				<div class="loading-state" aria-live="polite" aria-busy="true">
 					<div class="loading-spinner"></div>
@@ -571,6 +603,92 @@
 	.calendar-page {
 		padding-bottom: var(--spacing-xl);
 		min-height: 100vh;
+	}
+
+	/* Suggestion Banner */
+	.suggestion-banner {
+		background: var(--card-bg);
+		border: 1px solid var(--primary-color);
+		border-radius: var(--radius-md);
+		padding: var(--spacing-md);
+		margin-bottom: var(--spacing-md);
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-md);
+		box-shadow: var(--shadow-md);
+		animation: slideDown 0.3s ease-out;
+	}
+
+	@keyframes slideDown {
+		from { transform: translateY(-10px); opacity: 0; }
+		to { transform: translateY(0); opacity: 1; }
+	}
+
+	.suggestion-icon {
+		font-size: 1.5rem;
+	}
+
+	.suggestion-content {
+		flex: 1;
+	}
+
+	.suggestion-title {
+		font-weight: 700;
+		margin: 0;
+		color: var(--primary-color);
+	}
+
+	.suggestion-desc {
+		font-size: 0.85rem;
+		margin: 2px 0 0;
+		opacity: 0.8;
+	}
+
+	.suggestion-actions {
+		display: flex;
+		gap: var(--spacing-sm);
+	}
+
+	.suggestion-btn {
+		padding: 6px 12px;
+		border-radius: 8px;
+		font-size: 0.85rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.suggestion-btn--primary {
+		background: var(--primary-color);
+		color: white;
+		border: none;
+	}
+
+	.suggestion-btn--primary:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px rgba(212, 68, 7, 0.2);
+	}
+
+	.suggestion-btn--secondary {
+		background: transparent;
+		color: var(--text-color);
+		border: 1px solid var(--border-color);
+	}
+
+	.suggestion-btn--secondary:hover {
+		background: var(--border-color);
+	}
+
+	@media (max-width: 600px) {
+		.suggestion-banner {
+			flex-direction: column;
+			align-items: flex-start;
+			text-align: left;
+		}
+		.suggestion-actions {
+			width: 100%;
+			justify-content: flex-end;
+		}
 	}
 
 	.page-header {
