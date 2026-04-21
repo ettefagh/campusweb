@@ -4,6 +4,7 @@
 	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
 	import { browser } from '$app/environment';
 	import { activeA11yClasses, A11Y_CLASS_MAP } from '$lib/stores/accessibility';
+	import { settingsStore } from '$lib/stores/settingsStore';
 
 	// Bridge: sync accessibility store → <html> class list.
 	// All CSS a11y overrides target html.a11y-* classes, so this is the
@@ -17,6 +18,10 @@
 			if (activeClasses.length > 0) {
 				html.classList.add(...activeClasses);
 			}
+		});
+
+		settingsStore.subscribe((settings) => {
+			document.documentElement.setAttribute('data-theme', settings.theme);
 		});
 	}
 </script>

@@ -57,142 +57,36 @@ export interface AppSettings {
 // ── Static Data: Campuses ─────────────────────────────────────────────────────
 
 export const CAMPUSES: Campus[] = [
-  {
-    id: 'heidelberg',
-    name: 'SRH Hochschule Heidelberg',
-    city: 'Heidelberg',
-    country: 'DE',
-    calendarBaseUrl: 'https://www.srh-university.de',
-  },
-  {
-    id: 'berlin',
-    name: 'SRH Berlin University of Applied Sciences',
-    city: 'Berlin',
-    country: 'DE',
-    calendarBaseUrl: 'https://www.srh-university.de',
-  },
-  {
-    id: 'hamburg',
-    name: 'SRH Hamburg',
-    city: 'Hamburg',
-    country: 'DE',
-  },
-  {
-    id: 'gera',
-    name: 'SRH Gera',
-    city: 'Gera',
-    country: 'DE',
-  },
-  {
-    id: 'dresden',
-    name: 'SRH Dresden',
-    city: 'Dresden',
-    country: 'DE',
-  },
+  { id: 'berlin', name: 'SRH Berlin', city: 'Berlin', country: 'DE' },
+  { id: 'cologne', name: 'SRH Cologne', city: 'Cologne', country: 'DE' },
+  { id: 'fuerth', name: 'SRH Fürth', city: 'Fürth', country: 'DE' },
+  { id: 'dresden', name: 'SRH Dresden', city: 'Dresden', country: 'DE' },
+  { id: 'hamburg', name: 'SRH Hamburg', city: 'Hamburg', country: 'DE' },
+  { id: 'heidelberg', name: 'SRH Heidelberg', city: 'Heidelberg', country: 'DE' },
+  { id: 'leipzig', name: 'SRH Leipzig', city: 'Leipzig', country: 'DE' },
+  { id: 'munich', name: 'SRH Munich', city: 'Munich', country: 'DE' },
+  { id: 'stuttgart', name: 'SRH Stuttgart', city: 'Stuttgart', country: 'DE' },
 ];
 
 // ── Static Data: Departments ──────────────────────────────────────────────────
-// Each department is linked to a campus via campusId.
-// The icalUrl would point to the department's official iCal feed for
-// free-lecture periods and exam schedules.
+// Mapping provided majors to all campuses
 
-export const DEPARTMENTS: Department[] = [
-  // Berlin Campus
-  {
-    id: 'leac_berlin',
-    campusId: 'berlin',
-    name: 'Leadership, Entrepreneurship & Applied Consulting',
-    shortName: 'LEAC',
-  },
-  {
-    id: 'cs_berlin',
-    campusId: 'berlin',
-    name: 'Computer Science & Digital Media',
-    shortName: 'CS & DM',
-  },
-  {
-    id: 'business_berlin',
-    campusId: 'berlin',
-    name: 'Business & Management',
-    shortName: 'Business',
-  },
-  {
-    id: 'design_berlin',
-    campusId: 'berlin',
-    name: 'Design',
-    shortName: 'Design',
-  },
-  {
-    id: 'health_berlin',
-    campusId: 'berlin',
-    name: 'Health Sciences',
-    shortName: 'Health',
-  },
-  {
-    id: 'law_berlin',
-    campusId: 'berlin',
-    name: 'Law',
-    shortName: 'Law',
-  },
-  // Heidelberg Campus
-  {
-    id: 'medicine_hd',
-    campusId: 'heidelberg',
-    name: 'Medicine & Health Sciences',
-    shortName: 'Medicine',
-  },
-  {
-    id: 'engineering_hd',
-    campusId: 'heidelberg',
-    name: 'Engineering & Architecture',
-    shortName: 'Engineering',
-  },
-  {
-    id: 'business_hd',
-    campusId: 'heidelberg',
-    name: 'Business & Law',
-    shortName: 'Business & Law',
-  },
-  {
-    id: 'therapy_hd',
-    campusId: 'heidelberg',
-    name: 'Therapy Sciences',
-    shortName: 'Therapy',
-  },
-  // Hamburg Campus
-  {
-    id: 'aviation_hh',
-    campusId: 'hamburg',
-    name: 'Aviation Management & Logistics',
-    shortName: 'Aviation',
-  },
-  {
-    id: 'business_hh',
-    campusId: 'hamburg',
-    name: 'Business Administration',
-    shortName: 'Business',
-  },
-  // Gera Campus
-  {
-    id: 'engineering_gera',
-    campusId: 'gera',
-    name: 'Engineering',
-    shortName: 'Engineering',
-  },
-  {
-    id: 'health_gera',
-    campusId: 'gera',
-    name: 'Health Sciences',
-    shortName: 'Health',
-  },
-  // Dresden Campus
-  {
-    id: 'therapy_dd',
-    campusId: 'dresden',
-    name: 'Therapy & Social Sciences',
-    shortName: 'Therapy',
-  },
+const MAJOR_LIST = [
+  { id: 'aim', name: 'Artificial Intelligence & Machine Learning', shortName: 'AIM' },
+  { id: 'bls', name: 'Business Law & Sustainability', shortName: 'BLS' },
+  { id: 'hes', name: 'Health & Environmental Sciences', shortName: 'HES' },
+  { id: 'psy', name: 'Psychology & Behavioral Sciences', shortName: 'PSY' },
+  { id: 'teac', name: 'Teaching & Educational Arts', shortName: 'TEAC' },
 ];
+
+export const DEPARTMENTS: Department[] = CAMPUSES.flatMap(campus => 
+  MAJOR_LIST.map(major => ({
+    id: `${major.id}_${campus.id}`,
+    campusId: campus.id,
+    name: major.name,
+    shortName: major.shortName
+  }))
+);
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
 

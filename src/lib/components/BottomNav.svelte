@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { t } from "$lib/i18n";
-
+  let navItems: Array<{ path: string; label: string; icon: string; ariaLabel: string }> = [];
   $: navItems = [
     { path: "/", label: $t.nav.home, icon: "🏠", ariaLabel: $t.nav.home },
     {

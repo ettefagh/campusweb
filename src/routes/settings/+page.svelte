@@ -123,18 +123,34 @@
 			</div>
 		</div>
 
-		<div class="theme-picker" role="group" aria-label="Theme selection">
-			{#each themeOptions as opt}
-				<button
-					class="theme-card"
-					class:active={$settingsStore.theme === opt.value}
-					on:click={() => settingsStore.patch({ theme: opt.value })}
-					aria-pressed={$settingsStore.theme === opt.value}
-				>
-					<span class="theme-icon">{opt.icon}</span>
-					<span class="theme-label">{opt.label}</span>
-				</button>
-			{/each}
+		<div class="theme-picker" role="group" aria-label={$t.settings.appearanceTitle}>
+			<button
+				class="theme-card"
+				class:active={$settingsStore.theme === 'auto'}
+				on:click={() => settingsStore.patch({ theme: 'auto' })}
+				aria-pressed={$settingsStore.theme === 'auto'}
+			>
+				<span class="theme-icon">🔄</span>
+				<span class="theme-label">{$t.settings.themeAuto}</span>
+			</button>
+			<button
+				class="theme-card"
+				class:active={$settingsStore.theme === 'light'}
+				on:click={() => settingsStore.patch({ theme: 'light' })}
+				aria-pressed={$settingsStore.theme === 'light'}
+			>
+				<span class="theme-icon">☀️</span>
+				<span class="theme-label">{$t.settings.themeLight}</span>
+			</button>
+			<button
+				class="theme-card"
+				class:active={$settingsStore.theme === 'dark'}
+				on:click={() => settingsStore.patch({ theme: 'dark' })}
+				aria-pressed={$settingsStore.theme === 'dark'}
+			>
+				<span class="theme-icon">🌙</span>
+				<span class="theme-label">{$t.settings.themeDark}</span>
+			</button>
 		</div>
 	</section>
 
@@ -156,9 +172,9 @@
 				value={$settingsStore.weekStartsOn}
 				on:change={(e) => settingsStore.patch({ weekStartsOn: Number(e.currentTarget.value) })}
 			>
-				{#each weekStartOptions as opt}
-					<option value={opt.value}>{opt.label}</option>
-				{/each}
+				<option value={1}>{$t.settings.monday}</option>
+				<option value={0}>{$t.settings.sunday}</option>
+				<option value={6}>{$t.settings.saturday}</option>
 			</select>
 		</div>
 

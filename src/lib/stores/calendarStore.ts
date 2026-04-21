@@ -59,7 +59,7 @@ function createCalendarStore() {
                 const result = await fetchCalendarEvents(url, id, color);
                 
                 update(subs => {
-                    const newSubs = [...subs, {
+                    return [...subs, {
                         id,
                         url,
                         name: result.name || name,
@@ -67,8 +67,6 @@ function createCalendarStore() {
                         lastUpdated: Date.now(),
                         cachedEvents: result.events
                     }];
-                    if (browser) localStorage.setItem(STORAGE_KEY, JSON.stringify(newSubs));
-                    return newSubs;
                 });
                 return true;
             } catch (e) {
@@ -79,29 +77,23 @@ function createCalendarStore() {
 
         remove: (id: string) => {
             update(subs => {
-                const newSubs = subs.filter(s => s.id !== id);
-                if (browser) localStorage.setItem(STORAGE_KEY, JSON.stringify(newSubs));
-                return newSubs;
+                return subs.filter(s => s.id !== id);
             });
         },
 
-        refreshAll: async () => {
+        refreshAll: async (force = false) => {
+            const now = Date.now();
             update(subs => {
-                // Determine which subs need updating
-                const now = Date.now();
-                
                 subs.forEach(async (sub) => {
-                    if (now - sub.lastUpdated > UPDATE_INTERVAL) {
+                    if (force || (now - sub.lastUpdated > UPDATE_INTERVAL)) {
                         try {
                             const result = await fetchCalendarEvents(sub.url, sub.id, sub.color);
                             update(currentSubs => {
-                                const updated = currentSubs.map(s => 
+                                return currentSubs.map(s => 
                                     s.id === sub.id 
-                                        ? { ...s, lastUpdated: now, cachedEvents: result.events, name: result.name || s.name }
+                                        ? { ...s, lastUpdated: Date.now(), cachedEvents: result.events, name: result.name || s.name }
                                         : s
                                 );
-                                if (browser) localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-                                return updated;
                             });
                         } catch (e) {
                             console.error(`Failed to refresh calendar ${sub.name}:`, e);
@@ -110,7 +102,7 @@ function createCalendarStore() {
                 });
                 return subs;
             });
-        }
+        },
     };
 }
 
@@ -169,3 +161,12 @@ async function fetchCalendarEvents(url: string, id: string, color: string): Prom
 }
 
 export const calendarStore = createCalendarStore();
+
+// Centralized persistence
+if (browser) {
+    calendarStore.subscribe(subs => {
+        if (subs && subs.length >= 0) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(subs));
+        }
+    });
+}

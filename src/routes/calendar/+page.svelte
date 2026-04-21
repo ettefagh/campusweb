@@ -13,38 +13,10 @@
 	import { browser } from "$app/environment";
 	import { settingsStore } from "$lib/stores/settingsStore";
 
+	import { t } from "$lib/i18n";
+
 	// ─── i18n — driven by global settings store ───────────────────────
 	$: locale = $settingsStore.language ?? "en";
-
-	const buttonLabels: Record<string, Record<string, string>> = {
-		en: {
-			today: "Today",
-			month: "Month",
-			week: "Week",
-			day: "Day",
-			list: "List",
-			prev: "←",
-			next: "→",
-			threeDays: "3 Days",
-		},
-		de: {
-			today: "Heute",
-			month: "Monat",
-			week: "Woche",
-			day: "Tag",
-			list: "Liste",
-			prev: "←",
-			next: "→",
-			threeDays: "3 Tage",
-		},
-	};
-
-	function getLabels(loc: string) {
-		return buttonLabels[loc] || buttonLabels["en"];
-	}
-
-	let t = getLabels(locale);
-	$: t = getLabels(locale);
 
 	// ─── Responsive Breakpoints ──────────────────────────────────────
 	let innerWidth = 1024;
@@ -122,7 +94,7 @@
 		view: getDefaultView(),
 		events: [],
 		locale: locale,
-		firstDay: 1,
+		firstDay: $settingsStore.weekStartsOn ?? 1,
 		nowIndicator: true,
 		slotMinTime: "07:00:00",
 		slotMaxTime: "22:00:00",
@@ -135,13 +107,13 @@
 			end: "",
 		},
 		buttonText: {
-			today: t.today,
-			dayGridMonth: t.month,
-			timeGridWeek: t.week,
-			timeGridDay: t.day,
-			listWeek: t.list,
-			listDay: t.list,
-			listMonth: t.list,
+			today: $t.calendar.today,
+			dayGridMonth: $t.calendar.month,
+			timeGridWeek: $t.calendar.week,
+			timeGridDay: $t.calendar.day,
+			listWeek: $t.calendar.list,
+			listDay: $t.calendar.list,
+			listMonth: $t.calendar.list,
 		},
 		height: "100%",
 		eventContent: (info: any) => {
@@ -313,6 +285,23 @@
 		setTimeout(updateToolbarState, 80);
 	}
 
+	$: if (isMounted && ecComponent) {
+		options = { 
+			...options, 
+			locale: locale,
+			firstDay: $settingsStore.weekStartsOn ?? 1,
+			buttonText: {
+				today: $t.calendar.today,
+				dayGridMonth: $t.calendar.month,
+				timeGridWeek: $t.calendar.week,
+				timeGridDay: $t.calendar.day,
+				listWeek: $t.calendar.list,
+				listDay: $t.calendar.list,
+				listMonth: $t.calendar.list,
+			}
+		};
+	}
+
 	// ─── Store Subscription ──────────────────────────────────────────
 	const unsubscribe = calendarStore.subscribe((subs) => {
 		currentSubs = subs;
@@ -320,6 +309,26 @@
 			options = { ...options, events: getAllEvents() };
 		}
 	});
+
+	async function handleRefresh() {
+		if (isLoading) return;
+		isLoading = true;
+		try {
+			// Refresh both the centralized store (forcing update) and the local static events
+			await Promise.all([
+				calendarStore.refreshAll(true),
+				(async () => { staticEvents = await loadCalendarEvents(); })()
+			]);
+			
+			if (!isMounted) return;
+			options = { ...options, events: getAllEvents() };
+			isLoading = false;
+			setTimeout(updateToolbarState, 150);
+		} catch (error) {
+			console.error("Failed to refresh calendar events:", error);
+			if (isMounted) isLoading = false;
+		}
+	}
 
 	// ─── Lifecycle ───────────────────────────────────────────────────
 	onMount(() => {
@@ -357,8 +366,13 @@
 
 <div class="calendar-page">
 	<header class="page-header">
-		<h1>📅 Calendar</h1>
-		<p class="subtitle">University events and your schedule</p>
+		<div class="header-main">
+			<h1>📅 {$t.calendar.title || 'Calendar'}</h1>
+			<button class="refresh-btn" on:click={handleRefresh} aria-label={$t.calendar.refresh} title={$t.calendar.refresh}>
+				<span class:spinning={isLoading}>🔄</span>
+			</button>
+		</div>
+		<p class="subtitle">{$t.calendar.subtitle || 'University events and your schedule'}</p>
 	</header>
 
 	<div class="calendar-page-layout">
@@ -394,32 +408,32 @@
 							class="view-btn"
 							class:active={currentViewLabel === "dayGridMonth"}
 							on:click={() => switchView("dayGridMonth")}
-						>{t.month}</button>
+						>{$t.calendar.month}</button>
 						<button
 							class="view-btn"
 							class:active={currentViewLabel === "timeGridWeek"}
 							on:click={() => switchView("timeGridWeek")}
-						>{t.week}</button>
+						>{$t.calendar.week}</button>
 						<button
 							class="view-btn"
 							class:active={currentViewLabel === "timeGridDay"}
 							on:click={() => switchView("timeGridDay")}
-						>{t.day}</button>
+						>{$t.calendar.day}</button>
 						<button
 							class="view-btn"
 							class:active={currentViewLabel === "listWeek"}
 							on:click={() => switchView("listWeek")}
-						>{t.list}</button>
+						>{$t.calendar.list}</button>
 					</div>
 				<div class="toolbar-start">
 					<button class="nav-btn" on:click={goToPrev} aria-label="Previous"
-						>{t.prev}</button
+						>{$t.calendar.prev}</button
 					>
 					<button class="nav-btn today-btn" on:click={goToToday}
-						>{t.today}</button
+						>{$t.calendar.today}</button
 					>
 					<button class="nav-btn" on:click={goToNext} aria-label="Next"
-						>{t.next}</button
+						>{$t.calendar.next}</button
 					>
 				</div>
 			</div>
@@ -563,11 +577,56 @@
 		text-align: center;
 		padding: var(--spacing-lg) 0 var(--spacing-sm);
 		margin-bottom: var(--spacing-sm);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.header-main {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-sm);
+		margin-bottom: var(--spacing-xs);
 	}
 
 	h1 {
-		margin-bottom: var(--spacing-xs);
+		margin: 0;
 		font-size: 1.75rem;
+	}
+
+	.refresh-btn {
+		background: var(--bg-color-secondary);
+		border: 1px solid var(--border-color);
+		color: var(--text-color);
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		font-size: 1.1rem;
+		padding: 0;
+	}
+
+	.refresh-btn:hover {
+		background: var(--border-color);
+		transform: scale(1.05);
+	}
+
+	.refresh-btn:active {
+		transform: scale(0.95);
+	}
+
+	.spinning {
+		display: inline-block;
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		from { transform: rotate(0deg); }
+		to { transform: rotate(360deg); }
 	}
 
 	.subtitle {

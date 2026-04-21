@@ -55,6 +55,8 @@ const translations = {
     // ── Calendar page ──
     calendar: {
       pageTitle: 'Calendar – SRH Campus Hub',
+      title: 'Calendar',
+      subtitle: 'University events and your schedule',
       today: 'Today',
       month: 'Month',
       week: 'Week',
@@ -75,6 +77,7 @@ const translations = {
       time: 'Time',
       allDay: 'All day',
       close: 'Close',
+      refresh: 'Refresh',
       openInMaps: 'Open in Maps',
     },
 
@@ -199,6 +202,8 @@ const translations = {
     // ── Calendar page ──
     calendar: {
       pageTitle: 'Kalender – SRH Campus Hub',
+      title: 'Kalender',
+      subtitle: 'Uni-Veranstaltungen und dein Zeitplan',
       today: 'Heute',
       month: 'Monat',
       week: 'Woche',
@@ -219,6 +224,7 @@ const translations = {
       time: 'Uhrzeit',
       allDay: 'Ganztägig',
       close: 'Schließen',
+      refresh: 'Aktualisieren',
       openInMaps: 'In Karten öffnen',
     },
 

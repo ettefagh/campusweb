@@ -8,6 +8,7 @@
 	let searchQuery = "";
 
 	// Reactive filtered links
+	let displayLinks: typeof allLinks = [];
 	$: displayLinks = isEditMode
 		? allLinks.filter((link) => {
 				const query = searchQuery.toLowerCase().trim();

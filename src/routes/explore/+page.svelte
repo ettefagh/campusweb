@@ -31,6 +31,7 @@
 		}
 	}
 
+	let filteredLinks: typeof allLinks = [];
 	$: filteredLinks = allLinks.filter((link) => {
 		if (!searchQuery.trim()) return true;
 		const query = searchQuery.toLowerCase();
@@ -41,6 +42,7 @@
 		);
 	});
 
+	let activeCategories: string[] = [];
 	$: activeCategories = categoryOrder.filter((cat) =>
 		filteredLinks.some((link) => link.category_name === cat)
 	);

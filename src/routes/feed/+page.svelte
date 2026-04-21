@@ -26,6 +26,7 @@
     contactSheetOpen = false;
   }
 
+  let newsCards: Array<{ tag: string; emoji: string; title: string; desc: string; url: string; color: string }> = [];
   $: newsCards = [
     {
       tag: $t.feed.eventsTag,
@@ -86,6 +87,7 @@
     },
   ];
 
+  let contacts: Array<{ icon: string; label: string; value: string; href: string }> = [];
   $: contacts = [
     {
       icon: "📞",
