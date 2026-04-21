@@ -11,10 +11,10 @@
 	import SecureCalendarInput from "$lib/components/SecureCalendarInput.svelte";
 	import { focusTrap } from "$lib/utils/focusTrap";
 	import { browser } from "$app/environment";
+	import { settingsStore } from "$lib/stores/settingsStore";
 
-	// ─── i18n Preparation ─────────────────────────────────────────────
-	// Future: this will come from a global locale store
-	let locale: string = "en";
+	// ─── i18n — driven by global settings store ───────────────────────
+	$: locale = $settingsStore.language ?? "en";
 
 	const buttonLabels: Record<string, Record<string, string>> = {
 		en: {

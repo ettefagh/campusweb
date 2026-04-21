@@ -1,21 +1,23 @@
 <script lang="ts">
   import { page } from "$app/stores";
+  import { t } from "$lib/i18n";
 
-  const navItems = [
-    { path: "/", label: "Home", icon: "🏠", ariaLabel: "Home page" },
+  $: navItems = [
+    { path: "/", label: $t.nav.home, icon: "🏠", ariaLabel: $t.nav.home },
     {
       path: "/explore",
-      label: "Explore",
+      label: $t.nav.explore,
       icon: "🧭",
-      ariaLabel: "Explore all links",
+      ariaLabel: $t.nav.explore,
     },
     {
       path: "/calendar",
-      label: "Calendar",
+      label: $t.nav.calendar,
       icon: "📅",
-      ariaLabel: "University calendar",
+      ariaLabel: $t.nav.calendar,
     },
-    { path: "/feed", label: "Feed", icon: "📰", ariaLabel: "News feed" },
+    { path: "/feed", label: $t.nav.feed, icon: "📰", ariaLabel: $t.nav.feed },
+    { path: "/settings", label: $t.nav.settings, icon: "⚙️", ariaLabel: $t.nav.settings },
   ];
 </script>
 
@@ -53,7 +55,15 @@
     {/each}
   </nav>
   <div class="sidebar-footer">
-    <span class="sidebar-footer-text">SRH Campus Hub</span>
+    <a
+      href="/settings"
+      class="sidebar-settings-link"
+      class:active={$page.url.pathname === '/settings'}
+      aria-label="Settings"
+    >
+      <span aria-hidden="true">⚙️</span>
+      <span>Settings</span>
+    </a>
   </div>
 </aside>
 
@@ -274,10 +284,22 @@
       margin-top: auto;
     }
 
-    .sidebar-footer-text {
-      font-size: 0.75rem;
+    .sidebar-settings-link {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-size: 0.9rem;
+      font-weight: 600;
       color: var(--text-color-secondary);
-      font-weight: 500;
+      text-decoration: none;
+      padding: var(--spacing-sm) var(--spacing-sm);
+      border-radius: var(--radius-md);
+      transition: all 0.2s;
+    }
+    .sidebar-settings-link:hover,
+    .sidebar-settings-link.active {
+      color: var(--primary-color);
+      background: rgba(212, 68, 7, 0.08);
     }
   }
 

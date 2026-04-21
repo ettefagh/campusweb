@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { t } from "$lib/i18n";
 
   let innerWidth = 0;
   let contactSheetOpen = false;
@@ -25,28 +26,28 @@
     contactSheetOpen = false;
   }
 
-  const newsCards = [
+  $: newsCards = [
     {
-      tag: "Events",
+      tag: $t.feed.eventsTag,
       emoji: "📅",
-      title: "Upcoming University Events",
-      desc: "Explore workshops, career fairs, and cultural events hosted by SRH this semester.",
+      title: $t.feed.eventsTitle,
+      desc: $t.feed.eventsDesc,
       url: "/viewer?url=https://www.srh-university.de/en/events/",
       color: "#3b82f6",
     },
     {
-      tag: "News",
+      tag: $t.feed.newsTag,
       emoji: "📰",
-      title: "Latest Campus News",
-      desc: "Stay up to date with announcements, research highlights, and campus updates.",
+      title: $t.feed.newsTitle,
+      desc: $t.feed.newsDesc,
       url: "/viewer?url=https://www.srh-university.de/en/news/",
       color: "#ef4444",
     },
     {
-      tag: "Merch",
+      tag: $t.feed.merchTag,
       emoji: "🛒",
-      title: "Official Brand Store",
-      desc: "Grab official SRH merchandise — hoodies, notebooks, and more.",
+      title: $t.feed.merchTitle,
+      desc: $t.feed.merchDesc,
       url: "https://srh-store.de/employees/bildung.html",
       color: "#8b5cf6",
     },
@@ -85,22 +86,22 @@
     },
   ];
 
-  const contacts = [
+  $: contacts = [
     {
       icon: "📞",
-      label: "Phone",
+      label: $t.feed.phone,
       value: "+49 30 515650 200",
       href: "tel:+493051565020",
     },
     {
       icon: "📧",
-      label: "Email",
+      label: $t.feed.email,
       value: "info.hsg@srh.de",
       href: "mailto:info.hsg@srh.de",
     },
     {
       icon: "🏢",
-      label: "Address",
+      label: $t.feed.address,
       value: "Ludwig Guttmann Str. 6\n69123 Heidelberg, Germany",
       href: "",
     },
@@ -108,20 +109,20 @@
 </script>
 
 <svelte:head>
-  <title>Campus News | Campusweb</title>
+  <title>{$t.feed.pageTitle}</title>
 </svelte:head>
 
 <svelte:window bind:innerWidth />
 
 <div class="feed-container">
   <header class="page-header">
-    <h1>📰 Campus News</h1>
-    <p class="subtitle">Latest updates from SRH University</p>
+    <h1>{$t.feed.title}</h1>
+    <p class="subtitle">{$t.feed.subtitle}</p>
   </header>
 
   <!-- Feature 4: Modernized Instagram Embed Wrapper -->
   <section class="embed-section">
-    <h2 class="section-title">📸 Instagram Feeds</h2>
+    <h2 class="section-title">{$t.feed.instagramFeeds}</h2>
     <div class="embed-wrapper">
       <div class="embed-card">
         <div class="embed-label">@srh.students</div>
@@ -155,7 +156,7 @@
         <h3 class="news-card-title">{card.title}</h3>
         <p class="news-card-desc">{card.desc}</p>
         <span class="news-card-cta">
-          Read more
+          {$t.feed.readMore}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="14"
@@ -176,7 +177,7 @@
 
   <!-- Feature 2: Horizontal Scroll Social Chips -->
   <section class="social-section">
-    <h2 class="section-title">🌐 Follow SRH</h2>
+    <h2 class="section-title">{$t.feed.followSRH}</h2>
     <div class="social-scroll">
       {#each socialMedia as platform}
         <a
@@ -198,8 +199,8 @@
     <button class="contact-trigger" on:click={openContactSheet}>
       <span class="contact-trigger-icon">📞</span>
       <div class="contact-trigger-text">
-        <span class="contact-trigger-title">University Directory</span>
-        <span class="contact-trigger-sub">Phone, email & address</span>
+        <span class="contact-trigger-title">{$t.feed.universityDirectory}</span>
+        <span class="contact-trigger-sub">{$t.feed.phoneEmailAddress}</span>
       </div>
       <span class="contact-trigger-arrow">›</span>
     </button>
@@ -220,15 +221,15 @@
         class="sheet"
         on:click|stopPropagation
         role="dialog"
-        aria-label="Contact Information"
+        aria-label={$t.feed.contactTitle}
       >
         <div class="sheet-handle"></div>
         <button
           class="sheet-close"
           on:click={closeContactSheet}
-          aria-label="Close">✕</button
+          aria-label={$t.feed.close}>✕</button
         >
-        <h3 class="sheet-title">📞 SRH Contact</h3>
+        <h3 class="sheet-title">{$t.feed.contactTitle}</h3>
         <div class="contact-list">
           {#each contacts as c}
             <div class="contact-row">
@@ -261,14 +262,14 @@
         class="contact-modal"
         on:click|stopPropagation
         role="dialog"
-        aria-label="Contact Information"
+        aria-label={$t.feed.contactTitleDesktop}
       >
         <button
           class="sheet-close"
           on:click={closeContactSheet}
-          aria-label="Close">✕</button
+          aria-label={$t.feed.close}>✕</button
         >
-        <h3 class="sheet-title">📞 SRH Contact Information</h3>
+        <h3 class="sheet-title">{$t.feed.contactTitleDesktop}</h3>
         <div class="contact-list">
           {#each contacts as c}
             <div class="contact-row">

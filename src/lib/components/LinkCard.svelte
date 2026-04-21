@@ -187,6 +187,15 @@
 		background: var(--glass-bg-strong);
 	}
 
+	.link-card:active {
+		transform: translateY(0px);
+		background: var(--glass-bg-strong);
+	}
+
+	.link-card:focus {
+		outline: none;
+	}
+
 	.icon {
 		font-size: 32px;
 		line-height: 1;

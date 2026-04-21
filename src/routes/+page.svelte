@@ -2,6 +2,7 @@
 	import LinkCard from "$lib/components/LinkCard.svelte";
 	import { favorites } from "$lib/stores/favorites";
 	import { allLinks } from "$lib/data/links";
+	import { t } from "$lib/i18n";
 
 	let isEditMode = false;
 	let searchQuery = "";
@@ -29,10 +30,10 @@
 </script>
 
 <svelte:head>
-	<title>SRH Campus Hub - Quick Access to University Resources</title>
+	<title>{$t.home.pageTitle}</title>
 	<meta
 		name="description"
-		content="Quick access to SRH University resources - optimized for mobile"
+		content={$t.home.subtitle}
 	/>
 </svelte:head>
 
@@ -54,8 +55,8 @@
 				height="48"
 			/>
 		</div>
-		<h1>Campusweb</h1>
-		<p class="subtitle">Quick access to university resources</p>
+		<h1>{$t.home.title}</h1>
+		<p class="subtitle">{$t.home.subtitle}</p>
 	</header>
 
 	{#if isEditMode}
@@ -63,7 +64,7 @@
 		<div class="search-container">
 			<input
 				type="text"
-				placeholder="Search links..."
+				placeholder={$t.home.searchPlaceholder}
 				bind:value={searchQuery}
 				class="search-input"
 			/>
@@ -71,10 +72,10 @@
 	{/if}
 
 	<section class="links-section">
-		<h2 class="sr-only">University Links</h2>
+		<h2 class="sr-only">{$t.home.universityLinks}</h2>
 		{#if displayLinks.length === 0}
 			<div class="empty-state">
-				<p>No favorites yet. Click Edit below to add some!</p>
+				<p>{$t.home.emptyState}</p>
 			</div>
 		{:else}
 			{#each displayLinks as link (link.id)}
@@ -94,7 +95,7 @@
 			class:editing={isEditMode}
 			on:click={toggleEditMode}
 		>
-			{isEditMode ? "Done" : "Edit Favorites"}
+			{isEditMode ? $t.home.done : $t.home.editFavorites}
 		</button>
 	</footer>
 </div>
