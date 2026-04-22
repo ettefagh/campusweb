@@ -1,4 +1,5 @@
 import type { RequestHandler } from './$types';
+import { enhanceIcal } from '$lib/ical-enhancer';
 
 /**
  * Server-side iCal proxy endpoint.
@@ -86,7 +87,10 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
             });
         }
 
-        return new Response(icalData, {
+        // Enhance the calendar data (clean titles, add GPS, strip PII)
+        const enhancedIcalData = enhanceIcal(icalData);
+
+        return new Response(enhancedIcalData, {
             status: 200,
             headers: {
                 'Content-Type': 'text/calendar; charset=utf-8',

@@ -524,11 +524,6 @@
 			<section class="quick-links-section">
 				<h2 class="section-title">🔗 Quick Links</h2>
 				<div class="quick-links-grid">
-					<a href="https://calendarsub.padarhava.workers.dev/" target="_blank" rel="noopener noreferrer" class="quick-link-card">
-						<span class="ql-icon">📅</span>
-						<span class="ql-title">Calendar Enhancer</span>
-						<span class="ql-desc">Enhance your university calendar</span>
-					</a>
 					<a href="https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php" target="_blank" rel="noopener noreferrer" class="quick-link-card">
 						<span class="ql-icon">🗓️</span>
 						<span class="ql-title">My Schedule</span>
