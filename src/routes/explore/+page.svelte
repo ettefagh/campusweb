@@ -220,7 +220,6 @@
 	.links-grid {
 		display: flex;
 		flex-direction: column;
-		gap: var(--spacing-sm);
 	}
 
 	@media (min-width: 640px) {

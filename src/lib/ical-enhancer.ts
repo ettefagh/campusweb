@@ -186,10 +186,9 @@ function enhanceEvent(lines: string[]): string[] {
     }
 
     const descParts = [];
-    descParts.push(`🆔 Course ID: ${courseId}`);
+    descParts.push(`Course ID: ${courseId}`);
     if (enhancedLoc.notes) descParts.push(enhancedLoc.notes);
-    descParts.push('--------------------------');
-    descParts.push(`🗺️ Original: ${locationRaw}`);
+    descParts.push(`Original Location: ${locationRaw}`);
     event.push(`DESCRIPTION:${descParts.join('\\n')}`);
 
     for (const line of safeLines) {

@@ -342,9 +342,20 @@
     margin-bottom: var(--spacing-xl);
   }
 
+  @media (max-width: 639px) {
+    .news-cards {
+      gap: 0;
+    }
+  }
+
   .news-card {
     flex: 1 1 100%;
-    /* Remaining properties of .news-card are below */
+  }
+
+  @media (max-width: 639px) {
+    .news-card {
+      margin-bottom: var(--spacing-md);
+    }
   }
 
   @media (min-width: 640px) {
