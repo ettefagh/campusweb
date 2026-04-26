@@ -74,6 +74,19 @@
   // ─── Feature 4: Empty State ─────────────────────────────────────
   $: currentEventsCount = options.events?.length ?? 0;
 
+  // ─── Responsive multi-day view ─────────────────────────────────
+  // Adapts the number of visible days to screen width:
+  //   portrait mobile → 3 days, landscape → 5 days, desktop → 7 days (week)
+  $: multiDayViewName = isPortraitMobile
+    ? "timeGrid3Day"
+    : isLandscapeMobile
+      ? "timeGrid5Day"
+      : "timeGridWeek";
+
+  $: multiDayLabel = isPortraitMobile
+    ? $t.calendar.threeDays
+    : $t.calendar.week;
+
   function getDefaultView(): string {
     const breakpoint = isDesktop
       ? "desktop"
@@ -85,8 +98,8 @@
       if (saved) return saved;
     }
 
-    if (isPortraitMobile) return "dayGridMonth";
-    if (isLandscapeMobile) return "timeGridWeek";
+    if (isPortraitMobile) return "timeGrid3Day";
+    if (isLandscapeMobile) return "timeGrid5Day";
     return "timeGridWeek";
   }
 
@@ -109,7 +122,22 @@
   }
 
   // ─── EC Options ──────────────────────────────────────────────────
-  let plugins = [TimeGrid, DayGrid, List];
+  const MultiDayPlugin = {
+    createOptions(opts: any) {
+      if (opts.views?.timeGridWeek?.component) {
+        opts.views.timeGrid3Day = {
+          component: opts.views.timeGridWeek.component,
+          duration: { days: 3 },
+        };
+        opts.views.timeGrid5Day = {
+          component: opts.views.timeGridWeek.component,
+          duration: { days: 5 },
+        };
+      }
+    },
+  };
+
+  let plugins = [TimeGrid, DayGrid, List, MultiDayPlugin];
 
   let options: any = {
     view: getDefaultView(),
@@ -380,7 +408,6 @@
 
     // Clean up if outside range
     if (!inRange) {
-      document.getElementById("custom-now-pill")?.remove();
       document.getElementById("custom-now-track")?.remove();
       return;
     }
@@ -418,22 +445,6 @@
       const indicatorRect = indicator.getBoundingClientRect();
       const widthPx = Math.max(0, indicatorRect.left - bodyRect.left);
       track.style.width = `${widthPx}px`;
-    }
-
-    // ── 2. Pill in sidebar ────────────────────────────────────────
-    const sidebar = document.querySelector(".ec-sidebar") as HTMLElement | null;
-    if (sidebar) {
-      let pill = document.getElementById(
-        "custom-now-pill",
-      ) as HTMLElement | null;
-      if (!pill) {
-        pill = document.createElement("div");
-        pill.id = "custom-now-pill";
-        sidebar.style.position = "relative";
-        sidebar.appendChild(pill);
-      }
-      pill.textContent = timeStr;
-      pill.style.top = topPx;
     }
   }
 
@@ -555,9 +566,9 @@
             >
             <button
               class="view-btn"
-              class:active={currentViewLabel === "timeGridWeek"}
-              on:click={() => switchView("timeGridWeek")}
-              >{$t.calendar.week}</button
+              class:active={currentViewLabel === "timeGridWeek" || currentViewLabel === "timeGrid3Day" || currentViewLabel === "timeGrid5Day"}
+              on:click={() => switchView(multiDayViewName)}
+              >{multiDayLabel}</button
             >
             <button
               class="view-btn"
@@ -568,8 +579,7 @@
             <button
               class="view-btn"
               class:active={currentViewLabel === "listWeek"}
-              on:click={() => switchView("listWeek")}
-              >{$t.calendar.list}</button
+              on:click={() => switchView("listWeek")}>{$t.calendar.list}</button
             >
           </div>
           <div class="toolbar-start">
@@ -1483,9 +1493,9 @@
     padding: 6px 6px !important;
     border-radius: 6px !important;
     /* Always white base — same as Apple Calendar */
-    background-color: #ffffff !important;
+    background-color: #ffffff70 !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
-    border-left: 4px solid var(--event-color, var(--primary-color)) !important;
+    border-left: 3px solid var(--event-color, var(--primary-color)) !important;
     position: relative;
     z-index: 1;
     transition: transform 0.1s ease;
@@ -1542,12 +1552,17 @@
 
   /* List view overrides */
   :global(.ec-event-inner--list) {
+    display: flex;
     flex-direction: row;
     align-items: center;
     gap: 8px;
     height: auto;
     padding: 6px 8px !important;
     justify-content: space-between;
+  }
+
+  :global(.ec-list .ec-event-tag) {
+    display: none !important;
   }
 
   /* Assistive Textures - Enabled state */
@@ -1606,7 +1621,9 @@
   }
 
   :global(
-      [data-theme="dark"] .a11y-assistive-patterns .ec-event-inner[data-texture="stripes"]::after
+      [data-theme="dark"]
+        .a11y-assistive-patterns
+        .ec-event-inner[data-texture="stripes"]::after
     ) {
     background-image: linear-gradient(
       45deg,
@@ -1621,7 +1638,9 @@
   }
 
   :global(
-      [data-theme="dark"] .a11y-assistive-patterns .ec-event-inner[data-texture="dots"]::after
+      [data-theme="dark"]
+        .a11y-assistive-patterns
+        .ec-event-inner[data-texture="dots"]::after
     ) {
     background-image: radial-gradient(
       rgba(255, 255, 255, 1) 15%,
@@ -1630,7 +1649,9 @@
   }
 
   :global(
-      [data-theme="dark"] .a11y-assistive-patterns .ec-event-inner[data-texture="mesh"]::after
+      [data-theme="dark"]
+        .a11y-assistive-patterns
+        .ec-event-inner[data-texture="mesh"]::after
     ) {
     background-image: linear-gradient(
         rgba(255, 255, 255, 1) 1.5px,
@@ -1660,22 +1681,7 @@
     pointer-events: none;
   }
 
-  /* Time pill in the sidebar */
-  :global(#custom-now-pill) {
-    position: absolute;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #ff3b30;
-    color: white;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 20px;
-    z-index: 20;
-    pointer-events: none;
-    white-space: nowrap;
-    box-shadow: 0 1px 4px rgba(255, 59, 48, 0.4);
-  }
+
 
   /* Today's column: solid red line (the default ec-now-indicator border) */
   :global(.ec-now-indicator) {
@@ -1691,8 +1697,8 @@
     background: #ff3b30 !important;
     width: 10px !important;
     height: 10px !important;
-    left: -5px !important;
-    top: -6px !important;
+    left: 2px !important;
+    top: 1px !important;
     border-radius: 50% !important;
     z-index: 5 !important;
     box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.25) !important;

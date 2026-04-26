@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { settingsStore, CAMPUSES, DEPARTMENTS, campusDepartments, isSetupComplete } from '$lib/stores/settingsStore';
 	import { accessibility } from '$lib/stores/accessibility';
+	import { calendarStore } from '$lib/stores/calendarStore';
 	import { t } from '$lib/i18n';
 
 	// When campus changes, clear department selection
@@ -28,9 +29,24 @@
 	const APP_VERSION = '1.0.0';
 	let updateStatus: 'idle' | 'checking' | 'updating' = 'idle';
 
-	function handleUpdate() {
+	async function handleUpdate() {
 		updateStatus = 'updating';
-		// Tell the waiting service worker to take over, then reload
+
+		try {
+			// 1. Refresh calendar data explicitly
+			await calendarStore.refreshAll(true);
+
+			// 2. Clear browser caches to fetch fresh webapp assets on next load
+			// This leaves localStorage intact (where settings & calendar cachedEvents live)
+			if ('caches' in window) {
+				const cacheNames = await caches.keys();
+				await Promise.all(cacheNames.map((name) => caches.delete(name)));
+			}
+		} catch (e) {
+			console.error('Update error:', e);
+		}
+
+		// 3. Tell the waiting service worker to take over, then reload
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.getRegistration().then((reg) => {
 				if (reg?.waiting) {
@@ -39,8 +55,13 @@
 						window.location.reload();
 					});
 				} else {
-					// No waiting SW — force cache-bypass reload
-					window.location.reload();
+					if (reg) {
+						reg.update().finally(() => {
+							window.location.reload();
+						});
+					} else {
+						window.location.reload();
+					}
 				}
 			});
 		} else {

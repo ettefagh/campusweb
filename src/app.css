@@ -1,4 +1,4 @@
-/* SRH Campus Hub - Global Styles */
+/* SRH Campus Pages - Global Styles */
 /* Liquid Glass Theme — Apple visionOS inspired */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -169,8 +169,8 @@
 		--shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
 
 		/* Event Colors - Dark Mode (RGB for transparency) */
-		--event-green-rgb: 6, 95, 70;
-		--event-orange-rgb: 146, 64, 14;
+		--event-green-rgb: 16, 185, 129;
+		--event-orange-rgb: 185, 82, 20;
 		--event-purple-rgb: 76, 29, 149;
 		--event-pink-rgb: 131, 24, 67;
 		--event-cyan-rgb: 22, 78, 99;

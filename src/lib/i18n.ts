@@ -29,7 +29,7 @@ const translations = {
     home: {
       title: 'Campusweb',
       subtitle: 'Quick access to university resources',
-      pageTitle: 'SRH Campus Hub - Quick Access to University Resources',
+      pageTitle: 'CampusWeb Pages - Quick Access to University Resources',
       searchPlaceholder: 'Search links…',
       emptyState: 'No favorites yet. Click Edit below to add some!',
       editFavorites: 'Edit Favorites',
@@ -41,7 +41,7 @@ const translations = {
     explore: {
       title: '🧭 Explore & Search',
       subtitle: 'Discover all university resources and tools',
-      pageTitle: 'Explore & Search - SRH Campus Hub',
+      pageTitle: 'Explore & Search - CampusWeb Pages',
       searchPlaceholder: 'Search resources…',
       noResults: 'No local resources found for',
       externalTitle: 'Search in External Portals',
@@ -54,7 +54,7 @@ const translations = {
 
     // ── Calendar page ──
     calendar: {
-      pageTitle: 'Calendar – SRH Campus Hub',
+      pageTitle: 'Calendar – CampusWeb Pages',
       title: 'Calendar',
       subtitle: 'University events and your schedule',
       today: 'Today',
@@ -114,9 +114,9 @@ const translations = {
 
     // ── Settings page ──
     settings: {
-      pageTitle: 'Settings – SRH Campus Hub',
+      pageTitle: 'Settings – CampusWeb Pages',
       title: 'Settings',
-      subtitle: 'Personalise your CampusHub experience',
+      subtitle: 'Personalise your CampusWeb Pages experience',
       campusTitle: 'My Campus & Programme',
       campusDesc: 'Used to personalise your calendar with lecture-free periods and exam schedules',
       campusLabel: 'Campus',
@@ -160,7 +160,7 @@ const translations = {
       resetConfirm: 'Are you sure? This will clear all your preferences.',
       resetYes: 'Yes, reset everything',
       resetCancel: 'Cancel',
-      builtWith: 'SRH Campus Hub · Built with ❤️',
+      builtWith: 'CampusWeb Pages · Built with ❤️',
     },
   },
 
@@ -178,7 +178,7 @@ const translations = {
     home: {
       title: 'Campusweb',
       subtitle: 'Schnellzugriff auf Universitätsressourcen',
-      pageTitle: 'SRH Campus Hub – Schnellzugriff auf Uni-Ressourcen',
+      pageTitle: 'CampusWeb Pages – Schnellzugriff auf Uni-Ressourcen',
       searchPlaceholder: 'Links suchen…',
       emptyState: 'Noch keine Favoriten. Klicke unten auf Bearbeiten!',
       editFavorites: 'Favoriten bearbeiten',
@@ -190,7 +190,7 @@ const translations = {
     explore: {
       title: '🧭 Erkunden & Suchen',
       subtitle: 'Alle Uni-Ressourcen und Tools entdecken',
-      pageTitle: 'Erkunden & Suchen – SRH Campus Hub',
+      pageTitle: 'Erkunden & Suchen – CampusWeb Pages',
       searchPlaceholder: 'Ressourcen suchen…',
       noResults: 'Keine lokalen Ressourcen gefunden für',
       externalTitle: 'In externen Portalen suchen',
@@ -203,7 +203,7 @@ const translations = {
 
     // ── Calendar page ──
     calendar: {
-      pageTitle: 'Kalender – SRH Campus Hub',
+      pageTitle: 'Kalender – CampusWeb Pages',
       title: 'Kalender',
       subtitle: 'Uni-Veranstaltungen und dein Zeitplan',
       today: 'Heute',
@@ -261,7 +261,7 @@ const translations = {
 
     // ── Settings page ──
     settings: {
-      pageTitle: 'Einstellungen – SRH Campus Hub',
+      pageTitle: 'Einstellungen – CampusWeb Pages',
       title: 'Einstellungen',
       subtitle: 'Personalisiere dein CampusHub-Erlebnis',
       campusTitle: 'Mein Campus & Studiengang',
@@ -307,7 +307,7 @@ const translations = {
       resetConfirm: 'Bist du sicher? Alle Einstellungen werden gelöscht.',
       resetYes: 'Ja, alles zurücksetzen',
       resetCancel: 'Abbrechen',
-      builtWith: 'SRH Campus Hub · Mit ❤️ gebaut',
+      builtWith: 'CampusWeb Pages · Mit ❤️ gebaut',
     },
   },
 } as const;
