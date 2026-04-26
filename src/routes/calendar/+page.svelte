@@ -126,6 +126,11 @@
       minute: "2-digit",
       hour12: false,
     },
+    eventTimeFormat: {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    },
     allDaySlot: true,
     headerToolbar: {
       start: "",
@@ -1477,42 +1482,34 @@
     overflow: hidden;
     padding: 6px 6px !important;
     border-radius: 6px !important;
-    /* Base opaque layer so body gradient doesn't bleed */
-    background-color: var(--card-bg) !important;
-    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    /* Always white base — same as Apple Calendar */
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
     border-left: 4px solid var(--event-color, var(--primary-color)) !important;
     position: relative;
     z-index: 1;
     transition: transform 0.1s ease;
   }
 
-  /* The tint layer behind the text */
+  /* Light pastel tint on the white base — Apple Calendar style */
   :global(.ec-event-inner::before) {
     content: "";
     position: absolute;
     inset: 0;
     background-color: var(--event-color, var(--primary-color));
-    opacity: 0.25; /* Light mode tint — card-bg is white so this is pastel */
+    opacity: 0.15;
     z-index: -2;
+    border-radius: 6px;
   }
 
-  :global([data-theme="dark"] .ec-event-inner) {
+  /* Dark mode: dark translucent base (#000000b3) with subtle color wash */
+  :global(html[data-theme="dark"] .ec-event-inner) {
+    background-color: #000000b3 !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
   }
 
-  /* Dark mode: make tint stronger so card doesn't look muddy */
-  :global([data-theme="dark"] .ec-event-inner::before) {
-    opacity: 0.55;
-  }
-
-  /* Dark mode: switch text to white so it contrasts against the dark tinted bg */
-  :global([data-theme="dark"] .ec-event-title-text) {
-    color: rgba(255, 255, 255, 0.95) !important;
-  }
-
-  :global([data-theme="dark"] .ec-event-loc),
-  :global([data-theme="dark"] .ec-event-time-custom) {
-    color: rgba(255, 255, 255, 0.75) !important;
+  :global(html[data-theme="dark"] .ec-event-inner::before) {
+    opacity: 0.25; /* Stronger tint to give the dark base a colored wash */
   }
 
   :global(.ec-event:hover .ec-event-inner) {
@@ -1520,11 +1517,11 @@
   }
 
   :global(.ec-event:hover .ec-event-inner::before) {
-    opacity: 0.35;
+    opacity: 0.22;
   }
 
-  :global([data-theme="dark"] .ec-event:hover .ec-event-inner::before) {
-    opacity: 0.65;
+  :global(html[data-theme="dark"] .ec-event:hover .ec-event-inner::before) {
+    opacity: 0.35;
   }
 
   :global(.ec-event-title-text) {

@@ -20,8 +20,22 @@
 			}
 		});
 
+		function applyTheme(theme: string) {
+			if (theme === 'auto') {
+				const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+				document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+			} else {
+				document.documentElement.setAttribute('data-theme', theme);
+			}
+		}
+
 		settingsStore.subscribe((settings) => {
-			document.documentElement.setAttribute('data-theme', settings.theme);
+			applyTheme(settings.theme);
+		});
+
+		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+			// Re-apply current theme setting when OS preference changes
+			settingsStore.subscribe(s => applyTheme(s.theme))();
 		});
 	}
 </script>

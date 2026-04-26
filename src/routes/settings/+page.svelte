@@ -17,13 +17,35 @@
 		{ value: 'de', native: 'Deutsch', flag: '🇩🇪' },
 	];
 
-
-
 	let showResetConfirm = false;
 
 	function handleReset() {
 		settingsStore.reset();
 		showResetConfirm = false;
+	}
+
+	// ── Update / Reload ───────────────────────────────────────────
+	const APP_VERSION = '1.0.0';
+	let updateStatus: 'idle' | 'checking' | 'updating' = 'idle';
+
+	function handleUpdate() {
+		updateStatus = 'updating';
+		// Tell the waiting service worker to take over, then reload
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.getRegistration().then((reg) => {
+				if (reg?.waiting) {
+					reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+					navigator.serviceWorker.addEventListener('controllerchange', () => {
+						window.location.reload();
+					});
+				} else {
+					// No waiting SW — force cache-bypass reload
+					window.location.reload();
+				}
+			});
+		} else {
+			window.location.reload();
+		}
 	}
 </script>
 
@@ -263,7 +285,24 @@
 		{/if}
 	</section>
 
-	<p class="version-note">{$t.settings.builtWith}</p>
+	<div class="update-card">
+		<div class="update-info">
+			<span class="update-version">v{APP_VERSION}</span>
+			<span class="update-desc">{$t.settings.builtWith}</span>
+		</div>
+		<button
+			class="btn-update"
+			class:updating={updateStatus === 'updating'}
+			on:click={handleUpdate}
+			disabled={updateStatus === 'updating'}
+		>
+			{#if updateStatus === 'updating'}
+				<span class="update-spinner"></span> Updating…
+			{:else}
+				🔄 Update App
+			{/if}
+		</button>
+	</div>
 </div>
 
 <style>
@@ -533,6 +572,78 @@
 		color: var(--text-color-secondary);
 		margin-top: var(--spacing-xl);
 		opacity: 0.6;
+	}
+
+	/* ── Update Card ── */
+	.update-card {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--spacing-md);
+		margin-top: var(--spacing-xl);
+		padding: var(--spacing-md) var(--spacing-lg);
+		background: var(--card-bg);
+		border: 1px solid var(--border-color);
+		border-radius: var(--radius-xl);
+	}
+
+	.update-info {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.update-version {
+		font-size: 0.95rem;
+		font-weight: 700;
+		color: var(--text-color);
+		letter-spacing: 0.02em;
+	}
+
+	.update-desc {
+		font-size: 0.78rem;
+		color: var(--text-color-secondary);
+		opacity: 0.7;
+	}
+
+	.btn-update {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-xs);
+		padding: var(--spacing-sm) var(--spacing-md);
+		background: var(--primary-color);
+		color: white;
+		border: none;
+		border-radius: var(--radius-md);
+		font-size: 0.9rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: opacity 0.2s ease, transform 0.1s ease;
+		white-space: nowrap;
+	}
+
+	.btn-update:hover:not(:disabled) {
+		opacity: 0.85;
+		transform: translateY(-1px);
+	}
+
+	.btn-update:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.update-spinner {
+		display: inline-block;
+		width: 14px;
+		height: 14px;
+		border: 2px solid rgba(255,255,255,0.4);
+		border-top-color: white;
+		border-radius: 50%;
+		animation: spin 0.7s linear infinite;
+	}
+
+	@keyframes spin {
+		to { transform: rotate(360deg); }
 	}
 
 	@media (max-width: 480px) {
