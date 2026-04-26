@@ -277,14 +277,6 @@ export const serviceLinks = [
 // Student Utilities
 export const utilityLinks = [
 	{
-		id: 'calendar-enhancer',
-		title: 'Calendar Enhancer',
-		url: 'https://calendarsub.padarhava.workers.dev',
-		icon: '📅',
-		description: 'Enhance your university calendar',
-		category_name: 'Utilities'
-	},
-	{
 		id: 'pdf-tools',
 		title: 'PDF Tools',
 		url: 'https://tools.pdf24.org/en/',

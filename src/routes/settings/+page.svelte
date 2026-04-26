@@ -422,29 +422,64 @@
 	.toggle-desc { font-size: 0.78rem; color: var(--text-color-secondary); line-height: 1.4; }
 
 	.toggle {
-		width: 52px;
+		width: 56px;
 		height: 30px;
 		border-radius: 15px;
 		background: var(--border-color);
 		border: none;
 		padding: 3px;
 		cursor: pointer;
-		transition: background 0.25s;
+		transition: all 0.25s;
 		flex-shrink: 0;
 		position: relative;
+		overflow: hidden;
 	}
-	.toggle.on { background: var(--primary-color); }
+	
+	/* Accessibility Textures for Toggle - Only visible when enabled */
+	:global(.a11y-assistive-patterns) .toggle::before {
+		content: '✕';
+		position: absolute;
+		right: 10px;
+		top: 50%;
+		transform: translateY(-50%);
+		font-size: 0.7rem;
+		font-weight: 800;
+		color: var(--text-color-secondary);
+		opacity: 0.5;
+		transition: opacity 0.2s;
+	}
+
+	.toggle.on { 
+		background: var(--primary-color);
+	}
+
+	:global(.a11y-assistive-patterns) .toggle.on {
+		background-image: radial-gradient(rgba(255, 255, 255, 0.2) 15%, transparent 15%);
+		background-size: 6px 6px;
+	}
+
+	:global(.a11y-assistive-patterns) .toggle.on::before {
+		content: '✓';
+		left: 10px;
+		right: auto;
+		color: white;
+		opacity: 0.9;
+	}
+
 	.toggle-knob {
 		display: block;
 		width: 24px;
 		height: 24px;
 		background: white;
 		border-radius: 50%;
-		box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+		box-shadow: 0 2px 5px rgba(0,0,0,0.25);
 		transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
 		transform: translateX(0);
+		z-index: 2;
+		position: relative;
 	}
-	.toggle.on .toggle-knob { transform: translateX(22px); }
+
+	.toggle.on .toggle-knob { transform: translateX(26px); }
 
 	/* ── Danger section ── */
 	.danger-section { border-color: rgba(239, 68, 68, 0.2); }

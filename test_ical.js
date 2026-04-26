@@ -1,4 +1,4 @@
-import ICAL from 'ical.js';
+const ICAL = require('ical.js');
 const icalContent = `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT

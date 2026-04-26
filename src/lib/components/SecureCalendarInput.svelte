@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { calendarStore } from '$lib/stores/calendarStore';
+    import { calendarStore, EVENT_COLORS } from '$lib/stores/calendarStore';
     import { fade, fly } from 'svelte/transition';
 
     let url = '';
@@ -19,22 +19,6 @@
         try {
             let finalUrl = url;
             
-            // Auto-enhance SRH campus web URLs using the calendar enhancer API
-            if (finalUrl.includes('srh-community.campusweb.cloud')) {
-                loadingStatus = 'Enhancing SRH calendar URL...';
-                try {
-                    const response = await fetch(`https://calendarsub.padarhava.workers.dev/api/generate?url=${encodeURIComponent(finalUrl)}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.enhancedUrl) {
-                            finalUrl = data.enhancedUrl;
-                        }
-                    }
-                } catch (err) {
-                    console.warn("Failed to automatically enhance calendar URL:", err);
-                    // Fall back to the original URL if enhancement fails
-                }
-            }
 
             loadingStatus = 'Fetching calendar data...';
             const success = await calendarStore.add(finalUrl, name || 'My Calendar');
@@ -51,6 +35,28 @@
         } finally {
             isSubmitting = false;
             loadingStatus = '';
+        }
+    }
+
+    function resolveColor(color: string) {
+        if (!color || !color.startsWith('var')) return color;
+        if (typeof window === 'undefined') return '#000000';
+        const varName = color.slice(4, -1);
+        return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#000000';
+    }
+
+    let expandedSubs: Record<string, boolean> = {};
+    let colorGridOpen: Record<string, boolean> = {};
+
+    function toggleSub(id: string) {
+        expandedSubs[id] = !expandedSubs[id];
+    }
+
+    function toggleColorGrid(id: string, e: Event) {
+        e.stopPropagation();
+        colorGridOpen[id] = !colorGridOpen[id];
+        if (colorGridOpen[id]) {
+            expandedSubs[id] = true;
         }
     }
 </script>
@@ -118,17 +124,55 @@
 
     <div class="subscriptions-list">
         {#each $calendarStore as sub (sub.id)}
-            <div class="subscription-item" transition:fade>
-                <div class="sub-info">
-                    <span class="sub-color" style="background-color: {sub.color}"></span>
-                    <span class="sub-name">{sub.name}</span>
-                    <span class="sub-status" title="Last updated">
-                        Updated: {new Date(sub.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </span>
+            <div class="subscription-item {expandedSubs[sub.id] ? 'expanded' : ''}" transition:fade>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div class="sub-header" on:click={() => toggleSub(sub.id)} role="button" tabindex="0">
+                    <div class="sub-header-left">
+                        <button 
+                            class="current-color-circle" 
+                            style="background-color: {sub.color || 'var(--primary-color)'};"
+                            on:click={(e) => toggleColorGrid(sub.id, e)}
+                            title="Change Color"
+                            aria-label="Change Color"
+                        ></button>
+                        <span class="sub-name">{sub.name}</span>
+                    </div>
+                    <div class="sub-header-right">
+                        <span class="chevron" class:open={expandedSubs[sub.id]}>▼</span>
+                    </div>
                 </div>
-                <button class="remove-btn" on:click={() => calendarStore.remove(sub.id)} aria-label="Remove calendar">
-                    🗑️
-                </button>
+                
+                {#if expandedSubs[sub.id]}
+                    <div class="sub-settings" transition:fade>
+                        <div class="setting-group flex-group">
+                            <button class="remove-btn" on:click={(e) => { e.stopPropagation(); calendarStore.remove(sub.id); }} aria-label="Remove calendar">
+                                🗑️ Remove Subscription
+                            </button>
+                        </div>
+                        {#if colorGridOpen[sub.id]}
+                            <div class="setting-group" transition:fade>
+                                <span class="setting-label">Select Color</span>
+                                <div class="color-grid">
+                                    {#each EVENT_COLORS as color}
+                                        <button 
+                                            class="color-circle" 
+                                            style="background-color: {color.id};"
+                                            class:selected={sub.color === color.id}
+                                            on:click={() => { calendarStore.updateSubscriptionColor(sub.id, color.id); colorGridOpen[sub.id] = false; }}
+                                            title={color.id.replace('var(--event-', '').replace(')', '')}
+                                        ></button>
+                                    {/each}
+                                </div>
+                            </div>
+                        {/if}
+
+                        <div class="sub-footer">
+                            <span class="sub-status">
+                                Last synced: {new Date(sub.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </span>
+                        </div>
+                    </div>
+                {/if}
             </div>
         {/each}
     </div>
@@ -258,33 +302,118 @@
         margin-bottom: var(--spacing-md);
     }
 
-    .subscriptions-list {
-        margin-top: var(--spacing-lg);
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-sm);
+    .subscription-item {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--spacing-sm);
+        overflow: hidden;
+        transition: all 0.2s;
     }
 
-    .subscription-item {
+    .subscription-item:hover {
+        border-color: var(--primary-color);
+    }
+
+    .sub-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: var(--spacing-sm) var(--spacing-md);
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-md);
+        cursor: pointer;
+        background: rgba(0,0,0,0.02);
     }
-
-    .sub-info {
+    
+    .sub-header:hover {
+        background: rgba(0,0,0,0.04);
+    }
+    
+    .sub-header-left {
         display: flex;
         align-items: center;
         gap: var(--spacing-sm);
     }
 
-    .sub-color {
-        width: 12px;
-        height: 12px;
+    .current-color-circle {
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
+        border: 1px solid rgba(0,0,0,0.1);
+        cursor: pointer;
+        padding: 0;
+        transition: transform 0.2s;
+    }
+    
+    .current-color-circle:hover {
+        transform: scale(1.2);
+    }
+
+    .sub-header-right {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .chevron {
+        font-size: 0.8rem;
+        transition: transform 0.3s ease;
+        opacity: 0.6;
+    }
+    
+    .chevron.open {
+        transform: rotate(180deg);
+    }
+
+    .sub-settings {
+        padding: var(--spacing-md);
+        border-top: 1px solid var(--border-color);
+        background: var(--card-bg);
+    }
+
+    .setting-group {
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .flex-group {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .setting-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-color-secondary);
+    }
+
+    .color-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .color-circle {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s;
+        padding: 0;
+    }
+
+    .color-circle.selected {
+        border-color: var(--text-color);
+        transform: scale(1.15);
+        box-shadow: 0 0 0 2px var(--bg-color), 0 0 0 4px var(--text-color);
+    }
+
+
+
+    .sub-footer {
+        display: flex;
+        justify-content: flex-end;
     }
 
     .sub-name {
@@ -294,20 +423,21 @@
     .sub-status {
         font-size: 0.75rem;
         color: var(--text-color-secondary);
-        margin-left: var(--spacing-sm);
     }
 
     .remove-btn {
-        background: none;
-        border: none;
+        background: rgba(255, 59, 48, 0.1);
+        color: #ff3b30;
+        border: 1px solid rgba(255, 59, 48, 0.2);
+        border-radius: var(--radius-sm);
         cursor: pointer;
-        opacity: 0.6;
-        transition: opacity 0.2s;
-        padding: 4px;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+        padding: 4px 12px;
     }
 
     .remove-btn:hover {
-        opacity: 1;
+        background: rgba(255, 59, 48, 0.2);
     }
 
     .secure-input {

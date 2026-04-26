@@ -18,15 +18,15 @@ const ALLOWED_PATTERNS = [
     'srh-calendar-enhancer.padarhava.workers.dev',
     'outlook.office365.com',
     'outlook.office.com',
+    'outlook.live.com',
     'calendar.google.com',
-    'p63-caldav.icloud.com',
-    'caldav.icloud.com',
+    'icloud.com',
+    'calendar.yahoo.com'
 ];
 
 function isAllowedUrl(urlStr: string): boolean {
     try {
         const parsed = new URL(urlStr);
-        // Must be HTTPS
         if (parsed.protocol !== 'https:') return false;
         // Check against allowlist
         return ALLOWED_PATTERNS.some(pattern => parsed.hostname.endsWith(pattern));
@@ -56,7 +56,10 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-        const response = await fetch(targetUrl, {
+        const upstreamUrl = new URL(targetUrl);
+        upstreamUrl.searchParams.set('_t', Date.now().toString());
+
+        const response = await fetch(upstreamUrl.toString(), {
             signal: controller.signal,
             headers: {
                 'User-Agent': 'CampusWeb/1.0 iCal-Proxy',
@@ -87,10 +90,14 @@ export const GET: RequestHandler = async ({ url, fetch }) => {
             });
         }
 
-        // Enhance the calendar data (clean titles, add GPS, strip PII)
-        const enhancedIcalData = enhanceIcal(icalData);
+        // Enhance the calendar data (clean titles, add GPS, strip PII) only for SRH calendars
+        const parsedUrl = new URL(targetUrl);
+        const isSrhCalendar = ['srh-community.campusweb.cloud', 'ecampus.srh-university.de']
+            .some(domain => parsedUrl.hostname.endsWith(domain));
+            
+        const outputIcalData = isSrhCalendar ? enhanceIcal(icalData) : icalData;
 
-        return new Response(enhancedIcalData, {
+        return new Response(outputIcalData, {
             status: 200,
             headers: {
                 'Content-Type': 'text/calendar; charset=utf-8',

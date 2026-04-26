@@ -11,6 +11,27 @@
 	--srh-copper: #B7410E;
 	--srh-cream: #F5F0E6;
 	--srh-grey: #E8E8E8;
+	
+	/* Event Colors - Light Mode (Semantic & RGB for transparency) */
+	--event-green-rgb: 16, 185, 129;
+	--event-orange-rgb: 245, 158, 11;
+	--event-purple-rgb: 139, 92, 246;
+	--event-pink-rgb: 236, 72, 153;
+	--event-cyan-rgb: 6, 182, 212;
+	--event-yellow-rgb: 234, 179, 8;
+	--event-srh-rgb: 212, 68, 7;
+	--event-lecture-free-rgb: 59, 130, 246;
+	--event-exams-rgb: 239, 68, 68;
+
+	--event-green: rgb(var(--event-green-rgb));
+	--event-orange: rgb(var(--event-orange-rgb));
+	--event-purple: rgb(var(--event-purple-rgb));
+	--event-pink: rgb(var(--event-pink-rgb));
+	--event-cyan: rgb(var(--event-cyan-rgb));
+	--event-yellow: rgb(var(--event-yellow-rgb));
+	--event-srh: rgb(var(--event-srh-rgb));
+	--event-lecture-free: rgb(var(--event-lecture-free-rgb));
+	--event-exams: rgb(var(--event-exams-rgb));
 
 	/* Semantic Colors */
 	--primary-color: var(--srh-orange);
@@ -72,7 +93,7 @@
 
 	/* Shadows */
 	--shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255,255,255,0.6);
-	--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.55);
+	--shadow-md: 0 4px 166px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.55);
 	--shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.14), 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 
@@ -106,6 +127,17 @@
 		--shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.06);
 		--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
 		--shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+
+		/* Event Colors - Dark Mode (RGB for transparency) */
+		--event-green-rgb: 6, 95, 70;
+		--event-orange-rgb: 146, 64, 14;
+		--event-purple-rgb: 76, 29, 149;
+		--event-pink-rgb: 131, 24, 67;
+		--event-cyan-rgb: 22, 78, 99;
+		--event-yellow-rgb: 113, 63, 18;
+		--event-srh-rgb: 124, 45, 18;
+		--event-lecture-free-rgb: 30, 58, 138;
+		--event-exams-rgb: 127, 29, 29;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -135,6 +167,17 @@
 		--shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.06);
 		--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
 		--shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+
+		/* Event Colors - Dark Mode (RGB for transparency) */
+		--event-green-rgb: 6, 95, 70;
+		--event-orange-rgb: 146, 64, 14;
+		--event-purple-rgb: 76, 29, 149;
+		--event-pink-rgb: 131, 24, 67;
+		--event-cyan-rgb: 22, 78, 99;
+		--event-yellow-rgb: 113, 63, 18;
+		--event-srh-rgb: 124, 45, 18;
+		--event-lecture-free-rgb: 30, 58, 138;
+		--event-exams-rgb: 127, 29, 29;
 	}
 }
 

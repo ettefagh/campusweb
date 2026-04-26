@@ -104,16 +104,16 @@ export async function loadCalendarEvents(): Promise<CalendarEvent[]> {
 		const lectureFreeEvents = parseICalEvents(
 			lectureFreeContent,
 			'lecture-free',
-			'#3b82f6', // blue-500
-			'#2563eb'  // blue-600
+			'var(--event-lecture-free)',
+			'var(--event-lecture-free)'
 		);
 
 		// Parse exams (red theme)
 		const examEvents = parseICalEvents(
 			examsContent,
 			'exams',
-			'#ef4444', // red-500
-			'#dc2626'  // red-600
+			'var(--event-exams)',
+			'var(--event-exams)'
 		);
 
 		allEvents.push(...lectureFreeEvents, ...examEvents);

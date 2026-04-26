@@ -102,7 +102,7 @@ function resolveLocation(rawLoc: string) {
         return { key: 'Online', name: 'Online', address: 'Online', coords: '0,0', plusCode: '', notes: '', room: '' };
     }
 
-    const roomMatch = rawLoc.match(/((?:[A-D]|CUBE|SON|Seminar|HALL)\s*\d+\.\d+|\d+\.\d+)/i);
+    const roomMatch = rawLoc.match(/((?:[A-D]|CUBE|SHED|SON|Seminar|HALL)\s*\d+\.\d+|\d+\.\d+)/i);
     const roomCode = roomMatch ? roomMatch[1] : '';
 
     let key = 'CUBE';
