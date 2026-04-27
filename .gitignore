@@ -24,6 +24,15 @@ src/Documents/
 .DS_Store
 **/.DS_Store
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Tests and Scripts
+test_*
+check_*
 
 # Build timestamps
 vite.config.js.timestamp-*
