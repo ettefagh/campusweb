@@ -5,11 +5,12 @@
 <h1 align="center">CampusWeb</h1>
 
 <p align="center">
-  <strong>A premium, mobile-first university portal for SRH students.</strong>
+  <strong>An unofficial, premium university portal created by an SRH student.</strong>
 </p>
 
 <p align="center">
   <a href="https://github.com/ettefagh/campusweb/stargazers"><img src="https://img.shields.io/github/stars/ettefagh/campusweb?style=for-the-badge&color=24292e" alt="GitHub Stars"></a>
+  <img src="https://img.shields.io/badge/Status-Unofficial-red?style=for-the-badge" alt="Unofficial Project">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License"></a>
   <br>
   <img src="https://img.shields.io/badge/SvelteKit-FF3E00?style=for-the-badge&logo=svelte&logoColor=white" alt="SvelteKit">
@@ -100,8 +101,12 @@ Contributions are welcome! Whether it's adding new SRH resources or improving th
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## ⚠️ Disclaimer
+
+**CampusWeb is an independent, student-led project.** It is **not** an official application of SRH University, nor is it endorsed or maintained by the university administration. This tool was developed by an SRH student to improve the digital experience for the student community. All trademarks and university resources belong to their respective owners.
+
 ---
 
 <p align="center">
-  Built with ❤️ for SRH University students.
+  Built with ❤️ by an SRH University student.
 </p>
