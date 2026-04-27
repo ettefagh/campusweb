@@ -17,6 +17,7 @@ export interface CalendarEvent {
 		shortLocation?: string;
 		calendarId?: string;
 		description?: string;
+		classGroupId?: string;
 	};
 }
 
@@ -64,6 +65,15 @@ export function parseICalEvents(
 				? fullLocation.split(',')[0].trim()
 				: fullLocation;
 
+			// Extract class grouping ID (Course ID) if present, otherwise group as "Other Events"
+			let classGroupId = 'Other Events';
+			if (description) {
+				const match = description.match(/Course ID:\s*(?!N\/A)(k_[A-Z0-9_]+)/i);
+				if (match && match[1]) {
+					classGroupId = match[1];
+				}
+			}
+
 			events.push({
 				id: uid,
 				title: summary,
@@ -75,7 +85,8 @@ export function parseICalEvents(
 					location: fullLocation,
 					shortLocation,
 					calendarId,
-					description
+					description,
+					classGroupId
 				}
 			});
 		});

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { settingsStore, CAMPUSES, DEPARTMENTS, campusDepartments, isSetupComplete } from '$lib/stores/settingsStore';
 	import { accessibility } from '$lib/stores/accessibility';
-	import { calendarStore } from '$lib/stores/calendarStore';
+	import { calendarStore, activeClasses, EVENT_COLORS } from '$lib/stores/calendarStore';
+	import { classColors } from '$lib/stores/classColors';
 	import { t } from '$lib/i18n';
 
 	// When campus changes, clear department selection
@@ -281,6 +282,50 @@
 				</div>
 			</div>
 		</details>
+	</section>
+
+	<!-- ── Class Color Management ──────────────── -->
+	<section class="settings-section">
+		<div class="section-header">
+			<span class="section-icon">🖍️</span>
+			<div>
+				<h2>Class Colors</h2>
+				<p class="section-desc">Customize the color of specific classes or events.</p>
+			</div>
+		</div>
+
+		{#if $activeClasses.length === 0}
+			<p class="section-desc" style="opacity: 0.7;">No active classes found in your calendar subscriptions.</p>
+		{:else}
+			<div class="class-colors-list">
+				{#each $activeClasses as cls}
+					<div class="setting-row">
+						<div class="class-color-info">
+							<span class="setting-label">{cls.title}</span>
+							{#if cls.id !== cls.title}
+								<span class="class-title-hint">{cls.id}</span>
+							{/if}
+						</div>
+						<div class="class-color-actions">
+							<div class="color-palette">
+								{#each EVENT_COLORS as ec}
+									<button
+										class="palette-swatch"
+										class:selected={($classColors[cls.id] || cls.defaultColor) === ec.id}
+										style="background-color: {ec.id}"
+										on:click={() => classColors.updateColor(cls.id, ec.id)}
+										aria-label="Select color"
+									></button>
+								{/each}
+							</div>
+							{#if $classColors[cls.id]}
+								<button class="btn-clear-color" on:click={() => classColors.resetColor(cls.id)} aria-label="Reset color">🔄</button>
+							{/if}
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</section>
 
 	<!-- ── Reset ─────────────────────────────── -->
@@ -671,6 +716,77 @@
 		.setting-row { flex-direction: column; align-items: stretch; }
 		.setting-select { max-width: 100%; }
 		.toggle-row { flex-direction: row; align-items: center; }
+		.class-color-actions { align-self: flex-start; }
+	}
+
+	/* ── Class Colors ── */
+	.class-colors-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+	}
+	.class-color-info {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-width: 0;
+	}
+	.class-title-hint {
+		font-size: 0.75rem;
+		color: var(--text-color-secondary);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 250px;
+	}
+	.class-color-actions {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-sm);
+		flex-wrap: wrap;
+	}
+	.color-palette {
+		display: flex;
+		gap: 4px;
+		background: var(--bg-color);
+		padding: 4px;
+		border-radius: var(--radius-md);
+		border: 1px solid var(--border-color);
+	}
+	.palette-swatch {
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		border: 2px solid transparent;
+		cursor: pointer;
+		padding: 0;
+		transition: transform 0.1s, border-color 0.2s;
+	}
+	.palette-swatch:hover {
+		transform: scale(1.1);
+	}
+	.palette-swatch.selected {
+		border-color: var(--text-color);
+		box-shadow: 0 0 0 1px var(--bg-color) inset;
+	}
+	.btn-clear-color {
+		background: var(--bg-color);
+		border: 1px solid var(--border-color);
+		color: var(--text-color-secondary);
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.8rem;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+	.btn-clear-color:hover {
+		background: rgba(239, 68, 68, 0.1);
+		color: #ef4444;
+		border-color: rgba(239, 68, 68, 0.3);
 	}
 
 	/* ── Collapsible a11y section ── */

@@ -7,11 +7,12 @@
   import "@event-calendar/core/index.css";
   import { loadCalendarEvents } from "$lib/utils/icalParser";
   import type { CalendarEvent } from "$lib/utils/icalParser";
-  import { calendarStore, getTextureForColor } from "$lib/stores/calendarStore";
+  import { calendarStore, activeClasses, getTextureForColor } from "$lib/stores/calendarStore";
   import SecureCalendarInput from "$lib/components/SecureCalendarInput.svelte";
   import { focusTrap } from "$lib/utils/focusTrap";
   import { browser } from "$app/environment";
   import { settingsStore, activeDepartment } from "$lib/stores/settingsStore";
+  import { classColors } from "$lib/stores/classColors";
 
   import { t } from "$lib/i18n";
 
@@ -92,20 +93,28 @@
 
   function getAllEvents(): any[] {
     const subEvents = currentSubs.flatMap((s) => s.cachedEvents);
+    const classColorDefaults = new Map($activeClasses.map(c => [c.id, c.defaultColor]));
+    
     return [...staticEvents, ...subEvents]
       .filter((evt) => !hiddenSources.has(evt.extendedProps?.calendarId || ""))
-      .map((evt) => ({
-        id: evt.id,
-        title: evt.title,
-        start: evt.start,
-        end: evt.end,
-        allDay: evt.allDay,
-        backgroundColor: evt.backgroundColor,
-        extendedProps: {
-          ...evt.extendedProps,
-          texture: getTextureForColor(evt.backgroundColor),
-        },
-      }));
+      .map((evt) => {
+        const classGroupId = evt.extendedProps?.classGroupId;
+        const customColor = classGroupId ? $classColors[classGroupId] : null;
+        const autoColor = classGroupId ? classColorDefaults.get(classGroupId) : null;
+        const finalColor = customColor || autoColor || evt.backgroundColor;
+        return {
+          id: evt.id,
+          title: evt.title,
+          start: evt.start,
+          end: evt.end,
+          allDay: evt.allDay,
+          backgroundColor: finalColor,
+          extendedProps: {
+            ...evt.extendedProps,
+            texture: getTextureForColor(finalColor),
+          },
+        };
+      });
   }
 
   // ─── EC Options ──────────────────────────────────────────────────
@@ -349,6 +358,18 @@
     }
   });
 
+  const unsubscribeColors = classColors.subscribe(() => {
+    if (isMounted) {
+      options = { ...options, events: getAllEvents() };
+    }
+  });
+
+  const unsubscribeActiveClasses = activeClasses.subscribe(() => {
+    if (isMounted) {
+      options = { ...options, events: getAllEvents() };
+    }
+  });
+
   async function handleRefresh() {
     if (isLoading) return;
     isLoading = true;
@@ -447,6 +468,8 @@
     return () => {
       isMounted = false;
       unsubscribe();
+      unsubscribeColors();
+      unsubscribeActiveClasses();
       clearInterval(nowInterval);
     };
   });

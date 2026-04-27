@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
 import type { CalendarEvent } from '$lib/utils/icalParser';
 import { parseICalEvents, extractCalendarName } from '$lib/utils/icalParser';
@@ -239,3 +239,30 @@ if (browser) {
         }
     });
 }
+
+// Derived store to get all unique active classes from current subscriptions
+export const activeClasses = derived(calendarStore, $subs => {
+    const uniqueGroups = new Map<string, { id: string, title: string, calendarName: string }>();
+    
+    for (const sub of $subs) {
+        for (const evt of sub.cachedEvents) {
+            const groupId = evt.extendedProps?.classGroupId;
+            if (groupId && !uniqueGroups.has(groupId)) {
+                uniqueGroups.set(groupId, { 
+                    id: groupId, 
+                    title: groupId === 'Other Events' ? 'Miscellaneous events without a Course ID' : evt.title, 
+                    calendarName: sub.name
+                });
+            }
+        }
+    }
+    
+    // Sort alphabetically by ID to ensure deterministic order
+    const sortedGroups = Array.from(uniqueGroups.values()).sort((a, b) => a.id.localeCompare(b.id));
+    
+    // Assign colors sequentially to ensure uniqueness as much as possible
+    return sortedGroups.map((group, index) => ({
+        ...group,
+        defaultColor: EVENT_COLORS[index % EVENT_COLORS.length].id
+    }));
+});
