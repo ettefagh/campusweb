@@ -15,7 +15,7 @@
 	/* Event Colors - Light Mode (Semantic & RGB for transparency) */
 	--event-green-rgb: 16, 185, 129;
 	--event-orange-rgb: 245, 158, 11;
-	--event-purple-rgb: 139, 92, 246;
+	--event-purple-rgb: 58 102 230;
 	--event-pink-rgb: 236, 72, 153;
 	--event-cyan-rgb: 6, 182, 212;
 	--event-yellow-rgb: 234, 179, 8;
@@ -131,13 +131,13 @@
 		/* Event Colors - Dark Mode (RGB for transparency) */
 		--event-green-rgb: 6, 95, 70;
 		--event-orange-rgb: 146, 64, 14;
-		--event-purple-rgb: 76, 29, 149;
-		--event-pink-rgb: 131, 24, 67;
+		--event-purple-rgb: 58, 102, 230;
+		--event-pink-rgb: 206, 42, 108;
 		--event-cyan-rgb: 22, 78, 99;
-		--event-yellow-rgb: 113, 63, 18;
+		--event-yellow-rgb: 194, 107, 30;
 		--event-srh-rgb: 124, 45, 18;
-		--event-lecture-free-rgb: 30, 58, 138;
-		--event-exams-rgb: 127, 29, 29;
+		--event-lecture-free-rgb: 47, 92, 221;
+		--event-exams-rgb: 198, 47, 47;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -171,9 +171,9 @@
 		/* Event Colors - Dark Mode (RGB for transparency) */
 		--event-green-rgb: 16, 185, 129;
 		--event-orange-rgb: 185, 82, 20;
-		--event-purple-rgb: 76, 29, 149;
+		--event-purple-rgb: 51, 61, 145;
 		--event-pink-rgb: 131, 24, 67;
-		--event-cyan-rgb: 22, 78, 99;
+		--event-cyan-rgb: 46, 153, 194;
 		--event-yellow-rgb: 113, 63, 18;
 		--event-srh-rgb: 124, 45, 18;
 		--event-lecture-free-rgb: 30, 58, 138;

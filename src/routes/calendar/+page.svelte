@@ -74,19 +74,6 @@
   // ─── Feature 4: Empty State ─────────────────────────────────────
   $: currentEventsCount = options.events?.length ?? 0;
 
-  // ─── Responsive multi-day view ─────────────────────────────────
-  // Adapts the number of visible days to screen width:
-  //   portrait mobile → 3 days, landscape → 5 days, desktop → 7 days (week)
-  $: multiDayViewName = isPortraitMobile
-    ? "timeGrid3Day"
-    : isLandscapeMobile
-      ? "timeGrid5Day"
-      : "timeGridWeek";
-
-  $: multiDayLabel = isPortraitMobile
-    ? $t.calendar.threeDays
-    : $t.calendar.week;
-
   function getDefaultView(): string {
     const breakpoint = isDesktop
       ? "desktop"
@@ -98,8 +85,8 @@
       if (saved) return saved;
     }
 
-    if (isPortraitMobile) return "timeGrid3Day";
-    if (isLandscapeMobile) return "timeGrid5Day";
+    if (isPortraitMobile) return "listWeek";
+    if (isLandscapeMobile) return "listWeek";
     return "timeGridWeek";
   }
 
@@ -122,22 +109,7 @@
   }
 
   // ─── EC Options ──────────────────────────────────────────────────
-  const MultiDayPlugin = {
-    createOptions(opts: any) {
-      if (opts.views?.timeGridWeek?.component) {
-        opts.views.timeGrid3Day = {
-          component: opts.views.timeGridWeek.component,
-          duration: { days: 3 },
-        };
-        opts.views.timeGrid5Day = {
-          component: opts.views.timeGridWeek.component,
-          duration: { days: 5 },
-        };
-      }
-    },
-  };
-
-  let plugins = [TimeGrid, DayGrid, List, MultiDayPlugin];
+  let plugins = [TimeGrid, DayGrid, List];
 
   let options: any = {
     view: getDefaultView(),
@@ -566,9 +538,9 @@
             >
             <button
               class="view-btn"
-              class:active={currentViewLabel === "timeGridWeek" || currentViewLabel === "timeGrid3Day" || currentViewLabel === "timeGrid5Day"}
-              on:click={() => switchView(multiDayViewName)}
-              >{multiDayLabel}</button
+              class:active={currentViewLabel === "timeGridWeek"}
+              on:click={() => switchView("timeGridWeek")}
+              >{$t.calendar.week}</button
             >
             <button
               class="view-btn"
@@ -1561,13 +1533,19 @@
     justify-content: space-between;
   }
 
-  :global(.ec-list .ec-event-tag) {
+  :global(.ec-event-tag) {
     display: none !important;
   }
 
   /* Assistive Textures - Enabled state */
   :global(.a11y-assistive-patterns .ec-event-inner) {
     border-left-width: 8px !important; /* Thicker bar when enabled */
+  }
+
+  @media (max-width: 1023px) {
+    :global(.ec-event-inner) {
+      border-left: none !important;
+    }
   }
 
   /* Assistive Texture Layer (covers entire card) */
