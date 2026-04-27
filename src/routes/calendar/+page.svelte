@@ -7,7 +7,11 @@
   import "@event-calendar/core/index.css";
   import { loadCalendarEvents } from "$lib/utils/icalParser";
   import type { CalendarEvent } from "$lib/utils/icalParser";
-  import { calendarStore, activeClasses, getTextureForColor } from "$lib/stores/calendarStore";
+  import {
+    calendarStore,
+    activeClasses,
+    getTextureForColor,
+  } from "$lib/stores/calendarStore";
   import SecureCalendarInput from "$lib/components/SecureCalendarInput.svelte";
   import { focusTrap } from "$lib/utils/focusTrap";
   import { browser } from "$app/environment";
@@ -93,14 +97,18 @@
 
   function getAllEvents(): any[] {
     const subEvents = currentSubs.flatMap((s) => s.cachedEvents);
-    const classColorDefaults = new Map($activeClasses.map(c => [c.id, c.defaultColor]));
-    
+    const classColorDefaults = new Map(
+      $activeClasses.map((c) => [c.id, c.defaultColor]),
+    );
+
     return [...staticEvents, ...subEvents]
       .filter((evt) => !hiddenSources.has(evt.extendedProps?.calendarId || ""))
       .map((evt) => {
         const classGroupId = evt.extendedProps?.classGroupId;
         const customColor = classGroupId ? $classColors[classGroupId] : null;
-        const autoColor = classGroupId ? classColorDefaults.get(classGroupId) : null;
+        const autoColor = classGroupId
+          ? classColorDefaults.get(classGroupId)
+          : null;
         const finalColor = customColor || autoColor || evt.backgroundColor;
         return {
           id: evt.id,
@@ -1035,8 +1043,12 @@
     box-shadow: var(--glass-shadow-lg);
     height: calc(100vh - 380px);
     min-height: 400px;
-    padding-bottom: 70px; /* Space for the absolute toolbar */
+    padding-bottom: 67px; /* Space for the absolute toolbar */
     transition: opacity 0.3s ease;
+  }
+
+  [data-theme="light"] .calendar-container {
+    background: #ffffff38;
   }
 
   /* ─── Feature 4: Empty State ─────────────────────────────────── */
@@ -1681,8 +1693,6 @@
     z-index: 2;
     pointer-events: none;
   }
-
-
 
   /* Today's column: solid red line (the default ec-now-indicator border) */
   :global(.ec-now-indicator) {

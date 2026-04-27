@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { settingsStore, CAMPUSES, DEPARTMENTS, campusDepartments, isSetupComplete } from '$lib/stores/settingsStore';
+	import { settingsStore, CAMPUSES, DEPARTMENTS, campusDepartments, isSetupComplete, type AppLanguage, type WeekStart } from '$lib/stores/settingsStore';
 	import { accessibility } from '$lib/stores/accessibility';
 	import { calendarStore, activeClasses, EVENT_COLORS } from '$lib/stores/calendarStore';
 	import { classColors } from '$lib/stores/classColors';
 	import { t } from '$lib/i18n';
+	import { version } from '$app/environment';
 
 	// When campus changes, clear department selection
 	function handleCampusChange(campusId: string) {
@@ -12,6 +13,14 @@
 
 	function handleDepartmentChange(deptId: string) {
 		settingsStore.patch({ departmentId: deptId });
+	}
+
+	function handleLanguageChange(lang: string) {
+		settingsStore.patch({ language: lang as AppLanguage });
+	}
+
+	function handleWeekStartChange(start: number) {
+		settingsStore.patch({ weekStartsOn: start as WeekStart });
 	}
 
 	const languageOptions = [
@@ -27,7 +36,7 @@
 	}
 
 	// ── Update / Reload ───────────────────────────────────────────
-	const APP_VERSION = '1.0.0';
+	const APP_VERSION = version;
 	let updateStatus: 'idle' | 'checking' | 'updating' = 'idle';
 
 	async function handleUpdate() {
@@ -147,7 +156,7 @@
 				<button
 					class="segment"
 					class:active={$settingsStore.language === lang.value}
-					on:click={() => settingsStore.patch({ language: lang.value })}
+					on:click={() => handleLanguageChange(lang.value)}
 					aria-pressed={$settingsStore.language === lang.value}
 				>
 					<span class="segment-flag">{lang.flag}</span>
@@ -214,7 +223,7 @@
 				id="week-start"
 				class="setting-select setting-select--inline"
 				value={$settingsStore.weekStartsOn}
-				on:change={(e) => settingsStore.patch({ weekStartsOn: Number(e.currentTarget.value) })}
+				on:change={(e) => handleWeekStartChange(Number(e.currentTarget.value))}
 			>
 				<option value={1}>{$t.settings.monday}</option>
 				<option value={0}>{$t.settings.sunday}</option>
