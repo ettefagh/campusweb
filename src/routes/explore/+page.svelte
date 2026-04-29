@@ -12,6 +12,10 @@
 		favorites.toggle(event.detail.linkId);
 	}
 
+	function getCategoryName(cat: string, dict: any) {
+		return dict?.[cat] || cat;
+	}
+
 	function handleExternalSearch(sourceId: string) {
 		const source = searchSources.find((s) => s.id === sourceId)!;
 		const query = searchQuery.trim();
@@ -105,7 +109,7 @@
 	<div class="explore-content">
 		{#each activeCategories as category}
 			<section class="category-section">
-				<h2 class="category-title">{$t.linkCategory?.[category as keyof typeof $t.linkCategory] || category}</h2>
+				<h2 class="category-title">{getCategoryName(category, $t.linkCategory)}</h2>
 				<div class="links-grid">
 					{#each filteredLinks.filter((link) => link.category_name === category) as link (link.id)}
 						<LinkCard
