@@ -641,14 +641,6 @@
 		cursor: pointer;
 	}
 
-	.version-note {
-		text-align: center;
-		font-size: 0.78rem;
-		color: var(--text-color-secondary);
-		margin-top: var(--spacing-xl);
-		opacity: 0.6;
-	}
-
 	/* ── Update Card ── */
 	.update-card {
 		display: flex;

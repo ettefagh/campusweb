@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
 	import { accessibility } from "$lib/stores/accessibility";
+	import { t } from "$lib/i18n";
 
 	export let link: {
 		id: string;
@@ -29,8 +30,13 @@
 		dispatch("toggleFavorite", { linkId: link.id });
 	}
 
+	// Derive translated fields
+	$: displayTitle = $t.linkTitle?.[link.id as keyof typeof $t.linkTitle] || link.title;
+	$: displayDesc = $t.linkDesc?.[link.id as keyof typeof $t.linkDesc] || link.description;
+	$: displayCategory = link.category_name ? ($t.linkCategory?.[link.category_name as keyof typeof $t.linkCategory] || link.category_name) : undefined;
+
 	$: finalUrl = useViewer
-		? `/viewer?url=${encodeURIComponent(link.url)}&title=${encodeURIComponent(link.title)}`
+		? `/viewer?url=${encodeURIComponent(link.url)}&title=${encodeURIComponent(displayTitle)}`
 		: link.url;
 
 	// Accessibility: build aria-label based on context and screen reader hints setting.
@@ -38,11 +44,11 @@
 	// In normal mode + screenReaderHints: include the destination URL as a hint.
 	$: ariaLabel = (() => {
 		if (editMode) {
-			return `${link.title} — ${isFavorite ? 'Remove from favorites' : 'Add to favorites'}`;
+			return `${displayTitle} — ${isFavorite ? 'Remove from favorites' : 'Add to favorites'}`;
 		}
 		if ($accessibility.screenReaderHints) {
-			const dest = link.description ? `${link.description}. ` : '';
-			return `${link.title}. ${dest}Opens ${link.url} in a new tab.`;
+			const dest = displayDesc ? `${displayDesc}. ` : '';
+			return `${displayTitle}. ${dest}Opens ${link.url} in a new tab.`;
 		}
 		return undefined; // Let visible text serve as the label
 	})();
@@ -69,12 +75,12 @@
 	>
 		<span class="icon" aria-hidden="true">{link.icon}</span>
 		<div class="content">
-			<h3 class="title">{link.title}</h3>
-			{#if link.description}
-				<p class="description">{link.description}</p>
+			<h3 class="title">{displayTitle}</h3>
+			{#if displayDesc}
+				<p class="description">{displayDesc}</p>
 			{/if}
-			{#if link.category_name}
-				<span class="category">{link.category_name}</span>
+			{#if displayCategory}
+				<span class="category">{displayCategory}</span>
 			{/if}
 		</div>
 		{#if editMode}

@@ -35,10 +35,13 @@
 	$: filteredLinks = allLinks.filter((link) => {
 		if (!searchQuery.trim()) return true;
 		const query = searchQuery.toLowerCase();
+		const title = $t.linkTitle?.[link.id as keyof typeof $t.linkTitle] || link.title;
+		const desc = $t.linkDesc?.[link.id as keyof typeof $t.linkDesc] || link.description || "";
+		const cat = link.category_name ? ($t.linkCategory?.[link.category_name as keyof typeof $t.linkCategory] || link.category_name) : "";
 		return (
-			link.title.toLowerCase().includes(query) ||
-			(link.description && link.description.toLowerCase().includes(query)) ||
-			(link.category_name && link.category_name.toLowerCase().includes(query))
+			title.toLowerCase().includes(query) ||
+			desc.toLowerCase().includes(query) ||
+			cat.toLowerCase().includes(query)
 		);
 	});
 
@@ -102,7 +105,7 @@
 	<div class="explore-content">
 		{#each activeCategories as category}
 			<section class="category-section">
-				<h2 class="category-title">{category}</h2>
+				<h2 class="category-title">{$t.linkCategory?.[category as keyof typeof $t.linkCategory] || category}</h2>
 				<div class="links-grid">
 					{#each filteredLinks.filter((link) => link.category_name === category) as link (link.id)}
 						<LinkCard

@@ -13,9 +13,11 @@
 		? allLinks.filter((link) => {
 				const query = searchQuery.toLowerCase().trim();
 				if (!query) return true;
+				const title = $t.linkTitle?.[link.id as keyof typeof $t.linkTitle] || link.title;
+				const desc = $t.linkDesc?.[link.id as keyof typeof $t.linkDesc] || link.description || "";
 				return (
-					link.title.toLowerCase().includes(query) ||
-					link.description.toLowerCase().includes(query)
+					title.toLowerCase().includes(query) ||
+					desc.toLowerCase().includes(query)
 				);
 			})
 		: allLinks.filter((link) => $favorites.includes(link.id));
