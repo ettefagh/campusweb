@@ -165,26 +165,31 @@
     },
     height: "100%",
     eventContent: (info: any) => {
-      const loc = info.event.extendedProps?.shortLocation || "";
+      // Escape HTML entities in user-sourced data to prevent XSS
+      const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+      const rawLoc = info.event.extendedProps?.shortLocation || "";
+      const loc = esc(rawLoc);
       const locHtml = loc ? `<span class="ec-event-loc">📍${loc}</span>` : "";
       const texture = info.event.extendedProps?.texture || "solid";
       const color = info.event.backgroundColor || "var(--primary-color)";
-      const style = `--event-color: ${color};`;
+      const style = `--event-color: ${esc(color)};`;
+      const title = esc(info.event.title || "");
 
       // List view: flat layout with title + location tag
       if (info.view?.type?.startsWith("list")) {
         return {
-          html: `<div class="ec-event-inner ec-event-inner--list" style="${style}" data-texture="${texture}"><span class="ec-event-title-text">${info.event.title}</span>${locHtml}</div>`,
+          html: `<div class="ec-event-inner ec-event-inner--list" style="${style}" data-texture="${texture}"><span class="ec-event-title-text">${title}</span>${locHtml}</div>`,
         };
       }
 
       // Time grid / day grid: stacked layout
       const timeHtml =
         !info.event.allDay && info.timeText
-          ? `<div class="ec-event-time-custom">${info.timeText}</div>`
+          ? `<div class="ec-event-time-custom">${esc(info.timeText)}</div>`
           : "";
       return {
-        html: `<div class="ec-event-inner" style="${style}" data-texture="${texture}">${timeHtml}<div class="ec-event-title-text">${info.event.title}</div>${locHtml}</div>`,
+        html: `<div class="ec-event-inner" style="${style}" data-texture="${texture}">${timeHtml}<div class="ec-event-title-text">${title}</div>${locHtml}</div>`,
       };
     },
     eventClick: (info: any) => {

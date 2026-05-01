@@ -23,9 +23,18 @@
 
   $: url = $page.url.searchParams.get("url");
   $: title = $page.url.searchParams.get("title");
-  $: isValidUrl = url
-    ? ALLOWED_DOMAINS.some((d) => new URL(url!).hostname.endsWith(d))
-    : false;
+  $: isValidUrl = (() => {
+    if (!url) return false;
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:') return false;
+      return ALLOWED_DOMAINS.some((d) =>
+        parsed.hostname === d || parsed.hostname.endsWith('.' + d)
+      );
+    } catch {
+      return false;
+    }
+  })();
 
   let isLoading = true;
 
