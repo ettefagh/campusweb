@@ -271,6 +271,14 @@ export const serviceLinks = [
 		icon: '🛒',
 		description: 'Official merchandise',
 		category_name: 'Services'
+	},
+	{
+		id: 'equipment-rental',
+		title: 'Equipment Rental',
+		url: 'https://srhberlin.booqableshop.com/',
+		icon: '📷',
+		description: 'Rent equipment from SRH Berlin',
+		category_name: 'Services'
 	}
 ];
 
@@ -283,11 +291,56 @@ export const utilityLinks = [
 		icon: '📄',
 		description: 'Edit, merge, and convert PDFs',
 		category_name: 'Utilities'
+	},
+	{
+		id: 'calendar-subscription',
+		title: 'Calendar Subscription',
+		url: 'https://calendarsub.padarhava.workers.dev/',
+		icon: '📅',
+		description: 'Manage calendar subscriptions',
+		category_name: 'Utilities'
+	}
+];
+
+// Internal App Sections
+export const internalAppLinks = [
+	{
+		id: 'department-directory',
+		title: 'Department Directory',
+		url: '/feed', // Can add #directory if an ID is added later
+		icon: '📋',
+		description: 'Find university contacts and send emails',
+		category_name: 'App Sections'
+	},
+	{
+		id: 'calendar-app',
+		title: 'Calendar',
+		url: '/calendar',
+		icon: '📅',
+		description: 'University events, exams, and schedule',
+		category_name: 'App Sections'
+	},
+	{
+		id: 'settings-app',
+		title: 'Settings',
+		url: '/settings',
+		icon: '⚙️',
+		description: 'Personalize your CampusWeb experience',
+		category_name: 'App Sections'
+	},
+	{
+		id: 'accessibility-app',
+		title: 'Accessibility',
+		url: '/settings', // Will land on settings, user can expand the A11y section
+		icon: '♿',
+		description: 'Visual and interaction aids',
+		category_name: 'App Sections'
 	}
 ];
 
 // Combined list for all sections
 export const allLinks = [
+	...internalAppLinks,
 	...campusWebLinks,
 	...eCampusLinks,
 	...resourceLinks,
@@ -298,6 +351,7 @@ export const allLinks = [
 
 // Category order for display
 export const categoryOrder = [
+	'App Sections',
 	'CampusWeb Portal',
 	'Academic Services',
 	'E-Campus Learning',

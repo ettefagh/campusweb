@@ -25,6 +25,8 @@
 				window.location.href = `/viewer?url=${encodeURIComponent(`https://www.srh-university.de/en/search/?q=${encodeURIComponent(query)}`)}&title=${encodeURIComponent(source.name + " Search")}`;
 			} else if (source.id === "ecampus") {
 				window.open(`https://ecampus.srh-university.de/search/index.php?q=${encodeURIComponent(query)}`, "_blank");
+			} else if (source.id === "equipment") {
+				window.location.href = `/viewer?url=${encodeURIComponent(`https://srhberlin.booqableshop.com/search?q=${encodeURIComponent(query)}`)}&title=${encodeURIComponent(source.name + " Search")}`;
 			}
 		} else if (source.staticUrl) {
 			if (source.id === "library") {
@@ -57,6 +59,7 @@
 	const searchSources = [
 		{ id: "srh", name: "University Website", icon: "🎓", searchable: true },
 		{ id: "ecampus", name: "E-Campus", icon: "💻", searchable: true },
+		{ id: "equipment", name: "Equipment Rental", icon: "📷", searchable: true },
 		{ id: "library", name: "Library", icon: "📚", searchable: false, staticUrl: "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB" },
 		{ id: "team", name: "Staff", icon: "👥", searchable: false, staticUrl: "https://www.srh-university.de/en/srh-university/faculty-and-team/" },
 	];

@@ -57,9 +57,6 @@ export function parseICalEvents(
 			const endDate = dtend.toJSDate();
 
 			// Extract short location label (room code) from the full address
-			// ical.js already unescapes \, → , so we split on regular comma
-			// e.g. "B0.07 - SHED, Sonnenallee 221C, 12059 Berlin" → "B0.07 - SHED"
-			// e.g. "Online" → "Online"
 			const fullLocation = location || '';
 			const shortLocation = fullLocation.includes(',')
 				? fullLocation.split(',')[0].trim()
@@ -98,38 +95,35 @@ export function parseICalEvents(
 }
 
 /**
- * Load and parse multiple iCal files
+ * Load and parse multiple iCal files for the academic calendar
  */
 export async function loadCalendarEvents(): Promise<CalendarEvent[]> {
 	const allEvents: CalendarEvent[] = [];
+	
+	const sources = [
+		{ id: 'lecture-free', file: 'academic-calendar-lecture-free.ics', color: 'var(--event-lecture-free)' },
+		{ id: 'exams', file: 'academic-calendar-examinations.ics', color: 'var(--event-exams)' },
+		{ id: 'modules', file: 'academic-calendar-modules.ics', color: 'var(--event-orange)' },
+		{ id: 'welcome-week', file: 'academic-calendar-welcome-week.ics', color: 'var(--event-pink)' },
+		{ id: 'semester-dates', file: 'academic-calendar-semester-dates.ics', color: 'var(--event-purple)' }
+	];
 
 	try {
-		// Import the iCal files as raw text
-		const lectureFreeResponse = await fetch('/Documents/lecture-free-periods.ics');
-		const lectureFreeContent = await lectureFreeResponse.text();
-		
-		const examsResponse = await fetch('/Documents/exams.ics');
-		const examsContent = await examsResponse.text();
+		const results = await Promise.all(sources.map(async (src) => {
+			try {
+				const response = await fetch(`/Documents/${src.file}`);
+				if (!response.ok) return [];
+				const content = await response.text();
+				return parseICalEvents(content, src.id, src.color, src.color);
+			} catch (e) {
+				console.warn(`Failed to load ${src.file}`, e);
+				return [];
+			}
+		}));
 
-		// Parse lecture-free periods (blue theme)
-		const lectureFreeEvents = parseICalEvents(
-			lectureFreeContent,
-			'lecture-free',
-			'var(--event-lecture-free)',
-			'var(--event-lecture-free)'
-		);
-
-		// Parse exams (red theme)
-		const examEvents = parseICalEvents(
-			examsContent,
-			'exams',
-			'var(--event-exams)',
-			'var(--event-exams)'
-		);
-
-		allEvents.push(...lectureFreeEvents, ...examEvents);
+		results.forEach(evts => allEvents.push(...evts));
 	} catch (error) {
-		console.error('Error loading calendar events:', error);
+		console.error('Error loading academic calendar events:', error);
 	}
 
 	return allEvents;

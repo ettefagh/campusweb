@@ -64,8 +64,8 @@
 		href={finalUrl}
 		class="link-card"
 		class:clickable={editMode}
-		target={editMode ? undefined : "_blank"}
-		rel={editMode ? undefined : "noopener noreferrer"}
+		target={editMode || link.url.startsWith('/') ? undefined : "_blank"}
+		rel={editMode || link.url.startsWith('/') ? undefined : "noopener noreferrer"}
 		on:click={handleClick}
 		role={editMode ? "button" : undefined}
 		tabindex={editMode ? 0 : undefined}

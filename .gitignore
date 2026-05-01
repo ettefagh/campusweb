@@ -34,6 +34,7 @@ pnpm-debug.log*
 Tests/
 test_*
 check_*
+scripts/
 
 # Build timestamps
 vite.config.js.timestamp-*

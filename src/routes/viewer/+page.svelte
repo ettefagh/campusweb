@@ -12,6 +12,7 @@
     "tools.pdf24.org",
     "srh-berlin.idm.oclc.org",
     "srh-calendar-enhancer.padarhava.workers.dev",
+    "calendarsub.padarhava.workers.dev",
     "srh-university.de",
     "www.srh-university.de",
     "srh.de",
@@ -19,6 +20,7 @@
     "ecampus.srh-university.de",
     "webopac.srh-hochschulen.de",
     "srh-store.de",
+    "srhberlin.booqableshop.com",
   ];
 
   $: url = $page.url.searchParams.get("url");

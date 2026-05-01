@@ -50,41 +50,77 @@ export interface AppSettings {
   compactCards: boolean;
   /** Show seconds in time displays */
   showSeconds: boolean;
+  /** Whether the user has verified their university email */
+  emailVerified: boolean;
 }
 
 // ── Static Data: Campuses ─────────────────────────────────────────────────────
 
 export const CAMPUSES: Campus[] = [
+  { id: 'bamberg', name: 'SRH Bamberg', city: 'Bamberg', country: 'DE' },
   { id: 'berlin', name: 'SRH Berlin', city: 'Berlin', country: 'DE' },
-  { id: 'cologne', name: 'SRH Cologne', city: 'Cologne', country: 'DE' },
-  { id: 'fuerth', name: 'SRH Fürth', city: 'Fürth', country: 'DE' },
+  { id: 'bremen', name: 'SRH Bremen', city: 'Bremen', country: 'DE' },
   { id: 'dresden', name: 'SRH Dresden', city: 'Dresden', country: 'DE' },
+  { id: 'duesseldorf', name: 'SRH Düsseldorf', city: 'Düsseldorf', country: 'DE' },
+  { id: 'fuerth', name: 'SRH Fürth', city: 'Fürth', country: 'DE' },
+  { id: 'gera', name: 'SRH Gera', city: 'Gera', country: 'DE' },
   { id: 'hamburg', name: 'SRH Hamburg', city: 'Hamburg', country: 'DE' },
+  { id: 'hamm', name: 'SRH Hamm', city: 'Hamm', country: 'DE' },
+  { id: 'heide', name: 'SRH Heide', city: 'Heide', country: 'DE' },
   { id: 'heidelberg', name: 'SRH Heidelberg', city: 'Heidelberg', country: 'DE' },
+  { id: 'karlsruhe', name: 'SRH Karlsruhe', city: 'Karlsruhe', country: 'DE' },
+  { id: 'cologne', name: 'SRH Köln', city: 'Köln', country: 'DE' },
   { id: 'leipzig', name: 'SRH Leipzig', city: 'Leipzig', country: 'DE' },
-  { id: 'munich', name: 'SRH Munich', city: 'Munich', country: 'DE' },
+  { id: 'leverkusen', name: 'SRH Leverkusen', city: 'Leverkusen', country: 'DE' },
+  { id: 'munich', name: 'SRH München', city: 'München', country: 'DE' },
   { id: 'stuttgart', name: 'SRH Stuttgart', city: 'Stuttgart', country: 'DE' },
+  { id: 'tuebingen', name: 'SRH Tübingen', city: 'Tübingen', country: 'DE' },
 ];
 
-// ── Static Data: Departments ──────────────────────────────────────────────────
-// Mapping provided majors to all campuses
+// ── Static Data: Schools (Departments) ────────────────────────────────────────
+// Actual school-per-campus mappings from the official programme directors list.
 
-const MAJOR_LIST = [
+const SCHOOL_LIST = [
   { id: 'aim', name: 'Artificial Intelligence & Machine Learning', shortName: 'AIM' },
-  { id: 'bls', name: 'Business Law & Sustainability', shortName: 'BLS' },
+  { id: 'bls', name: 'Business, Law & Sustainability', shortName: 'BLS' },
   { id: 'hes', name: 'Health & Environmental Sciences', shortName: 'HES' },
   { id: 'psy', name: 'Psychology & Behavioral Sciences', shortName: 'PSY' },
-  { id: 'teac', name: 'Teaching & Educational Arts', shortName: 'TEAC' },
+  { id: 'teac', name: 'Technology, Engineering & Computing', shortName: 'TEAC' },
 ];
 
-export const DEPARTMENTS: Department[] = CAMPUSES.flatMap(campus => 
-  MAJOR_LIST.map(major => ({
-    id: `${major.id}_${campus.id}`,
-    campusId: campus.id,
-    name: major.name,
-    shortName: major.shortName,
-    icalUrl: `https://ical.srh.de/${major.id}/${campus.id}.ics`
-  }))
+// Which schools are actually present at each campus (from programme directors PDF)
+const CAMPUS_SCHOOLS: Record<string, string[]> = {
+  bamberg: ['bls', 'hes'],
+  berlin: ['aim', 'bls', 'hes', 'psy', 'teac'],
+  bremen: ['bls', 'hes', 'teac'],
+  dresden: ['bls', 'hes', 'teac'],
+  duesseldorf: ['bls', 'hes'],
+  fuerth: ['aim', 'bls', 'hes', 'teac'],
+  gera: ['bls', 'hes', 'psy', 'teac'],
+  hamburg: ['bls', 'hes', 'teac'],
+  hamm: ['bls', 'hes'],
+  heide: ['hes'],
+  heidelberg: ['bls', 'hes', 'psy', 'teac'],
+  karlsruhe: ['hes'],
+  cologne: ['bls', 'hes'],
+  leipzig: ['bls', 'hes', 'teac'],
+  leverkusen: ['hes'],
+  munich: ['aim', 'bls', 'hes', 'teac'],
+  stuttgart: ['hes', 'psy', 'teac'],
+  tuebingen: ['hes'],
+};
+
+export const DEPARTMENTS: Department[] = Object.entries(CAMPUS_SCHOOLS).flatMap(
+  ([campusId, schoolIds]) =>
+    schoolIds.map((sid) => {
+      const school = SCHOOL_LIST.find((s) => s.id === sid)!;
+      return {
+        id: `${sid}_${campusId}`,
+        campusId,
+        name: school.name,
+        shortName: school.shortName,
+      };
+    })
 );
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
@@ -97,6 +133,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   weekStartsOn: 1, // Monday
   compactCards: false,
   showSeconds: false,
+  emailVerified: false,
 };
 
 const STORAGE_KEY = 'app_settings';

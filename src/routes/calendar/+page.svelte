@@ -45,7 +45,8 @@
   let popupPosition = { x: 0, y: 0 };
 
   // ─── Feature 1: Interactive Legend Filter ────────────────────────
-  let hiddenSources: Set<string> = new Set();
+  // Default: Hide modules, welcome-week, and semester-dates
+  let hiddenSources: Set<string> = new Set(['modules', 'welcome-week', 'semester-dates']);
 
   function toggleSource(sourceId: string) {
     if (hiddenSources.has(sourceId)) {
@@ -629,7 +630,7 @@
                     class="legend-color"
                     style="background-color: var(--event-lecture-free);"
                   ></span>
-                  <span>Lecture-Free Periods</span>
+                  <span>{$t.calendar.lectureFree}</span>
                 </button>
                 <button
                   class="legend-item"
@@ -640,7 +641,40 @@
                     class="legend-color"
                     style="background-color: var(--event-exams);"
                   ></span>
-                  <span>Exams</span>
+                  <span>{$t.calendar.exams}</span>
+                </button>
+                <button
+                  class="legend-item"
+                  class:legend-item--hidden={hiddenSources.has("modules")}
+                  on:click={() => toggleSource("modules")}
+                >
+                  <span
+                    class="legend-color"
+                    style="background-color: var(--event-orange);"
+                  ></span>
+                  <span>{$t.calendar.modules}</span>
+                </button>
+                <button
+                  class="legend-item"
+                  class:legend-item--hidden={hiddenSources.has("welcome-week")}
+                  on:click={() => toggleSource("welcome-week")}
+                >
+                  <span
+                    class="legend-color"
+                    style="background-color: var(--event-pink);"
+                  ></span>
+                  <span>{$t.calendar.welcomeWeek}</span>
+                </button>
+                <button
+                  class="legend-item"
+                  class:legend-item--hidden={hiddenSources.has("semester-dates")}
+                  on:click={() => toggleSource("semester-dates")}
+                >
+                  <span
+                    class="legend-color"
+                    style="background-color: var(--event-purple);"
+                  ></span>
+                  <span>{$t.calendar.semesterDates}</span>
                 </button>
                 {#each currentSubs as sub}
                   <button

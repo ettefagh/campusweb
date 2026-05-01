@@ -1,10 +1,21 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { t } from "$lib/i18n";
+  import { settingsStore, CAMPUSES } from "$lib/stores/settingsStore";
+  import { campusContacts, generalContacts } from "$lib/data/contacts";
+  import EmailGate from "$lib/components/EmailGate.svelte";
 
   let innerWidth = 0;
   let contactSheetOpen = false;
   $: isPortraitMobile = innerWidth < 600;
+
+  // ── Directory state ──────────────────────────────────────────
+  import { programDirectors } from "$lib/data/contacts";
+  let dirTab: 'services' | 'program' | 'general' = 'services';
+  $: filteredCampusContacts = campusContacts.filter(c => c.campusId === $settingsStore.campusId);
+  $: generalContactsList = generalContacts;
+  $: currentCampusName = CAMPUSES.find(c => c.id === $settingsStore.campusId)?.name ?? '';
+  $: filteredProgramDirectors = programDirectors.filter(p => p.campusId === $settingsStore.campusId && $settingsStore.departmentId?.startsWith(p.school));
 
   onMount(() => {
     // Force reload of Instagram embeds when component mounts
@@ -194,6 +205,70 @@
         </a>
       {/each}
     </div>
+  </section>
+
+  <!-- Feature 5: Department Directory -->
+  <section class="directory-section">
+    <h2 class="section-title">📋 Department Directory</h2>
+    {#if !$settingsStore.emailVerified}
+      <EmailGate />
+    {:else if !$settingsStore.campusId}
+      <div class="directory-prompt">
+        <p>Please <a href="/settings">select your campus in Settings</a> to see campus-specific contacts.</p>
+      </div>
+    {:else}
+      <div class="directory-tabs">
+        <button class="dir-tab" class:active={dirTab === 'services'} on:click={() => dirTab = 'services'}>🏢 Campus Services</button>
+        {#if $settingsStore.departmentId}
+          <button class="dir-tab" class:active={dirTab === 'program'} on:click={() => dirTab = 'program'}>🎓 Programs</button>
+        {/if}
+        <button class="dir-tab" class:active={dirTab === 'general'} on:click={() => dirTab = 'general'}>🌐 University-wide</button>
+      </div>
+
+      {#if dirTab === 'services'}
+        <div class="dir-list">
+          {#each filteredCampusContacts as c}
+            <div class="dir-row">
+              <div class="dir-row-info">
+                <span class="dir-service">{c.service}</span>
+                <span class="dir-person">{c.person}</span>
+              </div>
+              <a href="https://outlook.office.com/owa/?path=/mail/action/compose&to={c.email}" target="_blank" rel="noopener noreferrer" class="dir-email">{c.email}</a>
+            </div>
+          {/each}
+          {#if filteredCampusContacts.length === 0}
+            <p class="dir-empty">No campus-specific services found for {currentCampusName}.</p>
+          {/if}
+        </div>
+      {:else if dirTab === 'program'}
+        <div class="dir-list">
+          {#each filteredProgramDirectors as p}
+            <div class="dir-row">
+              <div class="dir-row-info">
+                <span class="dir-service">{p.degree} {p.program}</span>
+                <span class="dir-person">{p.cluster}</span>
+              </div>
+              <a href="https://outlook.office.com/owa/?path=/mail/action/compose&to={p.email}" target="_blank" rel="noopener noreferrer" class="dir-email">{p.email}</a>
+            </div>
+          {/each}
+          {#if filteredProgramDirectors.length === 0}
+            <p class="dir-empty">No program directors found for your selected department.</p>
+          {/if}
+        </div>
+      {:else}
+        <div class="dir-list">
+          {#each generalContactsList as c}
+            <div class="dir-row">
+              <div class="dir-row-info">
+                <span class="dir-service">{c.service}</span>
+                <span class="dir-person">{c.person}</span>
+              </div>
+              <a href="https://outlook.office.com/owa/?path=/mail/action/compose&to={c.email}" target="_blank" rel="noopener noreferrer" class="dir-email">{c.email}</a>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    {/if}
   </section>
 
   <!-- Feature 3: Contact Hub Button -->
@@ -813,5 +888,50 @@
     .news-card-emoji {
       font-size: 1.6rem;
     }
+  }
+
+  /* ─── Directory ─────────────────────────────────────────────── */
+  .directory-section { margin-top: var(--spacing-lg); }
+  .directory-prompt {
+    text-align: center; padding: var(--spacing-lg);
+    background: var(--card-bg); border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+  }
+  .directory-prompt a { color: var(--primary-color); font-weight: 600; }
+  .directory-tabs {
+    display: flex; gap: var(--spacing-xs); margin-bottom: var(--spacing-md);
+    background: var(--card-bg); border-radius: var(--radius-md); padding: 4px;
+    border: 1px solid var(--border-color);
+  }
+  .dir-tab {
+    flex: 1; padding: var(--spacing-sm); border: none; background: transparent;
+    border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; color: var(--text-color-secondary); transition: all 0.2s;
+  }
+  .dir-tab.active {
+    background: var(--primary-color); color: white;
+  }
+  .dir-list {
+    display: flex; flex-direction: column; gap: 1px;
+    background: var(--border-color); border-radius: var(--radius-lg); overflow: hidden;
+    border: 1px solid var(--border-color);
+  }
+  .dir-row {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: var(--spacing-md); padding: var(--spacing-md);
+    background: var(--card-bg);
+  }
+  .dir-row-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+  .dir-service { font-weight: 600; font-size: 0.9rem; }
+  .dir-person { font-size: 0.8rem; color: var(--text-color-secondary); }
+  .dir-email {
+    font-size: 0.8rem; color: var(--primary-color); text-decoration: none;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .dir-email:hover { text-decoration: underline; }
+  .dir-empty { text-align: center; padding: var(--spacing-lg); color: var(--text-color-secondary); font-size: 0.9rem; }
+  @media (max-width: 600px) {
+    .dir-row { flex-direction: column; align-items: flex-start; gap: var(--spacing-xs); }
+    .dir-email { white-space: normal; word-break: break-all; }
   }
 </style>

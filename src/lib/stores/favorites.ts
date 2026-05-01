@@ -5,7 +5,7 @@ const STORAGE_KEY = 'SRH_CAMPUS_FAVORITES';
 
 // Default favorites
 const DEFAULT_FAVORITES = [
-	'campusweb',
+	'department-directory',
 	'schedule',
 	'grades',
 	'ecampus',

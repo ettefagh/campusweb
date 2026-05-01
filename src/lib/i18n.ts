@@ -81,6 +81,11 @@ const translations = {
       openInMaps: 'Open in Maps',
       suggestImport: 'Add official schedule',
       suggestImportDesc: 'Would you like to add your department\'s official iCal feed?',
+      lectureFree: 'Lecture-free Periods',
+      exams: 'Examination Phases',
+      modules: 'Modules / Blocks',
+      welcomeWeek: 'Welcome Week',
+      semesterDates: 'Semester Dates',
     },
 
     // ── Feed page ──
@@ -165,6 +170,10 @@ const translations = {
 
     // ── Links (Data Translations) ──
     linkTitle: {
+      'department-directory': 'Department Directory',
+      'calendar-app': 'Calendar',
+      'settings-app': 'Settings',
+      'accessibility-app': 'Accessibility',
       'campusweb': 'CampusWeb Portal',
       'my-profile': 'My Personal Data',
       'my-contacts': 'My Contacts',
@@ -200,6 +209,10 @@ const translations = {
       'pdf-tools': 'PDF Tools',
     },
     linkDesc: {
+      'department-directory': 'Find university contacts and send emails',
+      'calendar-app': 'University events, exams, and schedule',
+      'settings-app': 'Personalize your CampusWeb experience',
+      'accessibility-app': 'Visual and interaction aids',
       'campusweb': 'Student dashboard with events and overview',
       'my-profile': 'Profile information and contact details',
       'my-contacts': 'Student network and connections',
@@ -235,6 +248,7 @@ const translations = {
       'pdf-tools': 'Edit, merge, and convert PDFs',
     },
     linkCategory: {
+      'App Sections': 'App Sections',
       'CampusWeb Portal': 'CampusWeb Portal',
       'Academic Services': 'Academic Services',
       'E-Campus Learning': 'E-Campus Learning',
@@ -313,6 +327,11 @@ const translations = {
       openInMaps: 'In Karten öffnen',
       suggestImport: 'Offiziellen Plan hinzufügen',
       suggestImportDesc: 'Möchtest du den offiziellen iCal-Feed deines Fachbereichs hinzufügen?',
+      lectureFree: 'Vorlesungsfreie Zeit',
+      exams: 'Prüfungsphasen',
+      modules: 'Module / Blöcke',
+      welcomeWeek: 'Einführungswoche',
+      semesterDates: 'Semestertermine',
     },
 
     // ── Feed page ──
@@ -395,6 +414,10 @@ const translations = {
 
     // ── Links (Data Translations) ──
     linkTitle: {
+      'department-directory': 'Universitätsverzeichnis',
+      'calendar-app': 'Kalender',
+      'settings-app': 'Einstellungen',
+      'accessibility-app': 'Barrierefreiheit',
       'campusweb': 'CampusWeb Portal',
       'my-profile': 'Mein Profil',
       'my-contacts': 'Meine Kontakte',
@@ -430,6 +453,10 @@ const translations = {
       'pdf-tools': 'PDF Tools',
     },
     linkDesc: {
+      'department-directory': 'Finde Hochschulkontakte und sende E-Mails',
+      'calendar-app': 'Uni-Veranstaltungen, Prüfungen und Zeitplan',
+      'settings-app': 'Personalisiere dein CampusWeb-Erlebnis',
+      'accessibility-app': 'Visuelle und Interaktionshilfen',
       'campusweb': 'Studenten-Dashboard mit Events und Übersicht',
       'my-profile': 'Profilinformationen und Kontaktdaten',
       'my-contacts': 'Studentisches Netzwerk und Verbindungen',
@@ -465,6 +492,7 @@ const translations = {
       'pdf-tools': 'PDFs bearbeiten, zusammenfügen und konvertieren',
     },
     linkCategory: {
+      'App Sections': 'App Bereiche',
       'CampusWeb Portal': 'CampusWeb Portal',
       'Academic Services': 'Akademische Dienste',
       'E-Campus Learning': 'E-Campus Lernen',
