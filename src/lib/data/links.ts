@@ -307,7 +307,7 @@ export const internalAppLinks = [
 	{
 		id: 'department-directory',
 		title: 'Department Directory',
-		url: '/feed', // Can add #directory if an ID is added later
+		url: '/feed#directory',
 		icon: '📋',
 		description: 'Find university contacts and send emails',
 		category_name: 'App Sections'
@@ -331,7 +331,7 @@ export const internalAppLinks = [
 	{
 		id: 'accessibility-app',
 		title: 'Accessibility',
-		url: '/settings', // Will land on settings, user can expand the A11y section
+		url: '/settings#accessibility',
 		icon: '♿',
 		description: 'Visual and interaction aids',
 		category_name: 'App Sections'

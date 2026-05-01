@@ -15,7 +15,12 @@
   $: filteredCampusContacts = campusContacts.filter(c => c.campusId === $settingsStore.campusId);
   $: generalContactsList = generalContacts;
   $: currentCampusName = CAMPUSES.find(c => c.id === $settingsStore.campusId)?.name ?? '';
-  $: filteredProgramDirectors = programDirectors.filter(p => p.campusId === $settingsStore.campusId && $settingsStore.departmentId?.startsWith(p.school));
+  $: filteredProgramDirectors = programDirectors.filter(p => {
+    const campusMatch = p.campusId === $settingsStore.campusId;
+    const deptMatch = $settingsStore.departmentId?.startsWith(p.school);
+    const programMatch = !$settingsStore.programName || p.program === $settingsStore.programName;
+    return campusMatch && deptMatch && programMatch;
+  });
 
   onMount(() => {
     // Force reload of Instagram embeds when component mounts
@@ -208,7 +213,7 @@
   </section>
 
   <!-- Feature 5: Department Directory -->
-  <section class="directory-section">
+  <section id="directory" class="directory-section">
     <h2 class="section-title">📋 Department Directory</h2>
     {#if !$settingsStore.emailVerified}
       <EmailGate />

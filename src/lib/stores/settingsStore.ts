@@ -45,6 +45,7 @@ export interface AppSettings {
   theme: AppTheme;
   campusId: string | null;
   departmentId: string | null;
+  programName: string | null;
   weekStartsOn: WeekStart;
   /** Compact card layout on home page */
   compactCards: boolean;
@@ -130,6 +131,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   theme: 'auto',
   campusId: null,
   departmentId: null,
+  programName: null,
   weekStartsOn: 1, // Monday
   compactCards: false,
   showSeconds: false,
@@ -198,6 +200,18 @@ export const activeDepartment = derived(settingsStore, ($s) =>
 export const campusDepartments = derived(settingsStore, ($s) =>
   $s.campusId ? DEPARTMENTS.filter((d) => d.campusId === $s.campusId) : []
 );
+
+/** Programs filtered to the currently selected campus and department */
+import { programDirectors } from '$lib/data/contacts';
+export const campusPrograms = derived(settingsStore, ($s) => {
+  if (!$s.campusId || !$s.departmentId) return [];
+  const schoolId = $s.departmentId.split('_')[0];
+  const programs = programDirectors
+    .filter(p => p.campusId === $s.campusId && p.school === schoolId)
+    .map(p => p.program)
+    .filter(Boolean);
+  return [...new Set(programs)].sort();
+});
 
 /** True when the user has completed the initial setup */
 export const isSetupComplete = derived(settingsStore, ($s) =>

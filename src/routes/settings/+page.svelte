@@ -1,18 +1,24 @@
 <script lang="ts">
-	import { settingsStore, CAMPUSES, DEPARTMENTS, campusDepartments, isSetupComplete, type AppLanguage, type WeekStart } from '$lib/stores/settingsStore';
+	import { settingsStore, CAMPUSES, DEPARTMENTS, campusDepartments, campusPrograms, isSetupComplete, type AppLanguage, type WeekStart } from '$lib/stores/settingsStore';
 	import { accessibility } from '$lib/stores/accessibility';
 	import { calendarStore, activeClasses, EVENT_COLORS } from '$lib/stores/calendarStore';
 	import { classColors } from '$lib/stores/classColors';
 	import { t } from '$lib/i18n';
 	import { version } from '$app/environment';
+	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 
-	// When campus changes, clear department selection
+	// When campus changes, clear department and program selection
 	function handleCampusChange(campusId: string) {
-		settingsStore.patch({ campusId, departmentId: null });
+		settingsStore.patch({ campusId, departmentId: null, programName: null });
 	}
 
 	function handleDepartmentChange(deptId: string) {
-		settingsStore.patch({ departmentId: deptId });
+		settingsStore.patch({ departmentId: deptId, programName: null });
+	}
+
+	function handleProgramChange(programName: string) {
+		settingsStore.patch({ programName });
 	}
 
 	function handleLanguageChange(lang: string) {
@@ -78,6 +84,19 @@
 			window.location.reload();
 		}
 	}
+
+	let a11yOpen = false;
+
+	onMount(() => {
+		if ($page.url.hash === '#accessibility') {
+			a11yOpen = true;
+		}
+	});
+
+	// Reactively handle hash changes while on the same page
+	$: if ($page.url.hash === '#accessibility') {
+		a11yOpen = true;
+	}
 </script>
 
 <svelte:head>
@@ -131,6 +150,23 @@
 					{/each}
 				</select>
 			</div>
+
+			{#if $settingsStore.departmentId}
+				<div class="setting-row">
+					<label class="setting-label" for="program-select">{$t.settings.programLabel}</label>
+					<select
+						id="program-select"
+						class="setting-select"
+						value={$settingsStore.programName ?? ''}
+						on:change={(e) => handleProgramChange(e.currentTarget.value)}
+					>
+						<option value="" disabled>{$t.settings.programPlaceholder}</option>
+						{#each $campusPrograms as program}
+							<option value={program}>{program}</option>
+						{/each}
+					</select>
+				</div>
+			{/if}
 		{/if}
 
 		{#if $isSetupComplete}
@@ -235,8 +271,8 @@
 	</section>
 
 	<!-- ── Accessibility ─────────────────────── -->
-	<section class="settings-section a11y-section">
-		<details>
+	<section id="accessibility" class="settings-section a11y-section">
+		<details bind:open={a11yOpen}>
 			<summary class="section-header section-header--collapsible">
 				<span class="section-icon">♿</span>
 				<div>
