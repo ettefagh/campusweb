@@ -1,7 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { t } from "$lib/i18n";
-  import { settingsStore, CAMPUSES, DEPARTMENTS } from "$lib/stores/settingsStore";
+  import {
+    settingsStore,
+    CAMPUSES,
+    DEPARTMENTS,
+  } from "$lib/stores/settingsStore";
   import {
     campusContacts,
     generalContacts,
@@ -243,9 +247,10 @@
     <div class="section-header-group">
       <h2 class="section-title">📋 Department Directory</h2>
       <p class="section-subtitle">
-        {currentCampusName} 
+        {currentCampusName}
         {#if $settingsStore.departmentId}
-          — {DEPARTMENTS.find(d => d.id === $settingsStore.departmentId)?.name}
+          — {DEPARTMENTS.find((d) => d.id === $settingsStore.departmentId)
+            ?.name}
         {/if}
         {#if $settingsStore.programName}
           — {$settingsStore.programName}
@@ -568,7 +573,7 @@
   /* ─── Feature 1: News Preview Cards ──────────────────────────── */
   .news-cards {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-xl);
   }
@@ -676,7 +681,6 @@
 
   /* ─── Feature 4: Embed Wrapper ───────────────────────────────── */
   .embed-section {
-    margin-bottom: var(--spacing-xl);
   }
 
   .embed-wrapper {
