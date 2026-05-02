@@ -140,16 +140,31 @@
 			const query = searchQuery.toLowerCase();
 			const campusResults = campusContacts.filter(c => 
 				c.service.toLowerCase().includes(query) || 
-				c.person.toLowerCase().includes(query)
+				c.person.toLowerCase().includes(query) ||
+				c.email.toLowerCase().includes(query) ||
+				c.campusId.toLowerCase().includes(query) ||
+				deriveRoleFromEmail(c.email).toLowerCase().includes(query) ||
+				c.tags?.some(tag => tag.toLowerCase().includes(query))
 			);
 			const generalResults = generalContacts.filter(c => 
 				c.service.toLowerCase().includes(query) || 
-				c.person.toLowerCase().includes(query)
+				c.person.toLowerCase().includes(query) ||
+				c.email.toLowerCase().includes(query) ||
+				c.campusId.toLowerCase().includes(query) ||
+				deriveRoleFromEmail(c.email).toLowerCase().includes(query) ||
+				c.tags?.some(tag => tag.toLowerCase().includes(query))
 			);
 			const programResults = programDirectors.filter(p => 
 				p.program.toLowerCase().includes(query) || 
 				p.person.toLowerCase().includes(query) ||
-				p.degree.toLowerCase().includes(query)
+				p.email.toLowerCase().includes(query) ||
+				p.campusId.toLowerCase().includes(query) ||
+				p.school.toLowerCase().includes(query) ||
+				p.cluster.toLowerCase().includes(query) ||
+				p.degree.toLowerCase().includes(query) ||
+				deriveRoleFromEmail(p.email).toLowerCase().includes(query) ||
+				(p.phone && deriveLocationFromPhone(p.phone).toLowerCase().includes(query)) ||
+				p.tags?.some(tag => tag.toLowerCase().includes(query))
 			);
 			
 			const allRawResults = [

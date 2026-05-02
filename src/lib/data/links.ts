@@ -351,12 +351,14 @@ export const allLinks = [
 
 // Category order for display
 export const categoryOrder = [
-	'App Sections',
-	'CampusWeb Portal',
 	'Academic Services',
 	'E-Campus Learning',
-	'Resources',
-	'International Office',
 	'Services',
-	'Utilities'
+	'CampusWeb Portal',
+	'E-Campus',
+	'App Sections',
+	'Resources',
+	'Utilities',
+	'Career Service',
+	'International Office'
 ];
