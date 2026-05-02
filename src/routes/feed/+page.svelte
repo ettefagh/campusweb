@@ -1,8 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { t } from "$lib/i18n";
-  import { settingsStore, CAMPUSES } from "$lib/stores/settingsStore";
-  import { campusContacts, generalContacts } from "$lib/data/contacts";
+  import { settingsStore, CAMPUSES, DEPARTMENTS } from "$lib/stores/settingsStore";
+  import {
+    campusContacts,
+    generalContacts,
+    programDirectors,
+  } from "$lib/data/contacts";
   import EmailGate from "$lib/components/EmailGate.svelte";
 
   let innerWidth = 0;
@@ -10,17 +14,27 @@
   $: isPortraitMobile = innerWidth < 600;
 
   // ── Directory state ──────────────────────────────────────────
-  import { programDirectors } from "$lib/data/contacts";
-  let dirTab: 'services' | 'program' | 'general' = 'services';
-  $: filteredCampusContacts = campusContacts.filter(c => c.campusId === $settingsStore.campusId);
-  $: generalContactsList = generalContacts;
-  $: currentCampusName = CAMPUSES.find(c => c.id === $settingsStore.campusId)?.name ?? '';
-  $: filteredProgramDirectors = programDirectors.filter(p => {
+  let dirTab: "services" | "general" = "services";
+  let expandedId: string | null = null;
+  $: filteredCampusContacts = campusContacts.filter(
+    (c) => c.campusId === $settingsStore.campusId,
+  );
+  $: filteredProgramDirectors = programDirectors.filter((p) => {
     const campusMatch = p.campusId === $settingsStore.campusId;
-    const deptMatch = $settingsStore.departmentId?.startsWith(p.school);
-    const programMatch = !$settingsStore.programName || p.program === $settingsStore.programName;
+    const deptMatch =
+      !$settingsStore.departmentId ||
+      $settingsStore.departmentId?.startsWith(p.school);
+    const programMatch =
+      !$settingsStore.programName || p.program === $settingsStore.programName;
     return campusMatch && deptMatch && programMatch;
   });
+  $: generalContactsList = generalContacts;
+  $: currentCampusName =
+    CAMPUSES.find((c) => c.id === $settingsStore.campusId)?.name ?? "";
+
+  function toggleExpand(id: string) {
+    expandedId = expandedId === id ? null : id;
+  }
 
   onMount(() => {
     // Force reload of Instagram embeds when component mounts
@@ -42,7 +56,14 @@
     contactSheetOpen = false;
   }
 
-  let newsCards: Array<{ tag: string; emoji: string; title: string; desc: string; url: string; color: string }> = [];
+  let newsCards: Array<{
+    tag: string;
+    emoji: string;
+    title: string;
+    desc: string;
+    url: string;
+    color: string;
+  }> = [];
   $: newsCards = [
     {
       tag: $t.feed.eventsTag,
@@ -103,7 +124,12 @@
     },
   ];
 
-  let contacts: Array<{ icon: string; label: string; value: string; href: string }> = [];
+  let contacts: Array<{
+    icon: string;
+    label: string;
+    value: string;
+    href: string;
+  }> = [];
   $: contacts = [
     {
       icon: "📞",
@@ -214,61 +240,179 @@
 
   <!-- Feature 5: Department Directory -->
   <section id="directory" class="directory-section">
-    <h2 class="section-title">📋 Department Directory</h2>
+    <div class="section-header-group">
+      <h2 class="section-title">📋 Department Directory</h2>
+      <p class="section-subtitle">
+        {currentCampusName} 
+        {#if $settingsStore.departmentId}
+          — {DEPARTMENTS.find(d => d.id === $settingsStore.departmentId)?.name}
+        {/if}
+        {#if $settingsStore.programName}
+          — {$settingsStore.programName}
+        {/if}
+      </p>
+    </div>
     {#if !$settingsStore.emailVerified}
       <EmailGate />
     {:else if !$settingsStore.campusId}
       <div class="directory-prompt">
-        <p>Please <a href="/settings">select your campus in Settings</a> to see campus-specific contacts.</p>
+        <p>
+          Please <a href="/settings">select your campus in Settings</a> to see campus-specific
+          contacts.
+        </p>
       </div>
     {:else}
       <div class="directory-tabs">
-        <button class="dir-tab" class:active={dirTab === 'services'} on:click={() => dirTab = 'services'}>🏢 Campus Services</button>
-        {#if $settingsStore.departmentId}
-          <button class="dir-tab" class:active={dirTab === 'program'} on:click={() => dirTab = 'program'}>🎓 Programs</button>
-        {/if}
-        <button class="dir-tab" class:active={dirTab === 'general'} on:click={() => dirTab = 'general'}>🌐 University-wide</button>
+        <button
+          class="dir-tab"
+          class:active={dirTab === "services"}
+          on:click={() => (dirTab = "services")}>🏢 Campus Services</button
+        >
+        <button
+          class="dir-tab"
+          class:active={dirTab === "general"}
+          on:click={() => (dirTab = "general")}>🌐 University-wide</button
+        >
       </div>
 
-      {#if dirTab === 'services'}
+      {#if dirTab === "services"}
         <div class="dir-list">
-          {#each filteredCampusContacts as c}
-            <div class="dir-row">
-              <div class="dir-row-info">
-                <span class="dir-service">{c.service}</span>
-                <span class="dir-person">{c.person}</span>
-              </div>
-              <a href="https://outlook.office.com/owa/?path=/mail/action/compose&to={c.email}" target="_blank" rel="noopener noreferrer" class="dir-email">{c.email}</a>
+          <!-- Campus Services -->
+          {#each filteredCampusContacts as c, i}
+            {@const rowId = `service-${i}`}
+            <div
+              class="dir-row-container"
+              class:expanded={expandedId === rowId}
+            >
+              <button
+                class="dir-row-trigger"
+                on:click={() => toggleExpand(rowId)}
+              >
+                <div class="dir-row-info">
+                  <span class="dir-service">{c.service}</span>
+                  <span class="dir-person">{c.person}</span>
+                </div>
+                <span class="dir-chevron"
+                  >{expandedId === rowId ? "▾" : "›"}</span
+                >
+              </button>
+              {#if expandedId === rowId}
+                <div class="dir-expanded">
+                  <div class="dir-actions" style="justify-content: center;">
+                    <a
+                      href="mailto:{c.email}"
+                      class="dir-action-btn mail"
+                      style="max-width: 160px;"
+                    >
+                      <span class="action-icon">📧</span>
+                      <span class="action-text">Send Email</span>
+                    </a>
+                  </div>
+                  <div class="dir-footer">
+                    <div class="dir-meta-value">{c.email}</div>
+                  </div>
+                </div>
+              {/if}
             </div>
           {/each}
-          {#if filteredCampusContacts.length === 0}
-            <p class="dir-empty">No campus-specific services found for {currentCampusName}.</p>
+
+          <!-- Program Directors (if department selected) -->
+          {#if filteredProgramDirectors.length > 0}
+            <div class="dir-separator">🎓 Program Contacts</div>
+            {#each filteredProgramDirectors as p, i}
+              {@const rowId = `program-${i}`}
+              <div
+                class="dir-row-container"
+                class:expanded={expandedId === rowId}
+              >
+                <button
+                  class="dir-row-trigger"
+                  on:click={() => toggleExpand(rowId)}
+                >
+                  <div class="dir-row-info">
+                    <span class="dir-service">{p.degree} {p.program}</span>
+                    <span class="dir-person">{p.person}</span>
+                  </div>
+                  <span class="dir-chevron"
+                    >{expandedId === rowId ? "▾" : "›"}</span
+                  >
+                </button>
+                {#if expandedId === rowId}
+                  <div class="dir-expanded">
+                    <div class="dir-meta">
+                      <span class="meta-label">Cluster:</span>
+                      <span class="meta-value">{p.cluster}</span>
+                    </div>
+                    <div class="dir-actions">
+                      <a href="mailto:{p.email}" class="dir-action-btn mail">
+                        <span class="action-icon">📧</span>
+                        <span class="action-text">Mail</span>
+                      </a>
+                      {#if p.phone}
+                        <a
+                          href="tel:{p.phone.replace(/[\s-]/g, '')}"
+                          class="dir-action-btn call"
+                        >
+                          <span class="action-icon">📞</span>
+                          <span class="action-text">Call</span>
+                        </a>
+                      {/if}
+                    </div>
+                    <div class="dir-footer">
+                      <div class="dir-meta-value">{p.email}</div>
+                      {#if p.phone}<div class="dir-meta-value">
+                          {p.phone}
+                        </div>{/if}
+                    </div>
+                  </div>
+                {/if}
+              </div>
+            {/each}
           {/if}
-        </div>
-      {:else if dirTab === 'program'}
-        <div class="dir-list">
-          {#each filteredProgramDirectors as p}
-            <div class="dir-row">
-              <div class="dir-row-info">
-                <span class="dir-service">{p.degree} {p.program}</span>
-                <span class="dir-person">{p.cluster}</span>
-              </div>
-              <a href="https://outlook.office.com/owa/?path=/mail/action/compose&to={p.email}" target="_blank" rel="noopener noreferrer" class="dir-email">{p.email}</a>
-            </div>
-          {/each}
-          {#if filteredProgramDirectors.length === 0}
-            <p class="dir-empty">No program directors found for your selected department.</p>
+
+          {#if filteredCampusContacts.length === 0 && filteredProgramDirectors.length === 0}
+            <p class="dir-empty">
+              No campus-specific contacts found for {currentCampusName}.
+            </p>
           {/if}
         </div>
       {:else}
         <div class="dir-list">
-          {#each generalContactsList as c}
-            <div class="dir-row">
-              <div class="dir-row-info">
-                <span class="dir-service">{c.service}</span>
-                <span class="dir-person">{c.person}</span>
-              </div>
-              <a href="https://outlook.office.com/owa/?path=/mail/action/compose&to={c.email}" target="_blank" rel="noopener noreferrer" class="dir-email">{c.email}</a>
+          {#each generalContactsList as c, i}
+            {@const rowId = `general-${i}`}
+            <div
+              class="dir-row-container"
+              class:expanded={expandedId === rowId}
+            >
+              <button
+                class="dir-row-trigger"
+                on:click={() => toggleExpand(rowId)}
+              >
+                <div class="dir-row-info">
+                  <span class="dir-service">{c.service}</span>
+                  <span class="dir-person">{c.person}</span>
+                </div>
+                <span class="dir-chevron"
+                  >{expandedId === rowId ? "▾" : "›"}</span
+                >
+              </button>
+              {#if expandedId === rowId}
+                <div class="dir-expanded">
+                  <div class="dir-actions" style="justify-content: center;">
+                    <a
+                      href="mailto:{c.email}"
+                      class="dir-action-btn mail"
+                      style="max-width: 160px;"
+                    >
+                      <span class="action-icon">📧</span>
+                      <span class="action-text">Send Email</span>
+                    </a>
+                  </div>
+                  <div class="dir-footer">
+                    <div class="dir-meta-value">{c.email}</div>
+                  </div>
+                </div>
+              {/if}
             </div>
           {/each}
         </div>
@@ -410,8 +554,15 @@
   .section-title {
     font-size: 1.1rem;
     font-weight: 700;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
     color: var(--text-color);
+  }
+
+  .section-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-color-secondary);
+    margin-bottom: var(--spacing-md);
+    font-weight: 500;
   }
 
   /* ─── Feature 1: News Preview Cards ──────────────────────────── */
@@ -536,7 +687,6 @@
 
   .embed-card {
     flex: 1 1 100%;
-    /* Remaining properties of .embed-card are below */
   }
 
   @media (min-width: 768px) {
@@ -634,6 +784,228 @@
 
   .chip-name {
     font-weight: 600;
+  }
+
+  /* ─── Feature 5: Department Directory ─────────────────────────── */
+  .directory-section {
+    margin-bottom: var(--spacing-xl);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .directory-tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .directory-tabs {
+      background: rgba(255, 255, 255, 0.05);
+    }
+  }
+
+  .dir-tab {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    border-radius: calc(var(--radius-lg) - 4px);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .dir-tab.active {
+    background: white;
+    color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dir-tab.active {
+      background: #333;
+      color: #fff;
+    }
+  }
+
+  .dir-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dir-row-container {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+
+  .dir-row-container.expanded {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .dir-row-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--spacing-md);
+    background: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    color: var(--text-color);
+  }
+
+  .dir-row-trigger:hover {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  .dir-row-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .dir-service {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary-color);
+  }
+
+  .dir-person {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-color);
+  }
+
+  .dir-chevron {
+    font-size: 1.2rem;
+    color: var(--text-color-secondary);
+    opacity: 0.5;
+  }
+
+  .dir-expanded {
+    padding: 0 var(--spacing-md) var(--spacing-md);
+    animation: slideDown 0.2s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .dir-meta {
+    margin-bottom: var(--spacing-md);
+    font-size: 0.82rem;
+    display: flex;
+    gap: 4px;
+  }
+
+  .meta-label {
+    color: var(--text-color-secondary);
+  }
+  .meta-value {
+    font-weight: 600;
+  }
+
+  .dir-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .dir-action-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .dir-action-btn {
+      background: rgba(255, 255, 255, 0.05);
+    }
+  }
+
+  .dir-action-btn:hover {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: var(--primary-color);
+  }
+
+  .dir-action-btn .action-icon {
+    font-size: 1.4rem;
+  }
+
+  .dir-action-btn.mail {
+    color: var(--primary-color);
+  }
+
+  .dir-action-btn.call {
+    color: #10b981;
+  }
+
+  .dir-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px dashed var(--border-color);
+    padding-top: var(--spacing-md);
+  }
+
+  .dir-meta-value {
+    font-size: 0.78rem;
+    color: var(--text-color-secondary);
+    font-family: var(--font-mono, monospace);
+  }
+
+  .dir-separator {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-color-secondary);
+    margin: var(--spacing-md) 0 4px;
+    padding-left: 4px;
+    border-left: 3px solid var(--primary-color);
+  }
+
+  .dir-empty {
+    text-align: center;
+    padding: var(--spacing-xl) 0;
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+    font-style: italic;
   }
 
   /* ─── Feature 3: Contact Trigger Button ──────────────────────── */
@@ -893,50 +1265,5 @@
     .news-card-emoji {
       font-size: 1.6rem;
     }
-  }
-
-  /* ─── Directory ─────────────────────────────────────────────── */
-  .directory-section { margin-top: var(--spacing-lg); }
-  .directory-prompt {
-    text-align: center; padding: var(--spacing-lg);
-    background: var(--card-bg); border-radius: var(--radius-lg);
-    border: 1px solid var(--border-color);
-  }
-  .directory-prompt a { color: var(--primary-color); font-weight: 600; }
-  .directory-tabs {
-    display: flex; gap: var(--spacing-xs); margin-bottom: var(--spacing-md);
-    background: var(--card-bg); border-radius: var(--radius-md); padding: 4px;
-    border: 1px solid var(--border-color);
-  }
-  .dir-tab {
-    flex: 1; padding: var(--spacing-sm); border: none; background: transparent;
-    border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600;
-    cursor: pointer; color: var(--text-color-secondary); transition: all 0.2s;
-  }
-  .dir-tab.active {
-    background: var(--primary-color); color: white;
-  }
-  .dir-list {
-    display: flex; flex-direction: column; gap: 1px;
-    background: var(--border-color); border-radius: var(--radius-lg); overflow: hidden;
-    border: 1px solid var(--border-color);
-  }
-  .dir-row {
-    display: flex; justify-content: space-between; align-items: center;
-    gap: var(--spacing-md); padding: var(--spacing-md);
-    background: var(--card-bg);
-  }
-  .dir-row-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-  .dir-service { font-weight: 600; font-size: 0.9rem; }
-  .dir-person { font-size: 0.8rem; color: var(--text-color-secondary); }
-  .dir-email {
-    font-size: 0.8rem; color: var(--primary-color); text-decoration: none;
-    white-space: nowrap; flex-shrink: 0;
-  }
-  .dir-email:hover { text-decoration: underline; }
-  .dir-empty { text-align: center; padding: var(--spacing-lg); color: var(--text-color-secondary); font-size: 0.9rem; }
-  @media (max-width: 600px) {
-    .dir-row { flex-direction: column; align-items: flex-start; gap: var(--spacing-xs); }
-    .dir-email { white-space: normal; word-break: break-all; }
   }
 </style>

@@ -160,7 +160,7 @@
 						value={$settingsStore.programName ?? ''}
 						on:change={(e) => handleProgramChange(e.currentTarget.value)}
 					>
-						<option value="" disabled>{$t.settings.programPlaceholder}</option>
+						<option value="">{$t.settings.programPlaceholder}</option>
 						{#each $campusPrograms as program}
 							<option value={program}>{program}</option>
 						{/each}

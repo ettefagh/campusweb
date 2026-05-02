@@ -55,15 +55,13 @@
     {/each}
   </nav>
   <div class="sidebar-footer">
-    <a
-      href="/settings"
-      class="sidebar-settings-link"
-      class:active={$page.url.pathname === '/settings'}
-      aria-label="Settings"
-    >
-      <span aria-hidden="true">⚙️</span>
-      <span>Settings</span>
-    </a>
+    <div class="project-info">
+      <p class="crafted">Crafted with ❤️ for classmates</p>
+      <p class="status">Unofficial Project</p>
+      <a href="https://github.com/ettefagh/campusweb" target="_blank" rel="noopener noreferrer" class="github-link">
+        <span class="github-icon">GitHub</span>
+      </a>
+    </div>
   </div>
 </aside>
 
@@ -279,27 +277,45 @@
     }
 
     .sidebar-footer {
-      padding: var(--spacing-md) var(--spacing-lg);
+      padding: var(--spacing-lg) var(--spacing-md);
       border-top: 1px solid var(--glass-border-subtle);
       margin-top: auto;
     }
 
-    .sidebar-settings-link {
+    .project-info {
       display: flex;
-      align-items: center;
-      gap: var(--spacing-sm);
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text-color-secondary);
-      text-decoration: none;
-      padding: var(--spacing-sm) var(--spacing-sm);
-      border-radius: var(--radius-md);
-      transition: all 0.2s;
+      flex-direction: column;
+      gap: 4px;
     }
-    .sidebar-settings-link:hover,
-    .sidebar-settings-link.active {
+
+    .crafted {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-color);
+      margin: 0;
+    }
+
+    .status {
+      font-size: 0.75rem;
+      color: var(--text-color-secondary);
+      margin: 0;
+      opacity: 0.8;
+    }
+
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
       color: var(--primary-color);
-      background: rgba(212, 68, 7, 0.08);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .github-link:hover {
+      opacity: 0.8;
+      text-decoration: underline;
     }
   }
 

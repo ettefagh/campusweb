@@ -35,7 +35,8 @@
 	$: displayDesc = $t.linkDesc?.[link.id as keyof typeof $t.linkDesc] || link.description;
 	$: displayCategory = link.category_name ? ($t.linkCategory?.[link.category_name as keyof typeof $t.linkCategory] || link.category_name) : undefined;
 
-	$: finalUrl = useViewer
+	$: isInternalLink = link.url.startsWith('/');
+	$: finalUrl = (useViewer && !isInternalLink)
 		? `/viewer?url=${encodeURIComponent(link.url)}&title=${encodeURIComponent(displayTitle)}`
 		: link.url;
 

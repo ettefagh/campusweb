@@ -53,6 +53,10 @@
   <BottomNav />
   <main id="main" class="content-area">
     <slot />
+    <footer class="mobile-footer">
+      <p>Crafted with ❤️ for classmates • Unofficial Project</p>
+      <a href="https://github.com/ettefagh/campusweb" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </footer>
   </main>
   <UpdatePrompt />
 </div>
@@ -67,11 +71,38 @@
     );
   }
 
+  .mobile-footer {
+    padding: var(--spacing-xl) var(--spacing-lg);
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+    margin-top: var(--spacing-xl);
+    opacity: 0.6;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .mobile-footer p {
+    margin: 0;
+  }
+
+  .mobile-footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
   /* Desktop: shift content right for sidebar, remove bottom padding */
   @media (min-width: 1024px) {
     .app-container {
       margin-left: var(--sidebar-width, 220px);
       padding-bottom: 0;
+    }
+
+    .mobile-footer {
+      display: none;
     }
   }
 </style>

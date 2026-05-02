@@ -86,6 +86,7 @@
 					{link}
 					isFavorite={$favorites.includes(link.id)}
 					editMode={isEditMode}
+					useViewer={!isEditMode}
 					on:toggleFavorite={handleToggleFavorite}
 				/>
 			{/each}

@@ -27,10 +27,11 @@ CampusWeb is a modern Progressive Web App (PWA) designed to provide SRH Universi
 - 📱 **Mobile-First PWA** — Installable on iOS/Android with full offline support.
 - 📅 **Smart Calendar** — Aggregates university events and personal iCal feeds with auto-naming.
 - 📰 **Campus Hub** — Real-time news feed including Instagram embeds and university announcements.
-- 🔍 **Universal Search** — Instant access to a curated database of SRH links and documents.
-- ⭐ **Quick Access** — Pin your most-used resources to your personal dashboard.
+- 🔍 **Smart Directory** — A searchable university directory with regional role detection and smart phone origin tracking (verified students only).
+- ⭐ **Quick Access** — Pin your most-used resources and contacts to your personal dashboard.
 - 🌙 **Adaptive Design** — Seamless dark mode and high-contrast accessibility support.
 - ♿ **Inclusive** — WCAG 2.2 Level AA compliant with optimized touch targets.
+- 🔒 **Privacy-First** — Zero tracking, local persistence, and end-to-end encrypted calendar proxy.
 
 ## 🛠️ Tech Stack
 
@@ -103,7 +104,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ⚠️ Disclaimer
 
-**CampusWeb is an independent, student-led project.** It is **not** an official application of SRH University, nor is it endorsed or maintained by the university administration. This tool was developed by an SRH student to improve the digital experience for the student community. All trademarks and university resources belong to their respective owners.
+**CampusWeb is an independent, student-led project.** It is **not** an official application of SRH University, nor is it endorsed or maintained by the university administration. This tool was developed by an SRH student to improve the digital experience for the student community. All university directory data is provided as-is for convenience and is protected by email-verification guards. All trademarks and university resources belong to their respective owners.
 
 ---
 

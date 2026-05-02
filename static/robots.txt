@@ -30,3 +30,4 @@ User-agent: PerplexityBot
 Allow: /
 
 # Sitemap: https://campusweb.pages.dev/sitemap.xml
+Sitemap: https://campusweb.pages.dev/sitemap.xml
