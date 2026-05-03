@@ -586,19 +586,21 @@
         </div>
       {/if}
 
-      <div class="calendar-container" class:loading={isLoading}>
-        <Calendar bind:this={ecComponent} {plugins} {options} />
+      <div class="calendar-container" class:loading={isLoading} class:view-week={currentViewLabel === 'timeGridWeek'}>
+        <div class="calendar-scroll-area">
+          <Calendar bind:this={ecComponent} {plugins} {options} />
 
-        <!-- Feature 4: Empty State -->
-        {#if !isLoading && currentEventsCount === 0}
-          <div class="empty-state">
-            <div class="empty-icon">📭</div>
-            <p class="empty-title">No events to show</p>
-            <p class="empty-subtitle">
-              Try a different date range or add a calendar subscription.
-            </p>
-          </div>
-        {/if}
+          <!-- Feature 4: Empty State -->
+          {#if !isLoading && currentEventsCount === 0}
+            <div class="empty-state">
+              <div class="empty-icon">📭</div>
+              <p class="empty-title">No events to show</p>
+              <p class="empty-subtitle">
+                Try a different date range or add a calendar subscription.
+              </p>
+            </div>
+          {/if}
+        </div>
 
         <!-- Custom Bottom Toolbar -->
         <div class="calendar-toolbar">
@@ -1118,10 +1120,22 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--glass-shadow-lg);
-    height: calc(100vh - 380px);
+    height: calc(100vh - 280px);
     min-height: 400px;
     padding-bottom: 67px; /* Space for the absolute toolbar */
     transition: opacity 0.3s ease;
+  }
+
+  .calendar-scroll-area {
+    flex: 1;
+    overflow-x: hidden;
+    overflow-y: hidden; /* Vertical scroll is handled internally by ec */
+    height: 100%;
+    position: relative;
+  }
+
+  .view-week .calendar-scroll-area {
+    overflow-x: auto; /* Enable horizontal scroll in week view */
   }
 
   /* ─── Feature 4: Empty State ─────────────────────────────────── */
@@ -1482,6 +1496,10 @@
     height: 100% !important;
   }
 
+  .view-week :global(.ec) {
+    min-width: 1000px !important;
+  }
+
   :global(.ec-toolbar) {
     display: none !important;
   }
@@ -1796,7 +1814,7 @@
     }
 
     .calendar-container {
-      height: calc(100vh - 420px);
+      height: calc(100vh - 320px);
       margin: 0 var(--spacing-xs);
       min-height: 350px;
     }
@@ -1847,7 +1865,7 @@
     }
 
     .calendar-container {
-      height: calc(100vh - 280px); /* Taller on desktop */
+      height: calc(100vh - 180px); /* Taller on desktop */
     }
 
     /* Reset margins since they are now stacked */
