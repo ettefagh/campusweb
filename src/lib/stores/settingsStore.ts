@@ -24,6 +24,7 @@ export type WeekStart = 0 | 1 | 6; // 0=Sun, 1=Mon, 6=Sat
 
 export interface Campus {
   id: string;
+  university: string;
   name: string;
   city: string;
   country: string;
@@ -58,35 +59,35 @@ export interface AppSettings {
 // ── Static Data: Campuses ─────────────────────────────────────────────────────
 
 export const CAMPUSES: Campus[] = [
-  { id: 'bamberg', name: 'SRH Bamberg', city: 'Bamberg', country: 'DE' },
-  { id: 'berlin', name: 'SRH Berlin', city: 'Berlin', country: 'DE' },
-  { id: 'bremen', name: 'SRH Bremen', city: 'Bremen', country: 'DE' },
-  { id: 'dresden', name: 'SRH Dresden', city: 'Dresden', country: 'DE' },
-  { id: 'duesseldorf', name: 'SRH Düsseldorf', city: 'Düsseldorf', country: 'DE' },
-  { id: 'fuerth', name: 'SRH Fürth', city: 'Fürth', country: 'DE' },
-  { id: 'gera', name: 'SRH Gera', city: 'Gera', country: 'DE' },
-  { id: 'hamburg', name: 'SRH Hamburg', city: 'Hamburg', country: 'DE' },
-  { id: 'hamm', name: 'SRH Hamm', city: 'Hamm', country: 'DE' },
-  { id: 'heide', name: 'SRH Heide', city: 'Heide', country: 'DE' },
-  { id: 'heidelberg', name: 'SRH Heidelberg', city: 'Heidelberg', country: 'DE' },
-  { id: 'karlsruhe', name: 'SRH Karlsruhe', city: 'Karlsruhe', country: 'DE' },
-  { id: 'cologne', name: 'SRH Köln', city: 'Köln', country: 'DE' },
-  { id: 'leipzig', name: 'SRH Leipzig', city: 'Leipzig', country: 'DE' },
-  { id: 'leverkusen', name: 'SRH Leverkusen', city: 'Leverkusen', country: 'DE' },
-  { id: 'munich', name: 'SRH München', city: 'München', country: 'DE' },
-  { id: 'stuttgart', name: 'SRH Stuttgart', city: 'Stuttgart', country: 'DE' },
-  { id: 'tuebingen', name: 'SRH Tübingen', city: 'Tübingen', country: 'DE' },
+  { id: 'bamberg', university: 'SRH', name: 'Bamberg', city: 'Bamberg', country: 'DE' },
+  { id: 'berlin', university: 'SRH', name: 'Berlin', city: 'Berlin', country: 'DE' },
+  { id: 'bremen', university: 'SRH', name: 'Bremen', city: 'Bremen', country: 'DE' },
+  { id: 'dresden', university: 'SRH', name: 'Dresden', city: 'Dresden', country: 'DE' },
+  { id: 'duesseldorf', university: 'SRH', name: 'Düsseldorf', city: 'Düsseldorf', country: 'DE' },
+  { id: 'fuerth', university: 'SRH', name: 'Fürth', city: 'Fürth', country: 'DE' },
+  { id: 'gera', university: 'SRH', name: 'Gera', city: 'Gera', country: 'DE' },
+  { id: 'hamburg', university: 'SRH', name: 'Hamburg', city: 'Hamburg', country: 'DE' },
+  { id: 'hamm', university: 'SRH', name: 'Hamm', city: 'Hamm', country: 'DE' },
+  { id: 'heide', university: 'SRH', name: 'Heide', city: 'Heide', country: 'DE' },
+  { id: 'heidelberg', university: 'SRH', name: 'Heidelberg', city: 'Heidelberg', country: 'DE' },
+  { id: 'karlsruhe', university: 'SRH', name: 'Karlsruhe', city: 'Karlsruhe', country: 'DE' },
+  { id: 'cologne', university: 'SRH', name: 'Köln', city: 'Köln', country: 'DE' },
+  { id: 'leipzig', university: 'SRH', name: 'Leipzig', city: 'Leipzig', country: 'DE' },
+  { id: 'leverkusen', university: 'SRH', name: 'Leverkusen', city: 'Leverkusen', country: 'DE' },
+  { id: 'munich', university: 'SRH', name: 'München', city: 'München', country: 'DE' },
+  { id: 'stuttgart', university: 'SRH', name: 'Stuttgart', city: 'Stuttgart', country: 'DE' },
+  { id: 'tuebingen', university: 'SRH', name: 'Tübingen', city: 'Tübingen', country: 'DE' },
 ];
 
 // ── Static Data: Schools (Departments) ────────────────────────────────────────
 // Actual school-per-campus mappings from the official programme directors list.
 
 const SCHOOL_LIST = [
-  { id: 'aim', name: 'Artificial Intelligence & Machine Learning', shortName: 'AIM' },
-  { id: 'bls', name: 'Business, Law & Sustainability', shortName: 'BLS' },
-  { id: 'hes', name: 'Health & Environmental Sciences', shortName: 'HES' },
-  { id: 'psy', name: 'Psychology & Behavioral Sciences', shortName: 'PSY' },
-  { id: 'teac', name: 'Technology, Engineering & Computing', shortName: 'TEAC' },
+  { id: 'aim', name: 'School of Arts, Information and Media', shortName: 'AIM' },
+  { id: 'bls', name: 'School of Business and Law', shortName: 'BLS' },
+  { id: 'hes', name: 'School of Health, Education and Social Sciences', shortName: 'HES' },
+  { id: 'psy', name: 'School of Psychology', shortName: 'PSY' },
+  { id: 'teac', name: 'School of Technology and Architecture', shortName: 'TEAC' },
 ];
 
 // Which schools are actually present at each campus (from programme directors PDF)

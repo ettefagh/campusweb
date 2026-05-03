@@ -27,11 +27,11 @@ export interface ProgramDirector {
 // ── University-wide contacts (not campus-specific) ────────────────────────────
 export const generalContacts: CampusContact[] = [
   { campusId: 'general', service: 'Admission', person: 'Melanie Kunz (Teamleitung)', email: 'apply.hsg@srh.de', tags: ['Admissions'] },
-  { campusId: 'general', service: 'Assistant to School Board – AIM', person: 'Linda Metz', email: 'Linda.Metz@srh.de', tags: ['Board Assistant', 'school:AIM'] },
-  { campusId: 'general', service: 'Assistant to School Board – BLS', person: 'Julia Neef / Minh Phuong Phung', email: 'Julia.Neef@srh.de', tags: ['Board Assistant', 'school:BLS'] },
-  { campusId: 'general', service: 'Assistant to School Board – HES', person: 'Joann Jahr / Michaela Kuhn / Carmen Schlüter / Carolin Thiel', email: 'Joann.Jahr@srh.de', tags: ['Board Assistant', 'school:HES'] },
-  { campusId: 'general', service: 'Assistant to School Board – PSY', person: 'Lilli Kolbe', email: 'Lilli.Kolbe@srh.de', tags: ['Board Assistant', 'school:PSY'] },
-  { campusId: 'general', service: 'Assistant to School Board – TEAC', person: 'Himanshu Khadse', email: 'HimanshuDilip.Khadse@srh.de', tags: ['Board Assistant', 'school:TEAC'] },
+  { campusId: 'general', service: 'Assistant to School Board – School of Arts, Information and Media', person: 'Linda Metz', email: 'Linda.Metz@srh.de', tags: ['Board Assistant', 'school:AIM'] },
+  { campusId: 'general', service: 'Assistant to School Board – School of Business and Law', person: 'Julia Neef / Minh Phuong Phung', email: 'Julia.Neef@srh.de', tags: ['Board Assistant', 'school:BLS'] },
+  { campusId: 'general', service: 'Assistant to School Board – School of Health, Education and Social Sciences', person: 'Joann Jahr / Michaela Kuhn / Carmen Schlüter / Carolin Thiel', email: 'Joann.Jahr@srh.de', tags: ['Board Assistant', 'school:HES'] },
+  { campusId: 'general', service: 'Assistant to School Board – School of Psychology', person: 'Lilli Kolbe', email: 'Lilli.Kolbe@srh.de', tags: ['Board Assistant', 'school:PSY'] },
+  { campusId: 'general', service: 'Assistant to School Board – School of Technology and Architecture', person: 'Himanshu Khadse', email: 'HimanshuDilip.Khadse@srh.de', tags: ['Board Assistant', 'school:TEAC'] },
   { campusId: 'general', service: 'E-Campus Support', person: 'Kerstin Nakoinz / Jasmin Adler / Rosalie Wohlauf / Nicole Hofmann / Caroline Liss / Linus Theuringer', email: 'ecampus-support.hsg@srh.de', tags: ['E-Campus', 'IT Support'] },
   { campusId: 'general', service: 'Erasmus (Heidelberg)', person: 'Adel Kovacs', email: 'Adel.Kovacs@srh.de', tags: ['Erasmus', 'International'] },
   { campusId: 'general', service: 'Erasmus (Gera)', person: 'Prof. Dr. Claudia Wahn', email: 'Claudia.Wahn@srh.de', tags: ['Erasmus', 'International'] },

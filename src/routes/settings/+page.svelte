@@ -130,7 +130,7 @@
 			>
 				<option value="" disabled>{$t.settings.campusPlaceholder}</option>
 				{#each CAMPUSES as campus}
-					<option value={campus.id}>{campus.city} — {campus.name}</option>
+					<option value={campus.id}>{campus.name}</option>
 				{/each}
 			</select>
 		</div>
@@ -750,8 +750,32 @@
 	}
 
 	@media (max-width: 480px) {
-		.setting-row { flex-direction: column; align-items: stretch; }
-		.setting-select { max-width: 100%; }
+		.setting-row { 
+			flex-direction: row; 
+			align-items: center; 
+			justify-content: space-between;
+			padding: var(--spacing-sm) 0;
+			gap: var(--spacing-sm);
+		}
+		.setting-label { 
+			font-size: 0.9rem;
+			font-weight: 500;
+			color: var(--text-color);
+			margin: 0;
+			flex: 1;
+		}
+		.setting-select { 
+			width: auto;
+			min-width: 140px;
+			max-width: 60%; 
+			font-size: 0.88rem;
+			padding: 6px 24px 6px 12px;
+			background-position: right 8px center;
+			background-color: var(--bg-color-alt, rgba(0,0,0,0.03));
+			border-radius: var(--radius-sm);
+			border: 1px solid var(--border-color);
+			text-align: right;
+		}
 		.toggle-row { flex-direction: row; align-items: center; }
 		.class-color-actions { align-self: flex-start; }
 	}

@@ -50,7 +50,6 @@
 <a href="#main" class="skip-to-main">Skip to main content</a>
 
 <div class="app-container">
-  <BottomNav />
   <main id="main" class="content-area">
     <slot />
     <footer class="mobile-footer">
@@ -58,8 +57,10 @@
       <a href="https://github.com/ettefagh/campusweb" target="_blank" rel="noopener noreferrer">GitHub</a>
     </footer>
   </main>
-  <UpdatePrompt />
 </div>
+
+<BottomNav />
+<UpdatePrompt />
 
 <style>
   .app-container {
