@@ -92,9 +92,9 @@
       if (saved) return saved;
     }
 
-    if (isPortraitMobile) return "listWeek";
-    if (isLandscapeMobile) return "listWeek";
-    return "timeGridWeek";
+    if (isPortraitMobile) return "timeGridWeek";
+    if (isLandscapeMobile) return "dayGridMonth";
+    return "dayGridMonth";
   }
 
   function getAllEvents(): any[] {
@@ -164,6 +164,25 @@
       listWeek: $t.calendar.list,
       listDay: $t.calendar.list,
       listMonth: $t.calendar.list,
+    },
+    views: {
+      dayGridMonth: {
+        dayHeaderFormat: { weekday: 'short' }
+      },
+      timeGridWeek: {
+        dayHeaderContent: (arg: any) => {
+          const weekday = arg.date.toLocaleDateString(locale, { weekday: 'short' });
+          const day = arg.date.getDate();
+          return { html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>` };
+        }
+      },
+      timeGridDay: {
+        dayHeaderContent: (arg: any) => {
+          const weekday = arg.date.toLocaleDateString(locale, { weekday: 'long' });
+          const day = arg.date.getDate();
+          return { html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>` };
+        }
+      }
     },
     height: "100%",
     eventContent: (info: any) => {
@@ -287,9 +306,22 @@
 
   // ─── Navigation Functions ────────────────────────────────────────
   function goToToday() {
-    if (!ecComponent) return;
-    options = { ...options, date: new Date() };
-    setTimeout(updateToolbarState, 80);
+    if (ecComponent) {
+      ecComponent.today();
+      updateToolbarState();
+
+      // Allow time for view to update then scroll to now indicator
+      setTimeout(() => {
+        const nowIndicator = document.querySelector(".ec-now-indicator");
+        if (nowIndicator) {
+          nowIndicator.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+            inline: "center",
+          });
+        }
+      }, 100);
+    }
   }
 
   function goToPrev() {
@@ -1498,6 +1530,20 @@
 
   .view-week :global(.ec) {
     min-width: 1000px !important;
+  }
+
+  :global(.custom-header) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+    padding: 4px 0;
+  }
+
+  :global(.header-day-num) {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 2px;
   }
 
   :global(.ec-toolbar) {
