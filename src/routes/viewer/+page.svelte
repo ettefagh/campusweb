@@ -26,7 +26,11 @@
   $: title = $page.url.searchParams.get("title") || "External Link";
 
   $: parsed = (() => {
-    try { return new URL(url); } catch { return null; }
+    try {
+      return new URL(url);
+    } catch {
+      return null;
+    }
   })();
 
   $: domain = parsed?.hostname ?? "";
@@ -35,7 +39,7 @@
     if (!parsed) return false;
     if (parsed.protocol !== "https:") return false;
     return ALLOWED_DOMAINS.some(
-      (d) => parsed.hostname === d || parsed.hostname.endsWith("." + d)
+      (d) => parsed.hostname === d || parsed.hostname.endsWith("." + d),
     );
   })();
 
@@ -107,8 +111,16 @@
   <!-- ── Top bar: always at the top on both iOS and Android ── -->
   <header class="viewer-header">
     <button class="icon-btn back-btn" on:click={goBack} aria-label="Close">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <polyline points="15 18 9 12 15 6"/>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <polyline points="15 18 9 12 15 6" />
       </svg>
     </button>
 
@@ -120,27 +132,84 @@
     </div>
 
     <div class="header-actions">
-      <button class="icon-btn" on:click={reload} aria-label="Reload" title="Reload">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="23 4 23 10 17 10"/>
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      <button
+        class="icon-btn"
+        on:click={reload}
+        aria-label="Reload"
+        title="Reload"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <polyline points="23 4 23 10 17 10" />
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
         </svg>
       </button>
 
       {#if canShare}
-        <button class="icon-btn" on:click={share} aria-label="Share" title="Share">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        <button
+          class="icon-btn"
+          on:click={share}
+          aria-label="Share"
+          title="Share"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="18" cy="5" r="3" /><circle
+              cx="6"
+              cy="12"
+              r="3"
+            /><circle cx="18" cy="19" r="3" />
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line
+              x1="15.41"
+              y1="6.51"
+              x2="8.59"
+              y2="10.49"
+            />
           </svg>
         </button>
       {/if}
 
       {#if url && isValidUrl}
-        <a href={url} target="_blank" rel="noopener noreferrer" class="icon-btn" aria-label="Open in browser" title="Open in browser">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="icon-btn"
+          aria-label="Open in browser"
+          title="Open in browser"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path
+              d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+            />
+            <polyline points="15 3 21 3 21 9" /><line
+              x1="10"
+              y1="14"
+              x2="21"
+              y2="3"
+            />
           </svg>
         </a>
       {/if}
@@ -149,7 +218,13 @@
 
   <!-- ── Progress bar ── -->
   {#if isLoading && loadProgress > 0}
-    <div class="progress-track" role="progressbar" aria-valuenow={loadProgress} aria-valuemin={0} aria-valuemax={100}>
+    <div
+      class="progress-track"
+      role="progressbar"
+      aria-valuenow={loadProgress}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
       <div class="progress-bar" style="width: {loadProgress}%"></div>
     </div>
   {/if}
@@ -160,7 +235,7 @@
       <iframe
         bind:this={iframeEl}
         src={url}
-        title={title}
+        {title}
         class:loaded={!isLoading}
         on:load={handleIframeLoad}
         sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
@@ -180,9 +255,9 @@
   /* ── Layout: always column (header top, content bottom) ── */
   .viewer-page {
     display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    height: 100vh;
+    flex-direction: column-reverse;
+    height: calc(100vh - var(--bottom-nav-height, 0px));
+    height: calc(100dvh - var(--bottom-nav-height, 0px));
     background: var(--bg-color);
     overflow: hidden;
     /* Sit inside the PWA shell — no extra bottom nav overlap on this route */
@@ -197,12 +272,12 @@
     height: 56px;
     min-height: 56px;
     background: var(--card-bg);
-    border-bottom: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color);
     z-index: 10;
     flex-shrink: 0;
-    /* Safe area: account for iOS notch/status bar when in standalone mode */
-    padding-top: env(safe-area-inset-top, 0);
-    height: calc(56px + env(safe-area-inset-top, 0));
+    /* Safe area: account for iOS bottom indicator when toolbar is at bottom */
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    height: calc(56px + env(safe-area-inset-bottom, 0));
   }
 
   .icon-btn {
@@ -224,7 +299,7 @@
 
   .icon-btn:hover,
   .icon-btn:focus-visible {
-    background: var(--hover-bg, rgba(0,0,0,0.07));
+    background: var(--hover-bg, rgba(0, 0, 0, 0.07));
   }
 
   .icon-btn svg {
@@ -348,13 +423,5 @@
     text-decoration: none;
     font-weight: 600;
     font-size: 0.95rem;
-  }
-
-  /* Dark mode icon contrast */
-  [data-theme="dark"] .icon-btn {
-    color: var(--text-color);
-  }
-  [data-theme="dark"] .icon-btn:hover {
-    background: rgba(255,255,255,0.08);
   }
 </style>

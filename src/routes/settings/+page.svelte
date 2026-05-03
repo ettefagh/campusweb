@@ -7,6 +7,7 @@
 	import { version } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import EmailGate from '$lib/components/EmailGate.svelte';
 
 	// When campus changes, clear department and program selection
 	function handleCampusChange(campusId: string) {
@@ -86,6 +87,17 @@
 	}
 
 	let a11yOpen = false;
+	let classColorsOpen = false;
+	let activeColorChooser: string | null = null;
+
+	function toggleColorChooser(id: string) {
+		activeColorChooser = activeColorChooser === id ? null : id;
+	}
+
+	function selectColor(clsId: string, colorId: string) {
+		classColors.updateColor(clsId, colorId);
+		activeColorChooser = null;
+	}
 
 	onMount(() => {
 		if ($page.url.hash === '#accessibility') {
@@ -169,13 +181,32 @@
 			{/if}
 		{/if}
 
-		{#if $isSetupComplete}
-			<div class="setting-info-row">
-				<span class="info-badge">{$t.settings.campusReady}</span>
-				<span class="info-note">{$t.settings.campusReadyNote}</span>
-			</div>
-		{/if}
 	</section>
+
+	{#if $isSetupComplete && !$settingsStore.emailVerified}
+		<section class="settings-section">
+			<div class="section-header">
+				<span class="section-icon">🔒</span>
+				<div>
+					<h2>Directory Access</h2>
+					<p class="section-desc">Verify your student email to access university contacts.</p>
+				</div>
+			</div>
+			<EmailGate />
+		</section>
+	{/if}
+
+	{#if $settingsStore.emailVerified}
+		<section class="settings-section">
+			<div class="section-header">
+				<span class="section-icon">✅</span>
+				<div>
+					<h2>Directory Access</h2>
+					<p class="section-desc">Your email is verified. You have full access to the university directory.</p>
+				</div>
+			</div>
+		</section>
+	{/if}
 
 	<!-- ── Language ──────────────────────────── -->
 	<section class="settings-section">
@@ -288,89 +319,107 @@
 						<span class="setting-label">🎭 {$t.settings.reduceMotion}</span>
 						<span class="toggle-desc">{$t.settings.reduceMotionDesc}</span>
 					</div>
-					<button class="toggle" class:on={$accessibility.reduceMotion} role="switch" aria-checked={$accessibility.reduceMotion} aria-label={$t.settings.reduceMotion} on:click={() => accessibility.toggle('reduceMotion')}><span class="toggle-knob" /></button>
+					<button class="toggle" class:on={$accessibility.reduceMotion} role="switch" aria-checked={$accessibility.reduceMotion} aria-label={$t.settings.reduceMotion} on:click={() => accessibility.toggle('reduceMotion')}><span class="toggle-knob"></span></button>
 				</div>
 				<div class="setting-row toggle-row">
 					<div class="toggle-info">
 						<span class="setting-label">⬛ {$t.settings.highContrast}</span>
 						<span class="toggle-desc">{$t.settings.highContrastDesc}</span>
 					</div>
-					<button class="toggle" class:on={$accessibility.highContrast} role="switch" aria-checked={$accessibility.highContrast} aria-label={$t.settings.highContrast} on:click={() => accessibility.toggle('highContrast')}><span class="toggle-knob" /></button>
+					<button class="toggle" class:on={$accessibility.highContrast} role="switch" aria-checked={$accessibility.highContrast} aria-label={$t.settings.highContrast} on:click={() => accessibility.toggle('highContrast')}><span class="toggle-knob"></span></button>
 				</div>
 				<div class="setting-row toggle-row">
 					<div class="toggle-info">
 						<span class="setting-label">🔡 {$t.settings.largeText}</span>
 						<span class="toggle-desc">{$t.settings.largeTextDesc}</span>
 					</div>
-					<button class="toggle" class:on={$accessibility.largeText} role="switch" aria-checked={$accessibility.largeText} aria-label={$t.settings.largeText} on:click={() => accessibility.toggle('largeText')}><span class="toggle-knob" /></button>
+					<button class="toggle" class:on={$accessibility.largeText} role="switch" aria-checked={$accessibility.largeText} aria-label={$t.settings.largeText} on:click={() => accessibility.toggle('largeText')}><span class="toggle-knob"></span></button>
 				</div>
 				<div class="setting-row toggle-row">
 					<div class="toggle-info">
 						<span class="setting-label">🎯 {$t.settings.focusVisible}</span>
 						<span class="toggle-desc">{$t.settings.focusVisibleDesc}</span>
 					</div>
-					<button class="toggle" class:on={$accessibility.focusVisible} role="switch" aria-checked={$accessibility.focusVisible} aria-label={$t.settings.focusVisible} on:click={() => accessibility.toggle('focusVisible')}><span class="toggle-knob" /></button>
+					<button class="toggle" class:on={$accessibility.focusVisible} role="switch" aria-checked={$accessibility.focusVisible} aria-label={$t.settings.focusVisible} on:click={() => accessibility.toggle('focusVisible')}><span class="toggle-knob"></span></button>
 				</div>
 				<div class="setting-row toggle-row">
 					<div class="toggle-info">
 						<span class="setting-label">🔊 {$t.settings.screenReader}</span>
 						<span class="toggle-desc">{$t.settings.screenReaderDesc}</span>
 					</div>
-					<button class="toggle" class:on={$accessibility.screenReaderHints} role="switch" aria-checked={$accessibility.screenReaderHints} aria-label={$t.settings.screenReader} on:click={() => accessibility.toggle('screenReaderHints')}><span class="toggle-knob" /></button>
+					<button class="toggle" class:on={$accessibility.screenReaderHints} role="switch" aria-checked={$accessibility.screenReaderHints} aria-label={$t.settings.screenReader} on:click={() => accessibility.toggle('screenReaderHints')}><span class="toggle-knob"></span></button>
 				</div>
 				<div class="setting-row toggle-row">
 					<div class="toggle-info">
 						<span class="setting-label">🎨 {$t.settings.assistiveTextures}</span>
 						<span class="toggle-desc">{$t.settings.assistiveTexturesDesc}</span>
 					</div>
-					<button class="toggle" class:on={$accessibility.assistivePatterns} role="switch" aria-checked={$accessibility.assistivePatterns} aria-label={$t.settings.assistiveTextures} on:click={() => accessibility.toggle('assistivePatterns')}><span class="toggle-knob" /></button>
+					<button class="toggle" class:on={$accessibility.assistivePatterns} role="switch" aria-checked={$accessibility.assistivePatterns} aria-label={$t.settings.assistiveTextures} on:click={() => accessibility.toggle('assistivePatterns')}><span class="toggle-knob"></span></button>
 				</div>
 			</div>
 		</details>
 	</section>
 
 	<!-- ── Class Color Management ──────────────── -->
-	<section class="settings-section">
-		<div class="section-header">
-			<span class="section-icon">🖍️</span>
-			<div>
-				<h2>Class Colors</h2>
-				<p class="section-desc">Customize the color of specific classes or events.</p>
-			</div>
-		</div>
+	<section id="class-colors" class="settings-section a11y-section">
+		<details bind:open={classColorsOpen}>
+			<summary class="section-header section-header--collapsible">
+				<span class="section-icon">🖍️</span>
+				<div>
+					<h2>Class Colors</h2>
+					<p class="section-desc">Customize the color of specific classes or events.</p>
+				</div>
+				<span class="chevron" aria-hidden="true">›</span>
+			</summary>
 
-		{#if $activeClasses.length === 0}
-			<p class="section-desc" style="opacity: 0.7;">No active classes found in your calendar subscriptions.</p>
-		{:else}
-			<div class="class-colors-list">
-				{#each $activeClasses as cls}
-					<div class="setting-row">
-						<div class="class-color-info">
-							<span class="setting-label">{cls.title}</span>
-							{#if cls.id !== cls.title}
-								<span class="class-title-hint">{cls.id}</span>
-							{/if}
-						</div>
-						<div class="class-color-actions">
-							<div class="color-palette">
-								{#each EVENT_COLORS as ec}
-									<button
-										class="palette-swatch"
-										class:selected={($classColors[cls.id] || cls.defaultColor) === ec.id}
-										style="background-color: {ec.id}"
-										on:click={() => classColors.updateColor(cls.id, ec.id)}
-										aria-label="Select color"
+			<div class="a11y-body">
+				{#if $activeClasses.length === 0}
+					<p class="section-desc" style="opacity: 0.7;">No active classes found in your calendar subscriptions.</p>
+				{:else}
+					<div class="class-colors-list">
+						{#each $activeClasses as cls}
+							<div class="setting-row" style="position: relative;">
+								<div class="class-color-info">
+									<span class="setting-label">{cls.title}</span>
+									{#if cls.id !== cls.title}
+										<span class="class-title-hint">{cls.id}</span>
+									{/if}
+								</div>
+								<div class="class-color-actions">
+									<button 
+										class="active-color-swatch"
+										style="background-color: {$classColors[cls.id] || cls.defaultColor}"
+										on:click={() => toggleColorChooser(cls.id)}
+										aria-label="Change color"
 									></button>
-								{/each}
+									
+									{#if activeColorChooser === cls.id}
+										<div class="color-popup-overlay" on:click={() => activeColorChooser = null} on:keydown={(e) => e.key === 'Escape' && (activeColorChooser = null)} role="button" tabindex="-1" aria-label="Close color chooser"></div>
+										<div class="color-popup">
+											<div class="color-palette">
+												{#each EVENT_COLORS as ec}
+													<button
+														class="palette-swatch"
+														class:selected={($classColors[cls.id] || cls.defaultColor) === ec.id}
+														style="background-color: {ec.id}"
+														on:click={() => selectColor(cls.id, ec.id)}
+														aria-label="Select color"
+													></button>
+												{/each}
+											</div>
+										</div>
+									{/if}
+
+									{#if $classColors[cls.id]}
+										<button class="btn-clear-color" on:click={() => classColors.resetColor(cls.id)} aria-label="Reset color">🔄</button>
+									{/if}
+								</div>
 							</div>
-							{#if $classColors[cls.id]}
-								<button class="btn-clear-color" on:click={() => classColors.resetColor(cls.id)} aria-label="Reset color">🔄</button>
-							{/if}
-						</div>
+						{/each}
 					</div>
-				{/each}
+				{/if}
 			</div>
-		{/if}
+		</details>
 	</section>
 
 	<!-- ── Reset ─────────────────────────────── -->
@@ -489,19 +538,6 @@
 	}
 	.setting-select--inline { max-width: 160px; }
 
-	/* ── Info row ── */
-	.setting-info-row {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		padding: var(--spacing-sm) var(--spacing-md);
-		background: rgba(16, 185, 129, 0.08);
-		border: 1px solid rgba(16, 185, 129, 0.2);
-		border-radius: var(--radius-md);
-		margin-top: var(--spacing-sm);
-	}
-	.info-badge { font-size: 0.88rem; font-weight: 600; color: #10b981; }
-	.info-note { font-size: 0.78rem; color: var(--text-color-secondary); }
 
 	/* ── Segmented control ── */
 	.segmented-control {
@@ -805,14 +841,46 @@
 		align-items: center;
 		gap: var(--spacing-sm);
 		flex-wrap: wrap;
+		position: relative;
+	}
+	.active-color-swatch {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		border: 2px solid var(--border-color);
+		cursor: pointer;
+		padding: 0;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		transition: transform 0.1s;
+	}
+	.active-color-swatch:active {
+		transform: scale(0.95);
+	}
+	.color-popup {
+		position: absolute;
+		right: 0;
+		top: calc(100% + 8px);
+		z-index: 100;
+	}
+	.color-popup-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 90;
+		cursor: default;
 	}
 	.color-palette {
 		display: flex;
 		gap: 4px;
 		background: var(--bg-color);
-		padding: 4px;
+		padding: 8px;
 		border-radius: var(--radius-md);
 		border: 1px solid var(--border-color);
+		box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+		flex-wrap: wrap;
+		width: 150px;
 	}
 	.palette-swatch {
 		width: 22px;

@@ -1,7 +1,6 @@
 <script lang="ts">
     import { settingsStore } from '$lib/stores/settingsStore';
     import { fade } from 'svelte/transition';
-    import { t } from '$lib/i18n';
 
     let email = '';
     let error = '';
@@ -21,10 +20,7 @@
     }
 </script>
 
-<div class="email-gate" transition:fade>
-    <div class="gate-icon">🔒</div>
-    <h3 class="gate-title">University Members Only</h3>
-    <p class="gate-desc">Enter your SRH email to access the directory. Your email is only checked locally and never sent anywhere.</p>
+<div class="email-gate-inline" transition:fade>
     <div class="gate-form">
         <input
             type="email"
@@ -41,27 +37,44 @@
 </div>
 
 <style>
-    .email-gate {
-        text-align: center;
-        padding: var(--spacing-xl) var(--spacing-lg);
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
+    .email-gate-inline {
+        width: 100%;
     }
-    .gate-icon { font-size: 2rem; margin-bottom: var(--spacing-sm); }
-    .gate-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 var(--spacing-xs); }
-    .gate-desc { font-size: 0.85rem; color: var(--text-color-secondary); margin: 0 0 var(--spacing-md); line-height: 1.5; }
-    .gate-form { display: flex; gap: var(--spacing-sm); max-width: 400px; margin: 0 auto; }
+    .gate-form { 
+        display: flex; 
+        gap: var(--spacing-sm); 
+        width: 100%; 
+    }
     .gate-input {
-        flex: 1; padding: var(--spacing-sm) var(--spacing-md);
-        border: 1px solid var(--border-color); border-radius: var(--radius-sm);
-        background: var(--bg-color); color: var(--text-color); font-size: 0.9rem;
+        flex: 1; 
+        padding: var(--spacing-sm) var(--spacing-md);
+        border: 1px solid var(--border-color); 
+        border-radius: var(--radius-sm);
+        background: var(--bg-color); 
+        color: var(--text-color); 
+        font-size: 0.9rem;
     }
     .gate-btn {
         padding: var(--spacing-sm) var(--spacing-md);
-        background: var(--primary-color); color: white; border: none;
-        border-radius: var(--radius-sm); font-weight: 600; cursor: pointer;
+        background: var(--primary-color); 
+        color: white; 
+        border: none;
+        border-radius: var(--radius-sm); 
+        font-weight: 600; 
+        cursor: pointer;
         white-space: nowrap;
     }
-    .gate-error { color: #ef4444; font-size: 0.85rem; margin-top: var(--spacing-sm); }
+    .gate-error { 
+        color: #ef4444; 
+        font-size: 0.85rem; 
+        margin-top: var(--spacing-sm); 
+    }
+    @media (max-width: 480px) {
+        .gate-form {
+            flex-direction: column;
+        }
+        .gate-btn {
+            width: 100%;
+        }
+    }
 </style>

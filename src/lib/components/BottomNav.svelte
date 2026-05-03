@@ -103,6 +103,11 @@
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.1), 0 -1px 0 var(--glass-border-subtle);
   }
 
+  :global([data-theme="dark"]) .bottom-nav {
+    background: rgba(20, 20, 25, 0.85);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
   .nav-item {
     display: flex;
     flex-direction: column;

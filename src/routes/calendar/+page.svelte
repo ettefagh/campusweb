@@ -46,7 +46,11 @@
 
   // ─── Feature 1: Interactive Legend Filter ────────────────────────
   // Default: Hide modules, welcome-week, and semester-dates
-  let hiddenSources: Set<string> = new Set(['modules', 'welcome-week', 'semester-dates']);
+  let hiddenSources: Set<string> = new Set([
+    "modules",
+    "welcome-week",
+    "semester-dates",
+  ]);
 
   function toggleSource(sourceId: string) {
     if (hiddenSources.has(sourceId)) {
@@ -149,6 +153,12 @@
       minute: "2-digit",
       hour12: false,
     },
+    dayHeaderContent: (info: any) => {
+      const date = info.date;
+      const weekday = date.toLocaleDateString(locale, { weekday: "short" });
+      const day = date.getDate();
+      return `${weekday} ${day}`;
+    },
     allDaySlot: true,
     headerToolbar: {
       start: "",
@@ -167,20 +177,48 @@
     height: "100%",
     eventContent: (info: any) => {
       // Escape HTML entities in user-sourced data to prevent XSS
-      const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const esc = (s: string) =>
+        s
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
 
       const rawLoc = info.event.extendedProps?.shortLocation || "";
       const loc = esc(rawLoc);
       const locHtml = loc ? `<span class="ec-event-loc">📍${loc}</span>` : "";
       const texture = info.event.extendedProps?.texture || "solid";
       const color = info.event.backgroundColor || "var(--primary-color)";
-      const style = `--event-color: ${esc(color)};`;
+      const textColor = color.replace('var(--event-', 'var(--event-text-');
+      const style = `--event-color: ${esc(color)}; --event-text-color: ${esc(textColor)};`;
       const title = esc(info.event.title || "");
 
       // List view: flat layout with title + location tag
       if (info.view?.type?.startsWith("list")) {
+        const isAllDay = info.event.allDay;
+        const formatTime = (d: Date) =>
+          d.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          });
+
+        let leftPart = "";
+        let rightPart = "";
+
+        if (isAllDay) {
+          leftPart = `<span class="ec-event-title-text">${title}</span><span class="ec-event-time-sub">All-day</span>`;
+          rightPart = `${locHtml}`;
+        } else if (info.event.start) {
+          const startStr = formatTime(info.event.start);
+          const endStr = info.event.end ? formatTime(info.event.end) : "";
+          
+          leftPart = `<span class="ec-event-title-text">${title}</span><span class="ec-event-time-sub">${startStr}</span>`;
+          rightPart = `${locHtml}${endStr ? `<span class="ec-event-time-sub time-end">${endStr}</span>` : ""}`;
+        }
+
         return {
-          html: `<div class="ec-event-inner ec-event-inner--list" style="${style}" data-texture="${texture}"><span class="ec-event-title-text">${title}</span>${locHtml}</div>`,
+          html: `<div class="ec-event-inner ec-event-inner--list" style="${style}" data-texture="${texture}"><div class="event-main-info">${leftPart}</div><div class="event-meta-info">${rightPart}</div></div>`,
         };
       }
 
@@ -667,7 +705,9 @@
                 </button>
                 <button
                   class="legend-item"
-                  class:legend-item--hidden={hiddenSources.has("semester-dates")}
+                  class:legend-item--hidden={hiddenSources.has(
+                    "semester-dates",
+                  )}
                   on:click={() => toggleSource("semester-dates")}
                 >
                   <span
@@ -829,10 +869,6 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border-radius: var(--radius-lg);
-  }
-
-  [data-theme="dark"] .calendar-page-layout {
-    background-color: #12121242; /* Requested hex with transparency */
   }
 
   /* Suggestion Banner */
@@ -1086,10 +1122,6 @@
     transition: opacity 0.3s ease;
   }
 
-  [data-theme="light"] .calendar-container {
-    background: #ffffff38;
-  }
-
   /* ─── Feature 4: Empty State ─────────────────────────────────── */
   .empty-state {
     position: absolute;
@@ -1266,64 +1298,6 @@
       opacity: 1;
       transform: scale(1);
     }
-  }
-
-  /* ─── Feature 2: Mobile Bottom Sheet ──────────────────────────── */
-  .bottom-sheet-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.45);
-    z-index: 999;
-    animation: overlayFadeIn 0.2s ease;
-  }
-
-  @keyframes overlayFadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .bottom-sheet {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--glass-blur-strong);
-    -webkit-backdrop-filter: var(--glass-blur-strong);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    border-top: 1px solid var(--glass-border);
-    padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-xl);
-    box-shadow:
-      0 -8px 40px rgba(0, 0, 0, 0.22),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    max-height: 70vh;
-    overflow-y: auto;
-  }
-
-  @keyframes slideUp {
-    from {
-      transform: translateY(100%);
-    }
-    to {
-      transform: translateY(0);
-    }
-  }
-
-  .sheet-handle {
-    width: 36px;
-    height: 4px;
-    background: var(--border-color);
-    border-radius: 2px;
-    margin: 0 auto var(--spacing-md);
   }
 
   .popup-close {
@@ -1529,6 +1503,10 @@
     box-shadow: none !important;
   }
 
+  :global(.ec-list .ec-event) {
+    padding: 5px 14px !important;
+  }
+
   :global(.ec-event-inner) {
     display: flex;
     flex-direction: column;
@@ -1542,6 +1520,7 @@
     background-color: #ffffff70 !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
     border-left: 3px solid var(--event-color, var(--primary-color)) !important;
+    color: var(--event-text-color, var(--event-color)) !important;
     position: relative;
     z-index: 1;
     transition: transform 0.1s ease;
@@ -1568,6 +1547,10 @@
     opacity: 0.25; /* Stronger tint to give the dark base a colored wash */
   }
 
+  /* Removed old Apple pastel styling to favor neon high-contrast theme */
+
+
+
   :global(.ec-event:hover .ec-event-inner) {
     transform: translateY(-1px);
   }
@@ -1586,7 +1569,7 @@
     line-height: 1.3;
     white-space: normal;
     word-break: break-word;
-    color: var(--event-color, var(--primary-color)) !important;
+    color: var(--event-text-color, var(--primary-color)) !important;
     text-shadow: none !important;
   }
 
@@ -1600,11 +1583,41 @@
   :global(.ec-event-inner--list) {
     display: flex;
     flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    height: auto;
-    padding: 6px 8px !important;
+    align-items: flex-end;
     justify-content: space-between;
+    gap: 12px;
+    height: auto;
+    padding: 8px 14px !important;
+  }
+
+  :global(.event-main-info) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  :global(.event-meta-info) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  :global(.ec-event-time-sub) {
+    font-size: 0.78em;
+    font-weight: 600;
+    opacity: 0.85;
+    color: var(--event-color, var(--primary-color)) !important;
+  }
+
+  :global(.ec-event-time-sub.time-end) {
+    opacity: 0.6;
+    font-size: 0.72em;
   }
 
   :global(.ec-event-tag) {

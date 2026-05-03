@@ -11,7 +11,8 @@
     generalContacts,
     programDirectors,
   } from "$lib/data/contacts";
-  import EmailGate from "$lib/components/EmailGate.svelte";
+  import { getEmailUrl } from "$lib/utils/emailHelper";
+  import { getDirectPhone, getTeamsChatUrl } from "$lib/utils/phoneHelper";
 
   let innerWidth = 0;
   let contactSheetOpen = false;
@@ -86,7 +87,7 @@
       color: "#ef4444",
     },
     {
-      tag: $t.feed.merchTag,
+      tag: "AD",
       emoji: "🛒",
       title: $t.feed.merchTitle,
       desc: $t.feed.merchDesc,
@@ -145,7 +146,7 @@
       icon: "📧",
       label: $t.feed.email,
       value: "info.hsg@srh.de",
-      href: "mailto:info.hsg@srh.de",
+      href: getEmailUrl("info.hsg@srh.de"),
     },
     {
       icon: "🏢",
@@ -168,31 +169,6 @@
     <p class="subtitle">{$t.feed.subtitle}</p>
   </header>
 
-  <!-- Feature 4: Modernized Instagram Embed Wrapper -->
-  <section class="embed-section">
-    <h2 class="section-title">{$t.feed.instagramFeeds}</h2>
-    <div class="embed-wrapper">
-      <div class="embed-card">
-        <div class="embed-label">@srh.students</div>
-        <blockquote
-          class="instagram-media"
-          data-instgrm-permalink="https://www.instagram.com/srh.students/"
-          data-instgrm-version="14"
-          style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:0; width:100%;"
-        ></blockquote>
-      </div>
-      <div class="embed-card">
-        <div class="embed-label">@srh_university_international</div>
-        <blockquote
-          class="instagram-media"
-          data-instgrm-permalink="https://www.instagram.com/srh_university_international/"
-          data-instgrm-version="14"
-          style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:0; width:100%;"
-        ></blockquote>
-      </div>
-    </div>
-  </section>
-
   <!-- Feature 1: News Preview Cards -->
   <section class="news-cards">
     {#each newsCards as card}
@@ -200,15 +176,13 @@
         <span class="news-card-tag" style="background: {card.color};"
           >{card.tag}</span
         >
-        <span class="news-card-emoji">{card.emoji}</span>
         <h3 class="news-card-title">{card.title}</h3>
         <p class="news-card-desc">{card.desc}</p>
         <span class="news-card-cta">
-          {$t.feed.readMore}
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -221,6 +195,51 @@
         </span>
       </a>
     {/each}
+  </section>
+
+  <!-- Feature 4: Modernized Instagram Embed Wrapper -->
+  <section class="embed-section">
+    <h2 class="section-title">{$t.feed.instagramFeeds}</h2>
+    <div class="embed-wrapper">
+      <div class="embed-card">
+        <div class="embed-label">@srh.students</div>
+        <blockquote
+          class="instagram-media"
+          data-instgrm-permalink="https://www.instagram.com/srh.students/"
+          data-instgrm-version="14"
+          style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:0; width:100%;"
+        >
+          <div class="insta-placeholder">
+            <div class="insta-skeleton-header">
+              <div class="insta-skeleton-avatar"></div>
+              <div class="insta-skeleton-text"></div>
+            </div>
+            <div class="insta-skeleton-image">
+              <div class="insta-spinner"></div>
+            </div>
+          </div>
+        </blockquote>
+      </div>
+      <div class="embed-card">
+        <div class="embed-label">@srh_university_international</div>
+        <blockquote
+          class="instagram-media"
+          data-instgrm-permalink="https://www.instagram.com/srh_university_international/"
+          data-instgrm-version="14"
+          style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:0; width:100%;"
+        >
+          <div class="insta-placeholder">
+            <div class="insta-skeleton-header">
+              <div class="insta-skeleton-avatar"></div>
+              <div class="insta-skeleton-text"></div>
+            </div>
+            <div class="insta-skeleton-image">
+              <div class="insta-spinner"></div>
+            </div>
+          </div>
+        </blockquote>
+      </div>
+    </div>
   </section>
 
   <!-- Feature 2: Horizontal Scroll Social Chips -->
@@ -258,7 +277,14 @@
       </p>
     </div>
     {#if !$settingsStore.emailVerified}
-      <EmailGate />
+      <div class="verification-hint">
+        <span class="hint-icon">🔒</span>
+        <div class="hint-text">
+          <h3>Directory Access Restricted</h3>
+          <p>Please verify your university email in Settings to view contact details.</p>
+          <a href="/settings" class="btn-verify">Go to Settings to Verify</a>
+        </div>
+      </div>
     {:else if !$settingsStore.campusId}
       <div class="directory-prompt">
         <p>
@@ -271,12 +297,12 @@
         <button
           class="dir-tab"
           class:active={dirTab === "services"}
-          on:click={() => (dirTab = "services")}>🏢 Campus Services</button
+          onclick={() => (dirTab = "services")}>🏢 Campus Services</button
         >
         <button
           class="dir-tab"
           class:active={dirTab === "general"}
-          on:click={() => (dirTab = "general")}>🌐 University-wide</button
+          onclick={() => (dirTab = "general")}>🌐 University-wide</button
         >
       </div>
 
@@ -291,7 +317,7 @@
             >
               <button
                 class="dir-row-trigger"
-                on:click={() => toggleExpand(rowId)}
+                onclick={() => toggleExpand(rowId)}
               >
                 <div class="dir-row-info">
                   <span class="dir-service">{c.service}</span>
@@ -305,7 +331,8 @@
                 <div class="dir-expanded">
                   <div class="dir-actions" style="justify-content: center;">
                     <a
-                      href="mailto:{c.email}"
+                      href={getEmailUrl(c.email)}
+                      target="_blank" rel="noopener noreferrer"
                       class="dir-action-btn mail"
                       style="max-width: 160px;"
                     >
@@ -332,7 +359,7 @@
               >
                 <button
                   class="dir-row-trigger"
-                  on:click={() => toggleExpand(rowId)}
+                  onclick={() => toggleExpand(rowId)}
                 >
                   <div class="dir-row-info">
                     <span class="dir-service">{p.degree} {p.program}</span>
@@ -344,25 +371,20 @@
                 </button>
                 {#if expandedId === rowId}
                   <div class="dir-expanded">
-                    <div class="dir-meta">
-                      <span class="meta-label">Cluster:</span>
-                      <span class="meta-value">{p.cluster}</span>
-                    </div>
                     <div class="dir-actions">
-                      <a href="mailto:{p.email}" class="dir-action-btn mail">
+                      <a href={getEmailUrl(p.email)} class="dir-action-btn mail" target="_blank" rel="noopener noreferrer" title="Mail">
                         <span class="action-icon">📧</span>
-                        <span class="action-text">Mail</span>
                       </a>
                       {#if p.phone}
-                        <a
-                          href="tel:{p.phone.replace(/[\s-]/g, '')}"
-                          class="dir-action-btn call"
-                        >
+                        <a href={getDirectPhone(p.phone)} class="dir-action-btn call" title="Call Direct">
                           <span class="action-icon">📞</span>
-                          <span class="action-text">Call</span>
                         </a>
                       {/if}
+                      <a href={getTeamsChatUrl(p.email)} class="dir-action-btn chat" target="_blank" rel="noopener noreferrer" title="Chat on Teams">
+                        <span class="action-icon">💬</span>
+                      </a>
                     </div>
+
                     <div class="dir-footer">
                       <div class="dir-meta-value">{p.email}</div>
                       {#if p.phone}<div class="dir-meta-value">
@@ -391,7 +413,7 @@
             >
               <button
                 class="dir-row-trigger"
-                on:click={() => toggleExpand(rowId)}
+                onclick={() => toggleExpand(rowId)}
               >
                 <div class="dir-row-info">
                   <span class="dir-service">{c.service}</span>
@@ -403,14 +425,12 @@
               </button>
               {#if expandedId === rowId}
                 <div class="dir-expanded">
-                  <div class="dir-actions" style="justify-content: center;">
-                    <a
-                      href="mailto:{c.email}"
-                      class="dir-action-btn mail"
-                      style="max-width: 160px;"
-                    >
+                  <div class="dir-actions">
+                    <a href={getEmailUrl(c.email)} class="dir-action-btn mail" target="_blank" rel="noopener noreferrer" title="Mail">
                       <span class="action-icon">📧</span>
-                      <span class="action-text">Send Email</span>
+                    </a>
+                    <a href={getTeamsChatUrl(c.email)} class="dir-action-btn chat" target="_blank" rel="noopener noreferrer" title="Chat on Teams">
+                      <span class="action-icon">💬</span>
                     </a>
                   </div>
                   <div class="dir-footer">
@@ -427,7 +447,7 @@
 
   <!-- Feature 3: Contact Hub Button -->
   <section class="contact-trigger-section">
-    <button class="contact-trigger" on:click={openContactSheet}>
+    <button class="contact-trigger" onclick={openContactSheet}>
       <span class="contact-trigger-icon">📞</span>
       <div class="contact-trigger-text">
         <span class="contact-trigger-title">{$t.feed.universityDirectory}</span>
@@ -444,20 +464,20 @@
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="sheet-overlay" on:click={closeContactSheet} role="presentation">
+    <div class="sheet-overlay" onclick={closeContactSheet} role="presentation">
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div
         class="sheet"
-        on:click|stopPropagation
+        onclick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label={$t.feed.contactTitle}
       >
         <div class="sheet-handle"></div>
         <button
           class="sheet-close"
-          on:click={closeContactSheet}
+          onclick={closeContactSheet}
           aria-label={$t.feed.close}>✕</button
         >
         <h3 class="sheet-title">{$t.feed.contactTitle}</h3>
@@ -485,19 +505,19 @@
     <!-- svelte-ignore a11y-click-events-have-key-events -->
     <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
     <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="sheet-overlay" on:click={closeContactSheet} role="presentation">
+    <div class="sheet-overlay" onclick={closeContactSheet} role="presentation">
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div
         class="contact-modal"
-        on:click|stopPropagation
+        onclick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label={$t.feed.contactTitleDesktop}
       >
         <button
           class="sheet-close"
-          on:click={closeContactSheet}
+          onclick={closeContactSheet}
           aria-label={$t.feed.close}>✕</button
         >
         <h3 class="sheet-title">{$t.feed.contactTitleDesktop}</h3>
@@ -572,31 +592,18 @@
 
   /* ─── Feature 1: News Preview Cards ──────────────────────────── */
   .news-cards {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: var(--spacing-md);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
     margin-bottom: var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
   }
 
-  @media (max-width: 639px) {
+  @media (max-width: 768px) {
     .news-cards {
-      gap: 0;
-    }
-  }
-
-  .news-card {
-    flex: 1 1 100%;
-  }
-
-  @media (max-width: 639px) {
-    .news-card {
-      margin-bottom: var(--spacing-md);
-    }
-  }
-
-  @media (min-width: 640px) {
-    .news-card {
-      flex: 1 1 calc(33.333% - var(--spacing-md));
+      grid-template-columns: 1fr;
     }
   }
 
@@ -605,14 +612,33 @@
     display: flex;
     flex-direction: column;
     padding: var(--spacing-lg);
+    padding-right: calc(var(--spacing-lg) * 2.5);
     background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
     text-decoration: none;
     color: var(--text-color);
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
   }
+
+  .news-card:nth-child(3n) {
+    border-right: none;
+  }
+
+  .news-card:last-child {
+    border-bottom: none;
+  }
+
+  @media (max-width: 768px) {
+    .news-card {
+      border-right: none;
+    }
+    .news-card:nth-child(3n) {
+      border-right: none;
+    }
+  }
+
 
   .news-card::before {
     content: "";
@@ -648,10 +674,7 @@
     margin-bottom: var(--spacing-sm);
   }
 
-  .news-card-emoji {
-    font-size: 2rem;
-    margin-bottom: var(--spacing-sm);
-  }
+
 
   .news-card-title {
     font-size: 1.05rem;
@@ -670,13 +693,20 @@
   }
 
   .news-card-cta {
-    display: inline-flex;
+    position: absolute;
+    right: var(--spacing-lg);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 0.82rem;
-    font-weight: 600;
     color: var(--primary-color);
-    margin-top: auto;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+  }
+
+  .news-card:hover .news-card-cta {
+    opacity: 1;
+    right: calc(var(--spacing-lg) - 4px);
   }
 
   /* ─── Feature 4: Embed Wrapper ───────────────────────────────── */
@@ -710,6 +740,66 @@
 
   .embed-card:hover {
     box-shadow: var(--shadow-md);
+  }
+
+  .insta-placeholder {
+    padding: 16px;
+    min-height: 450px;
+    background: var(--card-bg);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .insta-skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .insta-skeleton-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(150, 150, 150, 0.2);
+    animation: pulse 1.5s infinite;
+  }
+
+  .insta-skeleton-text {
+    height: 14px;
+    width: 120px;
+    border-radius: 4px;
+    background: rgba(150, 150, 150, 0.2);
+    animation: pulse 1.5s infinite;
+  }
+
+  .insta-skeleton-image {
+    flex: 1;
+    border-radius: 4px;
+    background: rgba(150, 150, 150, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 1.5s infinite;
+  }
+
+  .insta-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(150, 150, 150, 0.3);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .embed-label {
@@ -798,6 +888,55 @@
     border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
     box-shadow: var(--shadow-sm);
+  }
+
+  .verification-hint {
+    padding: 24px;
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(212, 68, 7, 0.2);
+    background: rgba(212, 68, 7, 0.05);
+  }
+
+  .hint-icon {
+    font-size: 2.5rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  }
+
+  .hint-text h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.1rem;
+    color: var(--text-color);
+  }
+
+  .hint-text p {
+    margin: 0 0 12px 0;
+    font-size: 0.9rem;
+    color: var(--text-color-secondary);
+    line-height: 1.4;
+  }
+
+  .btn-verify {
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  @media (max-width: 600px) {
+    .verification-hint {
+      flex-direction: column;
+      text-align: center;
+      padding: 20px;
+    }
   }
 
   .directory-tabs {
@@ -963,6 +1102,7 @@
     }
   }
 
+
   .dir-action-btn:hover {
     background: rgba(0, 0, 0, 0.06);
     border-color: var(--primary-color);
@@ -978,6 +1118,10 @@
 
   .dir-action-btn.call {
     color: #10b981;
+  }
+
+  .dir-action-btn.chat {
+    color: #505ac9; /* Teams Purple/Blue */
   }
 
   .dir-footer {
@@ -1010,6 +1154,22 @@
     color: var(--text-color-secondary);
     font-size: 0.9rem;
     font-style: italic;
+  }
+
+  /* ── Phone Native Select Overlay ── */
+  .phone-select-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  .phone-native-select {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    -webkit-appearance: menulist-button;
   }
 
   /* ─── Feature 3: Contact Trigger Button ──────────────────────── */
@@ -1242,26 +1402,17 @@
     }
 
     .news-cards {
-      flex: 1 1 calc(50% - var(--spacing-xl) / 2);
+      width: 100%;
     }
 
     .social-section,
     .contact-trigger-section {
       width: 100%;
     }
-
-    /* News card adjustments for larger screens */
-    .news-card {
-      flex: 1 1 100%;
-    }
   }
 
   /* ─── Responsive ─────────────────────────────────────────────── */
-  @media (max-width: 639px) {
-    .news-cards {
-      gap: var(--spacing-sm);
-    }
-
+  @media (max-width: 768px) {
     .news-card {
       padding: var(--spacing-md);
     }

@@ -15,13 +15,34 @@
 	/* Event Colors - Light Mode (Semantic & RGB for transparency) */
 	--event-green-rgb: 16, 185, 129;
 	--event-orange-rgb: 245, 158, 11;
-	--event-purple-rgb: 58 102 230;
+	--event-purple-rgb: 168, 85, 247;
 	--event-pink-rgb: 236, 72, 153;
 	--event-cyan-rgb: 6, 182, 212;
 	--event-yellow-rgb: 234, 179, 8;
 	--event-srh-rgb: 212, 68, 7;
 	--event-lecture-free-rgb: 59, 130, 246;
 	--event-exams-rgb: 239, 68, 68;
+
+	/* Event Neon Text Colors (Constant in light/dark mode) */
+	--event-text-yellow-rgb: 223, 156, 11;
+	--event-text-cyan-rgb: 0, 240, 255;
+	--event-text-green-rgb: 8, 181, 44;
+	--event-text-pink-rgb: 255, 0, 255;
+	--event-text-orange-rgb: 255, 102, 0;
+	--event-text-exams-rgb: 255, 0, 51;
+	--event-text-purple-rgb: 157, 0, 255;
+	--event-text-lecture-free-rgb: 0, 102, 255;
+	--event-text-srh-rgb: 255, 69, 0;
+
+	--event-text-yellow: rgb(var(--event-text-yellow-rgb));
+	--event-text-cyan: rgb(var(--event-text-cyan-rgb));
+	--event-text-green: rgb(var(--event-text-green-rgb));
+	--event-text-pink: rgb(var(--event-text-pink-rgb));
+	--event-text-orange: rgb(var(--event-text-orange-rgb));
+	--event-text-exams: rgb(var(--event-text-exams-rgb));
+	--event-text-purple: rgb(var(--event-text-purple-rgb));
+	--event-text-lecture-free: rgb(var(--event-text-lecture-free-rgb));
+	--event-text-srh: rgb(var(--event-text-srh-rgb));
 
 	--event-green: rgb(var(--event-green-rgb));
 	--event-orange: rgb(var(--event-orange-rgb));
@@ -69,6 +90,7 @@
 
 	/* Layout */
 	--sidebar-width: 220px;
+	--bottom-nav-height: 112px;
 
 	/* Thumb Zone Measurements */
 	--thumb-zone-easy: 40vh;
@@ -128,10 +150,11 @@
 		--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
 		--shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
 
-		/* Event Colors - Dark Mode (RGB for transparency) */
+
+		/* Event Colors - Dark Mode */
 		--event-green-rgb: 6, 95, 70;
 		--event-orange-rgb: 146, 64, 14;
-		--event-purple-rgb: 58, 102, 230;
+		--event-purple-rgb: 126, 34, 206;
 		--event-pink-rgb: 206, 42, 108;
 		--event-cyan-rgb: 22, 78, 99;
 		--event-yellow-rgb: 194, 107, 30;
@@ -168,16 +191,17 @@
 		--shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
 		--shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
 
-		/* Event Colors - Dark Mode (RGB for transparency) */
-		--event-green-rgb: 16, 185, 129;
-		--event-orange-rgb: 185, 82, 20;
-		--event-purple-rgb: 51, 61, 145;
-		--event-pink-rgb: 131, 24, 67;
-		--event-cyan-rgb: 46, 153, 194;
-		--event-yellow-rgb: 113, 63, 18;
+
+		/* Event Colors - Dark Mode */
+		--event-green-rgb: 6, 95, 70;
+		--event-orange-rgb: 146, 64, 14;
+		--event-purple-rgb: 126, 34, 206;
+		--event-pink-rgb: 206, 42, 108;
+		--event-cyan-rgb: 22, 78, 99;
+		--event-yellow-rgb: 194, 107, 30;
 		--event-srh-rgb: 124, 45, 18;
-		--event-lecture-free-rgb: 30, 58, 138;
-		--event-exams-rgb: 127, 29, 29;
+		--event-lecture-free-rgb: 47, 92, 221;
+		--event-exams-rgb: 198, 47, 47;
 	}
 }
 
@@ -475,11 +499,20 @@ html.a11y-focus-visible textarea:focus {
 html.a11y-screen-reader {
 	/* Intentionally empty — behaviour is driven by Svelte component logic */
 }
-/* ── Search Keyboard Stitching ────────────────────────────────────────── */
-body:has(.bottom-search-input:focus) .bottom-nav {
-	display: none !important;
-}
+
 
 a, button {
 	-webkit-tap-highlight-color: transparent;
+}
+
+mark {
+	background: rgba(212, 68, 7, 0.18);
+	color: inherit;
+	border-radius: 4px;
+	padding: 0 2px;
+}
+
+[data-theme="dark"] mark {
+	background: rgba(212, 68, 7, 0.3);
+	color: inherit;
 }

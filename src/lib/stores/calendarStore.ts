@@ -14,15 +14,15 @@ export interface CalendarSubscription {
 }
 
 export const EVENT_COLORS = [
-    { id: 'var(--event-srh)', texture: 'stripes' },
-    { id: 'var(--event-green)', texture: 'dots' },
-    { id: 'var(--event-orange)', texture: 'mesh' },
-    { id: 'var(--event-purple)', texture: 'stripes' },
-    { id: 'var(--event-pink)', texture: 'dots' },
-    { id: 'var(--event-cyan)', texture: 'mesh' },
     { id: 'var(--event-yellow)', texture: 'stripes' },
+    { id: 'var(--event-cyan)', texture: 'mesh' },
+    { id: 'var(--event-green)', texture: 'dots' },
+    { id: 'var(--event-pink)', texture: 'dots' },
+    { id: 'var(--event-orange)', texture: 'mesh' },
+    { id: 'var(--event-exams)', texture: 'mesh' },
+    { id: 'var(--event-purple)', texture: 'stripes' },
     { id: 'var(--event-lecture-free)', texture: 'dots' },
-    { id: 'var(--event-exams)', texture: 'mesh' }
+    { id: 'var(--event-srh)', texture: 'stripes' }
 ];
 
 export function getTextureForColor(color: string): string {

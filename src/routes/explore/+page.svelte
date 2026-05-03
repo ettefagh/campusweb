@@ -223,6 +223,13 @@
 		{ id: "team", name: "Staff", icon: "👥", searchable: false, staticUrl: "https://www.srh-university.de/en/srh-university/faculty-and-team/" },
 	];
 
+	function highlightMatch(text: string, query: string): string {
+		if (!query.trim()) return text;
+		const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		const regex = new RegExp(`(${escapedQuery})`, 'gi');
+		return text.replace(regex, '<mark>$1</mark>');
+	}
+
 	/**
 	 * Svelte Action: Stitches the element to the virtual keyboard on mobile (iOS Safari)
 	 */
@@ -279,21 +286,21 @@
 								<div class="search-contact-info">
 									<div class="search-contact-meta">
 										{#if contact.type === 'program'}
-											{contact.degree} {contact.program}
+											{@html highlightMatch(`${contact.degree} ${contact.program}`, searchQuery)}
 										{:else}
-											{contact.service}
+											{@html highlightMatch(contact.service, searchQuery)}
 										{/if}
 									</div>
 									<div class="search-contact-name">
-										{contact.person}
+										{@html highlightMatch(contact.person, searchQuery)}
 										<div class="search-contact-tags">
 												{#each contact.tags as tag}
 													{#if tag.startsWith('campus:')}
-														<span class="contact-tag campus-tag">{tag.replace('campus:', '')}</span>
+														<span class="contact-tag campus-tag">{@html highlightMatch(tag.replace('campus:', ''), searchQuery)}</span>
 													{:else if tag.startsWith('school:')}
-														<span class="contact-tag school-tag">{tag.replace('school:', '')}</span>
+														<span class="contact-tag school-tag">{@html highlightMatch(tag.replace('school:', ''), searchQuery)}</span>
 													{:else}
-														<span class="contact-tag">{tag}</span>
+														<span class="contact-tag">{@html highlightMatch(tag, searchQuery)}</span>
 													{/if}
 												{/each}
 											{#if contact.phone}

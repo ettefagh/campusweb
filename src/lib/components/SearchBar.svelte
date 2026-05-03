@@ -1,18 +1,27 @@
 <script lang="ts">
 	let {
 		searchQuery = $bindable(''),
+		isSearchActive = $bindable(false),
 		placeholder = 'Search...',
 		clearLabel = 'Clear search',
 		children
 	} = $props<{
 		searchQuery: string;
+		isSearchActive?: boolean;
 		placeholder?: string;
 		clearLabel?: string;
 		children?: import('svelte').Snippet;
 	}>();
 
-	// Declarative State with Svelte 5 Runes to track focus
-	let isSearchActive = $state(false);
+	let inputElement: HTMLInputElement | undefined = $state();
+
+	export function focus() {
+		inputElement?.focus();
+	}
+
+	export function blur() {
+		inputElement?.blur();
+	}
 
 	function onFocus() {
 		isSearchActive = true;
@@ -25,9 +34,7 @@
 		}, 150);
 	}
 
-	function clearSearch() {
-		searchQuery = '';
-	}
+
 </script>
 
 <div class="search-snap-container" class:active={isSearchActive}>
@@ -37,6 +44,7 @@
 			Enforcing strict minimum font-size: 16px to prevent iOS Safari auto-zoom 
 		-->
 		<input
+			bind:this={inputElement}
 			type="search"
 			{placeholder}
 			bind:value={searchQuery}
@@ -45,13 +53,11 @@
 			class="snap-search-input"
 			aria-label={placeholder}
 		/>
-		{#if searchQuery}
-			<button class="clear-btn" aria-label={clearLabel} onclick={clearSearch}>✖</button>
-		{/if}
+
 	</div>
 
-	<!-- Space for autocomplete results or dropdown directly below the snapped input -->
-	{#if isSearchActive && children}
+	<!-- Space for results or dropdown directly below the input -->
+	{#if (isSearchActive || searchQuery.trim()) && children}
 		<div class="search-results-container">
 			{@render children()}
 		</div>
@@ -111,9 +117,10 @@
 	}
 
 	.search-icon {
-		font-size: 1.2rem;
-		opacity: 0.6;
-		margin-right: var(--spacing-xs, 8px);
+		font-size: 1.1rem;
+		opacity: 0.5;
+		margin-right: 12px;
+		flex-shrink: 0;
 	}
 
 	.snap-search-input {
@@ -125,8 +132,9 @@
 		font-size: 16px; 
 		color: var(--text-color, inherit);
 		width: 100%;
-		padding: 0;
-		-webkit-appearance: none;
+		padding: 0 4px;
+		-webkit-appearance: textfield;
+		appearance: auto;
 	}
 
 	.snap-search-input:focus {
@@ -159,7 +167,10 @@
 		flex: 1;
 		overflow-y: auto;
 		-webkit-overflow-scrolling: touch;
-		padding: 0 var(--spacing-sm, 12px) var(--spacing-sm, 12px);
+		padding: var(--spacing-md, 16px);
+		max-width: 800px;
+		margin: 0 auto;
+		width: 100%;
 		display: flex;
 		flex-direction: column;
 	}
