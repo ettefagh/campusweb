@@ -88,7 +88,7 @@
 	}
 
 	let a11yOpen = false;
-	let classColorsOpen = false;
+	let calendarSettingsOpen = false;
 	let activeColorChooser: string | null = null;
 
 	function toggleColorChooser(id: string) {
@@ -275,48 +275,94 @@
 		</div>
 	</section>
 
-	<!-- ── Calendar Preferences ──────────────── -->
-	<section class="settings-section">
-		<div class="section-header">
-			<span class="section-icon">📅</span>
-			<div>
-				<h2>{$t.settings.calendarTitle}</h2>
-				<p class="section-desc">{$t.settings.calendarDesc}</p>
-			</div>
-		</div>
+	<!-- ── Calendar Settings (Collapsible) ────────────── -->
+	<section class="settings-section a11y-section">
+		<details bind:open={calendarSettingsOpen}>
+			<summary class="section-header section-header--collapsible">
+				<span class="section-icon">📅</span>
+				<div>
+					<h2>{$t.settings.calendarTitle}</h2>
+					<p class="section-desc">Manage subscriptions, colors, and preferences.</p>
+				</div>
+				<span class="chevron" aria-hidden="true">›</span>
+			</summary>
 
-		<div class="setting-row">
-			<label class="setting-label" for="week-start">{$t.settings.weekStartsOn}</label>
-			<select
-				id="week-start"
-				class="setting-select setting-select--inline"
-				value={$settingsStore.weekStartsOn}
-				on:change={(e) => handleWeekStartChange(Number(e.currentTarget.value))}
-			>
-				<option value={1}>{$t.settings.monday}</option>
-				<option value={0}>{$t.settings.sunday}</option>
-				<option value={6}>{$t.settings.saturday}</option>
-			</select>
-		</div>
+			<div class="a11y-body">
+				<!-- 1. Preferences -->
+				<div class="setting-row">
+					<label class="setting-label" for="week-start">{$t.settings.weekStartsOn}</label>
+					<select
+						id="week-start"
+						class="setting-select setting-select--inline"
+						value={$settingsStore.weekStartsOn}
+						on:change={(e) => handleWeekStartChange(Number(e.currentTarget.value))}
+					>
+						<option value={1}>{$t.settings.monday}</option>
+						<option value={0}>{$t.settings.sunday}</option>
+						<option value={6}>{$t.settings.saturday}</option>
+					</select>
+				</div>
 
+				<!-- 2. Subscriptions -->
+				<div class="setting-group">
+					<h3 class="group-title">Subscriptions</h3>
+					<div class="helper-box">
+						<p>💡 <strong>How to find your link:</strong> Go to <a href="https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php" target="_blank" rel="noopener noreferrer">My Schedule</a> on the university portal. Below your schedule grid, you will find the <strong>"iCal-Export"</strong> button — copy that link and paste it below.</p>
+					</div>
+					<SecureCalendarInput />
+				</div>
 
-	</section>
-	
-	<!-- ── Calendar Subscriptions ────────────── -->
-	<section id="calendar-subscriptions" class="settings-section">
-		<div class="section-header">
-			<span class="section-icon">🔗</span>
-			<div>
-				<h2>Calendar Subscriptions</h2>
-				<p class="section-desc">Add or remove university calendar feeds (iCal/ICS).</p>
+				<!-- 3. Class Colors -->
+				<div class="setting-group" style="margin-top: var(--spacing-lg);">
+					<h3 class="group-title">Class Colors</h3>
+					{#if $activeClasses.length === 0}
+						<p class="section-desc" style="opacity: 0.7;">No active classes found in your calendar subscriptions.</p>
+					{:else}
+						<div class="class-colors-list">
+							{#each $activeClasses as cls}
+								<div class="setting-row" style="position: relative;">
+									<div class="class-color-info">
+										<span class="setting-label">{cls.title}</span>
+										{#if cls.id !== cls.title}
+											<span class="class-title-hint">{cls.id}</span>
+										{/if}
+									</div>
+									<div class="class-color-actions">
+										<button 
+											class="active-color-swatch"
+											style="background-color: {$classColors[cls.id] || cls.defaultColor}"
+											on:click={() => toggleColorChooser(cls.id)}
+											aria-label="Change color"
+										></button>
+										
+										{#if activeColorChooser === cls.id}
+											<div class="color-popup-overlay" on:click={() => activeColorChooser = null} on:keydown={(e) => e.key === 'Escape' && (activeColorChooser = null)} role="button" tabindex="-1" aria-label="Close color chooser"></div>
+											<div class="color-popup">
+												<div class="color-palette">
+													{#each EVENT_COLORS as ec}
+														<button
+															class="palette-swatch"
+															class:selected={($classColors[cls.id] || cls.defaultColor) === ec.id}
+															style="background-color: {ec.id}"
+															on:click={() => selectColor(cls.id, ec.id)}
+															aria-label="Select color"
+														></button>
+													{/each}
+												</div>
+											</div>
+										{/if}
+
+										{#if $classColors[cls.id]}
+											<button class="btn-clear-color" on:click={() => classColors.resetColor(cls.id)} aria-label="Reset color">🔄</button>
+										{/if}
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</div>
 			</div>
-		</div>
-		<div class="setting-row" style="display: block; padding-top: 0; border-top: none;">
-			<div class="helper-box">
-				<p>💡 <strong>How to find your link:</strong> Go to <a href="https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php" target="_blank" rel="noopener noreferrer">My Schedule</a> on the university portal. Below your schedule grid, you will find the <strong>"iCal-Export"</strong> button — copy that link and paste it below.</p>
-			</div>
-			<SecureCalendarInput />
-		</div>
+		</details>
 	</section>
 
 	<!-- ── Accessibility ─────────────────────── -->
@@ -378,67 +424,7 @@
 		</details>
 	</section>
 
-	<!-- ── Class Color Management ──────────────── -->
-	<section id="class-colors" class="settings-section a11y-section">
-		<details bind:open={classColorsOpen}>
-			<summary class="section-header section-header--collapsible">
-				<span class="section-icon">🖍️</span>
-				<div>
-					<h2>Class Colors</h2>
-					<p class="section-desc">Customize the color of specific classes or events.</p>
-				</div>
-				<span class="chevron" aria-hidden="true">›</span>
-			</summary>
 
-			<div class="a11y-body">
-				{#if $activeClasses.length === 0}
-					<p class="section-desc" style="opacity: 0.7;">No active classes found in your calendar subscriptions.</p>
-				{:else}
-					<div class="class-colors-list">
-						{#each $activeClasses as cls}
-							<div class="setting-row" style="position: relative;">
-								<div class="class-color-info">
-									<span class="setting-label">{cls.title}</span>
-									{#if cls.id !== cls.title}
-										<span class="class-title-hint">{cls.id}</span>
-									{/if}
-								</div>
-								<div class="class-color-actions">
-									<button 
-										class="active-color-swatch"
-										style="background-color: {$classColors[cls.id] || cls.defaultColor}"
-										on:click={() => toggleColorChooser(cls.id)}
-										aria-label="Change color"
-									></button>
-									
-									{#if activeColorChooser === cls.id}
-										<div class="color-popup-overlay" on:click={() => activeColorChooser = null} on:keydown={(e) => e.key === 'Escape' && (activeColorChooser = null)} role="button" tabindex="-1" aria-label="Close color chooser"></div>
-										<div class="color-popup">
-											<div class="color-palette">
-												{#each EVENT_COLORS as ec}
-													<button
-														class="palette-swatch"
-														class:selected={($classColors[cls.id] || cls.defaultColor) === ec.id}
-														style="background-color: {ec.id}"
-														on:click={() => selectColor(cls.id, ec.id)}
-														aria-label="Select color"
-													></button>
-												{/each}
-											</div>
-										</div>
-									{/if}
-
-									{#if $classColors[cls.id]}
-										<button class="btn-clear-color" on:click={() => classColors.resetColor(cls.id)} aria-label="Reset color">🔄</button>
-									{/if}
-								</div>
-							</div>
-						{/each}
-					</div>
-				{/if}
-			</div>
-		</details>
-	</section>
 
 	<!-- ── Reset ─────────────────────────────── -->
 	<section class="settings-section danger-section">
@@ -813,6 +799,19 @@
 
 	.helper-box a:hover {
 		opacity: 0.8;
+	}
+
+	.setting-group {
+		padding: var(--spacing-md) 0;
+		border-top: 1px solid var(--border-color);
+	}
+
+	.group-title {
+		font-size: 0.9rem;
+		font-weight: 700;
+		margin: 0 0 var(--spacing-sm);
+		color: var(--text-color);
+		opacity: 0.9;
 	}
 
 	.update-spinner {

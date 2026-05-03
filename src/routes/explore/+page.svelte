@@ -5,7 +5,7 @@
 	import { browser } from "$app/environment";
 	import { onMount } from "svelte";
 	import { t } from "$lib/i18n";
-	import { settingsStore } from "$lib/stores/settingsStore";
+	import { settingsStore, activeCampus } from "$lib/stores/settingsStore";
 	import { campusContacts, generalContacts, programDirectors } from "$lib/data/contacts";
 
 	let searchQuery = "";
@@ -30,14 +30,17 @@
 			} else if (source.id === "equipment") {
 				window.location.href = `/viewer?url=${encodeURIComponent(`https://srhberlin.booqableshop.com/search?q=${encodeURIComponent(query)}`)}&title=${encodeURIComponent(source.name + " Search")}`;
 			}
-		} else if (source.staticUrl) {
+		} else if (source.staticUrl || (source.id === 'library' && libraryUrl)) {
+			const finalUrl = source.id === 'library' ? libraryUrl : source.staticUrl;
 			if (source.id === "library") {
-				window.open(source.staticUrl, "_blank");
+				window.open(finalUrl, "_blank");
 			} else {
-				window.location.href = `/viewer?url=${encodeURIComponent(source.staticUrl)}&title=${encodeURIComponent(source.name)}`;
+				window.location.href = `/viewer?url=${encodeURIComponent(finalUrl)}&title=${encodeURIComponent(source.name)}`;
 			}
 		}
 	}
+
+	$: libraryUrl = $activeCampus?.libraryUrl || "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB";
 
 	let filteredLinks: typeof allLinks = [];
 	$: filteredLinks = allLinks.filter((link) => {
@@ -219,7 +222,7 @@
 		{ id: "srh", name: "University Website", icon: "🎓", searchable: true },
 		{ id: "ecampus", name: "E-Campus", icon: "💻", searchable: true },
 		{ id: "equipment", name: "Equipment Rental", icon: "📷", searchable: true },
-		{ id: "library", name: "Library", icon: "📚", searchable: false, staticUrl: "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB" },
+		{ id: "library", name: "Library", icon: "📚", searchable: false },
 		{ id: "team", name: "Staff", icon: "👥", searchable: false, staticUrl: "https://www.srh-university.de/en/srh-university/faculty-and-team/" },
 	];
 
@@ -345,6 +348,7 @@
 						<LinkCard
 							{link}
 							isFavorite={$favorites.includes(link.id)}
+							customUrl={link.id === 'library-catalogue' ? libraryUrl : undefined}
 							on:toggleFavorite={handleToggleFavorite}
 						/>
 					{/each}

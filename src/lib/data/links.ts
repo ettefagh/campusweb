@@ -131,6 +131,22 @@ export const eCampusLinks = [
 		icon: '📋',
 		description: 'Policies, forms, and guidelines',
 		category_name: 'E-Campus'
+	},
+	{
+		id: 'student-handbook',
+		title: 'Student Guide Handbook',
+		url: 'https://padlet.com/srhhshd/faqs-on-the-launch-of-srh-university-7mag1solqz2dqeaa/wish/Ae2Rav5EmxmbWnz4',
+		icon: '📘',
+		description: 'Comprehensive FAQ and organizational guide for SRH students',
+		category_name: 'Resources'
+	},
+	{
+		id: 'srh-padlet',
+		title: 'SRH University Padlet',
+		url: 'https://padlet.com/srhhshd/faqs-on-the-launch-of-srh-university-7mag1solqz2dqeaa',
+		icon: '📋',
+		description: 'FAQs, services, and regulations',
+		category_name: 'Resources'
 	}
 ];
 

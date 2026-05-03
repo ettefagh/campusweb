@@ -2,6 +2,8 @@ import { writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
 import type { CalendarEvent } from '$lib/utils/icalParser';
 import { parseICalEvents, extractCalendarName } from '$lib/utils/icalParser';
+import { settingsStore, activeCampus } from '$lib/stores/settingsStore';
+import { HOLIDAYS } from '$lib/data/holidays';
 
 export interface CalendarSubscription {
     id: string;
@@ -265,4 +267,41 @@ export const activeClasses = derived(calendarStore, $subs => {
         ...group,
         defaultColor: EVENT_COLORS[index % EVENT_COLORS.length].id
     }));
+});
+
+/** Derived: Holidays for the currently selected campus and language */
+export const holidayEvents = derived([settingsStore, activeCampus], ([$s, $campus]) => {
+    if (!$campus) return [];
+    const language = $s.language || 'en';
+    const currentYear = new Date().getFullYear();
+    const stateCode = $campus.stateCode;
+
+    return HOLIDAYS
+        .filter(h => h.states === 'ALL' || (stateCode && h.states.includes(stateCode)))
+        .map(h => {
+            const title = language === 'de' ? h.nameDe : h.nameEn;
+            const otherName = language === 'de' ? h.nameEn : h.nameDe;
+            const description = language === 'de' 
+                ? `English: ${otherName}\nRegion: ${h.states === 'ALL' ? 'National' : h.states.join(', ')}` 
+                : `German: ${otherName}\nRegion: ${h.states === 'ALL' ? 'National' : h.states.join(', ')}`;
+
+            // Create events for this year and next year for better coverage
+            const years = [currentYear, currentYear + 1];
+            return years.map(year => ({
+                id: `${h.id}_${year}`,
+                title: title,
+                start: new Date(`${year}-${h.date}`),
+                end: new Date(`${year}-${h.date}`),
+                allDay: true,
+                color: 'var(--event-purple)',
+                editable: false,
+                extendedProps: {
+                    source: 'holidays',
+                    calendarId: 'holidays',
+                    description: description,
+                    language: language
+                }
+            }));
+        })
+        .flat();
 });

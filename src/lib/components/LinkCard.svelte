@@ -14,6 +14,7 @@
 	export let isFavorite: boolean = false;
 	export let useViewer: boolean = false;
 	export let editMode: boolean = false;
+	export let customUrl: string | undefined = undefined;
 
 	const dispatch = createEventDispatcher();
 
@@ -35,10 +36,11 @@
 	$: displayDesc = $t.linkDesc?.[link.id as keyof typeof $t.linkDesc] || link.description;
 	$: displayCategory = link.category_name ? ($t.linkCategory?.[link.category_name as keyof typeof $t.linkCategory] || link.category_name) : undefined;
 
-	$: isInternalLink = link.url.startsWith('/');
+	$: effectiveUrl = customUrl || link.url;
+	$: isInternalLink = effectiveUrl.startsWith('/');
 	$: finalUrl = (useViewer && !isInternalLink)
-		? `/viewer?url=${encodeURIComponent(link.url)}&title=${encodeURIComponent(displayTitle)}`
-		: link.url;
+		? `/viewer?url=${encodeURIComponent(effectiveUrl)}&title=${encodeURIComponent(displayTitle)}`
+		: effectiveUrl;
 
 	// Accessibility: build aria-label based on context and screen reader hints setting.
 	// In edit mode: always explicit about the toggle action.

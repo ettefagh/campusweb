@@ -26,8 +26,9 @@ export interface Campus {
   id: string;
   university: string;
   name: string;
-  city: string;
   country: string;
+  stateCode?: string; // e.g., 'BE', 'BW', 'BY'
+  libraryUrl?: string;
   /** Base URL for campus-specific iCal feeds if available */
   calendarBaseUrl?: string;
 }
@@ -59,24 +60,26 @@ export interface AppSettings {
 // ── Static Data: Campuses ─────────────────────────────────────────────────────
 
 export const CAMPUSES: Campus[] = [
-  { id: 'bamberg', university: 'SRH', name: 'Bamberg', city: 'Bamberg', country: 'DE' },
-  { id: 'berlin', university: 'SRH', name: 'Berlin', city: 'Berlin', country: 'DE' },
-  { id: 'bremen', university: 'SRH', name: 'Bremen', city: 'Bremen', country: 'DE' },
-  { id: 'dresden', university: 'SRH', name: 'Dresden', city: 'Dresden', country: 'DE' },
-  { id: 'duesseldorf', university: 'SRH', name: 'Düsseldorf', city: 'Düsseldorf', country: 'DE' },
-  { id: 'fuerth', university: 'SRH', name: 'Fürth', city: 'Fürth', country: 'DE' },
-  { id: 'gera', university: 'SRH', name: 'Gera', city: 'Gera', country: 'DE' },
-  { id: 'hamburg', university: 'SRH', name: 'Hamburg', city: 'Hamburg', country: 'DE' },
-  { id: 'hamm', university: 'SRH', name: 'Hamm', city: 'Hamm', country: 'DE' },
-  { id: 'heide', university: 'SRH', name: 'Heide', city: 'Heide', country: 'DE' },
-  { id: 'heidelberg', university: 'SRH', name: 'Heidelberg', city: 'Heidelberg', country: 'DE' },
-  { id: 'karlsruhe', university: 'SRH', name: 'Karlsruhe', city: 'Karlsruhe', country: 'DE' },
-  { id: 'cologne', university: 'SRH', name: 'Köln', city: 'Köln', country: 'DE' },
-  { id: 'leipzig', university: 'SRH', name: 'Leipzig', city: 'Leipzig', country: 'DE' },
-  { id: 'leverkusen', university: 'SRH', name: 'Leverkusen', city: 'Leverkusen', country: 'DE' },
-  { id: 'munich', university: 'SRH', name: 'München', city: 'München', country: 'DE' },
-  { id: 'stuttgart', university: 'SRH', name: 'Stuttgart', city: 'Stuttgart', country: 'DE' },
-  { id: 'tuebingen', university: 'SRH', name: 'Tübingen', city: 'Tübingen', country: 'DE' },
+  { id: 'bamberg', university: 'SRH', name: 'Bamberg', city: 'Bamberg', country: 'DE', stateCode: 'BY' },
+  { id: 'berlin', university: 'SRH', name: 'Berlin', city: 'Berlin', country: 'DE', stateCode: 'BE', libraryUrl: 'https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB' },
+  { id: 'bonn', university: 'SRH', name: 'Bonn', city: 'Bonn', country: 'DE', stateCode: 'NW' },
+  { id: 'bremen', university: 'SRH', name: 'Bremen', city: 'Bremen', country: 'DE', stateCode: 'HB', libraryUrl: 'https://katalog.hamm.de/' },
+  { id: 'dresden', university: 'SRH', name: 'Dresden', city: 'Dresden', country: 'DE', stateCode: 'SN' },
+  { id: 'duesseldorf', university: 'SRH', name: 'Düsseldorf', city: 'Düsseldorf', country: 'DE', stateCode: 'NW' },
+  { id: 'fuerth', university: 'SRH', name: 'Fürth', city: 'Fürth', country: 'DE', stateCode: 'BY', libraryUrl: 'https://www.eopac.net/wlh/' },
+  { id: 'gera', university: 'SRH', name: 'Gera', city: 'Gera', country: 'DE', stateCode: 'TH' },
+  { id: 'hamburg', university: 'SRH', name: 'Hamburg', city: 'Hamburg', country: 'DE', stateCode: 'HH' },
+  { id: 'hamm', university: 'SRH', name: 'Hamm', city: 'Hamm', country: 'DE', stateCode: 'NW', libraryUrl: 'https://katalog.hamm.de/' },
+  { id: 'heide', university: 'SRH', name: 'Heide', city: 'Heide', country: 'DE', stateCode: 'SH' },
+  { id: 'heidelberg', university: 'SRH', name: 'Heidelberg', city: 'Heidelberg', country: 'DE', stateCode: 'BW', libraryUrl: 'https://1he.edu.srh.b13.live/' },
+  { id: 'karlsruhe', university: 'SRH', name: 'Karlsruhe', city: 'Karlsruhe', country: 'DE', stateCode: 'BW' },
+  { id: 'cologne', university: 'SRH', name: 'Köln', city: 'Köln', country: 'DE', stateCode: 'NW', libraryUrl: 'https://katalog.hamm.de/' },
+  { id: 'leipzig', university: 'SRH', name: 'Leipzig', city: 'Leipzig', country: 'DE', stateCode: 'SN' },
+  { id: 'leverkusen', university: 'SRH', name: 'Leverkusen', city: 'Leverkusen', country: 'DE', stateCode: 'NW' },
+  { id: 'munich', university: 'SRH', name: 'München', city: 'München', country: 'DE', stateCode: 'BY' },
+  { id: 'munster', university: 'SRH', name: 'Münster', city: 'Münster', country: 'DE', stateCode: 'NW' },
+  { id: 'stuttgart', university: 'SRH', name: 'Stuttgart', city: 'Stuttgart', country: 'DE', stateCode: 'BW' },
+  { id: 'tuebingen', university: 'SRH', name: 'Tübingen', city: 'Tübingen', country: 'DE', stateCode: 'BW' },
 ];
 
 // ── Static Data: Schools (Departments) ────────────────────────────────────────
@@ -92,24 +95,26 @@ const SCHOOL_LIST = [
 
 // Which schools are actually present at each campus (from programme directors PDF)
 const CAMPUS_SCHOOLS: Record<string, string[]> = {
-  bamberg: ['bls', 'hes'],
-  berlin: ['aim', 'bls', 'hes', 'psy', 'teac'],
-  bremen: ['bls', 'hes', 'teac'],
-  dresden: ['bls', 'hes', 'teac'],
-  duesseldorf: ['bls', 'hes'],
-  fuerth: ['aim', 'bls', 'hes', 'teac'],
-  gera: ['bls', 'hes', 'psy', 'teac'],
-  hamburg: ['bls', 'hes', 'teac'],
-  hamm: ['bls', 'hes'],
-  heide: ['hes'],
-  heidelberg: ['bls', 'hes', 'psy', 'teac'],
-  karlsruhe: ['hes'],
-  cologne: ['bls', 'hes'],
-  leipzig: ['bls', 'hes', 'teac'],
-  leverkusen: ['hes'],
-  munich: ['aim', 'bls', 'hes', 'teac'],
-  stuttgart: ['hes', 'psy', 'teac'],
-  tuebingen: ['hes'],
+  "bamberg": ["hes"],
+  "berlin": ["aim", "bls", "hes", "teac"],
+  "bonn": ["hes"],
+  "bremen": ["bls"],
+  "cologne": ["bls", "hes", "psy", "teac"],
+  "dresden": ["bls", "hes", "psy"],
+  "duesseldorf": ["hes"],
+  "fuerth": ["bls", "hes", "psy", "teac"],
+  "gera": ["bls", "hes", "psy"],
+  "hamburg": ["aim", "bls", "hes", "psy", "teac"],
+  "hamm": ["bls", "hes", "psy", "teac"],
+  "heide": ["hes"],
+  "heidelberg": ["aim", "bls", "hes", "psy", "teac"],
+  "karlsruhe": ["hes"],
+  "leipzig": ["aim", "bls", "hes", "psy", "teac"],
+  "leverkusen": ["hes"],
+  "munich": ["aim", "bls", "hes", "teac"],
+  "munster": ["bls", "hes", "psy"],
+  "stuttgart": ["bls", "hes", "psy", "teac"],
+  "tuebingen": ["hes"]
 };
 
 export const DEPARTMENTS: Department[] = Object.entries(CAMPUS_SCHOOLS).flatMap(
@@ -203,14 +208,15 @@ export const campusDepartments = derived(settingsStore, ($s) =>
 );
 
 /** Programs filtered to the currently selected campus and department */
-import { programDirectors } from '$lib/data/contacts';
+import { PROGRAM_DATA } from '$lib/data/programs';
 export const campusPrograms = derived(settingsStore, ($s) => {
   if (!$s.campusId || !$s.departmentId) return [];
   const schoolId = $s.departmentId.split('_')[0];
-  const programs = programDirectors
-    .filter(p => p.campusId === $s.campusId && p.school === schoolId)
-    .map(p => p.program)
-    .filter(Boolean);
+  
+  const programs = PROGRAM_DATA
+    .filter(p => p.campusId === $s.campusId && p.schoolId === schoolId)
+    .map(p => p.name);
+    
   return [...new Set(programs)].sort();
 });
 

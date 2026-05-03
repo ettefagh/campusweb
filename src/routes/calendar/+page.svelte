@@ -11,10 +11,11 @@
     calendarStore,
     activeClasses,
     getTextureForColor,
+    holidayEvents,
   } from "$lib/stores/calendarStore";
   import { focusTrap } from "$lib/utils/focusTrap";
   import { browser } from "$app/environment";
-  import { settingsStore, activeDepartment } from "$lib/stores/settingsStore";
+  import { settingsStore, activeDepartment, activeCampus } from "$lib/stores/settingsStore";
   import { classColors } from "$lib/stores/classColors";
 
   import { t } from "$lib/i18n";
@@ -102,7 +103,7 @@
       $activeClasses.map((c) => [c.id, c.defaultColor]),
     );
 
-    return [...staticEvents, ...subEvents]
+    return [...staticEvents, ...subEvents, ...$holidayEvents]
       .filter((evt) => !hiddenSources.has(evt.extendedProps?.calendarId || ""))
       .map((evt) => {
         const classGroupId = evt.extendedProps?.classGroupId;
@@ -698,6 +699,20 @@
             ></span>
             <span>{$t.calendar.semesterDates}</span>
           </button>
+          <button
+            class="legend-item"
+            class:legend-item--hidden={hiddenSources.has("holidays")}
+            on:click={() => toggleSource("holidays")}
+          >
+            <span
+              class="legend-color"
+              style="background-color: var(--event-purple);"
+            ></span>
+            <span>
+              {$settingsStore.language === "de" ? "Feiertage" : "Holidays"}
+              {$activeCampus?.stateCode ? `(${$activeCampus.stateCode})` : ""}
+            </span>
+          </button>
           {#each currentSubs as sub}
             <button
               class="legend-item"
@@ -747,6 +762,16 @@
             <span class="ql-icon">🎪</span>
             <span class="ql-title">University Events</span>
             <span class="ql-desc">Workshops, fairs & more</span>
+          </a>
+          <a
+            href="https://calendarsub.padarhava.workers.dev/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="quick-link-card"
+          >
+            <span class="ql-icon">🪄</span>
+            <span class="ql-title">Calendar Enhancer</span>
+            <span class="ql-desc">Optimize your iCal feed</span>
           </a>
         </div>
       </section>
