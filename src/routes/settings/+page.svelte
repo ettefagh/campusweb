@@ -8,6 +8,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import EmailGate from '$lib/components/EmailGate.svelte';
+	import SecureCalendarInput from '$lib/components/SecureCalendarInput.svelte';
 
 	// When campus changes, clear department and program selection
 	function handleCampusChange(campusId: string) {
@@ -299,6 +300,23 @@
 		</div>
 
 
+	</section>
+	
+	<!-- ── Calendar Subscriptions ────────────── -->
+	<section id="calendar-subscriptions" class="settings-section">
+		<div class="section-header">
+			<span class="section-icon">🔗</span>
+			<div>
+				<h2>Calendar Subscriptions</h2>
+				<p class="section-desc">Add or remove university calendar feeds (iCal/ICS).</p>
+			</div>
+		</div>
+		<div class="setting-row" style="display: block; padding-top: 0; border-top: none;">
+			<div class="helper-box">
+				<p>💡 <strong>How to find your link:</strong> Go to <a href="https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php" target="_blank" rel="noopener noreferrer">My Schedule</a> on the university portal. Below your schedule grid, you will find the <strong>"iCal-Export"</strong> button — copy that link and paste it below.</p>
+			</div>
+			<SecureCalendarInput />
+		</div>
 	</section>
 
 	<!-- ── Accessibility ─────────────────────── -->
@@ -769,6 +787,32 @@
 	.btn-update:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
+	}
+
+	.helper-box {
+		background: rgba(212, 68, 7, 0.04);
+		border: 1px solid rgba(212, 68, 7, 0.15);
+		border-radius: var(--radius-md);
+		padding: var(--spacing-sm) var(--spacing-md);
+		margin-bottom: var(--spacing-md);
+	}
+
+	.helper-box p {
+		margin: 0;
+		font-size: 0.85rem;
+		line-height: 1.5;
+		color: var(--text-color);
+	}
+
+	.helper-box a {
+		color: var(--primary-color);
+		font-weight: 700;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	.helper-box a:hover {
+		opacity: 0.8;
 	}
 
 	.update-spinner {

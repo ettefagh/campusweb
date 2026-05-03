@@ -293,6 +293,14 @@ export const utilityLinks = [
 		category_name: 'Utilities'
 	},
 	{
+		id: 'calendar-enhancer',
+		title: 'Calendar Enhancer',
+		url: 'https://calendarsub.padarhava.workers.dev/',
+		icon: '🪄',
+		description: 'Transform and optimize university schedules',
+		category_name: 'Utilities'
+	},
+	{
 		id: 'calendar-subscription',
 		title: 'Calendar Subscription',
 		url: 'https://calendarsub.padarhava.workers.dev/',

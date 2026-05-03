@@ -12,7 +12,6 @@
     activeClasses,
     getTextureForColor,
   } from "$lib/stores/calendarStore";
-  import SecureCalendarInput from "$lib/components/SecureCalendarInput.svelte";
   import { focusTrap } from "$lib/utils/focusTrap";
   import { browser } from "$app/environment";
   import { settingsStore, activeDepartment } from "$lib/stores/settingsStore";
@@ -63,9 +62,6 @@
       options = { ...options, events: getAllEvents() };
     }
   }
-
-  // ─── Feature 3: Calendar Settings Accordion ─────────────────────
-  let settingsOpen = false;
 
   // ─── Feature 5: Import Suggestion ──────────────────────────────
   let dismissedSuggestion = false;
@@ -152,12 +148,6 @@
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
-    },
-    dayHeaderContent: (info: any) => {
-      const date = info.date;
-      const weekday = date.toLocaleDateString(locale, { weekday: "short" });
-      const day = date.getDate();
-      return `${weekday} ${day}`;
     },
     allDaySlot: true,
     headerToolbar: {
@@ -390,6 +380,11 @@
       ...options,
       locale: locale,
       firstDay: $settingsStore.weekStartsOn ?? 1,
+      dayHeaderFormat: (date: Date) => {
+        const weekday = date.toLocaleDateString(locale, { weekday: "short" });
+        const day = date.getDate();
+        return `${weekday} ${day}`;
+      },
       buttonText: {
         today: $t.calendar.today,
         dayGridMonth: $t.calendar.month,
@@ -557,26 +552,28 @@
         <span class="toolbar-title">{currentTitleText}</span>
       </div>
 
-      {#if isMounted && currentSubs.length === 0 && $activeDepartment?.icalUrl && !dismissedSuggestion}
-        <div class="suggestion-banner">
-          <div class="suggestion-icon">💡</div>
+      {#if isMounted && currentSubs.length === 0}
+        <div class="suggestion-banner link-banner">
+          <div class="suggestion-icon">📅</div>
           <div class="suggestion-content">
-            <p class="suggestion-title">{$t.calendar.suggestImport}</p>
-            <p class="suggestion-desc">{$t.calendar.suggestImportDesc}</p>
+            <p class="suggestion-title">See your university schedule here</p>
+            <p class="suggestion-desc">Link your <strong>iCal-Export</strong> feed from the student portal to see your classes, exams and deadlines directly in this webapp.</p>
           </div>
           <div class="suggestion-actions">
-            <button
+            <a
+              href="/settings#calendar-subscriptions"
               class="suggestion-btn suggestion-btn--primary"
-              on:click={handleImportSuggestion}
             >
-              Add Now
-            </button>
-            <button
-              class="suggestion-btn suggestion-btn--secondary"
-              on:click={() => (dismissedSuggestion = true)}
-            >
-              Dismiss
-            </button>
+              Get Started
+            </a>
+            {#if $activeDepartment?.icalUrl && !dismissedSuggestion}
+              <button
+                class="suggestion-btn suggestion-btn--secondary"
+                on:click={handleImportSuggestion}
+              >
+                Import Department Calendar
+              </button>
+            {/if}
           </div>
         </div>
       {/if}
@@ -643,101 +640,77 @@
         </div>
       </div>
 
-      <!-- Feature 3: Calendar Settings Accordion -->
-      <section class="settings-card">
-        <button
-          class="settings-header"
-          on:click={() => (settingsOpen = !settingsOpen)}
-          aria-expanded={settingsOpen}
-        >
-          <span>⚙️ Calendar Settings</span>
-          <span class="chevron" class:open={settingsOpen}>▾</span>
-        </button>
-        <div class="settings-body" class:open={settingsOpen}>
-          <div class="settings-inner">
-            <!-- Interactive Legend -->
-            <div class="settings-legend">
-              <h4 class="settings-section-title">Legend</h4>
-              <div class="calendar-legend">
-                <button
-                  class="legend-item"
-                  class:legend-item--hidden={hiddenSources.has("lecture-free")}
-                  on:click={() => toggleSource("lecture-free")}
-                >
-                  <span
-                    class="legend-color"
-                    style="background-color: var(--event-lecture-free);"
-                  ></span>
-                  <span>{$t.calendar.lectureFree}</span>
-                </button>
-                <button
-                  class="legend-item"
-                  class:legend-item--hidden={hiddenSources.has("exams")}
-                  on:click={() => toggleSource("exams")}
-                >
-                  <span
-                    class="legend-color"
-                    style="background-color: var(--event-exams);"
-                  ></span>
-                  <span>{$t.calendar.exams}</span>
-                </button>
-                <button
-                  class="legend-item"
-                  class:legend-item--hidden={hiddenSources.has("modules")}
-                  on:click={() => toggleSource("modules")}
-                >
-                  <span
-                    class="legend-color"
-                    style="background-color: var(--event-orange);"
-                  ></span>
-                  <span>{$t.calendar.modules}</span>
-                </button>
-                <button
-                  class="legend-item"
-                  class:legend-item--hidden={hiddenSources.has("welcome-week")}
-                  on:click={() => toggleSource("welcome-week")}
-                >
-                  <span
-                    class="legend-color"
-                    style="background-color: var(--event-pink);"
-                  ></span>
-                  <span>{$t.calendar.welcomeWeek}</span>
-                </button>
-                <button
-                  class="legend-item"
-                  class:legend-item--hidden={hiddenSources.has(
-                    "semester-dates",
-                  )}
-                  on:click={() => toggleSource("semester-dates")}
-                >
-                  <span
-                    class="legend-color"
-                    style="background-color: var(--event-purple);"
-                  ></span>
-                  <span>{$t.calendar.semesterDates}</span>
-                </button>
-                {#each currentSubs as sub}
-                  <button
-                    class="legend-item"
-                    class:legend-item--hidden={hiddenSources.has(sub.id)}
-                    on:click={() => toggleSource(sub.id)}
-                  >
-                    <span
-                      class="legend-color"
-                      style="background-color: {sub.color};"
-                    ></span>
-                    <span>{sub.name}</span>
-                  </button>
-                {/each}
-              </div>
-            </div>
-
-            <!-- Subscription Management -->
-            <div class="settings-subscriptions">
-              <h4 class="settings-section-title">Manage Subscriptions</h4>
-              <SecureCalendarInput />
-            </div>
-          </div>
+      <!-- Interactive Legend (Always Visible) -->
+      <section class="calendar-legend-section">
+        <div class="calendar-legend">
+          <button
+            class="legend-item"
+            class:legend-item--hidden={hiddenSources.has("lecture-free")}
+            on:click={() => toggleSource("lecture-free")}
+          >
+            <span
+              class="legend-color"
+              style="background-color: var(--event-lecture-free);"
+            ></span>
+            <span>{$t.calendar.lectureFree}</span>
+          </button>
+          <button
+            class="legend-item"
+            class:legend-item--hidden={hiddenSources.has("exams")}
+            on:click={() => toggleSource("exams")}
+          >
+            <span
+              class="legend-color"
+              style="background-color: var(--event-exams);"
+            ></span>
+            <span>{$t.calendar.exams}</span>
+          </button>
+          <button
+            class="legend-item"
+            class:legend-item--hidden={hiddenSources.has("modules")}
+            on:click={() => toggleSource("modules")}
+          >
+            <span
+              class="legend-color"
+              style="background-color: var(--event-orange);"
+            ></span>
+            <span>{$t.calendar.modules}</span>
+          </button>
+          <button
+            class="legend-item"
+            class:legend-item--hidden={hiddenSources.has("welcome-week")}
+            on:click={() => toggleSource("welcome-week")}
+          >
+            <span
+              class="legend-color"
+              style="background-color: var(--event-pink);"
+            ></span>
+            <span>{$t.calendar.welcomeWeek}</span>
+          </button>
+          <button
+            class="legend-item"
+            class:legend-item--hidden={hiddenSources.has("semester-dates")}
+            on:click={() => toggleSource("semester-dates")}
+          >
+            <span
+              class="legend-color"
+              style="background-color: var(--event-purple);"
+            ></span>
+            <span>{$t.calendar.semesterDates}</span>
+          </button>
+          {#each currentSubs as sub}
+            <button
+              class="legend-item"
+              class:legend-item--hidden={hiddenSources.has(sub.id)}
+              on:click={() => toggleSource(sub.id)}
+            >
+              <span
+                class="legend-color"
+                style="background-color: {sub.color};"
+              ></span>
+              <span>{sub.name}</span>
+            </button>
+          {/each}
         </div>
       </section>
 
@@ -928,6 +901,10 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .suggestion-btn--primary {
