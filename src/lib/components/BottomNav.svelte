@@ -166,6 +166,49 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
+     LANDSCAPE MOBILE: Right Nav-Bar
+     ═══════════════════════════════════════════════════════════════ */
+  @media (max-width: 1023px) and (orientation: landscape) {
+    .bottom-nav {
+      top: 0;
+      bottom: 0;
+      left: auto;
+      right: 0;
+      width: 68px;
+      height: 100%;
+      flex-direction: column;
+      justify-content: center;
+      border-top: none;
+      border-left: 1px solid var(--glass-border);
+      padding: var(--spacing-lg) 0;
+      gap: var(--spacing-sm);
+    }
+
+    .nav-item {
+      flex-direction: column;
+      width: 100%;
+      min-height: 64px;
+      padding: var(--spacing-sm) 2px;
+      gap: 4px;
+    }
+
+    .nav-item .label {
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .nav-item.active::before {
+      top: 50%;
+      left: auto;
+      right: 0;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 32px;
+      border-radius: 3px 0 0 3px;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
      DESKTOP: Sidebar (hidden on mobile) — Liquid Glass
      ═══════════════════════════════════════════════════════════════ */
   .sidebar-nav {

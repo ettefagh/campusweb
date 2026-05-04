@@ -3,6 +3,7 @@
 	import { accessibility } from '$lib/stores/accessibility';
 	import { calendarStore, activeClasses, EVENT_COLORS } from '$lib/stores/calendarStore';
 	import { classColors } from '$lib/stores/classColors';
+	import { authStore } from '$lib/stores/authStore';
 	import { t } from '$lib/i18n';
 	import { version } from '$app/environment';
 	import { onMount } from 'svelte';
@@ -183,6 +184,21 @@
 		{/if}
 
 	</section>
+	
+	{#if $authStore.isGuest}
+		<section class="settings-section guest-section">
+			<div class="section-header">
+				<span class="section-icon">🔑</span>
+				<div>
+					<h2>Upgrade Account</h2>
+					<p class="section-desc">You are currently using the app as a <strong>Guest</strong>. Sign in with your university account to unlock all features.</p>
+				</div>
+			</div>
+			<button class="btn-signin" on:click={() => authStore.reset()}>
+				Sign in with Microsoft
+			</button>
+		</section>
+	{/if}
 
 	{#if $isSetupComplete && !$settingsStore.emailVerified}
 		<section class="settings-section">
@@ -715,6 +731,29 @@
 		border-radius: var(--radius-md);
 		font-size: 0.9rem;
 		cursor: pointer;
+	}
+
+	/* ── Guest Section ── */
+	.guest-section {
+		border-color: var(--primary-color);
+		background: rgba(var(--primary-color-rgb, 212, 68, 7), 0.03);
+	}
+
+	.btn-signin {
+		width: 100%;
+		padding: var(--spacing-md);
+		background: var(--primary-color);
+		color: white;
+		border: none;
+		border-radius: var(--radius-md);
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.2s;
+	}
+
+	.btn-signin:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px rgba(var(--primary-color-rgb, 212, 68, 7), 0.3);
 	}
 
 	/* ── Update Card ── */

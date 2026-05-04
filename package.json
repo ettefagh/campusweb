@@ -24,6 +24,7 @@
     "wrangler": "^4.86.0"
   },
   "dependencies": {
+    "@azure/msal-browser": "^3.13.0",
     "@event-calendar/core": "^3.12.0",
     "@event-calendar/day-grid": "^3.12.0",
     "@event-calendar/interaction": "^3.12.0",

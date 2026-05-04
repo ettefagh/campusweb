@@ -38,30 +38,42 @@
 </script>
 
 <div class="search-snap-container" class:active={isSearchActive}>
-	<div class="search-input-wrapper glass">
-		<span class="search-icon" aria-hidden="true">🔍</span>
-		<!-- 
-			Enforcing strict minimum font-size: 16px to prevent iOS Safari auto-zoom 
-		-->
-		<input
-			bind:this={inputElement}
-			type="search"
-			{placeholder}
-			bind:value={searchQuery}
-			onfocus={onFocus}
-			onblur={onBlur}
-			class="snap-search-input"
-			aria-label={placeholder}
-		/>
+	<div class="search-active-content">
+		<div class="search-input-wrapper glass">
+			<span class="search-icon" aria-hidden="true">🔍</span>
+			<!-- 
+				Enforcing strict minimum font-size: 16px to prevent iOS Safari auto-zoom 
+			-->
+			<input
+				bind:this={inputElement}
+				type="search"
+				{placeholder}
+				bind:value={searchQuery}
+				onfocus={onFocus}
+				onblur={onBlur}
+				class="snap-search-input"
+				aria-label={placeholder}
+			/>
 
-	</div>
-
-	<!-- Space for results or dropdown directly below the input -->
-	{#if (isSearchActive || searchQuery.trim()) && children}
-		<div class="search-results-container">
-			{@render children()}
+			{#if searchQuery}
+				<button 
+					type="button" 
+					class="clear-btn" 
+					onclick={() => { searchQuery = ''; focus(); }}
+					aria-label={clearLabel}
+				>
+					✕
+				</button>
+			{/if}
 		</div>
-	{/if}
+
+		<!-- Space for results or dropdown directly below the input -->
+		{#if (isSearchActive || searchQuery.trim()) && children}
+			<div class="search-results-container">
+				{@render children()}
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -85,14 +97,34 @@
 		margin: 0;
 		/* Hardware Notch & Safe Area Mitigation */
 		padding-top: env(safe-area-inset-top, 20px);
-		background-color: var(--bg-color, #ffffff);
+		background-color: #ffffff;
+	}
+
+	@media (min-width: 1024px) {
+		.search-snap-container.active {
+			left: var(--sidebar-width, 220px);
+			width: calc(100% - var(--sidebar-width, 220px));
+		}
+	}
+
+	.search-active-content {
+		width: 100%;
+		height: 100%;
 		display: flex;
 		flex-direction: column;
+		margin: 0 auto;
+	}
+
+	@media (min-width: 1024px) {
+		.search-active-content {
+			max-width: 1200px;
+			padding: 0 var(--spacing-md);
+		}
 	}
 
 	@media (prefers-color-scheme: dark) {
 		.search-snap-container.active {
-			background-color: var(--bg-color, #0d0d14);
+			background-color: #0d0d14;
 		}
 	}
 
@@ -168,7 +200,7 @@
 		overflow-y: auto;
 		-webkit-overflow-scrolling: touch;
 		padding: var(--spacing-md, 16px);
-		max-width: 800px;
+		max-width: 1200px;
 		margin: 0 auto;
 		width: 100%;
 		display: flex;

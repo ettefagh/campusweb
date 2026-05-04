@@ -2,9 +2,20 @@
   import "../app.css";
   import BottomNav from "$lib/components/BottomNav.svelte";
   import UpdatePrompt from "$lib/components/UpdatePrompt.svelte";
+  import AuthOverlay from "$lib/components/AuthOverlay.svelte";
   import { browser } from "$app/environment";
   import { activeA11yClasses, A11Y_CLASS_MAP } from "$lib/stores/accessibility";
   import { settingsStore } from "$lib/stores/settingsStore";
+  import { authStore } from "$lib/stores/authStore";
+  import { getMsalInstance } from "$lib/services/authService";
+  import { onMount } from "svelte";
+
+  // Initialize MSAL on mount
+  onMount(async () => {
+    if (browser) {
+      await getMsalInstance();
+    }
+  });
 
   // Bridge: sync accessibility store → <html> class list.
   // All CSS a11y overrides target html.a11y-* classes, so this is the
@@ -61,6 +72,7 @@
 
 <BottomNav />
 <UpdatePrompt />
+<AuthOverlay />
 
 <style>
   .app-container {
@@ -104,6 +116,18 @@
 
     .mobile-footer {
       display: none;
+    }
+  }
+
+  /* Landscape Mobile: Shift content for right nav-bar */
+  @media (max-width: 1023px) and (orientation: landscape) {
+    .app-container {
+      padding-bottom: 0;
+      padding-right: 68px;
+    }
+    
+    .content-area {
+      padding-right: var(--spacing-sm);
     }
   }
 </style>

@@ -143,6 +143,12 @@
       href: "tel:+493051565020",
     },
     {
+      icon: "💬",
+      label: "Teams",
+      value: "Chat with Info.hsg",
+      href: getTeamsChatUrl("info.hsg@srh.de"),
+    },
+    {
       icon: "📧",
       label: $t.feed.email,
       value: "info.hsg@srh.de",
@@ -329,15 +335,22 @@
               </button>
               {#if expandedId === rowId}
                 <div class="dir-expanded">
-                  <div class="dir-actions" style="justify-content: center;">
+                  <div class="dir-actions">
                     <a
                       href={getEmailUrl(c.email)}
-                      target="_blank" rel="noopener noreferrer"
                       class="dir-action-btn mail"
-                      style="max-width: 160px;"
+                      target="_blank" rel="noopener noreferrer"
+                      title="Mail"
                     >
                       <span class="action-icon">📧</span>
-                      <span class="action-text">Send Email</span>
+                    </a>
+                    <a
+                      href={getTeamsChatUrl(c.email)}
+                      class="dir-action-btn chat"
+                      target="_blank" rel="noopener noreferrer"
+                      title="Chat on Teams"
+                    >
+                      <span class="action-icon">💬</span>
                     </a>
                   </div>
                   <div class="dir-footer">
@@ -1058,19 +1071,6 @@
     }
   }
 
-  .dir-meta {
-    margin-bottom: var(--spacing-md);
-    font-size: 0.82rem;
-    display: flex;
-    gap: 4px;
-  }
-
-  .meta-label {
-    color: var(--text-color-secondary);
-  }
-  .meta-value {
-    font-weight: 600;
-  }
 
   .dir-actions {
     display: flex;
@@ -1156,21 +1156,6 @@
     font-style: italic;
   }
 
-  /* ── Phone Native Select Overlay ── */
-  .phone-select-wrapper {
-    position: relative;
-    display: inline-block;
-  }
-  .phone-native-select {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-    -webkit-appearance: menulist-button;
-  }
 
   /* ─── Feature 3: Contact Trigger Button ──────────────────────── */
   .contact-trigger-section {
@@ -1415,10 +1400,6 @@
   @media (max-width: 768px) {
     .news-card {
       padding: var(--spacing-md);
-    }
-
-    .news-card-emoji {
-      font-size: 1.6rem;
     }
   }
 </style>

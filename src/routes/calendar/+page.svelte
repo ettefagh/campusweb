@@ -309,18 +309,16 @@
     if (ecComponent) {
       ecComponent.today();
       updateToolbarState();
-
-      // Allow time for view to update then scroll to now indicator
-      setTimeout(() => {
-        const nowIndicator = document.querySelector(".ec-now-indicator");
-        if (nowIndicator) {
-          nowIndicator.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-            inline: "center",
-          });
-        }
-      }, 100);
+      
+      // Basic scroll to indicator for time views
+      if (currentViewLabel.includes('timeGrid')) {
+        setTimeout(() => {
+          const nowIndicator = document.querySelector('.ec-now-indicator');
+          if (nowIndicator) {
+            nowIndicator.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
     }
   }
 
@@ -618,7 +616,11 @@
         </div>
       {/if}
 
-      <div class="calendar-container" class:loading={isLoading} class:view-week={currentViewLabel === 'timeGridWeek'}>
+      <div class="calendar-container" 
+        class:loading={isLoading} 
+        class:view-week={currentViewLabel === 'timeGridWeek'}
+        class:is-landscape={isLandscapeMobile}
+      >
         <div class="calendar-scroll-area">
           <Calendar bind:this={ecComponent} {plugins} {options} />
 
@@ -665,9 +667,13 @@
             <button class="nav-btn" on:click={goToPrev} aria-label="Previous"
               >{$t.calendar.prev}</button
             >
-            <button class="nav-btn today-btn" on:click={goToToday}
-              >{$t.calendar.today}</button
+            <button 
+              class="nav-btn today-btn" 
+              on:click={goToToday}
+              aria-label="Go to Today"
             >
+              {$t.calendar.today}
+            </button>
             <button class="nav-btn" on:click={goToNext} aria-label="Next"
               >{$t.calendar.next}</button
             >
@@ -1247,6 +1253,80 @@
     border-top: 1px solid rgb(255 255 255 / 20%);
     /* border-radius: var(--radius-md); */
     box-shadow: var(--glass-shadow);
+    transition: all 0.3s ease;
+  }
+
+  /* Landscape Mobile: Right Nav-Bar Logic */
+  .calendar-container.is-landscape {
+    flex-direction: row;
+    padding-bottom: 0;
+    padding-right: 68px;
+  }
+
+  .calendar-container.is-landscape .calendar-toolbar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    left: auto;
+    width: 68px;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--spacing-sm) 0;
+    border-top: none;
+    border-left: 1px solid var(--glass-border);
+    gap: var(--spacing-md);
+    background: var(--glass-bg-strong);
+  }
+
+  .calendar-container.is-landscape .toolbar-start,
+  .calendar-container.is-landscape .toolbar-end {
+    flex-direction: column;
+    margin: 0;
+    width: 100%;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+    order: unset;
+  }
+
+  .calendar-container.is-landscape .toolbar-end {
+    margin-bottom: auto;
+  }
+
+  .calendar-container.is-landscape .toolbar-start {
+    margin-top: auto;
+  }
+
+  .calendar-container.is-landscape .nav-btn,
+  .calendar-container.is-landscape .view-btn {
+    border-right: none;
+    border-bottom: 1px solid var(--glass-border-subtle);
+    width: 100%;
+    height: 54px;
+    font-size: 0.75rem;
+    padding: 4px;
+  }
+
+  .calendar-container.is-landscape .nav-btn:last-child,
+  .calendar-container.is-landscape .view-btn:last-child {
+    border-bottom: none;
+  }
+
+  .calendar-container.is-landscape .today-btn {
+    padding: 4px;
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid var(--glass-border-subtle);
+    background: rgba(212, 68, 7, 0.05);
+  }
+
+  .calendar-container.is-landscape .today-btn:active {
+    background: rgba(212, 68, 7, 0.2);
+    transform: none;
   }
 
   .toolbar-center {
@@ -1319,6 +1399,15 @@
   .today-btn {
     font-weight: 600;
     color: var(--primary-color);
+    background: rgba(212, 68, 7, 0.05);
+    border: 1px solid rgba(212, 68, 7, 0.2);
+    padding: 0 16px;
+    transition: all 0.2s ease;
+  }
+
+  .today-btn:active {
+    background: rgba(212, 68, 7, 0.15);
+    transform: scale(0.98);
   }
 
   /* ─── Event Popup (Desktop) — Liquid Glass ────────────────────── */
@@ -1440,78 +1529,6 @@
     word-break: break-word;
   }
 
-  /* ─── Feature 3: Calendar Settings Accordion — Liquid Glass ───── */
-  .settings-card {
-    margin: var(--spacing-md) var(--spacing-sm) 0;
-    background: var(--glass-bg-light);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    overflow: hidden;
-  }
-
-  .settings-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-color);
-    font-size: 0.95rem;
-    font-weight: 600;
-    transition: background 0.2s ease;
-  }
-
-  .settings-header:hover {
-    background: rgba(212, 68, 7, 0.04);
-  }
-
-  .chevron {
-    transition: transform 0.3s ease;
-    font-size: 1.1rem;
-  }
-
-  .chevron.open {
-    transform: rotate(180deg);
-  }
-
-  .settings-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .settings-body.open {
-    max-height: 800px;
-  }
-
-  .settings-inner {
-    padding: 0 var(--spacing-md) var(--spacing-md);
-    border-top: 1px solid var(--border-color);
-  }
-
-  .settings-section-title {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-color-secondary, #888);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin: var(--spacing-md) 0 var(--spacing-xs);
-  }
-
-  .settings-legend {
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .settings-subscriptions {
-    border-top: 1px solid var(--border-color);
-    padding-top: var(--spacing-xs);
-  }
 
   /* ─── Event Calendar Theme Overrides ──────────────────────────── */
   :global(.ec) {
@@ -1885,9 +1902,6 @@
       min-width: 40px;
     }
 
-    .settings-card {
-      margin: var(--spacing-sm) var(--spacing-xs) 0;
-    }
   }
 
   .calendar-page-layout {
@@ -1914,22 +1928,11 @@
       height: calc(100vh - 180px); /* Taller on desktop */
     }
 
-    /* Reset margins since they are now stacked */
-    .settings-card {
-      margin: var(--spacing-sm) var(--spacing-sm) 0;
-    }
 
     .quick-links-section {
       margin: var(--spacing-md) var(--spacing-sm) 0;
     }
 
-    /* Keep settings open initially on desktop */
-    .settings-body {
-      max-height: 800px; /* Force open */
-    }
-    .chevron {
-      transform: rotate(180deg); /* Force chevron open */
-    }
   }
 
   /* ─── Quick Links Section ────────────────────────────────────── */

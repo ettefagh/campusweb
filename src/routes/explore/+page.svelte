@@ -7,8 +7,11 @@
 	import { t } from "$lib/i18n";
 	import { settingsStore, activeCampus } from "$lib/stores/settingsStore";
 	import { campusContacts, generalContacts, programDirectors } from "$lib/data/contacts";
+	import SearchBar from "$lib/components/SearchBar.svelte";
+	import { authStore } from "$lib/stores/authStore";
 
-	let searchQuery = "";
+	let searchQuery = $state("");
+	let isSearchActive = $state(false);
 
 	function handleToggleFavorite(event: CustomEvent<{ linkId: string }>) {
 		favorites.toggle(event.detail.linkId);
@@ -40,20 +43,19 @@
 		}
 	}
 
-	$: libraryUrl = $activeCampus?.libraryUrl || "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB";
-
-	let filteredLinks: typeof allLinks = [];
-	$: filteredLinks = allLinks.filter((link) => {
-		if (!searchQuery.trim()) return true;
-		const query = searchQuery.toLowerCase();
-		const title = $t.linkTitle?.[link.id as keyof typeof $t.linkTitle] || link.title;
-		const desc = $t.linkDesc?.[link.id as keyof typeof $t.linkDesc] || link.description || "";
-		const cat = link.category_name ? ($t.linkCategory?.[link.category_name as keyof typeof $t.linkCategory] || link.category_name) : "";
-		return (
-			title.toLowerCase().includes(query) ||
-			desc.toLowerCase().includes(query) ||
-			cat.toLowerCase().includes(query)
-		);
+	let libraryUrl = $derived($activeCampus?.libraryUrl || "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB");
+	
+	let filteredLinks = $derived.by(() => {
+		const q = searchQuery.trim().toLowerCase();
+		if (!q) return allLinks;
+		
+		return allLinks.filter((link) => {
+			const title = ($t.linkTitle?.[link.id as any] || link.title).toLowerCase();
+			const desc = ($t.linkDesc?.[link.id as any] || link.description || "").toLowerCase();
+			const cat = (link.category_name ? ($t.linkCategory?.[link.category_name as any] || link.category_name) : "").toLowerCase();
+			
+			return title.includes(q) || desc.includes(q) || cat.includes(q);
+		});
 	});
 	/** Derives a functional role from a university email address */
 	function deriveRoleFromEmail(email: string): string {
@@ -79,7 +81,10 @@
 			'apply': 'Admissions',
 			'library': 'Library',
 			'rektorat': 'Rektorat',
-			'course-coordination': 'Course Coordination'
+			'course-coordination': 'Course Coordination',
+			'faculty': 'Faculty & Staff',
+			'staff': 'Faculty & Staff',
+			'team': 'Faculty & Staff'
 		};
 
 		let baseRole = '';
@@ -91,7 +96,7 @@
 		}
 
 		if (!baseRole) {
-			if (localPart.includes('.')) return ''; // Likely a personal name
+			if (localPart.includes('.')) return 'Staff'; // Likely a personal name
 			return localPart.charAt(0).toUpperCase() + localPart.slice(1).replace(/[-.]/g, ' ');
 		}
 
@@ -135,37 +140,36 @@
 		return '';
 	}
 	// ── Directory Search ─────────────────────────────────────────
-	let filteredContacts: any[] = [];
-	$: {
+	let filteredContacts = $derived.by(() => {
 		if (!searchQuery.trim()) {
-			filteredContacts = [];
+			return [];
 		} else {
-			const query = searchQuery.toLowerCase();
+			const query = searchQuery.trim().toLowerCase();
 			const campusResults = campusContacts.filter(c => 
-				c.service.toLowerCase().includes(query) || 
-				c.person.toLowerCase().includes(query) ||
-				c.email.toLowerCase().includes(query) ||
-				c.campusId.toLowerCase().includes(query) ||
-				deriveRoleFromEmail(c.email).toLowerCase().includes(query) ||
+				(c.service || "").toLowerCase().includes(query) || 
+				(c.person || "").toLowerCase().includes(query) ||
+				(c.email || "").toLowerCase().includes(query) ||
+				(c.campusId || "").toLowerCase().includes(query) ||
+				deriveRoleFromEmail(c.email || "").toLowerCase().includes(query) ||
 				c.tags?.some(tag => tag.toLowerCase().includes(query))
 			);
 			const generalResults = generalContacts.filter(c => 
-				c.service.toLowerCase().includes(query) || 
-				c.person.toLowerCase().includes(query) ||
-				c.email.toLowerCase().includes(query) ||
-				c.campusId.toLowerCase().includes(query) ||
-				deriveRoleFromEmail(c.email).toLowerCase().includes(query) ||
+				(c.service || "").toLowerCase().includes(query) || 
+				(c.person || "").toLowerCase().includes(query) ||
+				(c.email || "").toLowerCase().includes(query) ||
+				(c.campusId || "").toLowerCase().includes(query) ||
+				deriveRoleFromEmail(c.email || "").toLowerCase().includes(query) ||
 				c.tags?.some(tag => tag.toLowerCase().includes(query))
 			);
 			const programResults = programDirectors.filter(p => 
-				p.program.toLowerCase().includes(query) || 
-				p.person.toLowerCase().includes(query) ||
-				p.email.toLowerCase().includes(query) ||
-				p.campusId.toLowerCase().includes(query) ||
-				p.school.toLowerCase().includes(query) ||
-				p.cluster.toLowerCase().includes(query) ||
-				p.degree.toLowerCase().includes(query) ||
-				deriveRoleFromEmail(p.email).toLowerCase().includes(query) ||
+				(p.program || "").toLowerCase().includes(query) || 
+				(p.person || "").toLowerCase().includes(query) ||
+				(p.email || "").toLowerCase().includes(query) ||
+				(p.campusId || "").toLowerCase().includes(query) ||
+				(p.school || "").toLowerCase().includes(query) ||
+				(p.cluster || "").toLowerCase().includes(query) ||
+				(p.degree || "").toLowerCase().includes(query) ||
+				deriveRoleFromEmail(p.email || "").toLowerCase().includes(query) ||
 				(p.phone && deriveLocationFromPhone(p.phone).toLowerCase().includes(query)) ||
 				p.tags?.some(tag => tag.toLowerCase().includes(query))
 			);
@@ -203,7 +207,7 @@
 					});
 				}
 			});
-			filteredContacts = Array.from(mergedMap.values()).map(c => {
+			return Array.from(mergedMap.values()).map(c => {
 				// Sort served campuses for cleaner display
 				c.servedCampuses.sort();
 				// Ensure tags are unique
@@ -211,12 +215,11 @@
 				return c;
 			});
 		}
-	}
+	});
 
-	let activeCategories: string[] = [];
-	$: activeCategories = categoryOrder.filter((cat) =>
+	let activeCategories = $derived(categoryOrder.filter((cat) =>
 		filteredLinks.some((link) => link.category_name === cat)
-	);
+	));
 
 	const searchSources = [
 		{ id: "srh", name: "University Website", icon: "🎓", searchable: true },
@@ -232,119 +235,172 @@
 		const regex = new RegExp(`(${escapedQuery})`, 'gi');
 		return text.replace(regex, '<mark>$1</mark>');
 	}
-
-	/**
-	 * Svelte Action: Stitches the element to the virtual keyboard on mobile (iOS Safari)
-	 */
-	function keyboardStitch(node: HTMLElement) {
-		if (!browser || !window.visualViewport) return;
-
-		const update = () => {
-			const viewport = window.visualViewport!;
-			// Calculate the gap between bottom of layout viewport and bottom of visual viewport
-			const offset = window.innerHeight - viewport.height;
-			
-			// We only care about positive offsets (keyboard being open)
-			// Apply via transform for sub-pixel smoothness and performance
-			if (offset > 0) {
-				node.style.transform = `translateY(-${offset}px)`;
-			} else {
-				node.style.transform = 'translateY(0)';
-			}
-		};
-
-		window.visualViewport.addEventListener('resize', update);
-		window.visualViewport.addEventListener('scroll', update);
-		
-		// Initial check
-		update();
-
-		return {
-			destroy() {
-				window.visualViewport?.removeEventListener('resize', update);
-				window.visualViewport?.removeEventListener('scroll', update);
-			}
-		};
-	}
 </script>
 
 <svelte:head>
 	<title>{$t.explore.pageTitle}</title>
 </svelte:head>
 
-<div class="explore-page" class:is-searching={searchQuery.trim().length > 0}>
+<div class="explore-page" class:is-searching={isSearchActive}>
 	<header class="page-header">
 		<h1>{$t.explore.title}</h1>
 		<p class="subtitle">{$t.explore.subtitle}</p>
+
+		<!-- Category Navigation Chips -->
+		<div class="category-nav glass">
+			<div class="category-nav-scroll">
+				{#each categoryOrder as category}
+					<button 
+						class="cat-chip" 
+						onclick={() => {
+							const el = document.getElementById(`category-${category.replace(/\s+/g, '-')}`);
+							if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+						}}
+					>
+						{getCategoryName(category, $t.linkCategory)}
+					</button>
+				{/each}
+			</div>
+		</div>
 	</header>
 
-	<div class="explore-content">
-		{#if searchQuery.trim() && filteredContacts.length > 0}
-			{#if $settingsStore.emailVerified}
-				<section class="category-section contact-results">
-					<h2 class="category-title">👥 {$t.feed.directoryTitle || 'University Directory'}</h2>
-					<div class="contact-results-list">
-						{#each filteredContacts as contact}
-							<div class="search-contact-card glass">
-								<div class="search-contact-info">
-									<div class="search-contact-meta">
-										{#if contact.type === 'program'}
-											{@html highlightMatch(`${contact.degree} ${contact.program}`, searchQuery)}
-										{:else}
-											{@html highlightMatch(contact.service, searchQuery)}
-										{/if}
-									</div>
-									<div class="search-contact-name">
-										{@html highlightMatch(contact.person, searchQuery)}
-										<div class="search-contact-tags">
-												{#each contact.tags as tag}
-													{#if tag.startsWith('campus:')}
-														<span class="contact-tag campus-tag">{@html highlightMatch(tag.replace('campus:', ''), searchQuery)}</span>
-													{:else if tag.startsWith('school:')}
-														<span class="contact-tag school-tag">{@html highlightMatch(tag.replace('school:', ''), searchQuery)}</span>
+	<div class="search-overlay-wrapper">
+		<SearchBar bind:searchQuery bind:isSearchActive placeholder={$t.explore.searchPlaceholder}>
+			{#snippet children()}
+				<div class="search-results-overlay">
+					<!-- Directory Matches -->
+					{#if searchQuery.trim() && filteredContacts.length > 0}
+						{#if $settingsStore.emailVerified}
+							<section class="category-section contact-results">
+								<h2 class="category-title">👥 {$t.feed.directoryTitle || 'University Directory'}</h2>
+								<div class="contact-results-list">
+									{#each filteredContacts as contact}
+										<div class="search-contact-card glass">
+											<div class="search-contact-info">
+												<div class="search-contact-meta">
+													{#if contact.type === 'program'}
+														{@html highlightMatch(`${contact.degree} ${contact.program}`, searchQuery)}
 													{:else}
-														<span class="contact-tag">{@html highlightMatch(tag, searchQuery)}</span>
+														{@html highlightMatch(contact.service, searchQuery)}
 													{/if}
-												{/each}
-											{#if contact.phone}
-												{@const phoneLoc = deriveLocationFromPhone(contact.phone)}
-												{#if phoneLoc && (contact.campusId ? phoneLoc.toLowerCase() !== contact.campusId.toLowerCase() : true)}
-													<span class="phone-origin-tag">via {phoneLoc}</span>
+												</div>
+												<div class="search-contact-name">
+													{@html highlightMatch(contact.person, searchQuery)}
+													<div class="search-contact-tags">
+														{#each contact.tags as tag}
+															{#if tag.startsWith('campus:')}
+																<span class="contact-tag campus-tag">{@html highlightMatch(tag.replace('campus:', ''), searchQuery)}</span>
+															{:else if tag.startsWith('school:')}
+																<span class="contact-tag school-tag">{@html highlightMatch(tag.replace('school:', ''), searchQuery)}</span>
+															{:else}
+																<span class="contact-tag">{@html highlightMatch(tag, searchQuery)}</span>
+															{/if}
+														{/each}
+														{#if contact.phone}
+															{@const phoneLoc = deriveLocationFromPhone(contact.phone)}
+															{#if phoneLoc && (contact.campusId ? phoneLoc.toLowerCase() !== contact.campusId.toLowerCase() : true)}
+																<span class="phone-origin-tag">via {phoneLoc}</span>
+															{/if}
+														{/if}
+													</div>
+												</div>
+											</div>
+											<div class="search-contact-actions">
+												<a href="mailto:{contact.email}" class="search-contact-btn mail" title="Email">📧</a>
+												<a href={getTeamsChatUrl(contact.email)} class="search-contact-btn chat" target="_blank" rel="noopener noreferrer" title="Chat on Teams">💬</a>
+												{#if contact.phone}
+													<a href="tel:{contact.phone.replace(/[\s-]/g, '')}" class="search-contact-btn call" title="Call">📞</a>
 												{/if}
-											{/if}
-											{#if contact.servedCampuses && contact.servedCampuses.length > 1}
-												<span class="served-campuses-tag">
-													Serves: {contact.servedCampuses.join(', ')}
-												</span>
-											{/if}
+											</div>
 										</div>
-									</div>
+									{/each}
 								</div>
-								<div class="search-contact-actions">
-									<a href="mailto:{contact.email}" class="search-contact-btn mail" title="Email">📧</a>
-									{#if contact.phone}
-										<a href="tel:{contact.phone.replace(/[\s-]/g, '')}" class="search-contact-btn call" title="Call">📞</a>
-									{/if}
+							</section>
+						{:else}
+							<div class="verification-hint guest-hint">
+								<div class="hint-icon">🔒</div>
+								<div class="hint-text">
+									<h3>Directory Restricted</h3>
+									<p>Accessing the university directory requires verification.</p>
+									<div class="hint-actions">
+										<button class="hint-btn secondary" onclick={() => window.location.href='/settings#accessibility'}>
+											Verify Email (Simple)
+										</button>
+										<button class="hint-btn primary" onclick={() => authStore.reset()}>
+											Sign in with Microsoft
+										</button>
+									</div>
 								</div>
 							</div>
-						{/each}
-					</div>
-				</section>
-			{:else}
-				<div class="verification-hint glass">
-					<span class="hint-icon">🔒</span>
-					<div class="hint-text">
-						<h3>{$t.explore.verifyTitle || 'Directory Access Restricted'}</h3>
-						<p>{$t.explore.verifyMessage || 'Please verify your university email in Settings to view contact details.'}</p>
-					</div>
+						{/if}
+					{/if}
+
+					<!-- Link Matches -->
+					{#if searchQuery.trim()}
+						<div class="links-results">
+							{#if activeCategories.length > 0}
+								{#each activeCategories as cat}
+									<section class="category-section">
+										<h2 class="category-title">{getCategoryName(cat, $t.linkCategory)}</h2>
+										<div class="links-grid">
+											{#each filteredLinks.filter(l => l.category_name === cat) as link}
+												<LinkCard {link} on:toggleFavorite={handleToggleFavorite} />
+											{/each}
+										</div>
+									</section>
+								{/each}
+							{:else if filteredContacts.length === 0}
+								<div class="no-results">
+									<div class="no-results-icon">🔍</div>
+									<p>No internal matches for "<strong>{searchQuery}</strong>"</p>
+								</div>
+							{/if}
+						</div>
+					{/if}
+
+					<!-- External Search (Always available as fallback) -->
+					<section class="category-section external-search-section">
+						<h2 class="category-title">🌐 {$t.explore.externalSearchTitle || 'External Portals'}</h2>
+						<div class="external-search-grid">
+							{#each searchSources as source}
+								<button 
+									class="external-search-row" 
+									onclick={() => handleExternalSearch(source.id)}
+									disabled={source.searchable && !searchQuery.trim()}
+								>
+									<span class="external-icon">{source.icon}</span>
+									<div class="external-row-content">
+										<span class="external-name">{source.name}</span>
+										<span class="external-query">
+											{#if source.searchable}
+												{searchQuery.trim() ? `Search for "${searchQuery}"` : 'Enter keywords to search'}
+											{:else}
+												Open official portal
+											{/if}
+										</span>
+									</div>
+									<span class="external-arrow">→</span>
+								</button>
+							{/each}
+						</div>
+					</section>
+
+					{#if !searchQuery.trim()}
+						<div class="search-welcome-state">
+							<p>{$t.explore.searchHint || 'Search for services, contacts, or external resources.'}</p>
+						</div>
+					{/if}
 				</div>
-			{/if}
-		{/if}
-		{#each activeCategories as category}
-			<section class="category-section">
+			{/snippet}
+		</SearchBar>
+	</div>
+
+	<div class="explore-content" class:hidden={isSearchActive}>
+		{#each categoryOrder as category}
+			<section class="category-section" id="category-{category.replace(/\s+/g, '-')}">
 				<h2 class="category-title">{getCategoryName(category, $t.linkCategory)}</h2>
 				<div class="links-grid">
-					{#each filteredLinks.filter((link) => link.category_name === category) as link (link.id)}
+					{#each allLinks.filter((link) => link.category_name === category) as link (link.id)}
 						<LinkCard
 							{link}
 							isFavorite={$favorites.includes(link.id)}
@@ -355,73 +411,30 @@
 				</div>
 			</section>
 		{/each}
-
-		{#if activeCategories.length === 0 && searchQuery.trim()}
-			<div class="no-results">
-				<p>{$t.explore.noResults} "{searchQuery}".</p>
-			</div>
-		{/if}
-
-		{#if searchQuery.trim()}
-			<section class="external-search-section">
-				<h2 class="external-search-title">{$t.explore.externalTitle}</h2>
-				<div class="external-search-list">
-					{#each searchSources as source}
-						<button class="external-search-row" on:click={() => handleExternalSearch(source.id)}>
-							<div class="external-icon-box">{source.icon}</div>
-							<div class="external-row-content">
-								{#if source.searchable}
-									<span class="external-name">{$t.explore.searchIn} {source.name}</span>
-									<span class="external-query">"{searchQuery}"</span>
-								{:else}
-									<span class="external-name">{$t.explore.openCatalog} {source.name} {$t.explore.catalog}</span>
-									<span class="external-query">{$t.explore.searchManually} "{searchQuery}"</span>
-								{/if}
-							</div>
-							<span class="external-chevron">›</span>
-						</button>
-					{/each}
-				</div>
-			</section>
-		{/if}
-	</div>
-
-	<!-- Thumb-Friendly Bottom Search -->
-	<div class="bottom-search-wrapper" use:keyboardStitch>
-		<div class="search-container glass">
-			<div class="search-input-group">
-				<span class="search-icon" aria-hidden="true">🔍</span>
-				<input
-					type="search"
-					placeholder={$t.explore.searchPlaceholder}
-					bind:value={searchQuery}
-					class="bottom-search-input"
-					aria-label={$t.explore.searchPlaceholder}
-				/>
-				{#if searchQuery}
-					<button class="clear-btn" aria-label={$t.explore.clearSearch} on:click={() => searchQuery = ''}>✖</button>
-				{/if}
-			</div>
-		</div>
 	</div>
 </div>
 
 <style>
 	.explore-page {
-		padding-bottom: 180px; /* Space for the bottom nav + search bar */
+		padding-bottom: 80px; /* Space for the bottom nav only */
 		min-height: 100vh;
 		position: relative;
 	}
 
-	/* When searching, add more padding so external results don't get covered */
+	/* No extra padding needed when searching as search bar is now at top */
 	.explore-page.is-searching {
-		padding-bottom: 260px; 
+		padding-bottom: 80px; 
 	}
 
 	.page-header {
 		text-align: center;
 		padding: var(--spacing-lg) 0;
-		margin-bottom: var(--spacing-lg);
+		margin: 0 auto var(--spacing-lg);
+		max-width: 1200px;
+	}
+
+	.explore-content.hidden {
+		display: none;
 	}
 
 	h1 {
@@ -442,6 +455,49 @@
 	.category-section {
 		margin-bottom: var(--spacing-xl);
 		animation: fadeIn 0.3s ease;
+		scroll-margin-top: 100px;
+	}
+
+	.category-nav {
+		margin-top: var(--spacing-md);
+		padding: 8px;
+		border-radius: var(--radius-full, 50px);
+		max-width: fit-content;
+		margin-left: auto;
+		margin-right: auto;
+		overflow: hidden;
+	}
+
+	.category-nav-scroll {
+		display: flex;
+		gap: 8px;
+		overflow-x: auto;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+		padding: 4px;
+	}
+
+	.category-nav-scroll::-webkit-scrollbar {
+		display: none;
+	}
+
+	.cat-chip {
+		padding: 6px 16px;
+		background: var(--bg-color);
+		border: 1px solid var(--border-color);
+		border-radius: var(--radius-full, 50px);
+		font-size: 0.85rem;
+		font-weight: 600;
+		white-space: nowrap;
+		cursor: pointer;
+		color: var(--text-color);
+		transition: all 0.2s;
+	}
+
+	.cat-chip:hover {
+		border-color: var(--primary-color);
+		background: var(--hover-bg);
+		transform: translateY(-1px);
 	}
 
 	@keyframes fadeIn {
@@ -475,6 +531,11 @@
 		.links-grid {
 			grid-template-columns: repeat(3, 1fr);
 		}
+		.explore-content {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 0 var(--spacing-md);
+		}
 	}
 
 	.no-results {
@@ -488,100 +549,40 @@
 		margin-bottom: var(--spacing-xl);
 	}
 
-	/* ─── Bottom Search UI ───────────────────────────── */
-	.bottom-search-wrapper {
-		position: fixed;
-		/* Clear the bottom nav height: 112px (approx) */
-		bottom: calc(var(--touch-target-min) + var(--spacing-md) * 4);
-		left: 0;
-		right: 0;
-		padding: 0 var(--spacing-sm) var(--spacing-sm);
-		z-index: 900;
-		pointer-events: none; /* Let clicks pass through empty space */
-		transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-	}
-
-	/* Stitch to keyboard when focused */
-	.bottom-search-wrapper:focus-within {
-		bottom: 0 !important;
-		padding-bottom: var(--spacing-xs);
-		background: linear-gradient(to top, var(--bg-color) 0%, transparent 100%);
+	/* ─── Search Overlay UI ───────────────────────────── */
+	.search-overlay-wrapper {
+		position: sticky;
+		top: var(--spacing-sm);
+		margin: 0 auto var(--spacing-xl);
+		z-index: 1000;
+		max-width: 1200px;
+		width: 100%;
+		padding: 0 var(--spacing-sm);
 	}
 
 	@media (min-width: 1024px) {
-		.bottom-search-wrapper {
-			bottom: var(--spacing-lg);
-			left: var(--sidebar-width, 220px);
-			max-width: 1200px;
-			margin: 0 auto;
-			padding: 0 var(--spacing-xl);
+		.search-overlay-wrapper {
+			top: var(--spacing-md);
+			padding: 0 var(--spacing-md);
 		}
 	}
 
-	.search-container {
-		pointer-events: auto; /* Re-enable clicks for the search box */
-		padding: var(--spacing-sm);
+	.search-results-overlay {
+		padding: var(--spacing-md);
+		background: #ffffff; /* Explicit solid background */
+		min-height: 100vh;
 		border-radius: var(--radius-lg);
-		box-shadow: var(--glass-shadow-lg);
-		max-width: 800px;
-		margin: 0 auto;
-		transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-	}
-
-	.search-input-group {
-		display: flex;
-		align-items: center;
-		background: var(--bg-color);
-		border-radius: var(--radius-md);
-		border: 2px solid var(--glass-border-subtle);
-		padding: 0 var(--spacing-sm);
-		height: 48px;
-		transition: border-color 0.2s;
-	}
-
-	.search-input-group:focus-within {
-		border-color: var(--primary-color);
-	}
-
-	.search-icon {
-		font-size: 1.2rem;
-		opacity: 0.6;
-		margin-right: var(--spacing-xs);
-	}
-
-	.bottom-search-input {
-		flex: 1;
-		background: transparent;
-		border: none;
-		outline: none;
-		font-size: 1rem;
-		color: var(--text-color);
-		width: 100%;
-		padding: 0;
-		-webkit-appearance: none;
-	}
-
-	.bottom-search-input:focus {
-		outline: none;
-		background: transparent;
-		border-color: transparent;
-	}
-
-	.clear-btn {
-		background: rgba(0,0,0,0.05);
-		border-radius: 50%;
-		width: 28px;
-		height: 28px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 0.8rem;
-		color: var(--text-color);
-		opacity: 0.6;
+		box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 	}
 
 	@media (prefers-color-scheme: dark) {
-		.clear-btn { background: rgba(255,255,255,0.1); }
+		.search-results-overlay {
+			background: #0d0d14; /* Explicit solid dark background */
+		}
+	}
+
+	.links-results {
+		margin-top: var(--spacing-md);
 	}
 
 	/* ─── Spotlight-style External Search List ─── */
@@ -590,53 +591,47 @@
 		animation: fadeIn 0.3s ease;
 	}
 
-	.external-search-title {
-		font-size: 1rem;
-		font-weight: 600;
-		color: var(--text-color-secondary);
-		margin-bottom: var(--spacing-sm);
-		padding-left: var(--spacing-sm);
-	}
-
-	.external-search-list {
-		background: var(--card-bg);
-		border-radius: var(--radius-lg);
-		border: 1px solid var(--border-color);
-		overflow: hidden;
+	.external-search-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 8px;
 	}
 
 	.external-search-row {
-		width: 100%;
 		display: flex;
 		align-items: center;
-		padding: var(--spacing-md);
-		background: transparent;
-		border: none;
-		border-bottom: 1px solid var(--border-color);
-		text-align: left;
+		width: 100%;
+		padding: 12px 16px;
+		background: var(--card-bg);
+		border: 1px solid var(--border-color);
+		border-radius: var(--radius-md);
 		cursor: pointer;
-		transition: background-color 0.2s;
+		text-align: left;
+		transition: all 0.2s ease;
+		color: inherit;
 	}
 
-	.external-search-row:last-child {
-		border-bottom: none;
+	.external-search-row:hover:not(:disabled) {
+		background: var(--glass-bg-active);
+		border-color: var(--primary-color);
+		transform: translateY(-1px);
 	}
 
-	.external-search-row:active,
-	.external-search-row:hover {
-		background-color: rgba(212, 68, 7, 0.05);
+	.external-search-row:disabled {
+		opacity: 0.5;
+		cursor: default;
 	}
 
-	.external-icon-box {
+	.external-icon {
+		font-size: 1.4rem;
+		margin-right: 16px;
 		width: 40px;
 		height: 40px;
-		background: var(--bg-color);
-		border-radius: 10px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 1.4rem;
-		margin-right: var(--spacing-md);
+		background: var(--bg-color);
+		border-radius: 10px;
 		border: 1px solid var(--border-color);
 	}
 
@@ -644,12 +639,13 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+		min-width: 0;
 	}
 
 	.external-name {
 		font-weight: 600;
+		font-size: 1rem;
 		color: var(--text-color);
-		font-size: 1.05rem;
 	}
 
 	.external-query {
@@ -801,11 +797,13 @@
 		padding: 24px;
 		margin: 20px 0;
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		gap: 20px;
 		border-radius: var(--radius-lg);
 		border: 1px solid rgba(212, 68, 7, 0.2);
 		background: rgba(212, 68, 7, 0.05);
+		text-align: center;
 	}
 
 	.hint-icon {
@@ -826,11 +824,46 @@
 		line-height: 1.4;
 	}
 
+	.hint-actions {
+		display: flex;
+		gap: var(--spacing-sm);
+		margin-top: var(--spacing-sm);
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	.hint-btn {
+		padding: 10px 18px;
+		border-radius: 10px;
+		font-size: 0.85rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s;
+		border: none;
+	}
+
+	.hint-btn.primary {
+		background: var(--primary-color);
+		color: white;
+	}
+
+	.hint-btn.secondary {
+		background: var(--hover-bg);
+		color: var(--text-color);
+		border: 1px solid var(--border-color);
+	}
+
+	.hint-btn:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+	}
+
 	@media (max-width: 600px) {
 		.verification-hint {
-			flex-direction: column;
-			text-align: center;
 			padding: 20px;
+		}
+		.hint-btn {
+			width: 100%;
 		}
 	}
 </style>
