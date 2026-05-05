@@ -1,23 +1,23 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { t } from "$lib/i18n";
-  let navItems: Array<{ path: string; label: string; icon: string; ariaLabel: string }> = [];
+  let navItems: Array<{ path: string; label: string; iconClass: string; ariaLabel: string }> = [];
   $: navItems = [
-    { path: "/", label: $t.nav.home, icon: "🏠", ariaLabel: $t.nav.home },
+    { path: "/", label: $t.nav.home, iconClass: "ph-house", ariaLabel: $t.nav.home },
     {
       path: "/explore",
       label: $t.nav.explore,
-      icon: "🧭",
+      iconClass: "ph-compass",
       ariaLabel: $t.nav.explore,
     },
     {
       path: "/calendar",
       label: $t.nav.calendar,
-      icon: "📅",
+      iconClass: "ph-calendar-blank",
       ariaLabel: $t.nav.calendar,
     },
-    { path: "/feed", label: $t.nav.feed, icon: "📰", ariaLabel: $t.nav.feed },
-    { path: "/settings", label: $t.nav.settings, icon: "⚙️", ariaLabel: $t.nav.settings },
+    { path: "/feed", label: $t.nav.feed, iconClass: "ph-newspaper", ariaLabel: $t.nav.feed },
+    { path: "/settings", label: $t.nav.settings, iconClass: "ph-gear", ariaLabel: $t.nav.settings },
   ];
 </script>
 
@@ -49,7 +49,9 @@
         aria-label={item.ariaLabel}
         aria-current={$page.url.pathname === item.path ? "page" : undefined}
       >
-        <span class="icon" aria-hidden="true">{item.icon}</span>
+        <span class="icon" aria-hidden="true">
+          <i class={$page.url.pathname === item.path ? `ph-fill ${item.iconClass}` : `ph ${item.iconClass}`}></i>
+        </span>
         <span class="label">{item.label}</span>
       </a>
     {/each}
@@ -75,7 +77,9 @@
       aria-label={item.ariaLabel}
       aria-current={$page.url.pathname === item.path ? "page" : undefined}
     >
-      <span class="icon" aria-hidden="true">{item.icon}</span>
+      <span class="icon" aria-hidden="true">
+        <i class={$page.url.pathname === item.path ? `ph-fill ${item.iconClass}` : `ph ${item.iconClass}`}></i>
+      </span>
       <span class="label">{item.label}</span>
     </a>
   {/each}

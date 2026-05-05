@@ -15,6 +15,7 @@
 	export let useViewer: boolean = false;
 	export let editMode: boolean = false;
 	export let customUrl: string | undefined = undefined;
+	export let showTag: boolean = false;
 
 	const dispatch = createEventDispatcher();
 
@@ -82,7 +83,7 @@
 			{#if displayDesc}
 				<p class="description">{displayDesc}</p>
 			{/if}
-			{#if displayCategory}
+			{#if displayCategory && (editMode || showTag)}
 				<span class="category">{displayCategory}</span>
 			{/if}
 		</div>
@@ -102,6 +103,7 @@
 		align-items: stretch;
 		gap: var(--spacing-sm);
 		transition: opacity 0.2s;
+		margin-top: 15px;
 	}
 
 	.link-card-container.edit-mode {

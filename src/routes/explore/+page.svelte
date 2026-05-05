@@ -143,7 +143,7 @@
       // Layer 3: Program Contacts (Requires program selection)
       const isProgramLayer =
         programName &&
-        c.programs.some((p) =>
+        c.programs.some((p: string) =>
           p.toLowerCase().includes(programName.toLowerCase()),
         );
 
@@ -279,6 +279,7 @@
               customUrl={link.id === "library-catalogue"
                 ? libraryUrl
                 : undefined}
+              showTag={true}
               on:toggleFavorite={handleToggleFavorite}
             />
           {/each}
@@ -299,8 +300,10 @@
       {#if $activeCampus || $activeDepartment || $settingsStore.programName}
         <p class="category-subtitle">
           {#if $activeCampus}{$activeCampus.name}{/if}
-          {#if $activeDepartment} • {$activeDepartment.shortName}{/if}
-          {#if $settingsStore.programName} • {$settingsStore.programName}{/if}
+          {#if $activeDepartment}
+            • {$activeDepartment.shortName}{/if}
+          {#if $settingsStore.programName}
+            • {$settingsStore.programName}{/if}
         </p>
       {/if}
 
@@ -309,7 +312,9 @@
           <div class="hint-icon">📍</div>
           <div class="hint-text">
             <h3>Campus Not Selected</h3>
-            <p>Please select your campus in settings to view relevant contacts.</p>
+            <p>
+              Please select your campus in settings to view relevant contacts.
+            </p>
             <button
               class="hint-btn primary"
               onclick={() => (window.location.href = "/settings")}

@@ -20,6 +20,10 @@
     "webopac.srh-hochschulen.de",
     "srh-store.de",
     "srhberlin.booqableshop.com",
+    "unpkg.com",
+    "srh-university.jobteaser.com",
+    "padlet.com",
+    "onedrive.live.com",
   ];
 
   $: url = $page.url.searchParams.get("url") || "";

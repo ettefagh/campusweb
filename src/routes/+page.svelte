@@ -3,6 +3,7 @@
 	import { favorites } from "$lib/stores/favorites";
 	import { allLinks } from "$lib/data/links";
 	import { t } from "$lib/i18n";
+	import { settingsStore } from "$lib/stores/settingsStore";
 
 	let isEditMode = false;
 	let searchQuery = "";
@@ -74,24 +75,50 @@
 		</div>
 	{/if}
 
-	<section class="links-section">
-		<h2 class="sr-only">{$t.home.universityLinks}</h2>
-		{#if displayLinks.length === 0}
-			<div class="empty-state">
-				<p>{$t.home.emptyState}</p>
-			</div>
-		{:else}
-			{#each displayLinks as link (link.id)}
-				<LinkCard
-					{link}
-					isFavorite={$favorites.includes(link.id)}
-					editMode={isEditMode}
-					useViewer={!isEditMode}
-					on:toggleFavorite={handleToggleFavorite}
-				/>
-			{/each}
+	{#each $settingsStore.homeSections as section (section.id)}
+		{#if section.enabled}
+			{#if section.id === "favorites"}
+				<section class="links-section">
+					<h2 class="sr-only">{$t.home.universityLinks}</h2>
+					{#if displayLinks.length === 0}
+						<div class="empty-state">
+							<p>{$t.home.emptyState}</p>
+						</div>
+					{:else}
+						{#each displayLinks as link (link.id)}
+							<LinkCard
+								{link}
+								isFavorite={$favorites.includes(link.id)}
+								editMode={isEditMode}
+								useViewer={!isEditMode}
+								on:toggleFavorite={handleToggleFavorite}
+							/>
+						{/each}
+					{/if}
+				</section>
+			{:else if section.id === "calendar"}
+				<section class="links-section full-width-section">
+					<div class="modular-section-header">
+						<h2>📅 {$t.calendar?.pageTitle || "Calendar Schedule"}</h2>
+						<a href="/calendar" class="view-all-link">{$t.home?.viewAll || "View Full Calendar"} →</a>
+					</div>
+					<div class="modular-placeholder glass">
+						<p>Your calendar schedule is modularly prepared. Navigate to the calendar tab to view your active class timetable.</p>
+					</div>
+				</section>
+			{:else if section.id === "feed"}
+				<section class="links-section full-width-section">
+					<div class="modular-section-header">
+						<h2>📰 {$t.feed?.pageTitle || "Campus Feed"}</h2>
+						<a href="/feed" class="view-all-link">{$t.home?.viewAllNews || "View All News"} →</a>
+					</div>
+					<div class="modular-placeholder glass">
+						<p>Your campus news and events feed is modularly prepared. Navigate to the feed tab to browse global announcements.</p>
+					</div>
+				</section>
+			{/if}
 		{/if}
-	</section>
+	{/each}
 
 	<footer class="page-footer">
 		<button
@@ -232,5 +259,56 @@
 		.links-section {
 			grid-template-columns: repeat(3, 1fr);
 		}
+	}
+
+	.full-width-section {
+		display: block !important;
+		grid-column: 1 / -1;
+		margin-top: var(--spacing-xl);
+	}
+
+	.modular-section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: var(--spacing-md);
+		padding: 0 var(--spacing-md);
+	}
+
+	.modular-section-header h2 {
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: var(--text-color);
+		margin: 0;
+	}
+
+	.view-all-link {
+		font-size: 0.9rem;
+		color: var(--primary-color);
+		font-weight: 600;
+		text-decoration: none;
+		transition: opacity 0.2s;
+	}
+
+	.view-all-link:hover {
+		opacity: 0.8;
+	}
+
+	.modular-placeholder {
+		background: var(--glass-bg-light);
+		backdrop-filter: var(--glass-blur);
+		-webkit-backdrop-filter: var(--glass-blur);
+		border: 1px dashed var(--border-color);
+		border-radius: var(--radius-xl);
+		padding: var(--spacing-xl) var(--spacing-lg);
+		text-align: center;
+		color: var(--text-color-secondary);
+		margin: 0 var(--spacing-md);
+	}
+
+	.modular-placeholder p {
+		margin: 0;
+		font-size: 0.9rem;
+		line-height: 1.5;
 	}
 </style>

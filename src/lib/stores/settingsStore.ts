@@ -22,6 +22,11 @@ export type AppLanguage = 'en' | 'de';
 export type AppTheme = 'auto' | 'light' | 'dark';
 export type WeekStart = 0 | 1 | 6; // 0=Sun, 1=Mon, 6=Sat
 
+export interface HomeSection {
+  id: string;
+  enabled: boolean;
+}
+
 export interface Campus {
   id: string;
   university: string;
@@ -55,6 +60,8 @@ export interface AppSettings {
   showSeconds: boolean;
   /** Whether the user has verified their university email */
   emailVerified: boolean;
+  /** Modular homepage sections order and toggle state */
+  homeSections: HomeSection[];
 }
 
 // ── Static Data: Campuses ─────────────────────────────────────────────────────
@@ -142,6 +149,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   compactCards: false,
   showSeconds: false,
   emailVerified: true,
+  homeSections: [
+    { id: 'favorites', enabled: true },
+    { id: 'calendar', enabled: false },
+    { id: 'feed', enabled: false }
+  ],
 };
 
 const STORAGE_KEY = 'app_settings';
@@ -153,7 +165,16 @@ function readFromStorage(): AppSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    
+    // Smart merge homeSections to dynamically add newly introduced sections
+    if (parsed && parsed.homeSections) {
+      const existingIds = parsed.homeSections.map((s: any) => s.id);
+      const missing = DEFAULT_SETTINGS.homeSections.filter(s => !existingIds.includes(s.id));
+      parsed.homeSections = [...parsed.homeSections, ...missing];
+    }
+    
+    return { ...DEFAULT_SETTINGS, ...parsed };
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

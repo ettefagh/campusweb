@@ -172,7 +172,7 @@ const translations = {
 
     // ── Links (Data Translations) ──
     linkTitle: {
-      'department-directory': 'Department Directory',
+      'department-directory': 'University Directory',
       'calendar-app': 'Calendar',
       'settings-app': 'Settings',
       'accessibility-app': 'Accessibility',

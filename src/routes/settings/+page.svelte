@@ -31,6 +31,25 @@
 		settingsStore.patch({ weekStartsOn: start as WeekStart });
 	}
 
+	function toggleSection(id: string) {
+		const updated = $settingsStore.homeSections.map((sec) =>
+			sec.id === id ? { ...sec, enabled: !sec.enabled } : sec
+		);
+		settingsStore.patch({ homeSections: updated });
+	}
+
+	function moveSection(index: number, direction: -1 | 1) {
+		const targetIndex = index + direction;
+		if (targetIndex < 0 || targetIndex >= $settingsStore.homeSections.length) return;
+
+		const updated = [...$settingsStore.homeSections];
+		const temp = updated[index];
+		updated[index] = updated[targetIndex];
+		updated[targetIndex] = temp;
+
+		settingsStore.patch({ homeSections: updated });
+	}
+
 	const languageOptions = [
 		{ value: 'en', native: 'English', flag: '🇬🇧' },
 		{ value: 'de', native: 'Deutsch', flag: '🇩🇪' },
@@ -273,6 +292,61 @@
 				<span class="theme-icon">🌙</span>
 				<span class="theme-label">{$t.settings.themeDark}</span>
 			</button>
+		</div>
+	</section>
+
+	<!-- ── Homepage Layout ── -->
+	<section class="settings-section">
+		<div class="section-header">
+			<span class="section-icon">🧩</span>
+			<div>
+				<h2>Homepage Layout</h2>
+				<p class="section-desc">Choose which sections appear on your homepage and change their order.</p>
+			</div>
+		</div>
+
+		<div class="sections-list">
+			{#each $settingsStore.homeSections as sec, i (sec.id)}
+				<div class="setting-row section-item">
+					<div class="section-info">
+						<span class="setting-label">
+							{#if sec.id === 'favorites'}⭐ {:else if sec.id === 'calendar'}📅 {:else if sec.id === 'feed'}📰 {/if}
+							{sec.id === 'favorites' ? 'Favorite Links' : sec.id === 'calendar' ? 'Calendar Schedule' : sec.id === 'feed' ? 'Campus Feed' : sec.id}
+						</span>
+					</div>
+					<div class="section-actions">
+						<!-- Reordering buttons -->
+						<button 
+							class="btn-reorder" 
+							disabled={i === 0} 
+							on:click={() => moveSection(i, -1)}
+							aria-label="Move Up"
+						>
+							▲
+						</button>
+						<button 
+							class="btn-reorder" 
+							disabled={i === $settingsStore.homeSections.length - 1} 
+							on:click={() => moveSection(i, 1)}
+							aria-label="Move Down"
+						>
+							▼
+						</button>
+
+						<!-- Toggle button -->
+						<button 
+							class="toggle" 
+							class:on={sec.enabled} 
+							role="switch" 
+							aria-checked={sec.enabled} 
+							aria-label="Toggle section" 
+							on:click={() => toggleSection(sec.id)}
+						>
+							<span class="toggle-knob"></span>
+						</button>
+					</div>
+				</div>
+			{/each}
 		</div>
 	</section>
 
@@ -1024,5 +1098,53 @@
 	@keyframes slideDown {
 		from { opacity: 0; transform: translateY(-8px); }
 		to { opacity: 1; transform: translateY(0); }
+	}
+
+	/* ── Homepage Layout Styles ── */
+	.sections-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+	}
+
+	.section-item {
+		padding: var(--spacing-md) 0;
+	}
+
+	.section-info {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-sm);
+	}
+
+	.section-actions {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-sm);
+	}
+
+	.btn-reorder {
+		background: var(--bg-color);
+		border: 1px solid var(--border-color);
+		color: var(--text-color);
+		border-radius: var(--radius-sm);
+		width: 32px;
+		height: 32px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		font-size: 0.8rem;
+		transition: all 0.2s;
+	}
+
+	.btn-reorder:hover:not(:disabled) {
+		border-color: var(--primary-color);
+		color: var(--primary-color);
+	}
+
+	.btn-reorder:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
 	}
 </style>
