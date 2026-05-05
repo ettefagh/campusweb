@@ -1,0 +1,16 @@
+{
+  "name": "srh-auth-module",
+  "version": "1.0.0",
+  "description": "Standalone Microsoft Entra ID Authentication Module for SRH University",
+  "main": "src/lib/services/authService.ts",
+  "type": "module",
+  "dependencies": {
+    "@azure/msal-browser": "^3.13.0",
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}

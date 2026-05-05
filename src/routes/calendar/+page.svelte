@@ -15,7 +15,11 @@
   } from "$lib/stores/calendarStore";
   import { focusTrap } from "$lib/utils/focusTrap";
   import { browser } from "$app/environment";
-  import { settingsStore, activeDepartment, activeCampus } from "$lib/stores/settingsStore";
+  import {
+    settingsStore,
+    activeDepartment,
+    activeCampus,
+  } from "$lib/stores/settingsStore";
   import { classColors } from "$lib/stores/classColors";
 
   import { t } from "$lib/i18n";
@@ -35,6 +39,8 @@
   let isLoading = true;
   let currentViewLabel = "";
   let currentTitleText = "";
+  let isTodayInView = true;
+  let todayDirection: "prev" | "next" | "none" = "none";
 
   // State for events
   let staticEvents: CalendarEvent[] = [];
@@ -167,22 +173,30 @@
     },
     views: {
       dayGridMonth: {
-        dayHeaderFormat: { weekday: 'short' }
+        dayHeaderFormat: { weekday: "short" },
       },
       timeGridWeek: {
         dayHeaderContent: (arg: any) => {
-          const weekday = arg.date.toLocaleDateString(locale, { weekday: 'short' });
+          const weekday = arg.date.toLocaleDateString(locale, {
+            weekday: "short",
+          });
           const day = arg.date.getDate();
-          return { html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>` };
-        }
+          return {
+            html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>`,
+          };
+        },
       },
       timeGridDay: {
         dayHeaderContent: (arg: any) => {
-          const weekday = arg.date.toLocaleDateString(locale, { weekday: 'long' });
+          const weekday = arg.date.toLocaleDateString(locale, {
+            weekday: "long",
+          });
           const day = arg.date.getDate();
-          return { html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>` };
-        }
-      }
+          return {
+            html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>`,
+          };
+        },
+      },
     },
     height: "100%",
     eventContent: (info: any) => {
@@ -199,7 +213,7 @@
       const locHtml = loc ? `<span class="ec-event-loc">📍${loc}</span>` : "";
       const texture = info.event.extendedProps?.texture || "solid";
       const color = info.event.backgroundColor || "var(--primary-color)";
-      const textColor = color.replace('var(--event-', 'var(--event-text-');
+      const textColor = color.replace("var(--event-", "var(--event-text-");
       const style = `--event-color: ${esc(color)}; --event-text-color: ${esc(textColor)};`;
       const title = esc(info.event.title || "");
 
@@ -222,7 +236,7 @@
         } else if (info.event.start) {
           const startStr = formatTime(info.event.start);
           const endStr = info.event.end ? formatTime(info.event.end) : "";
-          
+
           leftPart = `<span class="ec-event-title-text">${title}</span><span class="ec-event-time-sub">${startStr}</span>`;
           rightPart = `${locHtml}${endStr ? `<span class="ec-event-time-sub time-end">${endStr}</span>` : ""}`;
         }
@@ -262,6 +276,20 @@
       if (view) {
         currentTitleText = formatViewTitle(view);
         currentViewLabel = view.type;
+
+        // Calculate if today is in view
+        const now = new Date();
+        const start = new Date(view.activeStart);
+        const end = new Date(view.activeEnd);
+        isTodayInView = now >= start && now < end;
+
+        if (isTodayInView) {
+          todayDirection = "none";
+        } else if (now < start) {
+          todayDirection = "prev";
+        } else {
+          todayDirection = "next";
+        }
       }
     } catch {
       // Component may not be fully initialized yet
@@ -306,19 +334,42 @@
 
   // ─── Navigation Functions ────────────────────────────────────────
   function goToToday() {
-    if (ecComponent) {
+    if (!ecComponent) return;
+
+    if (!isTodayInView) {
+      // Case 1: Today is NOT in view -> Navigate to today
       ecComponent.today();
       updateToolbarState();
-      
-      // Basic scroll to indicator for time views
-      if (currentViewLabel.includes('timeGrid')) {
-        setTimeout(() => {
-          const nowIndicator = document.querySelector('.ec-now-indicator');
-          if (nowIndicator) {
-            nowIndicator.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // Case 2: Always scroll to indicator if it's a time view (or after navigating)
+    // This provides the 'anchor' functionality
+    if (currentViewLabel.includes("timeGrid")) {
+      setTimeout(() => {
+        const indicator = document.querySelector(
+          ".ec-now-indicator",
+        ) as HTMLElement;
+        if (indicator) {
+          // Find the closest scrollable container
+          let parent = indicator.parentElement;
+          while (parent && parent !== document.body) {
+            const style = window.getComputedStyle(parent);
+            if (style.overflowY === "auto" || style.overflowY === "scroll") {
+              const parentRect = parent.getBoundingClientRect();
+              const indicatorRect = indicator.getBoundingClientRect();
+              const relativeTop =
+                indicatorRect.top - parentRect.top + parent.scrollTop;
+
+              parent.scrollTo({
+                top: relativeTop - parentRect.height / 2,
+                behavior: "smooth",
+              });
+              break;
+            }
+            parent = parent.parentElement;
           }
-        }, 100);
-      }
+        }
+      }, 100);
     }
   }
 
@@ -588,7 +639,10 @@
           <div class="suggestion-icon">📅</div>
           <div class="suggestion-content">
             <p class="suggestion-title">See your university schedule here</p>
-            <p class="suggestion-desc">Link your <strong>iCal-Export</strong> feed from the student portal to see your classes, exams and deadlines directly in this webapp.</p>
+            <p class="suggestion-desc">
+              Link your <strong>iCal-Export</strong> feed from the student portal
+              to see your classes, exams and deadlines directly in this webapp.
+            </p>
           </div>
           <div class="suggestion-actions">
             <a
@@ -616,9 +670,10 @@
         </div>
       {/if}
 
-      <div class="calendar-container" 
-        class:loading={isLoading} 
-        class:view-week={currentViewLabel === 'timeGridWeek'}
+      <div
+        class="calendar-container"
+        class:loading={isLoading}
+        class:view-week={currentViewLabel === "timeGridWeek"}
         class:is-landscape={isLandscapeMobile}
       >
         <div class="calendar-scroll-area">
@@ -667,12 +722,19 @@
             <button class="nav-btn" on:click={goToPrev} aria-label="Previous"
               >{$t.calendar.prev}</button
             >
-            <button 
-              class="nav-btn today-btn" 
+            <button
+              class="nav-btn today-btn"
+              class:active={isTodayInView}
               on:click={goToToday}
               aria-label="Go to Today"
             >
+              {#if todayDirection === "prev"}
+                <span class="nav-arrow">{$t.calendar.prev}</span>
+              {/if}
               {$t.calendar.today}
+              {#if todayDirection === "next"}
+                <span class="nav-arrow">{$t.calendar.next}</span>
+              {/if}
             </button>
             <button class="nav-btn" on:click={goToNext} aria-label="Next"
               >{$t.calendar.next}</button
@@ -759,9 +821,7 @@
               class:legend-item--hidden={hiddenSources.has(sub.id)}
               on:click={() => toggleSource(sub.id)}
             >
-              <span
-                class="legend-color"
-                style="background-color: {sub.color};"
+              <span class="legend-color" style="background-color: {sub.color};"
               ></span>
               <span>{sub.name}</span>
             </button>
@@ -1306,7 +1366,7 @@
     border-right: none;
     border-bottom: 1px solid var(--glass-border-subtle);
     width: 100%;
-    height: 54px;
+    height: 49px;
     font-size: 0.75rem;
     padding: 4px;
   }
@@ -1403,6 +1463,26 @@
     border: 1px solid rgba(212, 68, 7, 0.2);
     padding: 0 16px;
     transition: all 0.2s ease;
+  }
+
+  .today-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+  }
+
+  .nav-arrow {
+    font-size: 0.8em;
+    opacity: 0.8;
+    margin: 0 4px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .today-btn:hover .nav-arrow {
+    opacity: 1;
+    transform: scale(1.1);
   }
 
   .today-btn:active {
@@ -1529,7 +1609,6 @@
     word-break: break-word;
   }
 
-
   /* ─── Event Calendar Theme Overrides ──────────────────────────── */
   :global(.ec) {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
@@ -1631,8 +1710,6 @@
   }
 
   /* Removed old Apple pastel styling to favor neon high-contrast theme */
-
-
 
   :global(.ec-event:hover .ec-event-inner) {
     transform: translateY(-1px);
@@ -1901,7 +1978,6 @@
       padding: var(--spacing-xs);
       min-width: 40px;
     }
-
   }
 
   .calendar-page-layout {
@@ -1928,11 +2004,9 @@
       height: calc(100vh - 180px); /* Taller on desktop */
     }
 
-
     .quick-links-section {
       margin: var(--spacing-md) var(--spacing-sm) 0;
     }
-
   }
 
   /* ─── Quick Links Section ────────────────────────────────────── */

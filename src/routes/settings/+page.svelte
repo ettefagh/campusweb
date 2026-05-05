@@ -3,7 +3,6 @@
 	import { accessibility } from '$lib/stores/accessibility';
 	import { calendarStore, activeClasses, EVENT_COLORS } from '$lib/stores/calendarStore';
 	import { classColors } from '$lib/stores/classColors';
-	import { authStore } from '$lib/stores/authStore';
 	import { t } from '$lib/i18n';
 	import { version } from '$app/environment';
 	import { onMount } from 'svelte';
@@ -185,20 +184,6 @@
 
 	</section>
 	
-	{#if $authStore.isGuest}
-		<section class="settings-section guest-section">
-			<div class="section-header">
-				<span class="section-icon">🔑</span>
-				<div>
-					<h2>Upgrade Account</h2>
-					<p class="section-desc">You are currently using the app as a <strong>Guest</strong>. Sign in with your university account to unlock all features.</p>
-				</div>
-			</div>
-			<button class="btn-signin" on:click={() => authStore.reset()}>
-				Sign in with Microsoft
-			</button>
-		</section>
-	{/if}
 
 	{#if $isSetupComplete && !$settingsStore.emailVerified}
 		<section class="settings-section">

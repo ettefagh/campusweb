@@ -104,13 +104,6 @@
 		transition: opacity 0.2s;
 	}
 
-	/* Use margin-bottom only in one-column grids (mobile stack) */
-	@media (max-width: 639px) {
-		.link-card-container {
-			margin-bottom: var(--spacing-md);
-		}
-	}
-
 	.link-card-container.edit-mode {
 		opacity: 1;
 	}

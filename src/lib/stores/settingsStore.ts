@@ -141,7 +141,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   weekStartsOn: 1, // Monday
   compactCards: false,
   showSeconds: false,
-  emailVerified: false,
+  emailVerified: true,
 };
 
 const STORAGE_KEY = 'app_settings';
@@ -207,6 +207,26 @@ export const campusDepartments = derived(settingsStore, ($s) =>
   $s.campusId ? DEPARTMENTS.filter((d) => d.campusId === $s.campusId) : []
 );
 
+/** Normalizes program names to consolidate variants (e.g., removes degree suffixes and focus areas) */
+export function normalizeProgramName(name: string): string {
+  if (!name) return '';
+  // 1. Remove everything after " - " (Focus on...)
+  let n = name.split(' - ')[0];
+  // 2. Remove degree suffixes like (B.Sc.), (M.A.), (M.Eng.), etc.
+  n = n.replace(/\s*\([^)]*\)/g, '');
+  // 3. Remove bilingual variants like "EN/ Architecture"
+  n = n.replace(/^[A-Z]{2}\/\s+/, '');
+  n = n.split(' EN/')[0];
+  // 4. Remove trailing slashes and alternative names
+  n = n.split(' / ')[0];
+  n = n.split('/')[0];
+
+  // 5. Consolidate Computer Science variants
+  if (n.toLowerCase().includes('computer science')) return 'Computer Science';
+  
+  return n.trim();
+}
+
 /** Programs filtered to the currently selected campus and department */
 import { PROGRAM_DATA } from '$lib/data/programs';
 export const campusPrograms = derived(settingsStore, ($s) => {
@@ -215,7 +235,7 @@ export const campusPrograms = derived(settingsStore, ($s) => {
   
   const programs = PROGRAM_DATA
     .filter(p => p.campusId === $s.campusId && p.schoolId === schoolId)
-    .map(p => p.name);
+    .map(p => normalizeProgramName(p.name));
     
   return [...new Set(programs)].sort();
 });

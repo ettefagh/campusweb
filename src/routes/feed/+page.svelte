@@ -21,18 +21,6 @@
   // ── Directory state ──────────────────────────────────────────
   let dirTab: "services" | "general" = "services";
   let expandedId: string | null = null;
-  $: filteredCampusContacts = campusContacts.filter(
-    (c) => c.campusId === $settingsStore.campusId,
-  );
-  $: filteredProgramDirectors = programDirectors.filter((p) => {
-    const campusMatch = p.campusId === $settingsStore.campusId;
-    const deptMatch =
-      !$settingsStore.departmentId ||
-      $settingsStore.departmentId?.startsWith(p.school);
-    const programMatch =
-      !$settingsStore.programName || p.program === $settingsStore.programName;
-    return campusMatch && deptMatch && programMatch;
-  });
   $: generalContactsList = generalContacts;
   $: currentCampusName =
     CAMPUSES.find((c) => c.id === $settingsStore.campusId)?.name ?? "";
@@ -267,196 +255,6 @@
     </div>
   </section>
 
-  <!-- Feature 5: Department Directory -->
-  <section id="directory" class="directory-section">
-    <div class="section-header-group">
-      <h2 class="section-title">📋 Department Directory</h2>
-      <p class="section-subtitle">
-        {currentCampusName}
-        {#if $settingsStore.departmentId}
-          — {DEPARTMENTS.find((d) => d.id === $settingsStore.departmentId)
-            ?.name}
-        {/if}
-        {#if $settingsStore.programName}
-          — {$settingsStore.programName}
-        {/if}
-      </p>
-    </div>
-    {#if !$settingsStore.emailVerified}
-      <div class="verification-hint">
-        <span class="hint-icon">🔒</span>
-        <div class="hint-text">
-          <h3>Directory Access Restricted</h3>
-          <p>Please verify your university email in Settings to view contact details.</p>
-          <a href="/settings" class="btn-verify">Go to Settings to Verify</a>
-        </div>
-      </div>
-    {:else if !$settingsStore.campusId}
-      <div class="directory-prompt">
-        <p>
-          Please <a href="/settings">select your campus in Settings</a> to see campus-specific
-          contacts.
-        </p>
-      </div>
-    {:else}
-      <div class="directory-tabs">
-        <button
-          class="dir-tab"
-          class:active={dirTab === "services"}
-          onclick={() => (dirTab = "services")}>🏢 Campus Services</button
-        >
-        <button
-          class="dir-tab"
-          class:active={dirTab === "general"}
-          onclick={() => (dirTab = "general")}>🌐 University-wide</button
-        >
-      </div>
-
-      {#if dirTab === "services"}
-        <div class="dir-list">
-          <!-- Campus Services -->
-          {#each filteredCampusContacts as c, i}
-            {@const rowId = `service-${i}`}
-            <div
-              class="dir-row-container"
-              class:expanded={expandedId === rowId}
-            >
-              <button
-                class="dir-row-trigger"
-                onclick={() => toggleExpand(rowId)}
-              >
-                <div class="dir-row-info">
-                  <span class="dir-service">{c.service}</span>
-                  <span class="dir-person">{c.person}</span>
-                </div>
-                <span class="dir-chevron"
-                  >{expandedId === rowId ? "▾" : "›"}</span
-                >
-              </button>
-              {#if expandedId === rowId}
-                <div class="dir-expanded">
-                  <div class="dir-actions">
-                    <a
-                      href={getEmailUrl(c.email)}
-                      class="dir-action-btn mail"
-                      target="_blank" rel="noopener noreferrer"
-                      title="Mail"
-                    >
-                      <span class="action-icon">📧</span>
-                    </a>
-                    <a
-                      href={getTeamsChatUrl(c.email)}
-                      class="dir-action-btn chat"
-                      target="_blank" rel="noopener noreferrer"
-                      title="Chat on Teams"
-                    >
-                      <span class="action-icon">💬</span>
-                    </a>
-                  </div>
-                  <div class="dir-footer">
-                    <div class="dir-meta-value">{c.email}</div>
-                  </div>
-                </div>
-              {/if}
-            </div>
-          {/each}
-
-          <!-- Program Directors (if department selected) -->
-          {#if filteredProgramDirectors.length > 0}
-            <div class="dir-separator">🎓 Program Contacts</div>
-            {#each filteredProgramDirectors as p, i}
-              {@const rowId = `program-${i}`}
-              <div
-                class="dir-row-container"
-                class:expanded={expandedId === rowId}
-              >
-                <button
-                  class="dir-row-trigger"
-                  onclick={() => toggleExpand(rowId)}
-                >
-                  <div class="dir-row-info">
-                    <span class="dir-service">{p.degree} {p.program}</span>
-                    <span class="dir-person">{p.person}</span>
-                  </div>
-                  <span class="dir-chevron"
-                    >{expandedId === rowId ? "▾" : "›"}</span
-                  >
-                </button>
-                {#if expandedId === rowId}
-                  <div class="dir-expanded">
-                    <div class="dir-actions">
-                      <a href={getEmailUrl(p.email)} class="dir-action-btn mail" target="_blank" rel="noopener noreferrer" title="Mail">
-                        <span class="action-icon">📧</span>
-                      </a>
-                      {#if p.phone}
-                        <a href={getDirectPhone(p.phone)} class="dir-action-btn call" title="Call Direct">
-                          <span class="action-icon">📞</span>
-                        </a>
-                      {/if}
-                      <a href={getTeamsChatUrl(p.email)} class="dir-action-btn chat" target="_blank" rel="noopener noreferrer" title="Chat on Teams">
-                        <span class="action-icon">💬</span>
-                      </a>
-                    </div>
-
-                    <div class="dir-footer">
-                      <div class="dir-meta-value">{p.email}</div>
-                      {#if p.phone}<div class="dir-meta-value">
-                          {p.phone}
-                        </div>{/if}
-                    </div>
-                  </div>
-                {/if}
-              </div>
-            {/each}
-          {/if}
-
-          {#if filteredCampusContacts.length === 0 && filteredProgramDirectors.length === 0}
-            <p class="dir-empty">
-              No campus-specific contacts found for {currentCampusName}.
-            </p>
-          {/if}
-        </div>
-      {:else}
-        <div class="dir-list">
-          {#each generalContactsList as c, i}
-            {@const rowId = `general-${i}`}
-            <div
-              class="dir-row-container"
-              class:expanded={expandedId === rowId}
-            >
-              <button
-                class="dir-row-trigger"
-                onclick={() => toggleExpand(rowId)}
-              >
-                <div class="dir-row-info">
-                  <span class="dir-service">{c.service}</span>
-                  <span class="dir-person">{c.person}</span>
-                </div>
-                <span class="dir-chevron"
-                  >{expandedId === rowId ? "▾" : "›"}</span
-                >
-              </button>
-              {#if expandedId === rowId}
-                <div class="dir-expanded">
-                  <div class="dir-actions">
-                    <a href={getEmailUrl(c.email)} class="dir-action-btn mail" target="_blank" rel="noopener noreferrer" title="Mail">
-                      <span class="action-icon">📧</span>
-                    </a>
-                    <a href={getTeamsChatUrl(c.email)} class="dir-action-btn chat" target="_blank" rel="noopener noreferrer" title="Chat on Teams">
-                      <span class="action-icon">💬</span>
-                    </a>
-                  </div>
-                  <div class="dir-footer">
-                    <div class="dir-meta-value">{c.email}</div>
-                  </div>
-                </div>
-              {/if}
-            </div>
-          {/each}
-        </div>
-      {/if}
-    {/if}
-  </section>
 
   <!-- Feature 3: Contact Hub Button -->
   <section class="contact-trigger-section">
@@ -485,6 +283,7 @@
         class="sheet"
         onclick={(e) => e.stopPropagation()}
         role="dialog"
+        tabindex="-1"
         aria-label={$t.feed.contactTitle}
       >
         <div class="sheet-handle"></div>
@@ -526,6 +325,7 @@
         class="contact-modal"
         onclick={(e) => e.stopPropagation()}
         role="dialog"
+        tabindex="-1"
         aria-label={$t.feed.contactTitleDesktop}
       >
         <button

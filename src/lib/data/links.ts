@@ -98,7 +98,7 @@ export const eCampusLinks = [
 		url: 'https://ecampus.srh-university.de/my/',
 		icon: '💻',
 		description: 'Moodle learning platform',
-		category_name: 'E-Campus Learning'
+		category_name: 'E-Campus Portal'
 	},
 	{
 		id: 'ecampus-news',
@@ -376,7 +376,7 @@ export const allLinks = [
 // Category order for display
 export const categoryOrder = [
 	'Academic Services',
-	'E-Campus Learning',
+	'E-Campus Portal',
 	'Services',
 	'CampusWeb Portal',
 	'E-Campus',
