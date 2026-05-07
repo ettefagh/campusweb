@@ -1,5 +1,6 @@
 <script lang="ts">
 	import LinkCard from "$lib/components/LinkCard.svelte";
+	import IdSlider from "$lib/components/IdSlider.svelte";
 	import { favorites } from "$lib/stores/favorites";
 	import { allLinks } from "$lib/data/links";
 	import { t } from "$lib/i18n";
@@ -95,6 +96,10 @@
 							/>
 						{/each}
 					{/if}
+				</section>
+			{:else if section.id === "cards"}
+				<section class="links-section full-width-section">
+					<IdSlider />
 				</section>
 			{:else if section.id === "calendar"}
 				<section class="links-section full-width-section">

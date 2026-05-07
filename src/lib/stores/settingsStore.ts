@@ -151,6 +151,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   emailVerified: true,
   homeSections: [
     { id: 'favorites', enabled: true },
+    { id: 'cards', enabled: true },
     { id: 'calendar', enabled: false },
     { id: 'feed', enabled: false }
   ],
