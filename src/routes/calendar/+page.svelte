@@ -1903,18 +1903,29 @@
   :global(.ec-now-indicator) {
     z-index: 15 !important;
     border-top: 2px solid var(--primary-color) !important;
+    box-shadow: 0 1px 6px rgba(212, 68, 7, 0.4) !important;
   }
 
   :global(.ec-now-indicator::before) {
     content: "" !important;
     position: absolute !important;
-    left: -5px !important;
-    top: -4px !important;
-    width: 10px !important;
-    height: 10px !important;
+    left: -6px !important;
+    top: -5px !important;
+    width: 12px !important;
+    height: 12px !important;
     background: var(--primary-color) !important;
     border-radius: 50% !important;
-    box-shadow: 0 0 8px var(--primary-color) !important;
+    box-shadow: 0 0 0 4px rgba(212, 68, 7, 0.2), 0 0 12px var(--primary-color) !important;
+    animation: indicatorPulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1) !important;
+  }
+
+  @keyframes indicatorPulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0px rgba(212, 68, 7, 0.4), 0 0 12px var(--primary-color) !important;
+    }
+    50% {
+      box-shadow: 0 0 0 6px rgba(212, 68, 7, 0), 0 0 16px var(--primary-color) !important;
+    }
   }
 
   /* Dark Mode */

@@ -86,6 +86,15 @@
       : null;
     const programName = $settingsStore.programName;
 
+    const normalizeProgram = (name: string): string => {
+      return name
+        .toLowerCase()
+        .replace(/\b(bachelor|master|b\.sc\.|m\.sc\.|cs)\b/g, "")
+        .replace(/[^a-z0-9]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    };
+
     const getSchoolFromTags = (tags?: string[]) => {
       if (!tags) return null;
       const found = tags.find((t) => t.toLowerCase().startsWith("school:"));
@@ -113,6 +122,7 @@
         services: [],
         programs: [`${p.degree || ""} ${p.program}`.trim()],
         school: p.school.toLowerCase(),
+        tags: p.degree ? [p.degree, ...(p.tags || [])] : (p.tags || []),
       })),
     ];
 
@@ -172,9 +182,11 @@
       // Layer 3: Program Contacts (Requires program selection)
       const isProgramLayer =
         programName &&
-        c.programs.some((p: string) =>
-          p.toLowerCase().includes(programName.toLowerCase()),
-        );
+        c.programs.some((p: string) => {
+          const normUser = normalizeProgram(programName);
+          const normContact = normalizeProgram(p);
+          return normContact.includes(normUser) || normUser.includes(normContact);
+        });
 
       return isGeneralLayer || isSchoolLayer || isProgramLayer;
     });

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { idCardsStore } from '$lib/stores/idStore';
-  import IdCard from './IdCard.svelte';
-  import IdModal from './IdModal.svelte';
+  import { idCardsStore } from "$lib/stores/idStore";
+  import IdCard from "./IdCard.svelte";
+  import IdModal from "./IdModal.svelte";
 
   let isEditMode = false;
   let activeIndex = 0;
@@ -22,7 +22,7 @@
     const width = sliderEl.clientWidth;
     sliderEl.scrollTo({
       left: index * width,
-      behavior: 'smooth'
+      behavior: "smooth",
     });
     activeIndex = index;
   }
@@ -38,7 +38,7 @@
   }
 
   function handleDeleteCard(id: string) {
-    if (confirm('Are you sure you want to delete this card?')) {
+    if (confirm("Are you sure you want to delete this card?")) {
       idCardsStore.remove(id);
       // Reset active index if needed
       if (activeIndex >= $idCardsStore.length) {
@@ -58,14 +58,14 @@
       <h2>Digital ID Wallet</h2>
       <p class="slider-subtitle">Tap cards to flip & scan barcode</p>
     </div>
-    
+
     <div class="slider-actions">
-      <button 
+      <button
         class="slider-action-btn"
         class:active={isEditMode}
         on:click={toggleEditMode}
       >
-        {isEditMode ? 'Done' : 'Manage'}
+        {isEditMode ? "Done" : "Manage"}
       </button>
     </div>
   </div>
@@ -73,15 +73,11 @@
   <!-- Cards Slider Container -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="slider-outer">
-    <div 
-      class="slider-container" 
-      bind:this={sliderEl}
-      on:scroll={handleScroll}
-    >
+    <div class="slider-container" bind:this={sliderEl} on:scroll={handleScroll}>
       {#each $idCardsStore as card, i (card.id)}
         <div class="slide">
-          <IdCard 
-            {card} 
+          <IdCard
+            {card}
             editMode={isEditMode}
             onEdit={handleEditCard}
             onDelete={handleDeleteCard}
@@ -96,7 +92,7 @@
           <div class="add-card-inner">
             <span class="plus-icon">➕</span>
             <h3>Add Digital Card</h3>
-            <p>Import student ID, semester ticket, or library card</p>
+            <p>Import student ID or library card</p>
           </div>
         </div>
       </div>
@@ -108,8 +104,8 @@
     {#each Array($idCardsStore.length + 1) as _, i}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div 
-        class="dot" 
+      <div
+        class="dot"
         class:active={activeIndex === i}
         on:click={() => scrollToSlide(i)}
       ></div>
@@ -119,10 +115,7 @@
 
 <!-- Modal Dialog -->
 {#if showModal}
-  <IdModal 
-    cardId={editingCardId} 
-    onClose={() => showModal = false} 
-  />
+  <IdModal cardId={editingCardId} onClose={() => (showModal = false)} />
 {/if}
 
 <style>
@@ -190,7 +183,7 @@
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE and Edge */
+    -ms-overflow-style: none; /* IE and Edge */
     width: 100%;
     gap: 0px;
   }
