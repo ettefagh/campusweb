@@ -99,7 +99,10 @@
   const STAR = 'NNWNWNWNN'; // Start/Stop asterisk code
 
   function generateBarcodeSVG(idNum: string): { rects: Array<{ x: number; w: number; isBlack: boolean }>, totalWidth: number } {
-    const cleanId = idNum.replace(/[^0-9]/g, '');
+    const cleanId = (idNum || '').replace(/[^0-9]/g, '');
+    if (!cleanId) {
+      return { rects: [], totalWidth: 100 };
+    }
     const fullCode = `*${cleanId}*`;
     
     const rects: Array<{ x: number; w: number; isBlack: boolean }> = [];
@@ -139,12 +142,7 @@
   class="card-wrapper"
   class:flipped={isFlipped}
   on:click={toggleFlip}
-  on:mousemove={handleMouseMove}
-  on:mouseenter={handleMouseEnter}
-  on:mouseleave={handleMouseLeave}
-  style:transform={isHovered && !isFlipped 
-    ? `perspective(1000px) rotateY(${mouseX * 25}deg) rotateX(${-mouseY * 25}deg) scale3d(1.02, 1.02, 1.02)` 
-    : isFlipped ? 'rotateY(180deg)' : 'none'}
+  style:transform={isFlipped ? 'rotateY(180deg)' : 'none'}
 >
   <div class="card-inner">
     <!-- FRONT OF CARD -->
@@ -158,7 +156,11 @@
 
       <!-- Expiration Badge -->
       {#if expirationStatus.isExpiringSoon}
-        <div class="expiration-badge" class:expired={expirationStatus.daysLeft <= 0}>
+        <div 
+          class="expiration-badge" 
+          class:expired={expirationStatus.daysLeft <= 0}
+          style:right={editMode ? '84px' : '12px'}
+        >
           {expirationStatus.daysLeft <= 0 ? '❌ Expired' : `⏳ Expires in ${expirationStatus.daysLeft}d`}
         </div>
       {/if}
@@ -272,25 +274,31 @@
       </div>
 
       <div class="card-back-body">
-        <div class="barcode-container glass">
-          <!-- Real Dynamic SVG Barcode -->
-          <svg 
-            class="barcode-svg" 
-            viewBox="0 0 {barcodeData.totalWidth} 50" 
-            preserveAspectRatio="none"
-          >
-            {#each barcodeData.rects as rect}
-              <rect 
-                x={rect.x} 
-                y="0" 
-                width={rect.w} 
-                height="50" 
-                fill={rect.isBlack ? 'var(--barcode-color, #000000)' : 'transparent'} 
-              />
-            {/each}
-          </svg>
-          <div class="barcode-label">*{card.idNumber}*</div>
-        </div>
+        {#if card.idNumber}
+          <div class="barcode-container">
+            <!-- Real Dynamic SVG Barcode -->
+            <svg 
+              class="barcode-svg" 
+              viewBox="0 0 {barcodeData.totalWidth} 50" 
+              preserveAspectRatio="none"
+            >
+              {#each barcodeData.rects as rect}
+                <rect 
+                  x={rect.x} 
+                  y="0" 
+                  width={rect.w} 
+                  height="50" 
+                  fill={rect.isBlack ? 'var(--barcode-color, #000000)' : 'transparent'} 
+                />
+              {/each}
+            </svg>
+            <div class="barcode-label">*{card.idNumber}*</div>
+          </div>
+        {:else}
+          <div class="barcode-container" style="display: flex; align-items: center; justify-content: center; min-height: 70px;">
+            <div class="barcode-label" style="opacity: 0.5; font-style: italic;">No ID Number Provided</div>
+          </div>
+        {/if}
 
         <div class="legal-text">
           <p>This digital card is stored securely on this device's local storage. To use, scan the barcode at campus libraries, student printers, or dining halls.</p>
@@ -308,8 +316,8 @@
 <style>
   .card-wrapper {
     position: relative;
-    width: 380px;
-    height: 236px;
+    width: 361px;
+    height: 224px;
     border-radius: 20px;
     cursor: pointer;
     transform-style: preserve-3d;
@@ -322,8 +330,8 @@
 
   @media (max-width: 400px) {
     .card-wrapper {
-      width: 320px;
-      height: 198px;
+      width: 304px;
+      height: 188px;
     }
   }
 
@@ -378,6 +386,7 @@
     background: #f7f9fa;
     color: #333;
     border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
   }
 
   :global([data-theme="dark"]) .card-back {
@@ -411,11 +420,58 @@
 
   /* ── Themes back-side styling ────────────────────────────── */
   .theme-srh-orange-back {
-    border-color: rgba(228, 68, 7, 0.2);
+    background: linear-gradient(135deg, #fce8d5 0%, #fbd5bd 100%) !important;
+    color: #4c1103 !important;
+    border-color: rgba(228, 68, 7, 0.15) !important;
+  }
+  :global([data-theme="dark"]) .theme-srh-orange-back {
+    background: linear-gradient(135deg, #2c0e02 0%, #170701 100%) !important;
+    color: #fbd5bd !important;
+    border-color: rgba(228, 68, 7, 0.25) !important;
   }
 
   .theme-liquid-dark-back {
-    border-color: rgba(255, 255, 255, 0.05);
+    background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%) !important;
+    color: #1a1a1a !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+  :global([data-theme="dark"]) .theme-liquid-dark-back {
+    background: linear-gradient(135deg, #121316 0%, #070809 100%) !important;
+    color: #f3f4f6 !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .theme-emerald-glass-back {
+    background: linear-gradient(135deg, #e6f4f1 0%, #ccece4 100%) !important;
+    color: #05221a !important;
+    border-color: rgba(15, 76, 58, 0.15) !important;
+  }
+  :global([data-theme="dark"]) .theme-emerald-glass-back {
+    background: linear-gradient(135deg, #05221a 0%, #010c09 100%) !important;
+    color: #ccece4 !important;
+    border-color: rgba(15, 76, 58, 0.25) !important;
+  }
+
+  .theme-sapphire-aurora-back {
+    background: linear-gradient(135deg, #eff6ff 0%, #fae8ff 100%) !important;
+    color: #1e3a8a !important;
+    border-color: rgba(29, 78, 216, 0.15) !important;
+  }
+  :global([data-theme="dark"]) .theme-sapphire-aurora-back {
+    background: linear-gradient(135deg, #100b26 0%, #05030f 100%) !important;
+    color: #fae8ff !important;
+    border-color: rgba(29, 78, 216, 0.25) !important;
+  }
+
+  .theme-custom-back {
+    background: var(--glass-bg-light) !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+  }
+  :global([data-theme="dark"]) .theme-custom-back {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: var(--dark-text) !important;
+    border-color: var(--dark-border) !important;
   }
 
   /* Shine overlay reflection */
@@ -744,11 +800,15 @@
     margin-bottom: 12px;
     width: 82%;
     border: 1px solid rgba(0,0,0,0.05);
+    transition: background 0.3s ease, border-color 0.3s ease;
   }
 
   :global([data-theme="dark"]) .barcode-container {
-    background: #ffffff; /* Barcodes are always high-contrast black on white */
-    border-color: rgba(255,255,255,0.1);
+    background: rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   .barcode-svg {
@@ -768,6 +828,11 @@
     margin-top: 4px;
     color: #333333;
     font-weight: 700;
+    transition: color 0.3s ease;
+  }
+
+  :global([data-theme="dark"]) .barcode-label {
+    color: rgba(255, 255, 255, 0.8);
   }
 
   .legal-text {

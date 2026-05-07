@@ -991,6 +991,7 @@
   .calendar-page {
     padding-bottom: var(--spacing-xl);
     min-height: 100vh;
+    animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
   .calendar-page-layout {
@@ -2079,6 +2080,17 @@
   @media (max-width: 768px) {
     .quick-links-section {
       margin: var(--spacing-md) var(--spacing-xs) 0;
+    }
+  }
+
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 </style>

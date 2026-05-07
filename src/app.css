@@ -3,6 +3,38 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+@font-face {
+	font-family: 'SRH Headline';
+	src: url('/fonts/SRHHeadline_W_Bd.woff2') format('woff2');
+	font-weight: bold;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'SRH Headline';
+	src: url('/fonts/SRHHeadline_W_Rg.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'SRH Text';
+	src: url('/fonts/SRHText_W_Bd.woff2') format('woff2');
+	font-weight: bold;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'SRH Text';
+	src: url('/fonts/SRHText_W_Rg.woff2') format('woff2');
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
 :root {
 	/* SRH Brand Colors */
 	--srh-orange: #D44407;
@@ -230,7 +262,7 @@ body {
 	background: var(--body-gradient);
 	background-attachment: fixed;
 	color: var(--text-color);
-	font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	font-family: 'SRH Text', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	line-height: 1.6;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -305,6 +337,7 @@ body {
 
 /* ── Headings ─────────────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
+	font-family: 'SRH Headline', sans-serif;
 	font-weight: 600;
 	line-height: 1.2;
 	margin-bottom: var(--spacing-md);

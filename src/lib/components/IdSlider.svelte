@@ -55,7 +55,7 @@
 <div class="id-slider-section">
   <div class="slider-header">
     <div class="slider-title-group">
-      <h2>🪪 Digital ID Wallet</h2>
+      <h2>Digital ID Wallet</h2>
       <p class="slider-subtitle">Tap cards to flip & scan barcode</p>
     </div>
     
@@ -209,8 +209,8 @@
   }
 
   .add-card-placeholder {
-    width: 380px;
-    height: 236px;
+    width: 361px;
+    height: 224px;
     border-radius: 20px;
     display: flex;
     align-items: center;
@@ -227,8 +227,8 @@
 
   @media (max-width: 400px) {
     .add-card-placeholder {
-      width: 320px;
-      height: 198px;
+      width: 304px;
+      height: 188px;
     }
   }
 

@@ -106,6 +106,12 @@
 		margin-top: 15px;
 	}
 
+	@media (min-width: 768px) {
+		.link-card-container {
+			margin-top: 0;
+		}
+	}
+
 	.link-card-container.edit-mode {
 		opacity: 1;
 	}

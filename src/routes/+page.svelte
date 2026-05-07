@@ -5,6 +5,14 @@
 	import { allLinks } from "$lib/data/links";
 	import { t } from "$lib/i18n";
 	import { settingsStore } from "$lib/stores/settingsStore";
+	import { onMount } from "svelte";
+	import { goto } from "$app/navigation";
+
+	onMount(() => {
+		if ($settingsStore.defaultPage === 'calendar') {
+			goto('/calendar', { replaceState: true });
+		}
+	});
 
 	let isEditMode = false;
 	let searchQuery = "";
@@ -43,27 +51,6 @@
 </svelte:head>
 
 <div class="home-page">
-	<header class="page-header">
-		<div class="logo-container">
-			<img
-				src="/icon-light.png"
-				alt="SRH University Logo"
-				class="logo light-mode"
-				width="48"
-				height="48"
-			/>
-			<img
-				src="/icon-dark.png"
-				alt="SRH University Logo"
-				class="logo dark-mode"
-				width="48"
-				height="48"
-			/>
-		</div>
-		<h1>{$t.home.title}</h1>
-		<p class="subtitle">{$t.home.subtitle}</p>
-	</header>
-
 	{#if isEditMode}
 		<!-- Search Box in Edit Mode -->
 		<div class="search-container">
@@ -76,13 +63,50 @@
 		</div>
 	{/if}
 
-	{#each $settingsStore.homeSections as section (section.id)}
+	{#each $settingsStore.homeSections as section, i (section.id)}
 		{#if section.enabled}
-			{#if section.id === "favorites"}
-				<section class="links-section">
-					<h2 class="sr-only">{$t.home.universityLinks}</h2>
+			{#if section.id === "header"}
+				<header class="page-header" class:narrow={$settingsStore.headerSize === 'small'} style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
+					<div class="logo-container">
+						<img
+							src="/icon-light.png"
+							alt="SRH University Logo"
+							class="logo light-mode"
+							width={$settingsStore.headerSize === 'small' ? '36' : '48'}
+							height={$settingsStore.headerSize === 'small' ? '36' : '48'}
+						/>
+						<img
+							src="/icon-dark.png"
+							alt="SRH University Logo"
+							class="logo dark-mode"
+							width={$settingsStore.headerSize === 'small' ? '36' : '48'}
+							height={$settingsStore.headerSize === 'small' ? '36' : '48'}
+						/>
+					</div>
+					<div class="header-text">
+						<h1>{$t.home.title}</h1>
+						<p class="subtitle">{$t.home.subtitle}</p>
+					</div>
+				</header>
+			{:else if section.id === "favorites"}
+				<section class="links-section" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
+					<div class="favorite-links-header">
+						<div class="favorite-links-title-group">
+							<h2>{$t.home.universityLinks || 'Favorite Links'}</h2>
+							<p class="favorite-links-subtitle">Custom quick-access bookmarks</p>
+						</div>
+						<div class="favorite-links-actions">
+							<button 
+								class="favorite-action-btn"
+								class:active={isEditMode}
+								on:click={toggleEditMode}
+							>
+								{isEditMode ? 'Done' : 'Manage'}
+							</button>
+						</div>
+					</div>
 					{#if displayLinks.length === 0}
-						<div class="empty-state">
+						<div class="empty-state" style="grid-column: 1 / -1; width: 100%;">
 							<p>{$t.home.emptyState}</p>
 						</div>
 					{:else}
@@ -98,13 +122,13 @@
 					{/if}
 				</section>
 			{:else if section.id === "cards"}
-				<section class="links-section full-width-section">
+				<section class="links-section full-width-section" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
 					<IdSlider />
 				</section>
 			{:else if section.id === "calendar"}
-				<section class="links-section full-width-section">
+				<section class="links-section full-width-section" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
 					<div class="modular-section-header">
-						<h2>📅 {$t.calendar?.pageTitle || "Calendar Schedule"}</h2>
+						<h2>{$t.calendar?.pageTitle || "Calendar Schedule"}</h2>
 						<a href="/calendar" class="view-all-link">{$t.home?.viewAll || "View Full Calendar"} →</a>
 					</div>
 					<div class="modular-placeholder glass">
@@ -112,9 +136,9 @@
 					</div>
 				</section>
 			{:else if section.id === "feed"}
-				<section class="links-section full-width-section">
+				<section class="links-section full-width-section" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
 					<div class="modular-section-header">
-						<h2>📰 {$t.feed?.pageTitle || "Campus Feed"}</h2>
+						<h2>{$t.feed?.pageTitle || "Campus Feed"}</h2>
 						<a href="/feed" class="view-all-link">{$t.home?.viewAllNews || "View All News"} →</a>
 					</div>
 					<div class="modular-placeholder glass">
@@ -125,15 +149,6 @@
 		{/if}
 	{/each}
 
-	<footer class="page-footer">
-		<button
-			class="edit-link"
-			class:editing={isEditMode}
-			on:click={toggleEditMode}
-		>
-			{isEditMode ? $t.home.done : $t.home.editFavorites}
-		</button>
-	</footer>
 </div>
 
 <style>
@@ -143,16 +158,48 @@
 
 	.page-header {
 		text-align: center;
-		padding: var(--spacing-xl) 0;
-		margin-bottom: var(--spacing-lg);
-		margin-top: 15%;
+		padding: var(--spacing-lg) 0;
+		margin: var(--spacing-md) var(--spacing-md) var(--spacing-lg) var(--spacing-md);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
 	}
 
-	/* Desktop: reduce the large mobile thumb-zone spacing */
-	@media (min-width: 1024px) {
-		.page-header {
-			margin-top: var(--spacing-lg);
-		}
+	.page-header.narrow {
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-start;
+		text-align: left;
+		padding: var(--spacing-sm) var(--spacing-md);
+		margin: var(--spacing-sm) var(--spacing-md);
+		gap: var(--spacing-md);
+		/* Respect Apple top notch and safe area */
+		padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
+	}
+
+	.page-header.narrow .logo-container {
+		margin-bottom: 0;
+	}
+
+	.page-header.narrow .logo {
+		width: 36px;
+		height: 36px;
+	}
+
+	.page-header.narrow .header-text {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.page-header.narrow h1 {
+		font-size: 1.2rem;
+		margin-bottom: 2px;
+	}
+
+	.page-header.narrow .subtitle {
+		font-size: 0.85rem;
+		margin-bottom: 0;
 	}
 
 	.logo-container {
@@ -160,8 +207,8 @@
 	}
 
 	.logo {
-		width: 64px;
-		height: 64px;
+		width: 48px;
+		height: 48px;
 		object-fit: contain;
 		border-radius: var(--radius-md);
 	}
@@ -315,5 +362,65 @@
 		margin: 0;
 		font-size: 0.9rem;
 		line-height: 1.5;
+	}
+
+	.favorite-links-header {
+		grid-column: 1 / -1;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: var(--spacing-md);
+		padding: 0 var(--spacing-md);
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.favorite-links-title-group h2 {
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: var(--text-color);
+		margin: 0 0 2px 0;
+	}
+
+	.favorite-links-subtitle {
+		font-size: 0.8rem;
+		color: var(--text-color-secondary);
+		margin: 0;
+	}
+
+	.favorite-action-btn {
+		background: var(--glass-bg-light);
+		border: 1px solid var(--glass-border-subtle);
+		padding: 6px 14px;
+		border-radius: 20px;
+		font-size: 0.8rem;
+		font-weight: 700;
+		cursor: pointer;
+		color: var(--text-color);
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.favorite-action-btn:hover {
+		background: rgba(212, 68, 7, 0.1);
+		color: var(--primary-color);
+		border-color: rgba(212, 68, 7, 0.2);
+	}
+
+	.favorite-action-btn.active {
+		background: var(--primary-color);
+		color: white;
+		border-color: var(--primary-color);
+		box-shadow: 0 2px 8px rgba(212, 68, 7, 0.3);
+	}
+
+	@keyframes reveal {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 </style>

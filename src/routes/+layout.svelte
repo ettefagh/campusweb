@@ -6,7 +6,6 @@
   import { activeA11yClasses, A11Y_CLASS_MAP } from "$lib/stores/accessibility";
   import { settingsStore } from "$lib/stores/settingsStore";
 
-
   // Bridge: sync accessibility store → <html> class list.
   // All CSS a11y overrides target html.a11y-* classes, so this is the
   // only place the store needs to be wired in — no prop drilling.
@@ -54,15 +53,18 @@
   <main id="main" class="content-area">
     <slot />
     <footer class="mobile-footer">
-      <p>Crafted with ❤️ for classmates • Unofficial Project</p>
-      <a href="https://github.com/ettefagh/campusweb" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <p>Crafted with ❤️ for My Classmates • Unofficial</p>
+      <a
+        href="https://github.com/ettefagh/campusweb"
+        target="_blank"
+        rel="noopener noreferrer">GitHub</a
+      >
     </footer>
   </main>
 </div>
 
 <BottomNav />
 <UpdatePrompt />
-
 
 <style>
   .app-container {
@@ -115,7 +117,7 @@
       padding-bottom: 0;
       padding-right: 68px;
     }
-    
+
     .content-area {
       padding-right: var(--spacing-sm);
     }

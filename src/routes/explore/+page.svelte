@@ -6,15 +6,35 @@
     activeDepartment,
   } from "$lib/stores/settingsStore";
   import { allLinks, categoryOrder } from "$lib/data/links";
-  import {
-    campusContacts,
-    generalContacts,
-    programDirectors,
-  } from "$lib/data/contacts";
   import { favorites } from "$lib/stores/favorites";
   import LinkCard from "$lib/components/LinkCard.svelte";
   import SearchBar from "$lib/components/SearchBar.svelte";
   import { onMount } from "svelte";
+
+  let campusContacts = $state<any[]>([]);
+  let generalContacts = $state<any[]>([]);
+  let programDirectors = $state<any[]>([]);
+  let isContactsLoaded = $state(false);
+  let isContactsLoading = $state(false);
+
+  async function loadPrivateContacts() {
+    if (isContactsLoaded || isContactsLoading) return;
+    isContactsLoading = true;
+    try {
+      const res = await fetch('/api/contacts');
+      if (res.ok) {
+        const data = await res.json();
+        campusContacts = data.campusContacts || [];
+        generalContacts = data.generalContacts || [];
+        programDirectors = data.programDirectors || [];
+        isContactsLoaded = true;
+      }
+    } catch (err) {
+      console.error('Failed to load private directory:', err);
+    } finally {
+      isContactsLoading = false;
+    }
+  }
 
   let searchQuery = $state("");
   let isSearchActive = $state(false);
@@ -26,6 +46,15 @@
     // Dynamic library URL based on campus if needed
     if ($settingsStore.campus === "Berlin") {
       libraryUrl = "https://login.srh-berlin.idm.oclc.org/menu";
+    }
+    if ($settingsStore.emailVerified) {
+      loadPrivateContacts();
+    }
+  });
+
+  $effect(() => {
+    if ($settingsStore.emailVerified && !isContactsLoaded && !isContactsLoading) {
+      loadPrivateContacts();
     }
   });
 
@@ -325,84 +354,91 @@
         </div>
       {:else if !searchQuery.trim() || filteredContacts.length > 0}
         {#if $settingsStore.emailVerified}
-          <div class="contact-results-list">
-            {#each searchQuery.trim() ? filteredContacts : filteredContacts.slice(0, 15) as contact}
-              <div class="search-contact-card glass">
-                <div class="search-contact-info">
-                  <div class="search-contact-meta">
-                    {#if contact.programs && contact.programs.length > 0}
-                      <div class="contact-program-list">
-                        {#each contact.programs as prog}
-                          <div class="program-item">
-                            🎓 {@html highlightMatch(prog, searchQuery)}
-                          </div>
+          {#if isContactsLoading}
+            <div class="contacts-loading glass">
+              <div class="spinner"></div>
+              <p>Securely loading private directory...</p>
+            </div>
+          {:else}
+            <div class="contact-results-list">
+              {#each searchQuery.trim() ? filteredContacts : filteredContacts.slice(0, 15) as contact}
+                <div class="search-contact-card glass">
+                  <div class="search-contact-info">
+                    <div class="search-contact-meta">
+                      {#if contact.programs && contact.programs.length > 0}
+                        <div class="contact-program-list">
+                          {#each contact.programs as prog}
+                            <div class="program-item">
+                              🎓 {@html highlightMatch(prog, searchQuery)}
+                            </div>
+                          {/each}
+                        </div>
+                      {/if}
+                      {#if contact.services && contact.services.length > 0}
+                        <div class="contact-service-list">
+                          {#each contact.services as service}
+                            <div class="service-item">
+                              🛠️ {@html highlightMatch(service, searchQuery)}
+                            </div>
+                          {/each}
+                        </div>
+                      {/if}
+                    </div>
+                    <div class="search-contact-name">
+                      {@html highlightMatch(contact.person, searchQuery)}
+                      <div class="search-contact-tags">
+                        {#each contact.tags as tag}
+                          {#if tag.startsWith("campus:")}
+                            <span class="contact-tag campus-tag"
+                              >{@html highlightMatch(
+                                tag.replace("campus:", ""),
+                                searchQuery,
+                              )}</span
+                            >
+                          {:else if tag.startsWith("school:")}
+                            <span class="contact-tag school-tag"
+                              >{@html highlightMatch(
+                                tag.replace("school:", ""),
+                                searchQuery,
+                              )}</span
+                            >
+                          {:else}
+                            <span class="contact-tag"
+                              >{@html highlightMatch(tag, searchQuery)}</span
+                            >
+                          {/if}
                         {/each}
                       </div>
-                    {/if}
-                    {#if contact.services && contact.services.length > 0}
-                      <div class="contact-service-list">
-                        {#each contact.services as service}
-                          <div class="service-item">
-                            🛠️ {@html highlightMatch(service, searchQuery)}
-                          </div>
-                        {/each}
-                      </div>
-                    {/if}
-                  </div>
-                  <div class="search-contact-name">
-                    {@html highlightMatch(contact.person, searchQuery)}
-                    <div class="search-contact-tags">
-                      {#each contact.tags as tag}
-                        {#if tag.startsWith("campus:")}
-                          <span class="contact-tag campus-tag"
-                            >{@html highlightMatch(
-                              tag.replace("campus:", ""),
-                              searchQuery,
-                            )}</span
-                          >
-                        {:else if tag.startsWith("school:")}
-                          <span class="contact-tag school-tag"
-                            >{@html highlightMatch(
-                              tag.replace("school:", ""),
-                              searchQuery,
-                            )}</span
-                          >
-                        {:else}
-                          <span class="contact-tag"
-                            >{@html highlightMatch(tag, searchQuery)}</span
-                          >
-                        {/if}
-                      {/each}
                     </div>
                   </div>
-                </div>
-                <div class="search-contact-actions">
-                  <a
-                    href="mailto:{contact.email}"
-                    class="search-contact-btn mail"
-                    title="Email">📧</a
-                  >
-                  <a
-                    href={getTeamsChatUrl(contact.email)}
-                    class="search-contact-btn chat"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Chat on Teams">💬</a
-                  >
-                  {#if contact.phone}
+                  <div class="search-contact-actions">
                     <a
-                      href="tel:{contact.phone.replace(/[\s-]/g, '')}"
-                      class="search-contact-btn call"
-                      title="Call">📞</a
+                      href="mailto:{contact.email}"
+                      class="search-contact-btn mail"
+                      title="Email">📧</a
                     >
-                  {/if}
+                    <a
+                      href={getTeamsChatUrl(contact.email)}
+                      class="search-contact-btn chat"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Chat on Teams">💬</a
+                    >
+                    {#if contact.phone}
+                      <a
+                        href="tel:{contact.phone.replace(/[\s-]/g, '')}"
+                        class="search-contact-btn call"
+                        title="Call">📞</a
+                      >
+                    {/if}
+                  </div>
                 </div>
-              </div>
-            {/each}
-            {#if !searchQuery.trim()}
-              <p class="view-more-hint">Search to see more contacts...</p>
-            {/if}
-          </div>
+              {/each}
+              {#if !searchQuery.trim()}
+                <p class="view-more-hint">Search to see more contacts...</p>
+              {/if}
+            </div>
+          {/if}
         {:else}
           <div class="verification-hint glass">
             <div class="hint-icon">🔒</div>
@@ -874,5 +910,33 @@
     font-size: 4rem;
     margin-bottom: 20px;
     opacity: 0.2;
+  }
+
+  /* ── Contacts Loading Spinner ── */
+  .contacts-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px var(--spacing-lg);
+    border-radius: var(--radius-xl);
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    gap: var(--spacing-md);
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(212, 68, 7, 0.1);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 </style>

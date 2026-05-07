@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { idCardsStore, type IdCardData } from '$lib/stores/idStore';
-  import IdCard from './IdCard.svelte';
+  import { idCardsStore, type IdCardData } from "$lib/stores/idStore";
+  import IdCard from "./IdCard.svelte";
 
   export let cardId: string | null = null; // null means we are adding a card
   export let onClose: () => void;
@@ -8,15 +8,15 @@
   const isEditing = cardId !== null;
 
   // Form Fields
-  let title = 'Student ID';
-  let university = 'SRH University';
-  let ownerName = '';
-  let dob = '';
-  let idNumber = '';
-  let validUntil = '';
-  let theme: IdCardData['theme'] = 'srh-orange';
+  let title = "";
+  let university = "";
+  let ownerName = "";
+  let dob = "";
+  let idNumber = "";
+  let validUntil = "";
+  let theme: IdCardData["theme"] = "srh-orange";
   let photo: string | undefined = undefined;
-  let isFullImageCard = false;
+  let isFullImageCard = true;
   let fullImage: string | undefined = undefined;
 
   // Corner Editor State
@@ -28,7 +28,7 @@
     { x: 0.05, y: 0.05 }, // Top-Left
     { x: 0.95, y: 0.05 }, // Top-Right
     { x: 0.95, y: 0.95 }, // Bottom-Right
-    { x: 0.05, y: 0.95 }  // Bottom-Left
+    { x: 0.05, y: 0.95 }, // Bottom-Left
   ];
 
   // If editing, populate fields
@@ -53,19 +53,95 @@
     })();
   }
 
+  // Barcode Scanner State
+  let isScanning = false;
+  let scanError = "";
+  let videoEl: HTMLVideoElement | null = null;
+  let stream: MediaStream | null = null;
+  let codeReader: any = null;
+
+  async function loadZXing(): Promise<boolean> {
+    if (typeof window !== 'undefined' && (window as any).ZXing) return true;
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.0/umd/index.min.js";
+        script.onload = () => resolve();
+        script.onerror = (err) => reject(err);
+        document.head.appendChild(script);
+      });
+      if ((window as any).ZXing) return true;
+    } catch (e) {
+      console.error("Failed to load ZXing library:", e);
+    }
+    return false;
+  }
+
+  async function startBarcodeScan() {
+    isScanning = true;
+    scanError = "";
+
+    scanError = "Loading scanner engine...";
+    const loaded = await loadZXing();
+    if (!loaded) {
+      scanError = "Failed to load scanner. Please enter manually.";
+      isScanning = false;
+      return;
+    }
+    scanError = "";
+
+    // Small timeout ensures videoEl is rendered in the DOM before we bind
+    setTimeout(async () => {
+      if (videoEl) {
+        try {
+          const ZXing = (window as any).ZXing;
+          codeReader = new ZXing.BrowserMultiFormatReader();
+          await codeReader.decodeFromConstraints(
+            {
+              video: {
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+              },
+            },
+            videoEl,
+            (result: any) => {
+              if (result) {
+                idNumber = result.text;
+                stopBarcodeScan();
+              }
+            }
+          );
+        } catch (err: any) {
+          console.error("Camera access error:", err);
+          scanError = "Failed to access camera. Please allow camera permissions.";
+          isScanning = false;
+        }
+      }
+    }, 150);
+  }
+
+  function stopBarcodeScan() {
+    isScanning = false;
+    if (codeReader) {
+      codeReader.reset();
+      codeReader = null;
+    }
+  }
+
   // Reactive Card preview object
   $: previewCard = {
-    id: 'preview',
-    title: title || 'Student ID',
-    university: university || 'SRH University',
-    ownerName: ownerName || 'Full Name',
-    dob: dob || 'DD.MM.YYYY',
-    idNumber: idNumber || '100000000',
-    validUntil: validUntil || 'bis DD.MM.YYYY',
+    id: "preview",
+    title: title || "Student ID",
+    university: university || "SRH University",
+    ownerName: ownerName || "Full Name",
+    dob: dob || "DD.MM.YYYY",
+    idNumber: idNumber || "100000000",
+    validUntil: validUntil || "bis DD.MM.YYYY",
     theme,
     photo,
     isFullImageCard,
-    fullImage
+    fullImage,
   };
 
   function handlePhotoUpload(event: Event) {
@@ -77,12 +153,12 @@
 
     reader.onload = (e) => {
       const base64String = e.target?.result as string;
-      
+
       // Image compression using Canvas to ensure it fits comfortably in localStorage
       const img = new Image();
       img.src = base64String;
       img.onload = () => {
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         const MAX_WIDTH = 180;
         const MAX_HEIGHT = 220;
         let width = img.width;
@@ -102,10 +178,10 @@
 
         canvas.width = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, width, height);
-        
-        photo = canvas.toDataURL('image/jpeg', 0.75); // compress to JPG with 75% quality
+
+        photo = canvas.toDataURL("image/jpeg", 0.75); // compress to JPG with 75% quality
       };
     };
 
@@ -126,7 +202,7 @@
         { x: 0.05, y: 0.05 },
         { x: 0.95, y: 0.05 },
         { x: 0.95, y: 0.95 },
-        { x: 0.05, y: 0.95 }
+        { x: 0.05, y: 0.95 },
       ];
     };
 
@@ -141,8 +217,10 @@
   function handleDragMove(event: MouseEvent | TouchEvent) {
     if (activeCornerIndex === null || !imageContainerEl) return;
     const rect = imageContainerEl.getBoundingClientRect();
-    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
-    const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY;
+    const clientX =
+      "touches" in event ? event.touches[0].clientX : event.clientX;
+    const clientY =
+      "touches" in event ? event.touches[0].clientY : event.clientY;
 
     const x = (clientX - rect.left) / rect.width;
     const y = (clientY - rect.top) / rect.height;
@@ -162,16 +240,19 @@
     if (!loadedImageEl) return;
 
     // Source corners mapped to natural image dimensions
-    const pixelCorners = corners.map(c => ({
+    const pixelCorners = corners.map((c) => ({
       x: c.x * (loadedImageEl?.naturalWidth || 760),
-      y: c.y * (loadedImageEl?.naturalHeight || 472)
+      y: c.y * (loadedImageEl?.naturalHeight || 472),
     }));
 
     fullImage = warpImage(loadedImageEl, pixelCorners, 760, 472);
   }
 
   // 4-Point Homography Warp & Gaussian Elimination
-  function solveHomography(src: {x: number, y: number}[], dst: {x: number, y: number}[]) {
+  function solveHomography(
+    src: { x: number; y: number }[],
+    dst: { x: number; y: number }[],
+  ) {
     const A: number[][] = [];
     const B: number[] = [];
     for (let i = 0; i < 4; i++) {
@@ -186,11 +267,7 @@
     }
 
     const h = gaussElimination(A, B);
-    return [
-      h[0], h[1], h[2],
-      h[3], h[4], h[5],
-      h[6], h[7], 1
-    ];
+    return [h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7], 1];
   }
 
   function gaussElimination(A: number[][], B: number[]) {
@@ -209,8 +286,12 @@
         return [1, 0, 0, 0, 1, 0, 0, 0];
       }
 
-      const tempA = A[maxRow]; A[maxRow] = A[i]; A[i] = tempA;
-      const tempB = B[maxRow]; B[maxRow] = B[i]; B[i] = tempB;
+      const tempA = A[maxRow];
+      A[maxRow] = A[i];
+      A[i] = tempA;
+      const tempB = B[maxRow];
+      B[maxRow] = B[i];
+      B[i] = tempB;
 
       for (let k = i + 1; k < n; k++) {
         const c = -A[k][i] / A[i][i];
@@ -235,27 +316,37 @@
     return x;
   }
 
-  function warpImage(img: HTMLImageElement, srcCorners: {x: number, y: number}[], targetWidth: number, targetHeight: number) {
-    const srcCanvas = document.createElement('canvas');
+  function warpImage(
+    img: HTMLImageElement,
+    srcCorners: { x: number; y: number }[],
+    targetWidth: number,
+    targetHeight: number,
+  ) {
+    const srcCanvas = document.createElement("canvas");
     srcCanvas.width = img.naturalWidth || img.width || 760;
     srcCanvas.height = img.naturalHeight || img.height || 472;
-    const srcCtx = srcCanvas.getContext('2d');
-    if (!srcCtx) return '';
+    const srcCtx = srcCanvas.getContext("2d");
+    if (!srcCtx) return "";
     srcCtx.drawImage(img, 0, 0);
-    const srcData = srcCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
+    const srcData = srcCtx.getImageData(
+      0,
+      0,
+      srcCanvas.width,
+      srcCanvas.height,
+    );
 
-    const dstCanvas = document.createElement('canvas');
+    const dstCanvas = document.createElement("canvas");
     dstCanvas.width = targetWidth;
     dstCanvas.height = targetHeight;
-    const dstCtx = dstCanvas.getContext('2d');
-    if (!dstCtx) return '';
+    const dstCtx = dstCanvas.getContext("2d");
+    if (!dstCtx) return "";
     const dstData = dstCtx.createImageData(targetWidth, targetHeight);
 
     const dstCorners = [
       { x: 0, y: 0 },
       { x: targetWidth, y: 0 },
       { x: targetWidth, y: targetHeight },
-      { x: 0, y: targetHeight }
+      { x: 0, y: targetHeight },
     ];
 
     const H = solveHomography(srcCorners, dstCorners);
@@ -290,20 +381,13 @@
     }
 
     dstCtx.putImageData(dstData, 0, 0);
-    return dstCanvas.toDataURL('image/jpeg', 0.85);
+    return dstCanvas.toDataURL("image/jpeg", 0.85);
   }
 
   function handleSave() {
-    if (isFullImageCard) {
-      if (!title || !idNumber) {
-        alert('Please fill out Card Type and ID Number.');
-        return;
-      }
-    } else {
-      if (!ownerName || !idNumber) {
-        alert('Please fill out Name and ID Number.');
-        return;
-      }
+    if (!title) {
+      alert("Please fill out Card Type.");
+      return;
     }
 
     const cardData = {
@@ -316,7 +400,7 @@
       theme,
       photo,
       isFullImageCard,
-      fullImage
+      fullImage,
     };
 
     if (isEditing && cardId) {
@@ -334,7 +418,7 @@
 <div class="modal-overlay" on:click={onClose}>
   <div class="modal-content glass" on:click|stopPropagation>
     <div class="modal-header">
-      <h2>{isEditing ? '✏️ Edit Card' : '✨ Add Digital Card'}</h2>
+      <h2>{isEditing ? "✏️ Edit Card" : "✨ Add Digital Card"}</h2>
       <button class="close-btn" on:click={onClose}>✖</button>
     </div>
 
@@ -349,19 +433,19 @@
       <!-- Input Fields -->
       <form class="modal-form" on:submit|preventDefault={handleSave}>
         <div class="form-tabs">
-          <button 
-            type="button" 
-            class="tab-btn" 
-            class:active={!isFullImageCard} 
-            on:click={() => isFullImageCard = false}
+          <button
+            type="button"
+            class="tab-btn"
+            class:active={!isFullImageCard}
+            on:click={() => (isFullImageCard = false)}
           >
             ✏️ Manual Form
           </button>
-          <button 
-            type="button" 
-            class="tab-btn" 
-            class:active={isFullImageCard} 
-            on:click={() => isFullImageCard = true}
+          <button
+            type="button"
+            class="tab-btn"
+            class:active={isFullImageCard}
+            on:click={() => (isFullImageCard = true)}
           >
             📸 Upload Digital ID
           </button>
@@ -370,23 +454,28 @@
         {#if isFullImageCard}
           <div class="form-group">
             <label for="full-card-upload">Digital Student ID Image File</label>
-            <input 
-              type="file" 
-              id="full-card-upload" 
-              accept="image/*" 
-              on:change={handleFullImageUpload} 
+            <input
+              type="file"
+              id="full-card-upload"
+              accept="image/*"
+              on:change={handleFullImageUpload}
               required={!fullImage}
             />
-            <p class="field-hint">Upload any photo of your student ID card. Drag the 4 green circles below to identify the card's exact corners!</p>
+            <p class="field-hint">
+              Upload any photo of your student ID card. Drag the 4 green circles
+              below to identify the card's exact corners!
+            </p>
           </div>
 
           {#if rawImageSrc}
             <div class="corner-editor-wrapper">
-              <span class="editor-title">🎯 Corner Correction (Drag points to align)</span>
+              <span class="editor-title"
+                >🎯 Corner Correction (Drag points to align)</span
+              >
               <!-- svelte-ignore a11y_no_static_element_interactions -->
               <div class="corner-editor-outer">
-                <div 
-                  class="corner-editor-container" 
+                <div
+                  class="corner-editor-container"
                   bind:this={imageContainerEl}
                   on:mousemove={handleDragMove}
                   on:touchmove|preventDefault={handleDragMove}
@@ -395,16 +484,16 @@
                   on:mouseleave={handleEndDrag}
                 >
                   <!-- svelte-ignore a11y_missing_attribute -->
-                  <img 
-                    src={rawImageSrc} 
-                    bind:this={loadedImageEl} 
+                  <img
+                    src={rawImageSrc}
+                    bind:this={loadedImageEl}
                     on:load={triggerWarp}
-                    class="corner-editor-img" 
+                    class="corner-editor-img"
                   />
-                  
+
                   <!-- SVG lines connecting the four corners -->
                   <svg class="corner-editor-overlay">
-                    <polygon 
+                    <polygon
                       points="
                         {corners[0].x * 100}%,{corners[0].y * 100}% 
                         {corners[1].x * 100}%,{corners[1].y * 100}% 
@@ -417,7 +506,7 @@
                   <!-- 4 Draggable corner handles -->
                   {#each corners as corner, idx}
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <div 
+                    <div
                       class="corner-handle handle-{idx}"
                       style="left: {corner.x * 100}%; top: {corner.y * 100}%"
                       on:mousedown={() => handleStartDrag(idx)}
@@ -434,11 +523,11 @@
           <!-- Digital ID Simplified Fields -->
           <div class="form-group">
             <label for="card-title-full">Card Type</label>
-            <input 
-              type="text" 
-              id="card-title-full" 
-              bind:value={title} 
-              placeholder="e.g. Student ID, Semester Ticket" 
+            <input
+              type="text"
+              id="card-title-full"
+              bind:value={title}
+              placeholder="e.g. Student ID, Semester Ticket"
               required
             />
           </div>
@@ -446,22 +535,30 @@
           <div class="form-row">
             <div class="form-group">
               <label for="id-number-full">Matriculation / ID Number</label>
-              <input 
-                type="text" 
-                id="id-number-full" 
-                bind:value={idNumber} 
-                placeholder="e.g. 100004862" 
-                required 
-              />
+              <div class="input-with-button">
+                <input
+                  type="text"
+                  id="id-number-full"
+                  bind:value={idNumber}
+                  placeholder="e.g. 100004862"
+                />
+                <button
+                  type="button"
+                  class="btn-input-scan"
+                  on:click={startBarcodeScan}
+                  title="Scan physical barcode via camera"
+                >
+                  📸 Scan
+                </button>
+              </div>
             </div>
             <div class="form-group">
               <label for="valid-until-full">Validity Date</label>
-              <input 
-                type="text" 
-                id="valid-until-full" 
-                bind:value={validUntil} 
-                placeholder="e.g. bis 31.03.2026" 
-                required
+              <input
+                type="text"
+                id="valid-until-full"
+                bind:value={validUntil}
+                placeholder="e.g. bis 31.03.2026"
               />
             </div>
           </div>
@@ -469,53 +566,61 @@
           <div class="form-row">
             <div class="form-group">
               <label for="card-title">Card Type</label>
-              <input 
-                type="text" 
-                id="card-title" 
-                bind:value={title} 
-                placeholder="e.g. Student ID, Library Card" 
+              <input
+                type="text"
+                id="card-title"
+                bind:value={title}
+                placeholder="e.g. Student ID, Library Card"
               />
             </div>
             <div class="form-group">
               <label for="university">University / Issuer</label>
-              <input 
-                type="text" 
-                id="university" 
-                bind:value={university} 
-                placeholder="e.g. SRH University" 
+              <input
+                type="text"
+                id="university"
+                bind:value={university}
+                placeholder="e.g. SRH University"
               />
             </div>
           </div>
 
           <div class="form-group">
             <label for="owner-name">Full Student Name</label>
-            <input 
-              type="text" 
-              id="owner-name" 
-              bind:value={ownerName} 
-              placeholder="e.g. Amirhossein Ettefagh" 
-              required 
+            <input
+              type="text"
+              id="owner-name"
+              bind:value={ownerName}
+              placeholder="e.g. Amirhossein Ettefagh"
             />
           </div>
 
           <div class="form-row">
             <div class="form-group">
               <label for="id-number">Matriculation / ID Number</label>
-              <input 
-                type="text" 
-                id="id-number" 
-                bind:value={idNumber} 
-                placeholder="e.g. 100004862" 
-                required 
-              />
+              <div class="input-with-button">
+                <input
+                  type="text"
+                  id="id-number"
+                  bind:value={idNumber}
+                  placeholder="e.g. 100004862"
+                />
+                <button
+                  type="button"
+                  class="btn-input-scan"
+                  on:click={startBarcodeScan}
+                  title="Scan physical barcode via camera"
+                >
+                  📸 Scan
+                </button>
+              </div>
             </div>
             <div class="form-group">
               <label for="dob">Date of Birth</label>
-              <input 
-                type="text" 
-                id="dob" 
-                bind:value={dob} 
-                placeholder="e.g. 12.08.1999" 
+              <input
+                type="text"
+                id="dob"
+                bind:value={dob}
+                placeholder="e.g. 12.08.1999"
               />
             </div>
           </div>
@@ -523,20 +628,20 @@
           <div class="form-row">
             <div class="form-group">
               <label for="valid-until">Validity Date</label>
-              <input 
-                type="text" 
-                id="valid-until" 
-                bind:value={validUntil} 
-                placeholder="e.g. bis 31.03.2026" 
+              <input
+                type="text"
+                id="valid-until"
+                bind:value={validUntil}
+                placeholder="e.g. bis 31.03.2026"
               />
             </div>
             <div class="form-group">
               <label for="photo-upload">Profile Picture</label>
-              <input 
-                type="file" 
-                id="photo-upload" 
-                accept="image/*" 
-                on:change={handlePhotoUpload} 
+              <input
+                type="file"
+                id="photo-upload"
+                accept="image/*"
+                on:change={handlePhotoUpload}
               />
             </div>
           </div>
@@ -548,37 +653,37 @@
               <!-- Orange -->
               <!-- svelte-ignore a11y_click_events_have_key_events -->
               <!-- svelte-ignore a11y_no_static_element_interactions -->
-              <div 
-                class="theme-option orange" 
-                class:selected={theme === 'srh-orange'}
-                on:click={() => theme = 'srh-orange'}
+              <div
+                class="theme-option orange"
+                class:selected={theme === "srh-orange"}
+                on:click={() => (theme = "srh-orange")}
                 title="SRH Orange"
               ></div>
               <!-- Dark -->
               <!-- svelte-ignore a11y_click_events_have_key_events -->
               <!-- svelte-ignore a11y_no_static_element_interactions -->
-              <div 
-                class="theme-option dark" 
-                class:selected={theme === 'liquid-dark'}
-                on:click={() => theme = 'liquid-dark'}
+              <div
+                class="theme-option dark"
+                class:selected={theme === "liquid-dark"}
+                on:click={() => (theme = "liquid-dark")}
                 title="Liquid Dark"
               ></div>
               <!-- Green -->
               <!-- svelte-ignore a11y_click_events_have_key_events -->
               <!-- svelte-ignore a11y_no_static_element_interactions -->
-              <div 
-                class="theme-option green" 
-                class:selected={theme === 'emerald-glass'}
-                on:click={() => theme = 'emerald-glass'}
+              <div
+                class="theme-option green"
+                class:selected={theme === "emerald-glass"}
+                on:click={() => (theme = "emerald-glass")}
                 title="Emerald Glass"
               ></div>
               <!-- Blue -->
               <!-- svelte-ignore a11y_click_events_have_key_events -->
               <!-- svelte-ignore a11y_no_static_element_interactions -->
-              <div 
-                class="theme-option blue" 
-                class:selected={theme === 'sapphire-aurora'}
-                on:click={() => theme = 'sapphire-aurora'}
+              <div
+                class="theme-option blue"
+                class:selected={theme === "sapphire-aurora"}
+                on:click={() => (theme = "sapphire-aurora")}
                 title="Sapphire Aurora"
               ></div>
             </div>
@@ -586,13 +691,52 @@
         {/if}
 
         <div class="form-actions">
-          <button type="button" class="btn-cancel" on:click={onClose}>Cancel</button>
-          <button type="submit" class="btn-save">{isEditing ? 'Save Changes' : 'Create Card'}</button>
+          <button type="button" class="btn-cancel" on:click={onClose}
+            >Cancel</button
+          >
+          <button type="submit" class="btn-save"
+            >{isEditing ? "Save Changes" : "Create Card"}</button
+          >
         </div>
       </form>
     </div>
   </div>
 </div>
+
+{#if isScanning}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="scanner-viewfinder-overlay" on:click={stopBarcodeScan}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="scanner-viewfinder-box glass" on:click|stopPropagation>
+      <div class="scanner-header">
+        <h3>Scan Matriculation Barcode</h3>
+        <button
+          type="button"
+          class="btn-close-scanner"
+          on:click={stopBarcodeScan}>✕</button
+        >
+      </div>
+
+      <div class="video-container">
+        <!-- svelte-ignore a11y_media_has_caption -->
+        <video bind:this={videoEl} class="scanner-video" autoplay playsinline
+        ></video>
+        <div class="scanner-laser-line"></div>
+        <div class="scanner-frame-corners"></div>
+      </div>
+
+      {#if scanError}
+        <p class="scan-error-msg">{scanError}</p>
+      {:else}
+        <p class="scan-hint-msg">
+          Fit Code-39 / Code-128 barcode within the scan frame
+        </p>
+      {/if}
+    </div>
+  </div>
+{/if}
 
 <style>
   .modal-overlay {
@@ -743,13 +887,15 @@
     }
   }
 
-  label, .picker-label {
+  label,
+  .picker-label {
     font-size: 0.8rem;
     font-weight: 700;
     color: var(--text-color);
   }
 
-  input[type="text"], input[type="file"] {
+  input[type="text"],
+  input[type="file"] {
     padding: 10px 14px;
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
@@ -759,7 +905,7 @@
     box-sizing: border-box;
   }
 
-  :global([data-theme="dark"]) input[type="text"], 
+  :global([data-theme="dark"]) input[type="text"],
   :global([data-theme="dark"]) input[type="file"] {
     background: rgba(255, 255, 255, 0.04);
   }
@@ -789,8 +935,10 @@
     cursor: pointer;
     box-sizing: border-box;
     border: 2px solid transparent;
-    transition: transform 0.2s, border-color 0.2s;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition:
+      transform 0.2s,
+      border-color 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   }
 
   .theme-option:hover {
@@ -802,10 +950,18 @@
     box-shadow: 0 0 0 2px var(--primary-color);
   }
 
-  .theme-option.orange { background: linear-gradient(135deg, #e44407 0%, #ca3700 100%); }
-  .theme-option.dark { background: linear-gradient(135deg, #1c1e22 0%, #0a0b0d 100%); }
-  .theme-option.green { background: linear-gradient(135deg, #0f4c3a 0%, #051e17 100%); }
-  .theme-option.blue { background: linear-gradient(135deg, #1d4ed8 0%, #6b21a8 100%); }
+  .theme-option.orange {
+    background: linear-gradient(135deg, #e44407 0%, #ca3700 100%);
+  }
+  .theme-option.dark {
+    background: linear-gradient(135deg, #1c1e22 0%, #0a0b0d 100%);
+  }
+  .theme-option.green {
+    background: linear-gradient(135deg, #0f4c3a 0%, #051e17 100%);
+  }
+  .theme-option.blue {
+    background: linear-gradient(135deg, #1d4ed8 0%, #6b21a8 100%);
+  }
 
   .form-actions {
     display: flex;
@@ -829,11 +985,11 @@
   }
 
   .btn-cancel:hover {
-    background: rgba(0,0,0,0.04);
+    background: rgba(0, 0, 0, 0.04);
   }
 
   :global([data-theme="dark"]) .btn-cancel:hover {
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
   }
 
   .btn-save {
@@ -846,7 +1002,9 @@
     font-weight: 700;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(212, 68, 7, 0.3);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
   }
 
   .btn-save:hover {
@@ -881,12 +1039,12 @@
   }
 
   .tab-btn:hover {
-    background: rgba(0,0,0,0.03);
+    background: rgba(0, 0, 0, 0.03);
     color: var(--text-color);
   }
 
   :global([data-theme="dark"]) .tab-btn:hover {
-    background: rgba(255,255,255,0.03);
+    background: rgba(255, 255, 255, 0.03);
   }
 
   .tab-btn.active {
@@ -976,14 +1134,17 @@
     transform: translate(-12px, -12px);
     cursor: move;
     z-index: 10;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: transform 0.1s, background-color 0.2s;
+    transition:
+      transform 0.1s,
+      background-color 0.2s;
   }
 
-  .corner-handle:hover, .corner-handle:active {
+  .corner-handle:hover,
+  .corner-handle:active {
     transform: translate(-12px, -12px) scale(1.25);
     background: #ffffff;
     border-color: #00ff64;
@@ -993,5 +1154,180 @@
     font-size: 0.65rem;
     font-weight: 900;
     color: #000;
+  }
+
+  /* Composite scanner input styling */
+  .input-with-button {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+  }
+
+  .input-with-button input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .btn-input-scan {
+    background: var(--glass-bg-light);
+    border: 1px solid var(--glass-border-subtle);
+    color: var(--text-color);
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .btn-input-scan:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(212, 68, 7, 0.15);
+  }
+
+  /* Full Screen / Fixed Scanner view-finder layout */
+  .scanner-viewfinder-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 200;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-md);
+    box-sizing: border-box;
+  }
+
+  .scanner-viewfinder-box {
+    background: rgba(25, 25, 25, 0.55) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: var(--radius-xl);
+    width: 480px;
+    max-width: 100%;
+    padding: var(--spacing-lg);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  .scanner-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .scanner-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: white;
+    font-family: "SRH Headline", sans-serif;
+  }
+
+  .btn-close-scanner {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background 0.2s ease;
+  }
+
+  .btn-close-scanner:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .video-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .scanner-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .scanner-laser-line {
+    position: absolute;
+    left: 5%;
+    top: 50%;
+    width: 90%;
+    height: 3px;
+    background: #ff3b30;
+    box-shadow:
+      0 0 12px #ff3b30,
+      0 0 4px #ff3b30;
+    z-index: 5;
+    animation: laserScan 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes laserScan {
+    0% {
+      top: 15%;
+    }
+    50% {
+      top: 85%;
+    }
+    100% {
+      top: 15%;
+    }
+  }
+
+  .scanner-frame-corners {
+    position: absolute;
+    top: 15%;
+    left: 10%;
+    width: 80%;
+    height: 70%;
+    border: 2px dashed rgba(255, 255, 255, 0.4);
+    border-radius: var(--radius-sm);
+    z-index: 4;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+  }
+
+  .scan-hint-msg {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.78rem;
+    text-align: center;
+    margin: var(--spacing-md) 0 0 0;
+  }
+
+  .scan-error-msg {
+    color: #ff3b30;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-align: center;
+    margin: var(--spacing-md) 0 0 0;
   }
 </style>

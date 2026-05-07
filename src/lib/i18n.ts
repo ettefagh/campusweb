@@ -34,7 +34,7 @@ const translations = {
       emptyState: 'No favorites yet. Click Edit below to add some!',
       editFavorites: 'Edit Favorites',
       done: 'Done',
-      universityLinks: 'University Links',
+      universityLinks: 'Favorite Links',
     },
 
     // ── Explore page ──
@@ -282,7 +282,7 @@ const translations = {
       emptyState: 'Noch keine Favoriten. Klicke unten auf Bearbeiten!',
       editFavorites: 'Favoriten bearbeiten',
       done: 'Fertig',
-      universityLinks: 'Universitätslinks',
+      universityLinks: 'Favoriten-Links',
     },
 
     // ── Explore page ──

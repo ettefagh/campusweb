@@ -62,6 +62,10 @@ export interface AppSettings {
   emailVerified: boolean;
   /** Modular homepage sections order and toggle state */
   homeSections: HomeSection[];
+  /** Homepage Header Size */
+  headerSize: 'big' | 'small';
+  /** Default Landing Page */
+  defaultPage: 'home' | 'calendar';
 }
 
 // ── Static Data: Campuses ─────────────────────────────────────────────────────
@@ -149,7 +153,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   compactCards: false,
   showSeconds: false,
   emailVerified: true,
+  headerSize: 'big',
+  defaultPage: 'home',
   homeSections: [
+    { id: 'header', enabled: true },
     { id: 'favorites', enabled: true },
     { id: 'cards', enabled: true },
     { id: 'calendar', enabled: false },
@@ -172,10 +179,29 @@ function readFromStorage(): AppSettings {
     if (parsed && parsed.homeSections) {
       const existingIds = parsed.homeSections.map((s: any) => s.id);
       const missing = DEFAULT_SETTINGS.homeSections.filter(s => !existingIds.includes(s.id));
-      parsed.homeSections = [...parsed.homeSections, ...missing];
+      let merged = [...parsed.homeSections, ...missing];
+      
+      // Force 'header' to always be at index 0
+      const headerItem = merged.find(s => s.id === 'header');
+      if (headerItem) {
+        merged = [headerItem, ...merged.filter(s => s.id !== 'header')];
+      }
+      parsed.homeSections = merged;
+    } else if (parsed && !parsed.homeSections) {
+      parsed.homeSections = [...DEFAULT_SETTINGS.homeSections];
     }
     
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    const finalSettings = { ...DEFAULT_SETTINGS, ...parsed };
+    
+    // Additional safeguard: ensure 'header' is at index 0
+    if (finalSettings.homeSections) {
+      const headerItem = finalSettings.homeSections.find(s => s.id === 'header');
+      if (headerItem) {
+        finalSettings.homeSections = [headerItem, ...finalSettings.homeSections.filter(s => s.id !== 'header')];
+      }
+    }
+    
+    return finalSettings;
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

@@ -40,3 +40,8 @@ scripts/
 # Build timestamps
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Private Contacts Data (Cloudflare-only, do not commit to GitHub)
+src/lib/data/contacts.ts
+static/data/contacts.json
+

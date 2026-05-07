@@ -6,11 +6,6 @@
     CAMPUSES,
     DEPARTMENTS,
   } from "$lib/stores/settingsStore";
-  import {
-    campusContacts,
-    generalContacts,
-    programDirectors,
-  } from "$lib/data/contacts";
   import { getEmailUrl } from "$lib/utils/emailHelper";
   import { getDirectPhone, getTeamsChatUrl } from "$lib/utils/phoneHelper";
 
@@ -21,7 +16,6 @@
   // ── Directory state ──────────────────────────────────────────
   let dirTab: "services" | "general" = "services";
   let expandedId: string | null = null;
-  $: generalContactsList = generalContacts;
   $: currentCampusName =
     CAMPUSES.find((c) => c.id === $settingsStore.campusId)?.name ?? "";
 
@@ -267,6 +261,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
   .page-header {
@@ -1102,6 +1097,17 @@
   @media (max-width: 768px) {
     .news-card {
       padding: var(--spacing-md);
+    }
+  }
+
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 </style>

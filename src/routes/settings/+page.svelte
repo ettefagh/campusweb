@@ -10,6 +10,8 @@
 	import EmailGate from '$lib/components/EmailGate.svelte';
 	import SecureCalendarInput from '$lib/components/SecureCalendarInput.svelte';
 
+	$: visibleSections = $settingsStore.homeSections.filter((s: any) => s.id !== 'feed');
+
 	// When campus changes, clear department and program selection
 	function handleCampusChange(campusId: string) {
 		settingsStore.patch({ campusId, departmentId: null, programName: null });
@@ -40,7 +42,8 @@
 
 	function moveSection(index: number, direction: -1 | 1) {
 		const targetIndex = index + direction;
-		if (targetIndex < 0 || targetIndex >= $settingsStore.homeSections.length) return;
+		if (index === 0 || targetIndex === 0) return;
+		if (targetIndex < 1 || targetIndex >= $settingsStore.homeSections.length) return;
 
 		const updated = [...$settingsStore.homeSections];
 		const temp = updated[index];
@@ -108,6 +111,12 @@
 
 	let a11yOpen = false;
 	let calendarSettingsOpen = false;
+	let directoryOpen = false;
+	let languageOpen = false;
+	let appearanceOpen = false;
+	let layoutOpen = false;
+	let dangerOpen = false;
+	let landingOpen = false;
 	let activeColorChooser: string | null = null;
 
 	function toggleColorChooser(id: string) {
@@ -204,150 +213,220 @@
 	</section>
 	
 
-	{#if $isSetupComplete && !$settingsStore.emailVerified}
+	{#if $isSetupComplete}
 		<section class="settings-section">
-			<div class="section-header">
-				<span class="section-icon">🔒</span>
-				<div>
-					<h2>Directory Access</h2>
-					<p class="section-desc">Verify your student email to access university contacts.</p>
-				</div>
-			</div>
-			<EmailGate />
-		</section>
-	{/if}
+			<details bind:open={directoryOpen}>
+				<summary class="section-header section-header--collapsible">
+					{#if !$settingsStore.emailVerified}
+						<span class="section-icon">🔒</span>
+						<div>
+							<h2>Directory Access</h2>
+							<p class="section-desc">Verify your student email to access university contacts.</p>
+						</div>
+					{:else}
+						<span class="section-icon">✅</span>
+						<div>
+							<h2>Directory Access</h2>
+							<p class="section-desc">Your email is verified. Full access to university directory.</p>
+						</div>
+					{/if}
+					<span class="chevron" aria-hidden="true">›</span>
+				</summary>
 
-	{#if $settingsStore.emailVerified}
-		<section class="settings-section">
-			<div class="section-header">
-				<span class="section-icon">✅</span>
-				<div>
-					<h2>Directory Access</h2>
-					<p class="section-desc">Your email is verified. You have full access to the university directory.</p>
+				<div class="a11y-body" style="padding-top: var(--spacing-md);">
+					{#if !$settingsStore.emailVerified}
+						<EmailGate />
+					{:else}
+						<p style="color: var(--text-color-secondary); font-size: 0.95rem; margin: 0; line-height: 1.5;">You have successfully verified your email. This grants you complete search and profile privileges across the active student and university contacts directory.</p>
+					{/if}
 				</div>
-			</div>
+			</details>
 		</section>
 	{/if}
 
 	<!-- ── Language ──────────────────────────── -->
 	<section class="settings-section">
-		<div class="section-header">
-			<span class="section-icon">🌐</span>
-			<div>
-				<h2>{$t.settings.languageTitle}</h2>
-				<p class="section-desc">{$t.settings.languageDesc}</p>
-			</div>
-		</div>
+		<details bind:open={languageOpen}>
+			<summary class="section-header section-header--collapsible">
+				<span class="section-icon">🌐</span>
+				<div>
+					<h2>{$t.settings.languageTitle}</h2>
+					<p class="section-desc">{$t.settings.languageDesc}</p>
+				</div>
+				<span class="chevron" aria-hidden="true">›</span>
+			</summary>
 
-		<div class="segmented-control" role="group" aria-label="Language selection">
-			{#each languageOptions as lang}
-				<button
-					class="segment"
-					class:active={$settingsStore.language === lang.value}
-					on:click={() => handleLanguageChange(lang.value)}
-					aria-pressed={$settingsStore.language === lang.value}
-				>
-					<span class="segment-flag">{lang.flag}</span>
-					<span class="segment-label">{lang.native}</span>
-				</button>
-			{/each}
-		</div>
+			<div class="a11y-body" style="padding-top: var(--spacing-md);">
+				<div class="segmented-control" role="group" aria-label="Language selection">
+					{#each languageOptions as lang}
+						<button
+							class="segment"
+							class:active={$settingsStore.language === lang.value}
+							on:click={() => handleLanguageChange(lang.value)}
+							aria-pressed={$settingsStore.language === lang.value}
+						>
+							<span class="segment-flag">{lang.flag}</span>
+							<span class="segment-label">{lang.native}</span>
+						</button>
+					{/each}
+				</div>
+			</div>
+		</details>
 	</section>
 
 	<!-- ── Appearance ────────────────────────── -->
 	<section class="settings-section">
-		<div class="section-header">
-			<span class="section-icon">🎨</span>
-			<div>
-				<h2>{$t.settings.appearanceTitle}</h2>
-				<p class="section-desc">{$t.settings.appearanceDesc}</p>
-			</div>
-		</div>
+		<details bind:open={appearanceOpen}>
+			<summary class="section-header section-header--collapsible">
+				<span class="section-icon">🎨</span>
+				<div>
+					<h2>{$t.settings.appearanceTitle}</h2>
+					<p class="section-desc">{$t.settings.appearanceDesc}</p>
+				</div>
+				<span class="chevron" aria-hidden="true">›</span>
+			</summary>
 
-		<div class="theme-picker" role="group" aria-label={$t.settings.appearanceTitle}>
-			<button
-				class="theme-card"
-				class:active={$settingsStore.theme === 'auto'}
-				on:click={() => settingsStore.patch({ theme: 'auto' })}
-				aria-pressed={$settingsStore.theme === 'auto'}
-			>
-				<span class="theme-icon">🔄</span>
-				<span class="theme-label">{$t.settings.themeAuto}</span>
-			</button>
-			<button
-				class="theme-card"
-				class:active={$settingsStore.theme === 'light'}
-				on:click={() => settingsStore.patch({ theme: 'light' })}
-				aria-pressed={$settingsStore.theme === 'light'}
-			>
-				<span class="theme-icon">☀️</span>
-				<span class="theme-label">{$t.settings.themeLight}</span>
-			</button>
-			<button
-				class="theme-card"
-				class:active={$settingsStore.theme === 'dark'}
-				on:click={() => settingsStore.patch({ theme: 'dark' })}
-				aria-pressed={$settingsStore.theme === 'dark'}
-			>
-				<span class="theme-icon">🌙</span>
-				<span class="theme-label">{$t.settings.themeDark}</span>
-			</button>
-		</div>
+			<div class="a11y-body" style="padding-top: var(--spacing-md);">
+				<div class="theme-picker" role="group" aria-label={$t.settings.appearanceTitle}>
+					<button
+						class="theme-card"
+						class:active={$settingsStore.theme === 'auto'}
+						on:click={() => settingsStore.patch({ theme: 'auto' })}
+						aria-pressed={$settingsStore.theme === 'auto'}
+					>
+						<span class="theme-icon">🔄</span>
+						<span class="theme-label">{$t.settings.themeAuto}</span>
+					</button>
+					<button
+						class="theme-card"
+						class:active={$settingsStore.theme === 'light'}
+						on:click={() => settingsStore.patch({ theme: 'light' })}
+						aria-pressed={$settingsStore.theme === 'light'}
+					>
+						<span class="theme-icon">☀️</span>
+						<span class="theme-label">{$t.settings.themeLight}</span>
+					</button>
+					<button
+						class="theme-card"
+						class:active={$settingsStore.theme === 'dark'}
+						on:click={() => settingsStore.patch({ theme: 'dark' })}
+						aria-pressed={$settingsStore.theme === 'dark'}
+					>
+						<span class="theme-icon">🌙</span>
+						<span class="theme-label">{$t.settings.themeDark}</span>
+					</button>
+				</div>
+			</div>
+		</details>
 	</section>
 
 	<!-- ── Homepage Layout ── -->
 	<section class="settings-section">
-		<div class="section-header">
-			<span class="section-icon">🧩</span>
-			<div>
-				<h2>Homepage Layout</h2>
-				<p class="section-desc">Choose which sections appear on your homepage and change their order.</p>
+		<details bind:open={layoutOpen}>
+			<summary class="section-header section-header--collapsible">
+				<span class="section-icon">🧩</span>
+				<div>
+					<h2>Homepage Layout</h2>
+					<p class="section-desc">Choose which sections appear on your homepage and change their order.</p>
+				</div>
+				<span class="chevron" aria-hidden="true">›</span>
+			</summary>
+
+			<div class="a11y-body" style="padding-top: var(--spacing-md);">
+				<div class="sections-list">
+					{#each visibleSections as sec, i (sec.id)}
+						<div class="setting-row section-item">
+							<div class="section-info">
+								<span class="setting-label">
+									{#if sec.id === 'favorites'}⭐ {:else if sec.id === 'calendar'}📅 {:else if sec.id === 'cards'}🪪 {:else if sec.id === 'header'}🏠 {/if}
+									{sec.id === 'favorites' ? 'Favorite Links' : sec.id === 'calendar' ? 'Calendar Schedule' : sec.id === 'cards' ? 'Cards' : sec.id === 'header' ? 'Header Section' : sec.id}
+								</span>
+							</div>
+							<div class="section-actions">
+								{#if sec.id === 'header'}
+									<!-- Compact/Prominent Swap Button/Chip (one button, swap options) -->
+									<button 
+										class="chip-toggle-btn"
+										on:click={() => settingsStore.patch({ headerSize: $settingsStore.headerSize === 'small' ? 'big' : 'small' })}
+									>
+										{$settingsStore.headerSize === 'small' ? 'Compact 📱' : 'Prominent ✨'}
+									</button>
+								{:else}
+									<!-- Reordering buttons -->
+									<button 
+										class="btn-reorder" 
+										disabled={i === 1} 
+										on:click={() => moveSection($settingsStore.homeSections.findIndex(s => s.id === sec.id), -1)}
+										aria-label="Move Up"
+									>
+										▲
+									</button>
+									<button 
+										class="btn-reorder" 
+										disabled={i === visibleSections.length - 1} 
+										on:click={() => moveSection($settingsStore.homeSections.findIndex(s => s.id === sec.id), 1)}
+										aria-label="Move Down"
+									>
+										▼
+									</button>
+								{/if}
+
+								<!-- Toggle button -->
+								<button 
+									class="toggle" 
+									class:on={sec.enabled} 
+									role="switch" 
+									aria-checked={sec.enabled} 
+									aria-label="Toggle section" 
+									on:click={() => toggleSection(sec.id)}
+								>
+									<span class="toggle-knob"></span>
+								</button>
+							</div>
+						</div>
+					{/each}
+				</div>
 			</div>
-		</div>
+		</details>
+	</section>
 
-		<div class="sections-list">
-			{#each $settingsStore.homeSections as sec, i (sec.id)}
-				<div class="setting-row section-item">
-					<div class="section-info">
-						<span class="setting-label">
-							{#if sec.id === 'favorites'}⭐ {:else if sec.id === 'calendar'}📅 {:else if sec.id === 'feed'}📰 {/if}
-							{sec.id === 'favorites' ? 'Favorite Links' : sec.id === 'calendar' ? 'Calendar Schedule' : sec.id === 'feed' ? 'Campus Feed' : sec.id}
-						</span>
+	<!-- ── Default Landing Page ────────────────── -->
+	<section class="settings-section">
+		<details bind:open={landingOpen}>
+			<summary class="section-header section-header--collapsible">
+				<span class="section-icon">🚀</span>
+				<div>
+					<h2>Default Landing Page</h2>
+					<p class="section-desc">Choose which page loads when you open the application.</p>
+				</div>
+				<span class="chevron" aria-hidden="true">›</span>
+			</summary>
+
+			<div class="a11y-body" style="padding-top: var(--spacing-md);">
+				<div class="setting-row">
+					<div class="setting-info" style="display: flex; flex-direction: column; gap: 2px;">
+						<span class="setting-label" style="font-weight: 600;">Default Page</span>
+						<span class="setting-desc" style="font-size: 0.78rem; color: var(--text-color-secondary);">Select the primary tab displayed on application startup.</span>
 					</div>
-					<div class="section-actions">
-						<!-- Reordering buttons -->
+					<div class="segment-control">
 						<button 
-							class="btn-reorder" 
-							disabled={i === 0} 
-							on:click={() => moveSection(i, -1)}
-							aria-label="Move Up"
+							class="segment-btn" 
+							class:active={$settingsStore.defaultPage !== 'calendar'} 
+							on:click={() => settingsStore.patch({ defaultPage: 'home' })}
 						>
-							▲
+							Home 🏠
 						</button>
 						<button 
-							class="btn-reorder" 
-							disabled={i === $settingsStore.homeSections.length - 1} 
-							on:click={() => moveSection(i, 1)}
-							aria-label="Move Down"
+							class="segment-btn" 
+							class:active={$settingsStore.defaultPage === 'calendar'} 
+							on:click={() => settingsStore.patch({ defaultPage: 'calendar' })}
 						>
-							▼
-						</button>
-
-						<!-- Toggle button -->
-						<button 
-							class="toggle" 
-							class:on={sec.enabled} 
-							role="switch" 
-							aria-checked={sec.enabled} 
-							aria-label="Toggle section" 
-							on:click={() => toggleSection(sec.id)}
-						>
-							<span class="toggle-knob"></span>
+							Calendar 📅
 						</button>
 					</div>
 				</div>
-			{/each}
-		</div>
+			</div>
+		</details>
 	</section>
 
 	<!-- ── Calendar Settings (Collapsible) ────────────── -->
@@ -503,25 +582,30 @@
 
 	<!-- ── Reset ─────────────────────────────── -->
 	<section class="settings-section danger-section">
-		<div class="section-header">
-			<span class="section-icon">🗑️</span>
-			<div>
-				<h2>{$t.settings.resetTitle}</h2>
-				<p class="section-desc">{$t.settings.resetDesc}</p>
-			</div>
-		</div>
-
-		{#if showResetConfirm}
-			<div class="confirm-box">
-				<p>{$t.settings.resetConfirm}</p>
-				<div class="confirm-buttons">
-					<button class="btn-danger" on:click={handleReset}>{$t.settings.resetYes}</button>
-					<button class="btn-cancel" on:click={() => showResetConfirm = false}>{$t.settings.resetCancel}</button>
+		<details bind:open={dangerOpen}>
+			<summary class="section-header section-header--collapsible">
+				<span class="section-icon">🗑️</span>
+				<div>
+					<h2>{$t.settings.resetTitle}</h2>
+					<p class="section-desc">{$t.settings.resetDesc}</p>
 				</div>
+				<span class="chevron" aria-hidden="true">›</span>
+			</summary>
+
+			<div class="a11y-body" style="padding-top: var(--spacing-md);">
+				{#if showResetConfirm}
+					<div class="confirm-box">
+						<p>{$t.settings.resetConfirm}</p>
+						<div class="confirm-buttons">
+							<button class="btn-danger" on:click={handleReset}>{$t.settings.resetYes}</button>
+							<button class="btn-cancel" on:click={() => showResetConfirm = false}>{$t.settings.resetCancel}</button>
+						</div>
+					</div>
+				{:else}
+					<button class="btn-reset" on:click={() => showResetConfirm = true}>{$t.settings.resetButton}</button>
+				{/if}
 			</div>
-		{:else}
-			<button class="btn-reset" on:click={() => showResetConfirm = true}>{$t.settings.resetButton}</button>
-		{/if}
+		</details>
 	</section>
 
 	<div class="update-card">
@@ -550,6 +634,7 @@
 		margin: 0 auto;
 		padding: var(--spacing-lg) var(--spacing-md);
 		padding-bottom: 120px;
+		animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 	}
 
 	/* ── Header ── */
@@ -679,6 +764,79 @@
 		background: rgba(212, 68, 7, 0.06);
 		color: var(--primary-color);
 		font-weight: 700;
+	}
+
+	/* ── In-line Chip Toggle Button ── */
+	.chip-toggle-btn {
+		background: rgba(0, 0, 0, 0.04);
+		border: 1px solid var(--border-color);
+		color: var(--primary-color);
+		font-size: 0.8rem;
+		font-weight: 700;
+		padding: 5px 12px;
+		border-radius: 12px;
+		cursor: pointer;
+		transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		margin-right: var(--spacing-xs);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	}
+
+	.chip-toggle-btn:hover {
+		background: rgba(212, 68, 7, 0.06);
+		border-color: var(--primary-color);
+		transform: scale(1.03);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.chip-toggle-btn {
+			background: rgba(255, 255, 255, 0.04);
+		}
+	}
+
+	/* ── Segment Picker ── */
+	.segment-control {
+		display: flex;
+		background: rgba(0, 0, 0, 0.04);
+		border: 1px solid var(--border-color);
+		border-radius: var(--radius-md);
+		padding: 3px;
+		gap: 2px;
+		flex-shrink: 0;
+	}
+
+	.segment-btn {
+		background: none;
+		border: none;
+		padding: 6px var(--spacing-md);
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--text-color-secondary);
+		border-radius: calc(var(--radius-md) - 2px);
+		cursor: pointer;
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.segment-btn:hover {
+		color: var(--text-color);
+	}
+
+	.segment-btn.active {
+		background: var(--card-bg, #fff);
+		color: var(--primary-color);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.segment-control {
+			background: rgba(255, 255, 255, 0.04);
+		}
+		.segment-btn.active {
+			background: rgba(255, 255, 255, 0.1);
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+		}
 	}
 
 	/* ── Toggle switch ── */
@@ -951,7 +1109,7 @@
 			background-color: var(--bg-color-alt, rgba(0,0,0,0.03));
 			border-radius: var(--radius-sm);
 			border: 1px solid var(--border-color);
-			text-align: right;
+			text-align: left;
 		}
 		.toggle-row { flex-direction: row; align-items: center; }
 		.class-color-actions { align-self: flex-start; }
@@ -1146,5 +1304,16 @@
 	.btn-reorder:disabled {
 		opacity: 0.3;
 		cursor: not-allowed;
+	}
+
+	@keyframes reveal {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 </style>
