@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  // @ts-ignore
   import Calendar from "@event-calendar/core";
   import TimeGrid from "@event-calendar/time-grid";
   import DayGrid from "@event-calendar/day-grid";
@@ -40,7 +41,7 @@
   let currentViewLabel = "";
   let currentTitleText = "";
   let isTodayInView = true;
-  let todayDirection: "prev" | "next" | "none" = "none";
+  let todayDirection: "left" | "right" | "center" = "center";
 
   // State for events
   let staticEvents: CalendarEvent[] = [];
@@ -132,6 +133,8 @@
         };
       });
   }
+
+  let calendarDate = new Date();
 
   // ─── EC Options ──────────────────────────────────────────────────
   let plugins = [TimeGrid, DayGrid, List];
@@ -269,6 +272,64 @@
     },
   };
 
+  // calendarDate is declared above options for temporal access
+
+  function checkTodayPosition() {
+    const todayCol = document.querySelector(".ec-today") as HTMLElement;
+    const scrollPort = document.querySelector(".ec-main") as HTMLElement;
+
+    // Boundary-aware pointers when horizontally scrollable on mobile
+    if (
+      scrollPort &&
+      todayCol &&
+      isPortraitMobile &&
+      currentViewLabel === "timeGridWeek"
+    ) {
+      const portRect = scrollPort.getBoundingClientRect();
+      const colRect = todayCol.getBoundingClientRect();
+
+      if (colRect.right < portRect.left + 40) {
+        todayDirection = "left";
+      } else if (colRect.left > portRect.right - 40) {
+        todayDirection = "right";
+      } else {
+        todayDirection = "center";
+      }
+      return;
+    }
+
+    const today = new Date();
+    const cal = new Date(calendarDate);
+
+    const currentYear = cal.getFullYear();
+    const currentMonth = cal.getMonth();
+
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth();
+
+    if (currentViewLabel === "dayGridMonth") {
+      if (currentYear === todayYear && currentMonth === todayMonth) {
+        todayDirection = "center";
+      } else if (cal < today) {
+        todayDirection = "right";
+      } else {
+        todayDirection = "left";
+      }
+    } else {
+      // For weekly or daily views, check date difference
+      const diffTime = cal.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (Math.abs(diffDays) <= (currentViewLabel === "timeGridWeek" ? 3 : 0)) {
+        todayDirection = "center";
+      } else if (diffDays < 0) {
+        todayDirection = "right";
+      } else {
+        todayDirection = "left";
+      }
+    }
+  }
+
   function updateToolbarState() {
     if (!ecComponent) return;
     try {
@@ -276,20 +337,8 @@
       if (view) {
         currentTitleText = formatViewTitle(view);
         currentViewLabel = view.type;
-
-        // Calculate if today is in view
-        const now = new Date();
-        const start = new Date(view.activeStart);
-        const end = new Date(view.activeEnd);
-        isTodayInView = now >= start && now < end;
-
-        if (isTodayInView) {
-          todayDirection = "none";
-        } else if (now < start) {
-          todayDirection = "prev";
-        } else {
-          todayDirection = "next";
-        }
+        calendarDate = new Date(view.currentStart);
+        checkTodayPosition();
       }
     } catch {
       // Component may not be fully initialized yet
@@ -297,10 +346,10 @@
   }
 
   function formatViewTitle(view: any): string {
-    if (!view || !view.activeStart) return "";
-    const start = new Date(view.activeStart);
-    const end = new Date(view.activeEnd);
-    // Subtract 1 day from end since EC's activeEnd is exclusive
+    if (!view || !view.currentStart) return "";
+    const start = new Date(view.currentStart);
+    const end = new Date(view.currentEnd);
+    // Subtract 1 day from end since EC's currentEnd is exclusive
     end.setDate(end.getDate() - 1);
 
     const opts: Intl.DateTimeFormatOptions = {
@@ -335,42 +384,46 @@
   // ─── Navigation Functions ────────────────────────────────────────
   function goToToday() {
     if (!ecComponent) return;
+    ecComponent.setOption("date", new Date());
+    updateToolbarState();
 
-    if (!isTodayInView) {
-      // Case 1: Today is NOT in view -> Navigate to today
-      ecComponent.today();
-      updateToolbarState();
-    }
-
-    // Case 2: Always scroll to indicator if it's a time view (or after navigating)
-    // This provides the 'anchor' functionality
-    if (currentViewLabel.includes("timeGrid")) {
-      setTimeout(() => {
-        const indicator = document.querySelector(
-          ".ec-now-indicator",
-        ) as HTMLElement;
-        if (indicator) {
-          // Find the closest scrollable container
-          let parent = indicator.parentElement;
-          while (parent && parent !== document.body) {
-            const style = window.getComputedStyle(parent);
-            if (style.overflowY === "auto" || style.overflowY === "scroll") {
-              const parentRect = parent.getBoundingClientRect();
-              const indicatorRect = indicator.getBoundingClientRect();
-              const relativeTop =
-                indicatorRect.top - parentRect.top + parent.scrollTop;
-
-              parent.scrollTo({
-                top: relativeTop - parentRect.height / 2,
-                behavior: "smooth",
-              });
-              break;
-            }
-            parent = parent.parentElement;
+    // Layout-safe custom dual-axis scroll centering
+    setTimeout(() => {
+      const indicator = document.querySelector(
+        ".ec-now-indicator",
+      ) as HTMLElement;
+      if (indicator) {
+        let parent = indicator.parentElement;
+        while (parent && parent !== document.body) {
+          const style = window.getComputedStyle(parent);
+          if (style.overflowY === "auto" || style.overflowY === "scroll") {
+            const parentRect = parent.getBoundingClientRect();
+            const indicatorRect = indicator.getBoundingClientRect();
+            const relativeTop =
+              indicatorRect.top - parentRect.top + parent.scrollTop;
+            parent.scrollTo({
+              top: relativeTop - parentRect.height / 2,
+              behavior: "smooth",
+            });
+            break;
           }
+          parent = parent.parentElement;
         }
-      }, 100);
-    }
+      }
+
+      const todayCol = document.querySelector(".ec-today") as HTMLElement;
+      const scrollPort = document.querySelector(".ec-main") as HTMLElement;
+      if (todayCol && scrollPort) {
+        const portRect = scrollPort.getBoundingClientRect();
+        const colRect = todayCol.getBoundingClientRect();
+        const relativeLeft =
+          colRect.left - portRect.left + scrollPort.scrollLeft;
+        scrollPort.scrollTo({
+          left: relativeLeft - portRect.width / 2 + colRect.width / 2,
+          behavior: "smooth",
+        });
+      }
+    }, 120);
   }
 
   function goToPrev() {
@@ -405,7 +458,6 @@
         ".ec-now-indicator",
       ) as HTMLElement;
       if (indicator) {
-        // Find the closest scrollable container to avoid scrolling the whole page
         let parent = indicator.parentElement;
         while (parent && parent !== document.body) {
           const style = window.getComputedStyle(parent);
@@ -414,7 +466,6 @@
             const indicatorRect = indicator.getBoundingClientRect();
             const relativeTop =
               indicatorRect.top - parentRect.top + parent.scrollTop;
-
             parent.scrollTo({
               top: relativeTop - parentRect.height / 2,
               behavior: "smooth",
@@ -423,6 +474,19 @@
           }
           parent = parent.parentElement;
         }
+      }
+
+      const todayCol = document.querySelector(".ec-today") as HTMLElement;
+      const scrollPort = document.querySelector(".ec-main") as HTMLElement;
+      if (todayCol && scrollPort) {
+        const portRect = scrollPort.getBoundingClientRect();
+        const colRect = todayCol.getBoundingClientRect();
+        const relativeLeft =
+          colRect.left - portRect.left + scrollPort.scrollLeft;
+        scrollPort.scrollTo({
+          left: relativeLeft - portRect.width / 2 + colRect.width / 2,
+          behavior: "smooth",
+        });
       }
     }, 80);
   }
@@ -521,55 +585,6 @@
     }
   }
 
-  // ─── Custom Now Indicator ──────────────────────────────────────────
-  function updateCustomNowIndicator() {
-    if (!browser || !isMounted) return;
-    const now = new Date();
-    const hours = now.getHours();
-    const inRange = hours >= 7 && hours < 22;
-
-    // Clean up if outside range
-    if (!inRange) {
-      document.getElementById("custom-now-track")?.remove();
-      return;
-    }
-
-    const timeStr = now.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-    const indicator = document.querySelector(
-      ".ec-now-indicator",
-    ) as HTMLElement | null;
-    if (!indicator) return;
-
-    const topPx = indicator.style.top; // e.g. "234px"
-
-    // ── 1. Full-width tinted track ────────────────────────────────
-    // Inject into the scroll body so it lines up with the indicator top
-    const body = document.querySelector(".ec-body") as HTMLElement | null;
-    if (body) {
-      let track = document.getElementById(
-        "custom-now-track",
-      ) as HTMLElement | null;
-      if (!track) {
-        track = document.createElement("div");
-        track.id = "custom-now-track";
-        body.style.position = "relative";
-        // Insert BEFORE the first child so it doesn't block events
-        body.insertBefore(track, body.firstChild);
-      }
-      track.style.top = topPx;
-
-      // Calculate width from the left edge to the current indicator
-      const bodyRect = body.getBoundingClientRect();
-      const indicatorRect = indicator.getBoundingClientRect();
-      const widthPx = Math.max(0, indicatorRect.left - bodyRect.left);
-      track.style.width = `${widthPx}px`;
-    }
-  }
-
   // ─── Lifecycle ───────────────────────────────────────────────────
   onMount(() => {
     isMounted = true;
@@ -583,7 +598,6 @@
         options = { ...options, events: getAllEvents() };
         isLoading = false;
         setTimeout(updateToolbarState, 150);
-        setTimeout(updateCustomNowIndicator, 300);
       } catch (error) {
         console.error("Failed to load calendar events:", error);
         if (isMounted) isLoading = false;
@@ -592,20 +606,37 @@
 
     init();
 
-    const nowInterval = setInterval(updateCustomNowIndicator, 60000);
+    const handleResize = () => {
+      checkTodayPosition();
+    };
+    window.addEventListener("resize", handleResize);
+
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target && target.classList.contains("ec-main")) {
+        checkTodayPosition();
+      }
+    };
+    window.addEventListener("scroll", handleScroll, true);
+
+    const interval = setInterval(() => {
+      checkTodayPosition();
+    }, 15000);
 
     return () => {
       isMounted = false;
       unsubscribe();
       unsubscribeColors();
       unsubscribeActiveClasses();
-      clearInterval(nowInterval);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll, true);
+      clearInterval(interval);
     };
   });
 </script>
 
 <svelte:head>
-  <title>Calendar - SRH Campus Hub</title>
+  <title>Calendar - Campusweb Pages</title>
 </svelte:head>
 
 <svelte:window bind:innerWidth on:click={handleWindowClick} />
@@ -693,51 +724,50 @@
 
         <!-- Custom Bottom Toolbar -->
         <div class="calendar-toolbar">
-          <div class="toolbar-end">
+          <div class="toolbar-group toolbar-views">
             <button
-              class="view-btn"
+              class="toolbar-btn"
               class:active={currentViewLabel === "dayGridMonth"}
               on:click={() => switchView("dayGridMonth")}
               >{$t.calendar.month}</button
             >
             <button
-              class="view-btn"
+              class="toolbar-btn"
               class:active={currentViewLabel === "timeGridWeek"}
               on:click={() => switchView("timeGridWeek")}
               >{$t.calendar.week}</button
             >
             <button
-              class="view-btn"
+              class="toolbar-btn"
               class:active={currentViewLabel === "timeGridDay"}
               on:click={() => switchView("timeGridDay")}
               >{$t.calendar.day}</button
             >
             <button
-              class="view-btn"
+              class="toolbar-btn"
               class:active={currentViewLabel === "listWeek"}
               on:click={() => switchView("listWeek")}>{$t.calendar.list}</button
             >
           </div>
-          <div class="toolbar-start">
-            <button class="nav-btn" on:click={goToPrev} aria-label="Previous"
-              >{$t.calendar.prev}</button
+          <div class="toolbar-group toolbar-nav">
+            <button
+              class="toolbar-btn"
+              on:click={goToPrev}
+              aria-label="Previous">←</button
             >
             <button
-              class="nav-btn today-btn"
-              class:active={isTodayInView}
+              class="toolbar-btn today-btn"
               on:click={goToToday}
               aria-label="Go to Today"
             >
-              {#if todayDirection === "prev"}
-                <span class="nav-arrow">{$t.calendar.prev}</span>
-              {/if}
-              {$t.calendar.today}
-              {#if todayDirection === "next"}
-                <span class="nav-arrow">{$t.calendar.next}</span>
+              {#if todayDirection === "left"}
+                ← {$t.calendar.today}
+              {:else}
+                {$t.calendar.today} {todayDirection === "right" ? "→" : ""}
               {/if}
             </button>
-            <button class="nav-btn" on:click={goToNext} aria-label="Next"
-              >{$t.calendar.next}</button
+            <button class="toolbar-btn" on:click={goToNext} aria-label="Next"
+              >→</button
             >
           </div>
         </div>
@@ -940,7 +970,7 @@
         aria-label="Open location in Google Maps"
       >
         <div class="popup-location-badge">
-          📍 {popupEvent.extendedProps?.shortLocation ||
+          {popupEvent.extendedProps?.shortLocation ||
             popupEvent.extendedProps?.location}
         </div>
         <div class="popup-location">
@@ -1307,11 +1337,8 @@
     gap: var(--spacing-sm);
     padding: var(--spacing-sm) var(--spacing-md);
     margin: 0;
-    /* background: var(--glass-bg-light); */
-    /* backdrop-filter: var(--glass-blur); */
     -webkit-backdrop-filter: var(--glass-blur);
     border-top: 1px solid rgb(255 255 255 / 20%);
-    /* border-radius: var(--radius-md); */
     box-shadow: var(--glass-shadow);
     transition: all 0.3s ease;
   }
@@ -1340,8 +1367,8 @@
     background: var(--glass-bg-strong);
   }
 
-  .calendar-container.is-landscape .toolbar-start,
-  .calendar-container.is-landscape .toolbar-end {
+  .calendar-container.is-landscape .toolbar-views,
+  .calendar-container.is-landscape .toolbar-nav {
     flex-direction: column;
     margin: 0;
     width: 100%;
@@ -1353,16 +1380,15 @@
     order: unset;
   }
 
-  .calendar-container.is-landscape .toolbar-end {
+  .calendar-container.is-landscape .toolbar-views {
     margin-bottom: auto;
   }
 
-  .calendar-container.is-landscape .toolbar-start {
+  .calendar-container.is-landscape .toolbar-nav {
     margin-top: auto;
   }
 
-  .calendar-container.is-landscape .nav-btn,
-  .calendar-container.is-landscape .view-btn {
+  .calendar-container.is-landscape .toolbar-btn {
     border-right: none;
     border-bottom: 1px solid var(--glass-border-subtle);
     width: 100%;
@@ -1371,8 +1397,7 @@
     padding: 4px;
   }
 
-  .calendar-container.is-landscape .nav-btn:last-child,
-  .calendar-container.is-landscape .view-btn:last-child {
+  .calendar-container.is-landscape .toolbar-btn:last-child {
     border-bottom: none;
   }
 
@@ -1394,25 +1419,17 @@
     margin-bottom: var(--spacing-xs);
   }
 
-  .toolbar-end,
-  .toolbar-start {
+  .toolbar-group {
     display: flex;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg-light);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 3px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border-subtle);
   }
 
-  .toolbar-end {
-    order: 2;
-  }
-
-  .toolbar-start {
-    order: 3;
-    margin-left: auto;
+  :global([data-theme="dark"]) .toolbar-group {
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .toolbar-title {
@@ -1421,72 +1438,45 @@
     color: var(--text-color);
   }
 
-  .nav-btn,
-  .view-btn {
-    padding: var(--spacing-xs) var(--spacing-sm);
+  .toolbar-btn {
+    padding: 8px 14px;
     border: none;
-    border-right: 1px solid var(--glass-border);
-    border-radius: 0;
     background: transparent;
     color: var(--text-color);
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 9px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    min-width: var(--touch-target-min);
-    min-height: var(--touch-target-min);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 36px;
   }
 
-  .nav-btn:last-child,
-  .view-btn:last-child {
-    border-right: none;
-  }
-
-  .nav-btn:hover,
-  .view-btn:hover {
+  .toolbar-btn:hover {
     background: rgba(212, 68, 7, 0.1);
   }
 
-  .view-btn.active {
+  .toolbar-btn.active {
     background: var(--primary-color);
     color: white;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 2px 8px rgba(212, 68, 7, 0.3);
   }
 
   .today-btn {
-    font-weight: 600;
+    background: rgba(212, 68, 7, 0.1);
     color: var(--primary-color);
-    background: rgba(212, 68, 7, 0.05);
-    border: 1px solid rgba(212, 68, 7, 0.2);
-    padding: 0 16px;
-    transition: all 0.2s ease;
-  }
-
-  .today-btn.active {
-    background: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-  }
-
-  .nav-arrow {
-    font-size: 0.8em;
-    opacity: 0.8;
-    margin: 0 4px;
-    transition: all 0.2s ease;
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    gap: 6px;
   }
 
-  .today-btn:hover .nav-arrow {
-    opacity: 1;
-    transform: scale(1.1);
+  .today-btn:hover {
+    background: rgba(212, 68, 7, 0.15);
   }
 
   .today-btn:active {
-    background: rgba(212, 68, 7, 0.15);
     transform: scale(0.98);
   }
 
@@ -1682,7 +1672,7 @@
     background-color: #ffffff70 !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
     border-left: 3px solid var(--event-color, var(--primary-color)) !important;
-    color: var(--event-text-color, var(--event-color)) !important;
+    color: black !important;
     position: relative;
     z-index: 1;
     transition: transform 0.1s ease;
@@ -1703,6 +1693,7 @@
   :global(html[data-theme="dark"] .ec-event-inner) {
     background-color: #000000b3 !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
+    color: white !important;
   }
 
   :global(html[data-theme="dark"] .ec-event-inner::before) {
@@ -1729,14 +1720,24 @@
     line-height: 1.3;
     white-space: normal;
     word-break: break-word;
-    color: var(--event-text-color, var(--primary-color)) !important;
+    color: black !important;
     text-shadow: none !important;
+  }
+
+  :global(html[data-theme="dark"] .ec-event-title-text) {
+    color: white !important;
   }
 
   :global(.ec-event-loc),
   :global(.ec-event-time-custom) {
-    color: var(--event-color, var(--primary-color)) !important;
+    color: black !important;
     font-weight: 500;
+    opacity: 0.55;
+  }
+
+  :global(html[data-theme="dark"] .ec-event-loc),
+  :global(html[data-theme="dark"] .ec-event-time-custom) {
+    color: white !important;
   }
 
   /* List view overrides */
@@ -1771,8 +1772,12 @@
   :global(.ec-event-time-sub) {
     font-size: 0.78em;
     font-weight: 600;
-    opacity: 0.85;
-    color: var(--event-color, var(--primary-color)) !important;
+    opacity: 0.55;
+    color: black !important;
+  }
+
+  :global(html[data-theme="dark"] .ec-event-time-sub) {
+    color: white !important;
   }
 
   :global(.ec-event-time-sub.time-end) {
@@ -1894,42 +1899,21 @@
   }
 
   /* ─── Custom Now Indicator UI ─────────────────────────────── */
-
-  /* Full-width tinted track — spans the entire calendar body */
-  :global(#custom-now-track) {
-    position: absolute;
-    left: 0;
-    transform: translateY(-50%);
-    height: 1px;
-    background: rgba(255, 59, 48, 0.25);
-    z-index: 2;
-    pointer-events: none;
-  }
-
-  /* Today's column: solid red line (the default ec-now-indicator border) */
   :global(.ec-now-indicator) {
-    border-top: 2px solid #ff3b30 !important;
-    overflow: visible !important;
-    z-index: 3 !important;
+    z-index: 15 !important;
+    border-top: 2px solid var(--primary-color) !important;
   }
 
-  /* Red dot at the left edge of today's column */
   :global(.ec-now-indicator::before) {
-    content: "";
-    position: absolute;
-    background: #ff3b30 !important;
+    content: "" !important;
+    position: absolute !important;
+    left: -5px !important;
+    top: -4px !important;
     width: 10px !important;
     height: 10px !important;
-    left: 2px !important;
-    top: 1px !important;
+    background: var(--primary-color) !important;
     border-radius: 50% !important;
-    z-index: 5 !important;
-    box-shadow: 0 0 0 2px rgba(255, 59, 48, 0.25) !important;
-  }
-
-  /* No ::after pseudo needed – the track element handles the full width */
-  :global(.ec-now-indicator::after) {
-    content: none !important;
+    box-shadow: 0 0 8px var(--primary-color) !important;
   }
 
   /* Dark Mode */
@@ -1972,8 +1956,7 @@
       font-size: 1.5rem;
     }
 
-    .nav-btn,
-    .view-btn {
+    .toolbar-btn {
       font-size: 0.8rem;
       padding: var(--spacing-xs);
       min-width: 40px;
@@ -1993,11 +1976,12 @@
       gap: var(--spacing-sm);
     }
 
-    .toolbar-end {
+    .toolbar-views {
       order: 1;
     }
-    .toolbar-start {
+    .toolbar-nav {
       order: 3;
+      margin-left: auto;
     }
 
     .calendar-container {

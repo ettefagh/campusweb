@@ -17,6 +17,7 @@ wrangler.toml.bak
 # Documents (may contain API keys or personal data)
 Documents/
 src/Documents/
+graphify-out/
 
 # Editor and OS
 .vscode/
