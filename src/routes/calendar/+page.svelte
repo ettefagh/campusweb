@@ -668,7 +668,7 @@
           aria-label={$t.calendar.refresh}
           title={$t.calendar.refresh}
         >
-          <span class:spinning={isLoading}>🔄</span>
+          <i class="ph-bold ph-arrows-counter-clockwise" class:spinning={isLoading}></i>
         </button>
       </div>
       <p class="subtitle">
@@ -685,7 +685,7 @@
 
       {#if isMounted && currentSubs.length === 0}
         <div class="suggestion-banner link-banner">
-          <div class="suggestion-icon">📅</div>
+        <div class="suggestion-icon"><i class="ph-bold ph-calendar"></i></div>
           <div class="suggestion-content">
             <p class="suggestion-title">See your university schedule here</p>
             <p class="suggestion-desc">
@@ -698,7 +698,7 @@
               href="/settings#calendar-subscriptions"
               class="suggestion-btn suggestion-btn--primary"
             >
-              Get Started
+              <i class="ph-bold ph-gear" style="margin-right: 6px;"></i> Get Started
             </a>
             {#if $activeDepartment?.icalUrl && !dismissedSuggestion}
               <button
@@ -1007,7 +1007,7 @@
 
 <style>
   .calendar-page {
-    padding-bottom: var(--spacing-xl);
+    padding-bottom: calc(var(--spacing-xl) * 2.5);
     min-height: 100vh;
     animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
@@ -1168,15 +1168,15 @@
     background: var(--bg-color-secondary);
     border: 1px solid var(--border-color);
     color: var(--text-color);
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     padding: 0;
   }
 

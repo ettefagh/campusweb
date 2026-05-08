@@ -247,7 +247,7 @@
 		width: 48px;
 		height: 48px;
 		object-fit: contain;
-		border-radius: var(--radius-md);
+		border-radius: 8px;
 	}
 
 	.logo.dark-mode {

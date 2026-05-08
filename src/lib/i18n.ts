@@ -39,7 +39,7 @@ const translations = {
 
     // ── Explore page ──
     explore: {
-      title: '🧭 Explore & Search',
+      title: 'Explore & Search',
       subtitle: 'Discover all university resources and tools',
       pageTitle: 'Explore & Search - CampusWeb Pages',
       searchPlaceholder: 'Search resources…',
@@ -91,15 +91,15 @@ const translations = {
     // ── Feed page ──
     feed: {
       pageTitle: 'Campus News | Campusweb',
-      title: '📰 Campus News',
-      subtitle: 'Latest updates from SRH University',
-      instagramFeeds: '📸 Instagram Feeds',
-      followSRH: '🌐 Follow SRH',
+      title: 'Campus Feed',
+      subtitle: 'Latest campus updates, social media feeds, and contacts',
+      instagramFeeds: 'Instagram Feeds',
+      followSRH: 'Follow SRH',
       readMore: 'Read more',
       universityDirectory: 'University Directory',
       phoneEmailAddress: 'Phone, email & address',
-      contactTitle: '📞 SRH Contact',
-      contactTitleDesktop: '📞 SRH Contact Information',
+      contactTitle: 'SRH Contact',
+      contactTitleDesktop: 'SRH Contact Information',
       close: 'Close',
       // News cards
       eventsTag: 'Events',
@@ -121,7 +121,7 @@ const translations = {
     settings: {
       pageTitle: 'Settings – CampusWeb Pages',
       title: 'Settings',
-      subtitle: 'Personalise your CampusWeb Pages experience',
+      subtitle: 'Personalise your web app experience',
       campusTitle: 'My Campus & Programme',
       campusDesc: 'Used to personalise your calendar with lecture-free periods and exam schedules',
       campusLabel: 'Campus',
@@ -288,7 +288,7 @@ const translations = {
 
     // ── Explore page ──
     explore: {
-      title: '🧭 Erkunden & Suchen',
+      title: 'Erkunden & Suchen',
       subtitle: 'Alle Uni-Ressourcen und Tools entdecken',
       pageTitle: 'Erkunden & Suchen – CampusWeb Pages',
       searchPlaceholder: 'Ressourcen suchen…',
@@ -340,15 +340,15 @@ const translations = {
     // ── Feed page ──
     feed: {
       pageTitle: 'Campus Neuigkeiten | Campusweb',
-      title: '📰 Campus Neuigkeiten',
-      subtitle: 'Aktuelle Updates der SRH Universität',
-      instagramFeeds: '📸 Instagram Feeds',
-      followSRH: '🌐 SRH folgen',
+      title: 'Campus Feed',
+      subtitle: 'Aktuelle Campus-Updates, Social-Media-Feeds und Kontakte',
+      instagramFeeds: 'Instagram Feeds',
+      followSRH: 'SRH folgen',
       readMore: 'Weiterlesen',
       universityDirectory: 'Universitätsverzeichnis',
       phoneEmailAddress: 'Telefon, E-Mail & Adresse',
-      contactTitle: '📞 SRH Kontakt',
-      contactTitleDesktop: '📞 SRH Kontaktinformationen',
+      contactTitle: 'SRH Kontakt',
+      contactTitleDesktop: 'SRH Kontaktinformationen',
       close: 'Schließen',
       eventsTag: 'Veranstaltungen',
       eventsTitle: 'Campus Events',
@@ -368,7 +368,7 @@ const translations = {
     settings: {
       pageTitle: 'Einstellungen – CampusWeb Pages',
       title: 'Einstellungen',
-      subtitle: 'Personalisiere dein CampusHub-Erlebnis',
+      subtitle: 'Personalisiere dein Webapp-Erlebnis',
       campusTitle: 'Mein Campus & Studiengang',
       campusDesc: 'Wird verwendet, um deinen Kalender mit vorlesungsfreien Zeiten und Prüfungsterminen zu personalisieren',
       campusLabel: 'Campus',

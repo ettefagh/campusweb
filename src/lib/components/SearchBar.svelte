@@ -44,7 +44,7 @@
 <div class="search-snap-container">
 	<div class="search-active-content">
 		<div class="search-input-wrapper glass">
-			<span class="search-icon" aria-hidden="true">🔍</span>
+			<i class="ph-bold ph-magnifying-glass search-icon" aria-hidden="true"></i>
 			<input
 				bind:this={inputElement}
 				id="search-input"

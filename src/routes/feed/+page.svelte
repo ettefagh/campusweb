@@ -273,7 +273,7 @@
   .feed-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: var(--spacing-lg) var(--spacing-md) 100px;
+    padding: var(--spacing-lg) var(--spacing-md) calc(var(--spacing-xl) * 2.5);
     display: flex;
     flex-direction: column;
     align-items: stretch;

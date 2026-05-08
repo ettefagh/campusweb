@@ -1,6 +1,8 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { t } from "$lib/i18n";
+  import { goto } from "$app/navigation";
+
   let navItems: Array<{ path: string; label: string; iconClass: string; ariaLabel: string }> = [];
   $: navItems = [
     { path: "/", label: $t.nav.home, iconClass: "ph-house", ariaLabel: $t.nav.home },
@@ -19,6 +21,44 @@
     { path: "/feed", label: $t.nav.feed, iconClass: "ph-newspaper", ariaLabel: $t.nav.feed },
     { path: "/settings", label: $t.nav.settings, iconClass: "ph-gear", ariaLabel: $t.nav.settings },
   ];
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  function handleTouchStart(event: TouchEvent) {
+    touchStartX = event.touches[0].clientX;
+    touchStartY = event.touches[0].clientY;
+  }
+
+  function handleTouchEnd(event: TouchEvent) {
+    const touchEndX = event.changedTouches[0].clientX;
+    const touchEndY = event.changedTouches[0].clientY;
+
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    // Minimum distance threshold of 60px, primarily horizontal movement
+    if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 45) {
+      const currentIndex = navItems.findIndex(item => item.path === $page.url.pathname);
+      if (currentIndex !== -1) {
+        if (deltaX < 0 && currentIndex < navItems.length - 1) {
+          // Swipe left -> Next tab
+          goto(navItems[currentIndex + 1].path);
+          triggerHaptic();
+        } else if (deltaX > 0 && currentIndex > 0) {
+          // Swipe right -> Previous tab
+          goto(navItems[currentIndex - 1].path);
+          triggerHaptic();
+        }
+      }
+    }
+  }
+
+  function triggerHaptic() {
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(10);
+    }
+  }
 </script>
 
 <!-- Desktop Sidebar -->
@@ -68,7 +108,12 @@
 </aside>
 
 <!-- Mobile Bottom Tab Bar -->
-<nav class="bottom-nav" aria-label="Main navigation">
+<nav
+  class="bottom-nav"
+  aria-label="Main navigation"
+  on:touchstart={handleTouchStart}
+  on:touchend={handleTouchEnd}
+>
   {#each navItems as item}
     <a
       href={item.path}

@@ -61,11 +61,12 @@
   let codeReader: any = null;
 
   async function loadZXing(): Promise<boolean> {
-    if (typeof window !== 'undefined' && (window as any).ZXing) return true;
+    if (typeof window !== "undefined" && (window as any).ZXing) return true;
     try {
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.0/umd/index.min.js";
+        script.src =
+          "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.0/umd/index.min.js";
         script.onload = () => resolve();
         script.onerror = (err) => reject(err);
         document.head.appendChild(script);
@@ -110,11 +111,12 @@
                 idNumber = result.text;
                 stopBarcodeScan();
               }
-            }
+            },
           );
         } catch (err: any) {
           console.error("Camera access error:", err);
-          scanError = "Failed to access camera. Please allow camera permissions.";
+          scanError =
+            "Failed to access camera. Please allow camera permissions.";
           isScanning = false;
         }
       }
@@ -189,17 +191,19 @@
   }
 
   async function loadPDFJS(): Promise<boolean> {
-    if (typeof window !== 'undefined' && (window as any).pdfjsLib) return true;
+    if (typeof window !== "undefined" && (window as any).pdfjsLib) return true;
     try {
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement("script");
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js";
+        script.src =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js";
         script.onload = () => resolve();
         script.onerror = (err) => reject(err);
         document.head.appendChild(script);
       });
       if ((window as any).pdfjsLib) {
-        (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+        (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
         return true;
       }
     } catch (e) {
@@ -249,7 +253,10 @@
     if (!input.files || input.files.length === 0) return;
 
     const file = input.files[0];
-    if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+    if (
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf")
+    ) {
       handlePDFUpload(file);
     } else {
       const reader = new FileReader();
@@ -511,7 +518,9 @@
 
         {#if isFullImageCard}
           <div class="form-group">
-            <label for="full-card-upload">Digital Student ID File (Image or PDF)</label>
+            <label for="full-card-upload"
+              >Digital Student ID File (Image or PDF)</label
+            >
             <input
               type="file"
               id="full-card-upload"
@@ -520,8 +529,8 @@
               required={!fullImage}
             />
             <p class="field-hint">
-              Upload any photo or PDF of your student ID card. Drag the 4 green circles
-              below to identify the card's exact corners!
+              Upload any photo or PDF of your student ID card. Drag the 4 green
+              circles below to identify the card's exact corners!
             </p>
           </div>
 
@@ -598,7 +607,7 @@
                   type="text"
                   id="id-number-full"
                   bind:value={idNumber}
-                  placeholder="e.g. 100004862"
+                  placeholder="e.g. 100004321"
                 />
                 <button
                   type="button"
@@ -660,7 +669,7 @@
                   type="text"
                   id="id-number"
                   bind:value={idNumber}
-                  placeholder="e.g. 100004862"
+                  placeholder="e.g. 100004321"
                 />
                 <button
                   type="button"

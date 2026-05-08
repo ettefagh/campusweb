@@ -391,7 +391,7 @@
 
     <!-- 2. SRH Contact List (Moved before external) -->
     <section class="category-section directory-results" id={DIRECTORY_ID}>
-      <h2 class="category-title">👥 Contact List</h2>
+      <h2 class="category-title">Contact List</h2>
       {#if $activeCampus || $activeDepartment || $settingsStore.programName}
         <p class="category-subtitle">
           {#if $activeCampus}{$activeCampus.name}{/if}
@@ -573,7 +573,7 @@
 
 <style>
   .explore-page {
-    padding-bottom: var(--spacing-xl);
+    padding-bottom: calc(var(--spacing-xl) * 2.5);
     min-height: 100vh;
     background: radial-gradient(
       circle at top right,
@@ -616,6 +616,7 @@
   .logo {
     width: 36px;
     height: 36px;
+    border-radius: 8px;
   }
 
   /* Dark mode support for logo */

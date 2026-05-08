@@ -810,7 +810,7 @@
     max-width: 680px;
     margin: 0 auto;
     padding: var(--spacing-lg) var(--spacing-md);
-    padding-bottom: 120px;
+    padding-bottom: calc(var(--spacing-xl) * 2.5);
     animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
