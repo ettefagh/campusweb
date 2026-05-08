@@ -185,7 +185,7 @@
   <!-- ── Campus & Programme ────────────────── -->
   <section class="settings-section">
     <div class="section-header">
-      <span class="section-icon">🏛️</span>
+      <span class="section-icon"><i class="ph-bold ph-graduation-cap"></i></span>
       <div>
         <h2>{$t.settings.campusTitle}</h2>
         <p class="section-desc">{$t.settings.campusDesc}</p>
@@ -253,7 +253,7 @@
       <details bind:open={directoryOpen}>
         <summary class="section-header section-header--collapsible">
           {#if !$settingsStore.emailVerified}
-            <span class="section-icon">🔒</span>
+            <span class="section-icon"><i class="ph-bold ph-lock-keyhole"></i></span>
             <div>
               <h2>Directory Access</h2>
               <p class="section-desc">
@@ -261,7 +261,7 @@
               </p>
             </div>
           {:else}
-            <span class="section-icon">✅</span>
+            <span class="section-icon"><i class="ph-bold ph-shield-check"></i></span>
             <div>
               <h2>Directory Access</h2>
               <p class="section-desc">
@@ -293,7 +293,7 @@
   <section class="settings-section">
     <details bind:open={languageOpen}>
       <summary class="section-header section-header--collapsible">
-        <span class="section-icon">🌐</span>
+        <span class="section-icon"><i class="ph-bold ph-globe"></i></span>
         <div>
           <h2>{$t.settings.languageTitle}</h2>
           <p class="section-desc">{$t.settings.languageDesc}</p>
@@ -327,7 +327,7 @@
   <section class="settings-section">
     <details bind:open={appearanceOpen}>
       <summary class="section-header section-header--collapsible">
-        <span class="section-icon">🎨</span>
+        <span class="section-icon"><i class="ph-bold ph-palette"></i></span>
         <div>
           <h2>{$t.settings.appearanceTitle}</h2>
           <p class="section-desc">{$t.settings.appearanceDesc}</p>
@@ -350,7 +350,7 @@
               on:click={() => settingsStore.patch({ theme: "auto" })}
               aria-pressed={$settingsStore.theme === "auto"}
             >
-              <span class="theme-icon">🔄</span>
+              <span class="theme-icon"><i class="ph-bold ph-arrows-counter-clockwise"></i></span>
               <span class="theme-label">{$t.settings.themeAuto}</span>
             </button>
             <button
@@ -359,7 +359,7 @@
               on:click={() => settingsStore.patch({ theme: "light" })}
               aria-pressed={$settingsStore.theme === "light"}
             >
-              <span class="theme-icon">☀️</span>
+              <span class="theme-icon"><i class="ph-bold ph-sun"></i></span>
               <span class="theme-label">{$t.settings.themeLight}</span>
             </button>
             <button
@@ -368,7 +368,7 @@
               on:click={() => settingsStore.patch({ theme: "dark" })}
               aria-pressed={$settingsStore.theme === "dark"}
             >
-              <span class="theme-icon">🌙</span>
+              <span class="theme-icon"><i class="ph-bold ph-moon"></i></span>
               <span class="theme-label">{$t.settings.themeDark}</span>
             </button>
           </div>
@@ -386,10 +386,10 @@
               <div class="setting-row section-item">
                 <div class="section-info">
                   <span class="setting-label">
-                    {#if sec.id === "favorites"}⭐
-                    {:else if sec.id === "calendar"}📅
-                    {:else if sec.id === "cards"}🪪
-                    {:else if sec.id === "header"}🏠
+                    {#if sec.id === "favorites"}<i class="ph-bold ph-star" style="margin-right: 8px; color: var(--primary-color);"></i>
+                    {:else if sec.id === "calendar"}<i class="ph-bold ph-calendar" style="margin-right: 8px; color: var(--primary-color);"></i>
+                    {:else if sec.id === "cards"}<i class="ph-bold ph-identification-card" style="margin-right: 8px; color: var(--primary-color);"></i>
+                    {:else if sec.id === "header"}<i class="ph-bold ph-house" style="margin-right: 8px; color: var(--primary-color);"></i>
                     {/if}
                     {sec.id === "favorites"
                       ? "Favorite Links"
@@ -494,7 +494,7 @@
                 class:active={$settingsStore.defaultPage !== "calendar"}
                 on:click={() => settingsStore.patch({ defaultPage: "home" })}
               >
-                Home 🏠
+                <i class="ph-bold ph-house" style="margin-right: 4px;"></i> Home
               </button>
               <button
                 class="segment-btn"
@@ -502,7 +502,7 @@
                 on:click={() =>
                   settingsStore.patch({ defaultPage: "calendar" })}
               >
-                Calendar 📅
+                <i class="ph-bold ph-calendar" style="margin-right: 4px;"></i> Calendar
               </button>
             </div>
           </div>
@@ -515,7 +515,7 @@
   <section class="settings-section a11y-section">
     <details bind:open={calendarSettingsOpen}>
       <summary class="section-header section-header--collapsible">
-        <span class="section-icon">📅</span>
+        <span class="section-icon"><i class="ph-bold ph-calendar"></i></span>
         <div>
           <h2>{$t.settings.calendarTitle}</h2>
           <p class="section-desc">
@@ -636,7 +636,7 @@
   <section id="accessibility" class="settings-section a11y-section">
     <details bind:open={a11yOpen}>
       <summary class="section-header section-header--collapsible">
-        <span class="section-icon">♿</span>
+        <span class="section-icon"><i class="ph-bold ph-accessibility"></i></span>
         <div>
           <h2>{$t.settings.a11yTitle}</h2>
           <p class="section-desc">{$t.settings.a11yDesc}</p>
@@ -647,7 +647,7 @@
       <div class="a11y-body">
         <div class="setting-row toggle-row">
           <div class="toggle-info">
-            <span class="setting-label">🎭 {$t.settings.reduceMotion}</span>
+            <span class="setting-label"><i class="ph-bold ph-wind" style="margin-right: 8px;"></i>{$t.settings.reduceMotion}</span>
             <span class="toggle-desc">{$t.settings.reduceMotionDesc}</span>
           </div>
           <button
@@ -662,7 +662,7 @@
         </div>
         <div class="setting-row toggle-row">
           <div class="toggle-info">
-            <span class="setting-label">⬛ {$t.settings.highContrast}</span>
+            <span class="setting-label"><i class="ph-bold ph-eye" style="margin-right: 8px;"></i>{$t.settings.highContrast}</span>
             <span class="toggle-desc">{$t.settings.highContrastDesc}</span>
           </div>
           <button
@@ -677,7 +677,7 @@
         </div>
         <div class="setting-row toggle-row">
           <div class="toggle-info">
-            <span class="setting-label">🔡 {$t.settings.largeText}</span>
+            <span class="setting-label"><i class="ph-bold ph-text-aa" style="margin-right: 8px;"></i>{$t.settings.largeText}</span>
             <span class="toggle-desc">{$t.settings.largeTextDesc}</span>
           </div>
           <button
@@ -692,7 +692,7 @@
         </div>
         <div class="setting-row toggle-row">
           <div class="toggle-info">
-            <span class="setting-label">🎯 {$t.settings.focusVisible}</span>
+            <span class="setting-label"><i class="ph-bold ph-target" style="margin-right: 8px;"></i>{$t.settings.focusVisible}</span>
             <span class="toggle-desc">{$t.settings.focusVisibleDesc}</span>
           </div>
           <button
@@ -707,7 +707,7 @@
         </div>
         <div class="setting-row toggle-row">
           <div class="toggle-info">
-            <span class="setting-label">🔊 {$t.settings.screenReader}</span>
+            <span class="setting-label"><i class="ph-bold ph-speaker-high" style="margin-right: 8px;"></i>{$t.settings.screenReader}</span>
             <span class="toggle-desc">{$t.settings.screenReaderDesc}</span>
           </div>
           <button
@@ -722,8 +722,7 @@
         </div>
         <div class="setting-row toggle-row">
           <div class="toggle-info">
-            <span class="setting-label">🎨 {$t.settings.assistiveTextures}</span
-            >
+            <span class="setting-label"><i class="ph-bold ph-grid-four" style="margin-right: 8px;"></i>{$t.settings.assistiveTextures}</span>
             <span class="toggle-desc">{$t.settings.assistiveTexturesDesc}</span>
           </div>
           <button
@@ -744,7 +743,7 @@
   <section class="settings-section danger-section">
     <details bind:open={dangerOpen}>
       <summary class="section-header section-header--collapsible">
-        <span class="section-icon">🗑️</span>
+        <span class="section-icon"><i class="ph-bold ph-trash"></i></span>
         <div>
           <h2>{$t.settings.resetTitle}</h2>
           <p class="section-desc">{$t.settings.resetDesc}</p>

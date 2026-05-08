@@ -643,38 +643,39 @@
 
 <div class="calendar-page">
   <header class="page-header">
-    <div class="logo-container">
-      <img
-        src="/icon-light.png"
-        alt="SRH University Logo"
-        class="logo light-mode"
-        width="36"
-        height="36"
-      />
-      <img
-        src="/icon-dark.png"
-        alt="SRH University Logo"
-        class="logo dark-mode"
-        width="36"
-        height="36"
-      />
-    </div>
-    <div class="header-text">
-      <div class="header-main">
-        <h1>{$t.calendar.title || "Calendar"}</h1>
-        <button
-          class="refresh-btn"
-          on:click={handleRefresh}
-          aria-label={$t.calendar.refresh}
-          title={$t.calendar.refresh}
-        >
-          <i class="ph-bold ph-arrows-counter-clockwise" class:spinning={isLoading}></i>
-        </button>
+    <div class="header-left">
+      <div class="logo-container">
+        <img
+          src="/icon-light.png"
+          alt="SRH University Logo"
+          class="logo light-mode"
+          width="36"
+          height="36"
+        />
+        <img
+          src="/icon-dark.png"
+          alt="SRH University Logo"
+          class="logo dark-mode"
+          width="36"
+          height="36"
+        />
       </div>
-      <p class="subtitle">
-        {$t.calendar.subtitle || "University events and your schedule"}
-      </p>
+      <div class="header-text">
+        <h1>{$t.calendar.title || "Calendar"}</h1>
+        <p class="subtitle">
+          {$t.calendar.subtitle || "University events and your schedule"}
+        </p>
+      </div>
     </div>
+
+    <button
+      class="refresh-btn"
+      on:click={handleRefresh}
+      aria-label={$t.calendar.refresh}
+      title={$t.calendar.refresh}
+    >
+      <i class="ph-bold ph-arrows-counter-clockwise" class:spinning={isLoading}></i>
+    </button>
   </header>
 
   <div class="calendar-page-layout">
@@ -1115,16 +1116,20 @@
   }
 
   .page-header {
+    display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
-    text-align: left;
+    justify-content: space-between;
     padding: var(--spacing-sm) var(--spacing-md);
     margin: var(--spacing-sm) var(--spacing-md);
-    gap: var(--spacing-md);
     /* Respect Apple top notch and safe area */
     padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
+  }
+
+  .header-left {
     display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
   }
 
   .logo-container {
@@ -1148,13 +1153,6 @@
   .header-text {
     display: flex;
     flex-direction: column;
-  }
-
-  .header-main {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: 2px;
   }
 
   h1 {
