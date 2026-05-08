@@ -7,6 +7,7 @@ export const campusWebLinks = [
     icon: "🎓",
     description: "Student dashboard with events and overview",
     category_name: "CampusWeb Portal",
+    iframeable: false,
   },
   {
     id: "my-profile",
@@ -15,6 +16,7 @@ export const campusWebLinks = [
     icon: "👤",
     description: "Profile information and contact details",
     category_name: "CampusWeb Portal",
+    iframeable: false,
   },
   {
     id: "my-contacts",
@@ -23,6 +25,7 @@ export const campusWebLinks = [
     icon: "👥",
     description: "Student network and connections",
     category_name: "CampusWeb Portal",
+    iframeable: false,
   },
   {
     id: "my-documents",
@@ -31,6 +34,7 @@ export const campusWebLinks = [
     icon: "📄",
     description: "Request certificates and transcripts",
     category_name: "CampusWeb Portal",
+    iframeable: false,
   },
   {
     id: "schedule",
@@ -39,6 +43,7 @@ export const campusWebLinks = [
     icon: "📅",
     description: "View class timetable",
     category_name: "Academic Services",
+    iframeable: false,
   },
   {
     id: "courses",
@@ -47,6 +52,7 @@ export const campusWebLinks = [
     icon: "📖",
     description: "View enrolled courses",
     category_name: "Academic Services",
+    iframeable: false,
   },
   {
     id: "course-selection",
@@ -55,6 +61,7 @@ export const campusWebLinks = [
     icon: "✅",
     description: "Register or drop courses",
     category_name: "Academic Services",
+    iframeable: false,
   },
   {
     id: "exam-registration",
@@ -63,6 +70,7 @@ export const campusWebLinks = [
     icon: "🎓",
     description: "Register for exams",
     category_name: "Academic Services",
+    iframeable: false,
   },
   {
     id: "grades",
@@ -71,6 +79,7 @@ export const campusWebLinks = [
     icon: "📊",
     description: "View grades and exam results",
     category_name: "Academic Services",
+    iframeable: false,
   },
   {
     id: "submissions",
@@ -79,6 +88,7 @@ export const campusWebLinks = [
     icon: "📤",
     description: "Upload assignments",
     category_name: "Academic Services",
+    iframeable: false,
   },
   {
     id: "course-catalog",
@@ -87,6 +97,7 @@ export const campusWebLinks = [
     icon: "📑",
     description: "Browse 2400+ courses",
     category_name: "Academic Services",
+    iframeable: false,
   },
 ];
 
@@ -99,6 +110,7 @@ export const eCampusLinks = [
     icon: "💻",
     description: "Moodle learning platform",
     category_name: "E-Campus Portal",
+    iframeable: false,
   },
   {
     id: "ecampus-news",
@@ -107,6 +119,7 @@ export const eCampusLinks = [
     icon: "📰",
     description: "University announcements",
     category_name: "E-Campus",
+    iframeable: false,
   },
   {
     id: "career-center-events",
@@ -115,6 +128,7 @@ export const eCampusLinks = [
     icon: "🧠",
     description: "SRH Career Center exclusive events on JobTeaser",
     category_name: "Career Service",
+    iframeable: false,
   },
   {
     id: "ecampus-tools",
@@ -123,6 +137,7 @@ export const eCampusLinks = [
     icon: "🛠️",
     description: "IT, Career Service, International Office",
     category_name: "E-Campus",
+    iframeable: false,
   },
   {
     id: "ecampus-regulations",
@@ -131,6 +146,7 @@ export const eCampusLinks = [
     icon: "📋",
     description: "Policies, forms, and guidelines",
     category_name: "E-Campus",
+    iframeable: false,
   },
   {
     id: "student-handbook",
@@ -139,6 +155,7 @@ export const eCampusLinks = [
     icon: "📘",
     description: "Comprehensive FAQ and organizational guide for SRH students",
     category_name: "Resources",
+    iframeable: false,
   },
   {
     id: "srh-padlet",
@@ -147,6 +164,7 @@ export const eCampusLinks = [
     icon: "📋",
     description: "FAQs, services, and regulations",
     category_name: "Resources",
+    iframeable: false,
   },
 ];
 
@@ -159,6 +177,7 @@ export const resourceLinks = [
     icon: "📚",
     description: "Search books and journals",
     category_name: "Resources",
+    iframeable: false,
   },
   {
     id: "library-eresources",
@@ -167,6 +186,7 @@ export const resourceLinks = [
     icon: "📖",
     description: "Digital library resources",
     category_name: "Resources",
+    iframeable: false,
   },
   {
     id: "team-directory",
@@ -175,6 +195,7 @@ export const resourceLinks = [
     icon: "👨‍🏫",
     description: "Find faculty and staff",
     category_name: "Resources",
+    iframeable: false,
   },
   {
     id: "university-website",
@@ -183,6 +204,7 @@ export const resourceLinks = [
     icon: "🌐",
     description: "Main university website",
     category_name: "Resources",
+    iframeable: false,
   },
   {
     id: "accommodation",
@@ -191,6 +213,7 @@ export const resourceLinks = [
     icon: "🏠",
     description: "Housing and residence options",
     category_name: "Resources",
+    iframeable: false,
   },
   {
     id: "study-advisors",
@@ -199,6 +222,7 @@ export const resourceLinks = [
     icon: "🗣️",
     description: "Contact our student advisory team",
     category_name: "Resources",
+    iframeable: false,
   },
   {
     id: "our-campuses",
@@ -207,6 +231,7 @@ export const resourceLinks = [
     icon: "🏛️",
     description: "Explore our campus locations",
     category_name: "Resources",
+    iframeable: false,
   },
   {
     id: "financing",
@@ -215,6 +240,7 @@ export const resourceLinks = [
     icon: "💰",
     description: "Tuition fees and funding options",
     category_name: "Resources",
+    iframeable: false,
   },
 ];
 
@@ -227,6 +253,7 @@ export const internationalOfficeLinks = [
     icon: "🌍",
     description: "Information on studying abroad",
     category_name: "International Office",
+    iframeable: false,
   },
   {
     id: "semester-abroad",
@@ -235,6 +262,7 @@ export const internationalOfficeLinks = [
     icon: "🏫",
     description: "Incoming exchange students",
     category_name: "International Office",
+    iframeable: false,
   },
   {
     id: "scholarships",
@@ -243,6 +271,7 @@ export const internationalOfficeLinks = [
     icon: "💶",
     description: "Funding and financial aid",
     category_name: "International Office",
+    iframeable: false,
   },
   {
     id: "partner-universities",
@@ -251,6 +280,7 @@ export const internationalOfficeLinks = [
     icon: "🤝",
     description: "Global university network",
     category_name: "International Office",
+    iframeable: false,
   },
   {
     id: "visa-residence",
@@ -259,6 +289,7 @@ export const internationalOfficeLinks = [
     icon: "🛂",
     description: "Visa and legal requirements",
     category_name: "International Office",
+    iframeable: false,
   },
 ];
 
@@ -271,6 +302,7 @@ export const serviceLinks = [
     icon: "📧",
     description: "University email",
     category_name: "Services",
+    iframeable: false,
   },
   {
     id: "onedrive",
@@ -279,6 +311,7 @@ export const serviceLinks = [
     icon: "☁️",
     description: "Cloud storage",
     category_name: "Services",
+    iframeable: false,
   },
   {
     id: "brand-store",
@@ -287,6 +320,7 @@ export const serviceLinks = [
     icon: "🛒",
     description: "Official merchandise",
     category_name: "Services",
+    iframeable: false,
   },
   {
     id: "equipment-rental",
@@ -295,6 +329,7 @@ export const serviceLinks = [
     icon: "📷",
     description: "Rent equipment from SRH Berlin",
     category_name: "Services",
+    iframeable: false,
   },
 ];
 
@@ -307,6 +342,7 @@ export const utilityLinks = [
     icon: "📄",
     description: "Edit, merge, and convert PDFs",
     category_name: "Utilities",
+    iframeable: false,
   },
   {
     id: "calendar-enhancer",
@@ -315,6 +351,7 @@ export const utilityLinks = [
     icon: "🪄",
     description: "Transform and optimize university schedules",
     category_name: "Utilities",
+    iframeable: true,
   },
 ];
 
@@ -327,6 +364,7 @@ export const internalAppLinks = [
     icon: "📋",
     description: "Find university contacts and send emails",
     category_name: "App Sections",
+    iframeable: false,
   },
   {
     id: "calendar-app",
@@ -335,6 +373,7 @@ export const internalAppLinks = [
     icon: "📅",
     description: "University events, exams, and schedule",
     category_name: "App Sections",
+    iframeable: false,
   },
   {
     id: "settings-app",
@@ -343,6 +382,7 @@ export const internalAppLinks = [
     icon: "⚙️",
     description: "Personalize your CampusWeb experience",
     category_name: "App Sections",
+    iframeable: false,
   },
   {
     id: "accessibility-app",
@@ -351,6 +391,7 @@ export const internalAppLinks = [
     icon: "♿",
     description: "Visual and interaction aids",
     category_name: "App Sections",
+    iframeable: false,
   },
 ];
 

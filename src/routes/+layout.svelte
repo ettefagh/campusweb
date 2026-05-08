@@ -3,6 +3,7 @@
   import BottomNav from "$lib/components/BottomNav.svelte";
   import UpdatePrompt from "$lib/components/UpdatePrompt.svelte";
   import { browser } from "$app/environment";
+  import { afterNavigate } from "$app/navigation";
   import { activeA11yClasses, A11Y_CLASS_MAP } from "$lib/stores/accessibility";
   import { settingsStore } from "$lib/stores/settingsStore";
 
@@ -10,6 +11,11 @@
   // All CSS a11y overrides target html.a11y-* classes, so this is the
   // only place the store needs to be wired in — no prop drilling.
   if (browser) {
+    // Frame Buster: Prevent nested loading of SvelteKit inside iframes
+    if (window.self !== window.top) {
+      window.top.location.href = window.location.href;
+    }
+
     activeA11yClasses.subscribe((activeClasses) => {
       const allClasses = Object.values(A11Y_CLASS_MAP);
       const html = document.documentElement;
@@ -44,6 +50,13 @@
         // Re-apply current theme setting when OS preference changes
         settingsStore.subscribe((s) => applyTheme(s.theme))();
       });
+
+    afterNavigate(() => {
+      const container = document.querySelector(".app-container");
+      if (container) {
+        container.scrollTop = 0;
+      }
+    });
   }
 </script>
 
@@ -52,14 +65,7 @@
 <div class="app-container">
   <main id="main" class="content-area">
     <slot />
-    <footer class="mobile-footer">
-      <p>Crafted with ❤️ for My Classmates • Unofficial</p>
-      <a
-        href="https://github.com/ettefagh/campusweb"
-        target="_blank"
-        rel="noopener noreferrer">GitHub</a
-      >
-    </footer>
+
   </main>
 </div>
 
@@ -69,47 +75,21 @@
 <style>
   .app-container {
     position: relative;
-    min-height: 100vh;
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     /* Mobile: pad bottom for bottom nav */
-    padding-bottom: calc(
-      var(--touch-target-min) + var(--spacing-lg) + var(--spacing-lg)
-    );
+    padding-bottom: 110px;
   }
 
-  .mobile-footer {
-    padding: var(--spacing-xl) var(--spacing-lg);
-    text-align: center;
-    border-top: 1px solid var(--border-color);
-    margin-top: var(--spacing-xl);
-    opacity: 0.6;
-    font-size: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .mobile-footer p {
-    margin: 0;
-  }
-
-  .mobile-footer a {
-    color: var(--primary-color);
-    text-decoration: none;
-    font-weight: 600;
-  }
-
-  /* Desktop: shift content right for sidebar, remove bottom padding */
-  @media (min-width: 1024px) {
-    .app-container {
-      margin-left: var(--sidebar-width, 220px);
-      padding-bottom: 0;
-    }
-
-    .mobile-footer {
-      display: none;
-    }
-  }
+	/* Desktop: shift content right for sidebar, remove bottom padding */
+	@media (min-width: 1024px) {
+		.app-container {
+			margin-left: var(--sidebar-width, 220px);
+			padding-bottom: 0;
+		}
+	}
 
   /* Landscape Mobile: Shift content for right nav-bar */
   @media (max-width: 1023px) and (orientation: landscape) {

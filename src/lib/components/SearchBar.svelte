@@ -31,6 +31,10 @@
 		// Small delay allows for clicks on dropdown results before state changes
 		setTimeout(() => {
 			isSearchActive = false;
+			if (typeof window !== 'undefined') {
+				// Forces mobile browsers to recalculate visual viewport boundaries and snap fixed elements back to the bottom
+				window.scrollTo(window.scrollX, window.scrollY);
+			}
 		}, 150);
 	}
 
@@ -43,6 +47,7 @@
 			<span class="search-icon" aria-hidden="true">🔍</span>
 			<input
 				bind:this={inputElement}
+				id="search-input"
 				type="search"
 				{placeholder}
 				bind:value={searchQuery}

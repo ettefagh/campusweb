@@ -10,6 +10,7 @@
   import LinkCard from "$lib/components/LinkCard.svelte";
   import SearchBar from "$lib/components/SearchBar.svelte";
   import { onMount } from "svelte";
+  import { page } from "$app/stores";
 
   let campusContacts = $state<any[]>([]);
   let generalContacts = $state<any[]>([]);
@@ -42,6 +43,9 @@
     "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB",
   );
 
+  let showGoToTop = $state(false);
+  let container: HTMLElement | null = null;
+
   onMount(() => {
     // Dynamic library URL based on campus if needed
     if ($settingsStore.campus === "Berlin") {
@@ -50,11 +54,44 @@
     if ($settingsStore.emailVerified) {
       loadPrivateContacts();
     }
+
+
+
+    container = document.querySelector(".app-container");
+    const handleScroll = () => {
+      if (container) {
+        showGoToTop = container.scrollTop > 300;
+      }
+    };
+    container?.addEventListener("scroll", handleScroll);
+    return () => {
+      container?.removeEventListener("scroll", handleScroll);
+    };
   });
+
+  function goToTop() {
+    container?.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   $effect(() => {
     if ($settingsStore.emailVerified && !isContactsLoaded && !isContactsLoading) {
       loadPrivateContacts();
+    }
+  });
+
+  $effect(() => {
+    if ($page.url.searchParams.get("focus") === "true") {
+      isSearchActive = true;
+      // Focus the input instantly to catch the user gesture, and try again slightly later if not fully rendered
+      const searchInput = document.getElementById("search-input") as HTMLInputElement;
+      if (searchInput) {
+        searchInput.focus();
+      } else {
+        setTimeout(() => {
+          const el = document.getElementById("search-input") as HTMLInputElement;
+          el?.focus();
+        }, 50);
+      }
     }
   });
 
@@ -253,7 +290,23 @@
 
 <div class="explore-page" class:is-searching={searchQuery.trim() !== ""}>
   <header class="page-header" class:collapsed={searchQuery.trim() !== ""}>
-    <div class="header-inner">
+    <div class="logo-container">
+      <img
+        src="/icon-light.png"
+        alt="SRH University Logo"
+        class="logo light-mode"
+        width="36"
+        height="36"
+      />
+      <img
+        src="/icon-dark.png"
+        alt="SRH University Logo"
+        class="logo dark-mode"
+        width="36"
+        height="36"
+      />
+    </div>
+    <div class="header-text">
       <h1>{$t.explore.title}</h1>
       <p class="subtitle">{$t.explore.subtitle}</p>
     </div>
@@ -320,7 +373,8 @@
               customUrl={link.id === "library-catalogue"
                 ? libraryUrl
                 : undefined}
-              showTag={true}
+              showTag={false}
+              useViewer={true}
               on:toggleFavorite={handleToggleFavorite}
             />
           {/each}
@@ -504,11 +558,22 @@
       </section>
     {/if}
   </div>
+
+  <!-- Floating Action Buttons -->
+  {#if showGoToTop}
+    <div class="fab-group">
+      <button class="fab-btn go-to-top glass" onclick={goToTop} aria-label="Go to top">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      </button>
+    </div>
+  {/if}
 </div>
 
 <style>
   .explore-page {
-    padding-bottom: 120px;
+    padding-bottom: var(--spacing-xl);
     min-height: 100vh;
     background: radial-gradient(
       circle at top right,
@@ -520,12 +585,18 @@
 
   /* ── Header ── */
   .page-header {
-    text-align: center;
-    padding: 60px var(--spacing-md) 40px;
-    overflow: hidden;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: var(--spacing-sm) var(--spacing-md);
+    gap: var(--spacing-md);
+    /* Respect Apple top notch and safe area */
+    padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
+    display: flex;
     transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
     opacity: 1;
-    max-height: 500px;
   }
 
   .page-header.collapsed {
@@ -533,34 +604,44 @@
     max-height: 0;
     padding-top: 0;
     padding-bottom: 0;
-    margin-bottom: -20px; /* Slight overlap fix */
+    margin-top: 0;
+    margin-bottom: 0;
     pointer-events: none;
   }
 
-  .header-inner {
-    transform: translateY(0);
-    transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  .logo-container {
+    margin-bottom: 0;
   }
 
-  .page-header.collapsed .header-inner {
-    transform: translateY(-40px);
+  .logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Dark mode support for logo */
+  :global([data-theme="dark"]) .light-mode {
+    display: none;
+  }
+  :global([data-theme="light"]) .dark-mode {
+    display: none;
+  }
+
+  .header-text {
+    display: flex;
+    flex-direction: column;
   }
 
   h1 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    margin-bottom: var(--spacing-xs);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 2px;
     color: var(--text-color);
   }
 
   .subtitle {
+    font-size: 0.85rem;
+    margin-bottom: 0;
     color: var(--text-color-secondary);
-    font-size: 1.1rem;
-    margin-bottom: var(--spacing-xl);
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
   }
 
   /* ── Sticky Search Wrapper ── */
@@ -571,15 +652,14 @@
     padding: var(--spacing-sm) var(--spacing-md);
     transition: all 0.3s ease;
     margin-bottom: 20px;
-    margin-top: 40px;
+    margin-top: 0; /* no margin-top in !is.searching */
   }
 
   :global(.is-searching) .search-sticky-wrapper {
-    /* background: var(--glass-bg); */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    border-bottom: none; /* removed */
+    box-shadow: none; /* removed */
     margin-bottom: 20px;
     margin-top: 40px;
   }
@@ -625,7 +705,7 @@
   .explore-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 var(--spacing-md);
+    padding: 0;
   }
 
   .category-section {
@@ -667,7 +747,13 @@
   .links-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: var(--spacing-md);
+    gap: 0;
+  }
+
+  @media (min-width: 540px) {
+    .links-grid {
+      gap: var(--spacing-md);
+    }
   }
 
   /* ── Directory & Contacts ── */
@@ -950,5 +1036,52 @@
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+  }
+
+  .fab-group {
+    position: fixed;
+    bottom: 120px; /* safe above bottom navigation bar */
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 9999;
+  }
+
+  .fab-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  .fab-btn:hover {
+    transform: scale(1.1) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .fab-btn:active {
+    transform: scale(0.95);
+  }
+
+  .go-to-top {
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(8px);
+    color: var(--text-color);
+  }
+
+  @media (min-width: 1024px) {
+    .fab-group {
+      bottom: 24px; /* clears tab bar which is sidebar on desktop */
+      right: 24px;
+    }
   }
 </style>

@@ -39,7 +39,7 @@
 
 	$: effectiveUrl = customUrl || link.url;
 	$: isInternalLink = effectiveUrl.startsWith('/');
-	$: finalUrl = (useViewer && !isInternalLink)
+	$: finalUrl = (useViewer && !isInternalLink && link.iframeable === true)
 		? `/viewer?url=${encodeURIComponent(effectiveUrl)}&title=${encodeURIComponent(displayTitle)}`
 		: effectiveUrl;
 

@@ -188,25 +188,83 @@
     reader.readAsDataURL(file);
   }
 
+  async function loadPDFJS(): Promise<boolean> {
+    if (typeof window !== 'undefined' && (window as any).pdfjsLib) return true;
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js";
+        script.onload = () => resolve();
+        script.onerror = (err) => reject(err);
+        document.head.appendChild(script);
+      });
+      if ((window as any).pdfjsLib) {
+        (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+        return true;
+      }
+    } catch (e) {
+      console.error("Failed to load PDF.js library:", e);
+    }
+    return false;
+  }
+
+  async function handlePDFUpload(file: File) {
+    const loaded = await loadPDFJS();
+    if (!loaded) {
+      alert("Failed to load PDF processing engine.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const typedarray = new Uint8Array(e.target?.result as ArrayBuffer);
+        const pdfjsLib = (window as any).pdfjsLib;
+        const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 2.0 }); // high res
+        const canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const context = canvas.getContext("2d");
+        if (context) {
+          await page.render({ canvasContext: context, viewport }).promise;
+          rawImageSrc = canvas.toDataURL("image/jpeg", 0.85);
+          corners = [
+            { x: 0.05, y: 0.05 },
+            { x: 0.95, y: 0.05 },
+            { x: 0.95, y: 0.95 },
+            { x: 0.05, y: 0.95 },
+          ];
+        }
+      } catch (err) {
+        console.error("PDF rendering error:", err);
+        alert("Failed to render PDF. Please upload a valid PDF file.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
   function handleFullImageUpload(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
 
     const file = input.files[0];
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      rawImageSrc = e.target?.result as string;
-      // Reset corners to reasonable starting point
-      corners = [
-        { x: 0.05, y: 0.05 },
-        { x: 0.95, y: 0.05 },
-        { x: 0.95, y: 0.95 },
-        { x: 0.05, y: 0.95 },
-      ];
-    };
-
-    reader.readAsDataURL(file);
+    if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+      handlePDFUpload(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        rawImageSrc = e.target?.result as string;
+        // Reset corners to reasonable starting point
+        corners = [
+          { x: 0.05, y: 0.05 },
+          { x: 0.95, y: 0.05 },
+          { x: 0.95, y: 0.95 },
+          { x: 0.05, y: 0.95 },
+        ];
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   // Draggable corners handlers
@@ -453,16 +511,16 @@
 
         {#if isFullImageCard}
           <div class="form-group">
-            <label for="full-card-upload">Digital Student ID Image File</label>
+            <label for="full-card-upload">Digital Student ID File (Image or PDF)</label>
             <input
               type="file"
               id="full-card-upload"
-              accept="image/*"
+              accept="image/*,application/pdf"
               on:change={handleFullImageUpload}
               required={!fullImage}
             />
             <p class="field-hint">
-              Upload any photo of your student ID card. Drag the 4 green circles
+              Upload any photo or PDF of your student ID card. Drag the 4 green circles
               below to identify the card's exact corners!
             </p>
           </div>

@@ -643,20 +643,38 @@
 
 <div class="calendar-page">
   <header class="page-header">
-    <div class="header-main">
-      <h1>📅 {$t.calendar.title || "Calendar"}</h1>
-      <button
-        class="refresh-btn"
-        on:click={handleRefresh}
-        aria-label={$t.calendar.refresh}
-        title={$t.calendar.refresh}
-      >
-        <span class:spinning={isLoading}>🔄</span>
-      </button>
+    <div class="logo-container">
+      <img
+        src="/icon-light.png"
+        alt="SRH University Logo"
+        class="logo light-mode"
+        width="36"
+        height="36"
+      />
+      <img
+        src="/icon-dark.png"
+        alt="SRH University Logo"
+        class="logo dark-mode"
+        width="36"
+        height="36"
+      />
     </div>
-    <p class="subtitle">
-      {$t.calendar.subtitle || "University events and your schedule"}
-    </p>
+    <div class="header-text">
+      <div class="header-main">
+        <h1>{$t.calendar.title || "Calendar"}</h1>
+        <button
+          class="refresh-btn"
+          on:click={handleRefresh}
+          aria-label={$t.calendar.refresh}
+          title={$t.calendar.refresh}
+        >
+          <span class:spinning={isLoading}>🔄</span>
+        </button>
+      </div>
+      <p class="subtitle">
+        {$t.calendar.subtitle || "University events and your schedule"}
+      </p>
+    </div>
   </header>
 
   <div class="calendar-page-layout">
@@ -1097,24 +1115,53 @@
   }
 
   .page-header {
-    text-align: center;
-    padding: var(--spacing-lg) 0 var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: var(--spacing-sm) var(--spacing-md);
+    gap: var(--spacing-md);
+    /* Respect Apple top notch and safe area */
+    padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
+    display: flex;
+  }
+
+  .logo-container {
+    margin-bottom: 0;
+  }
+
+  .logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  /* Dark mode support for logo */
+  :global([data-theme="dark"]) .light-mode {
+    display: none;
+  }
+  :global([data-theme="light"]) .dark-mode {
+    display: none;
+  }
+
+  .header-text {
     display: flex;
     flex-direction: column;
-    align-items: center;
   }
 
   .header-main {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 2px;
   }
 
   h1 {
+    font-size: 1.2rem;
+    font-weight: 700;
     margin: 0;
-    font-size: 1.75rem;
+    color: var(--text-color);
   }
 
   .refresh-btn {
@@ -1158,7 +1205,7 @@
 
   .subtitle {
     color: var(--text-color-secondary);
-    font-size: 1rem;
+    font-size: 0.85rem;
   }
 
   /* ─── Legend (inside Settings) ───────────────────────────────── */
@@ -1902,29 +1949,37 @@
   /* ─── Custom Now Indicator UI ─────────────────────────────── */
   :global(.ec-now-indicator) {
     z-index: 15 !important;
-    border-top: 2px solid var(--primary-color) !important;
-    box-shadow: 0 1px 6px rgba(212, 68, 7, 0.4) !important;
+    border-top: 2px solid #ef4444 !important; /* Vibrant Red line */
+    box-shadow: 0 1px 6px rgba(239, 68, 68, 0.4) !important;
+    margin-left: 0 !important;
   }
 
   :global(.ec-now-indicator::before) {
     content: "" !important;
     position: absolute !important;
-    left: -6px !important;
-    top: -5px !important;
-    width: 12px !important;
-    height: 12px !important;
-    background: var(--primary-color) !important;
+    left: 0 !important; /* No margin left/hang-off */
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 10px !important;
+    height: 10px !important;
+    background: #ef4444 !important; /* Premium vibrant red */
+    border: 1.5px solid #fff !important; /* High-contrast white border */
     border-radius: 50% !important;
-    box-shadow: 0 0 0 4px rgba(212, 68, 7, 0.2), 0 0 12px var(--primary-color) !important;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.8) !important;
     animation: indicatorPulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1) !important;
   }
 
   @keyframes indicatorPulse {
-    0%, 100% {
-      box-shadow: 0 0 0 0px rgba(212, 68, 7, 0.4), 0 0 12px var(--primary-color) !important;
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 0px rgba(239, 68, 68, 0.4),
+        0 0 8px rgba(239, 68, 68, 0.8) !important;
     }
     50% {
-      box-shadow: 0 0 0 6px rgba(212, 68, 7, 0), 0 0 16px var(--primary-color) !important;
+      box-shadow:
+        0 0 0 6px rgba(239, 68, 68, 0),
+        0 0 12px rgba(239, 68, 68, 0.8) !important;
     }
   }
 

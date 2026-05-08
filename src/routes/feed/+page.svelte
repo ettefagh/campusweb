@@ -153,8 +153,26 @@
 
 <div class="feed-container">
   <header class="page-header">
-    <h1>{$t.feed.title}</h1>
-    <p class="subtitle">{$t.feed.subtitle}</p>
+    <div class="logo-container">
+      <img
+        src="/icon-light.png"
+        alt="SRH University Logo"
+        class="logo light-mode"
+        width="36"
+        height="36"
+      />
+      <img
+        src="/icon-dark.png"
+        alt="SRH University Logo"
+        class="logo dark-mode"
+        width="36"
+        height="36"
+      />
+    </div>
+    <div class="header-text">
+      <h1>{$t.feed.title}</h1>
+      <p class="subtitle">{$t.feed.subtitle}</p>
+    </div>
   </header>
 
   <!-- Feature 1: News Preview Cards -->
@@ -248,8 +266,6 @@
       {/each}
     </div>
   </section>
-
-
 </div>
 
 <style>
@@ -265,25 +281,52 @@
   }
 
   .page-header {
-    text-align: center;
-    padding: var(--spacing-lg) 0 var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin: var(--spacing-sm) 0 var(--spacing-md) 0;
+    gap: var(--spacing-md);
+    /* Respect Apple top notch and safe area */
+    padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
+    display: flex;
+  }
+
+  .logo-container {
+    margin-bottom: 0;
+  }
+
+  .logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  /* Dark mode support for logo */
+  :global([data-theme="dark"]) .light-mode {
+    display: none;
+  }
+  :global([data-theme="light"]) .dark-mode {
+    display: none;
+  }
+
+  .header-text {
+    display: flex;
+    flex-direction: column;
   }
 
   h1 {
-    margin-bottom: var(--spacing-xs);
-    font-size: 1.75rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: var(--text-color);
   }
 
   .subtitle {
-    color: #666;
-    font-size: 1rem;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .subtitle {
-      color: #aaa;
-    }
+    font-size: 0.85rem;
+    margin-bottom: 0;
+    color: var(--text-color-secondary);
   }
 
   .section-title {
@@ -349,7 +392,6 @@
     }
   }
 
-
   .news-card::before {
     content: "";
     position: absolute;
@@ -383,8 +425,6 @@
     letter-spacing: 0.04em;
     margin-bottom: var(--spacing-sm);
   }
-
-
 
   .news-card-title {
     font-size: 1.05rem;
@@ -503,13 +543,21 @@
   }
 
   @keyframes pulse {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
+    0% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.6;
+    }
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .embed-label {
@@ -613,7 +661,7 @@
 
   .hint-icon {
     font-size: 2.5rem;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
   }
 
   .hint-text h3 {
@@ -768,7 +816,6 @@
     }
   }
 
-
   .dir-actions {
     display: flex;
     gap: var(--spacing-sm);
@@ -798,7 +845,6 @@
       background: rgba(255, 255, 255, 0.05);
     }
   }
-
 
   .dir-action-btn:hover {
     background: rgba(0, 0, 0, 0.06);
@@ -852,7 +898,6 @@
     font-size: 0.9rem;
     font-style: italic;
   }
-
 
   /* ─── Feature 3: Contact Trigger Button ──────────────────────── */
   .contact-trigger-section {

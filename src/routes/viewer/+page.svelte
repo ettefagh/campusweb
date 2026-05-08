@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
   import { browser } from "$app/environment";
+  import { goto } from "$app/navigation";
 
   // Domains allowed to be displayed in the iframe
   const ALLOWED_DOMAINS = [
@@ -81,10 +82,8 @@
   }
 
   function goBack() {
-    if (browser && window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = "/";
+    if (browser) {
+      goto("/explore");
     }
   }
 
@@ -192,7 +191,7 @@
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          class="icon-btn"
+          class="open-browser-btn"
           aria-label="Open in browser"
           title="Open in browser"
         >
@@ -215,6 +214,7 @@
               y2="3"
             />
           </svg>
+          <span class="btn-text">Open in browser</span>
         </a>
       {/if}
     </div>
@@ -427,5 +427,47 @@
     text-decoration: none;
     font-weight: 600;
     font-size: 0.95rem;
+  }
+
+  .open-browser-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 14px;
+    height: 40px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: var(--glass-bg-light, rgba(255, 255, 255, 0.05));
+    color: var(--primary-color);
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .open-browser-btn:hover,
+  .open-browser-btn:focus-visible {
+    background: var(--primary-color);
+    color: white !important;
+    border-color: var(--primary-color);
+  }
+
+  .open-browser-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  @media (max-width: 480px) {
+    .open-browser-btn .btn-text {
+      display: none;
+    }
+    .open-browser-btn {
+      width: 40px;
+      padding: 0;
+      border-radius: 50%;
+    }
   }
 </style>

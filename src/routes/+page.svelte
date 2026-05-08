@@ -8,11 +8,32 @@
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
 
+	let showGoToTop = false;
+	let container: HTMLElement | null = null;
+
 	onMount(() => {
 		if ($settingsStore.defaultPage === 'calendar') {
 			goto('/calendar', { replaceState: true });
 		}
+		container = document.querySelector(".app-container");
+		const handleScroll = () => {
+			if (container) {
+				showGoToTop = container.scrollTop > 300;
+			}
+		};
+		container?.addEventListener("scroll", handleScroll);
+		return () => {
+			container?.removeEventListener("scroll", handleScroll);
+		};
 	});
+
+	function goToTop() {
+		container?.scrollTo({ top: 0, behavior: "smooth" });
+	}
+
+	function triggerExploreSearch() {
+		goto("/explore?focus=true");
+	}
 
 	let isEditMode = false;
 	let searchQuery = "";
@@ -66,21 +87,21 @@
 	{#each $settingsStore.homeSections as section, i (section.id)}
 		{#if section.enabled}
 			{#if section.id === "header"}
-				<header class="page-header" class:narrow={$settingsStore.headerSize === 'small'} style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
+				<header class="page-header narrow" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
 					<div class="logo-container">
 						<img
 							src="/icon-light.png"
 							alt="SRH University Logo"
 							class="logo light-mode"
-							width={$settingsStore.headerSize === 'small' ? '36' : '48'}
-							height={$settingsStore.headerSize === 'small' ? '36' : '48'}
+							width="36"
+							height="36"
 						/>
 						<img
 							src="/icon-dark.png"
 							alt="SRH University Logo"
 							class="logo dark-mode"
-							width={$settingsStore.headerSize === 'small' ? '36' : '48'}
-							height={$settingsStore.headerSize === 'small' ? '36' : '48'}
+							width="36"
+							height="36"
 						/>
 					</div>
 					<div class="header-text">
@@ -149,11 +170,27 @@
 		{/if}
 	{/each}
 
+	<!-- Floating Action Buttons -->
+	<div class="fab-group">
+		{#if showGoToTop}
+			<button class="fab-btn go-to-top glass" on:click={goToTop} aria-label="Go to top">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+					<polyline points="18 15 12 9 6 15"></polyline>
+				</svg>
+			</button>
+		{/if}
+		<button class="fab-btn search-fab" on:click={triggerExploreSearch} aria-label="Search Explore">
+			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+				<circle cx="11" cy="11" r="8"></circle>
+				<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+			</svg>
+		</button>
+	</div>
 </div>
 
 <style>
 	.home-page {
-		padding-bottom: var(--spacing-xl);
+		padding-bottom: calc(var(--spacing-xl) * 2.5);
 	}
 
 	.page-header {
@@ -421,6 +458,58 @@
 		to {
 			opacity: 1;
 			transform: translateY(0);
+		}
+	}
+
+	.fab-group {
+		position: fixed;
+		bottom: 120px; /* safe above bottom navigation bar */
+		right: 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		z-index: 9999;
+	}
+
+	.fab-btn {
+		width: 48px;
+		height: 48px;
+		border-radius: 50%;
+		border: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.2rem;
+		cursor: pointer;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+		transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+	}
+
+	.fab-btn:hover {
+		transform: scale(1.1) translateY(-2px);
+		box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+	}
+
+	.fab-btn:active {
+		transform: scale(0.95);
+	}
+
+	.search-fab {
+		background: var(--primary-color, #d44407);
+		color: white;
+	}
+
+	.go-to-top {
+		background: var(--glass-bg-strong);
+		border: 1px solid var(--glass-border);
+		backdrop-filter: blur(8px);
+		color: var(--text-color);
+	}
+
+	@media (min-width: 1024px) {
+		.fab-group {
+			bottom: 24px; /* clears tab bar which is sidebar on desktop */
+			right: 24px;
 		}
 	}
 </style>
