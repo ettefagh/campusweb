@@ -1325,7 +1325,8 @@
     flex-direction: column;
     position: relative;
     margin: 0 var(--spacing-sm);
-    background: #d0d0d012;
+    /* Light mode: white base at 70% opacity (less transparent than before) */
+    background: rgba(255, 255, 255, 0.70);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
@@ -1338,6 +1339,10 @@
     transition: opacity 0.3s ease;
   }
 
+  :global([data-theme="dark"]) .calendar-container {
+    background: rgba(18, 18, 24, 0.65);
+  }
+
   .calendar-scroll-area {
     flex: 1;
     overflow-x: hidden;
@@ -1347,7 +1352,24 @@
   }
 
   .view-week .calendar-scroll-area {
-    overflow-x: auto; /* Enable horizontal scroll in week view */
+    /* Horizontal scroll is now handled inside .ec-main so sticky sidebar works.
+       Blocking it here prevents the double-scroll-container problem. */
+    overflow-x: hidden;
+  }
+
+  /* On portrait mobile, force fixed column width so .ec-main overflows
+     horizontally — this makes position:sticky on .ec-sidebar work correctly. */
+  @media (max-width: 599px) {
+    .view-week :global(.ec-main) {
+      --ec-col-width: 120px !important;
+    }
+  }
+
+  /* On landscape mobile, slightly smaller columns so it stays manageable */
+  @media (min-width: 600px) and (max-width: 1023px) {
+    .view-week :global(.ec-main) {
+      --ec-col-width: 110px !important;
+    }
   }
 
   /* ─── Feature 4: Empty State ─────────────────────────────────── */
@@ -1739,8 +1761,25 @@
     height: 100% !important;
   }
 
-  .view-week :global(.ec) {
-    min-width: 1000px !important;
+  /* No min-width on .view-week .ec — let .ec-main overflow via column widths
+     so position:sticky on .ec-sidebar has a proper scroll container to work against. */
+
+  /* ─── Sticky Sidebar Layer (week view horizontal scroll) ──────── */
+  :global(.ec-sidebar) {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 10 !important;
+    background-color: rgba(255, 255, 255, 0.80) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border-right: 1px solid var(--border-color) !important;
+    box-shadow: 6px 0 20px rgba(0, 0, 0, 0.04) !important;
+    transition: background-color 0.3s ease !important;
+  }
+
+  :global(html[data-theme="dark"] .ec-sidebar) {
+    background-color: rgba(18, 18, 26, 0.88) !important;
+    box-shadow: 6px 0 20px rgba(0, 0, 0, 0.18) !important;
   }
 
   :global(.custom-header) {
@@ -2026,37 +2065,31 @@
   /* ─── Custom Now Indicator UI ─────────────────────────────── */
   :global(.ec-now-indicator) {
     z-index: 15 !important;
-    border-top: 2px solid #ef4444 !important; /* Vibrant Red line */
-    box-shadow: 0 1px 6px rgba(239, 68, 68, 0.4) !important;
+    border-top: 2px solid var(--primary-color) !important;
+    box-shadow: 0 1px 6px rgba(212, 68, 7, 0.4) !important;
     margin-left: 0 !important;
   }
 
   :global(.ec-now-indicator::before) {
     content: "" !important;
     position: absolute !important;
-    left: 0 !important; /* No margin left/hang-off */
-    top: 50% !important;
-    transform: translateY(-50%) !important;
+    left: -5px !important; /* Hang slightly into sidebar so dot is fully visible */
+    top: -4px !important;  /* Center the 10px dot on the 2px line */
     width: 10px !important;
     height: 10px !important;
-    background: #ef4444 !important; /* Premium vibrant red */
-    border: 1.5px solid #fff !important; /* High-contrast white border */
+    background: var(--primary-color) !important;
     border-radius: 50% !important;
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.8) !important;
+    box-shadow: 0 0 8px var(--primary-color) !important;
     animation: indicatorPulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1) !important;
   }
 
   @keyframes indicatorPulse {
     0%,
     100% {
-      box-shadow:
-        0 0 0 0px rgba(239, 68, 68, 0.4),
-        0 0 8px rgba(239, 68, 68, 0.8) !important;
+      box-shadow: 0 0 0 0px rgba(212, 68, 7, 0.4), 0 0 8px var(--primary-color) !important;
     }
     50% {
-      box-shadow:
-        0 0 0 6px rgba(239, 68, 68, 0),
-        0 0 12px rgba(239, 68, 68, 0.8) !important;
+      box-shadow: 0 0 0 6px rgba(212, 68, 7, 0), 0 0 12px var(--primary-color) !important;
     }
   }
 
