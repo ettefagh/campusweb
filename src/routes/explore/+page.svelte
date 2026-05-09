@@ -297,6 +297,8 @@
         class="logo light-mode"
         width="36"
         height="36"
+        loading="eager"
+        fetchpriority="high"
       />
       <img
         src="/icon-dark.png"
@@ -304,6 +306,8 @@
         class="logo dark-mode"
         width="36"
         height="36"
+        loading="eager"
+        fetchpriority="high"
       />
     </div>
     <div class="header-text">
@@ -435,7 +439,7 @@
                         <div class="contact-program-list">
                           {#each contact.programs as prog}
                             <div class="program-item">
-                              🎓 {@html highlightMatch(prog, searchQuery)}
+                              <i class="ph-bold ph-graduation-cap" style="margin-right: 4px; color: var(--primary-color);"></i> {@html highlightMatch(prog, searchQuery)}
                             </div>
                           {/each}
                         </div>
@@ -444,7 +448,7 @@
                         <div class="contact-service-list">
                           {#each contact.services as service}
                             <div class="service-item">
-                              🛠️ {@html highlightMatch(service, searchQuery)}
+                              <i class="ph-bold ph-wrench" style="margin-right: 4px; color: var(--primary-color);"></i> {@html highlightMatch(service, searchQuery)}
                             </div>
                           {/each}
                         </div>
@@ -481,20 +485,23 @@
                     <a
                       href="mailto:{contact.email}"
                       class="search-contact-btn mail"
-                      title="Email">📧</a
+                      title="Email"
+                      ><i class="ph-bold ph-envelope"></i></a
                     >
                     <a
                       href={getTeamsChatUrl(contact.email)}
                       class="search-contact-btn chat"
                       target="_blank"
                       rel="noopener noreferrer"
-                      title="Chat on Teams">💬</a
+                      title="Chat on Teams"
+                      ><i class="ph-bold ph-chat-circle"></i></a
                     >
                     {#if contact.phone}
                       <a
                         href="tel:{contact.phone.replace(/[\s-]/g, '')}"
                         class="search-contact-btn call"
-                        title="Call">📞</a
+                        title="Call"
+                        ><i class="ph-bold ph-phone"></i></a
                       >
                     {/if}
                   </div>
@@ -573,6 +580,8 @@
 
 <style>
   .explore-page {
+    max-width: 1200px;
+    margin: 0 auto;
     padding-bottom: calc(var(--spacing-xl) * 2.5);
     min-height: 100vh;
     background: radial-gradient(

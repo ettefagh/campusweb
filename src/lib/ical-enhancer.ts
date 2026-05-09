@@ -98,14 +98,14 @@ function normalizeTitle(summary: string): string {
 }
 
 function resolveLocation(rawLoc: string) {
-    if (!rawLoc || rawLoc.toLowerCase() === 'online') {
+    if (!rawLoc || rawLoc.toLowerCase() === 'online' || /^(https?:\/\/[^\s]+)/i.test(rawLoc.trim())) {
         return { key: 'Online', name: 'Online', address: 'Online', coords: '0,0', plusCode: '', notes: '', room: '' };
     }
 
     const roomMatch = rawLoc.match(/((?:[A-D]|CUBE|SHED|SON|Seminar|HALL)\s*\d+\.\d+|\d+\.\d+)/i);
     const roomCode = roomMatch ? roomMatch[1] : '';
 
-    let key = 'CUBE';
+    let key = '';
     if (rawLoc.toUpperCase().includes('KIEHLUFER')) key = 'DEKRA';
     else if (rawLoc.toUpperCase().includes('THIEMANN')) key = 'CN';
     else if (rawLoc.toUpperCase().includes('HALL')) key = 'HALL';
@@ -120,6 +120,10 @@ function resolveLocation(rawLoc: string) {
             else if (rawLoc.toUpperCase().includes('CUBE')) key = 'CUBE';
             else if (/^\d/.test(first)) key = 'CUBE';
         }
+    }
+
+    if (!key) {
+        return { key: 'Unrecognized', name: '', address: '', coords: '', plusCode: '', notes: '', room: '' };
     }
 
     const data = CAMPUS_DATA[key] || CAMPUS_DATA['CUBE'];
@@ -173,7 +177,9 @@ function enhanceEvent(lines: string[]): string[] {
         uiLabel = 'Online';
     }
 
-    if (enhancedLoc.key === 'Online') {
+    if (enhancedLoc.key === 'Unrecognized') {
+        event.push(`LOCATION:${locationRaw}`);
+    } else if (enhancedLoc.key === 'Online') {
         event.push('LOCATION:Online');
         event.push('X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS="Online";X-APPLE-RADIUS=50;X-TITLE="Online";X-APPLE-REFERENCEFRAME=1:geo:0,0');
     } else {

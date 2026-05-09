@@ -182,6 +182,8 @@
     </div>
   </header>
 
+  <div class="settings-content">
+
   <!-- ── Campus & Programme ────────────────── -->
   <section class="settings-section">
     <div class="section-header">
@@ -802,14 +804,23 @@
       rel="noopener noreferrer">GitHub</a
     >
   </footer>
+  </div>
 </div>
 
 <style>
   .settings-page {
-    max-width: 680px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: var(--spacing-lg) var(--spacing-md);
     padding-bottom: calc(var(--spacing-xl) * 2.5);
+  }
+
+  .settings-content {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .settings-page > *:not(.page-header) {
     animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
@@ -820,7 +831,7 @@
     justify-content: flex-start;
     text-align: left;
     padding: var(--spacing-sm) var(--spacing-md);
-    margin: var(--spacing-sm) 0 var(--spacing-lg) 0;
+    margin: var(--spacing-sm) var(--spacing-md);
     gap: var(--spacing-md);
     /* Respect Apple top notch and safe area */
     padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));

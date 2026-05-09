@@ -1,8 +1,6 @@
 /* SRH Campus Pages - Global Styles */
 /* Liquid Glass Theme — Apple visionOS inspired */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 @font-face {
 	font-family: 'SRH Headline';
 	src: url('/fonts/SRHHeadline_W_Bd.woff2') format('woff2');

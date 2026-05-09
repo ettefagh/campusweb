@@ -15,10 +15,28 @@ export interface CalendarEvent {
 	extendedProps?: {
 		location?: string;
 		shortLocation?: string;
+		locationUrl?: string;
 		calendarId?: string;
 		description?: string;
 		classGroupId?: string;
 	};
+}
+
+function getFriendlyUrlLabel(url: string): string {
+	const lowercase = url.toLowerCase();
+	if (lowercase.includes('teams.microsoft.com') || lowercase.includes('teams.live.com')) {
+		return 'Teams Meeting';
+	}
+	if (lowercase.includes('zoom.us')) {
+		return 'Zoom Meeting';
+	}
+	if (lowercase.includes('meet.google.com')) {
+		return 'Google Meet';
+	}
+	if (lowercase.includes('webex.com')) {
+		return 'Webex Meeting';
+	}
+	return 'Online Link';
 }
 
 /**
@@ -58,9 +76,21 @@ export function parseICalEvents(
 
 			// Extract short location label (room code) from the full address
 			const fullLocation = location || '';
-			const shortLocation = fullLocation.includes(',')
-				? fullLocation.split(',')[0].trim()
-				: fullLocation;
+			let locationUrl = '';
+			let shortLocation = '';
+
+			const urlRegex = /https?:\/\/[^\s,;"]+/i;
+			if (urlRegex.test(fullLocation.trim())) {
+				const match = fullLocation.trim().match(urlRegex);
+				if (match) {
+					locationUrl = match[0];
+				}
+				shortLocation = getFriendlyUrlLabel(fullLocation);
+			} else {
+				shortLocation = fullLocation.includes(',')
+					? fullLocation.split(',')[0].trim()
+					: fullLocation;
+			}
 
 			// Extract class grouping ID (Course ID) if present, otherwise group as "Other Events"
 			let classGroupId = 'Other Events';
@@ -68,6 +98,13 @@ export function parseICalEvents(
 				const match = description.match(/Course ID:\s*(?!N\/A)(k_[A-Z0-9_]+)/i);
 				if (match && match[1]) {
 					classGroupId = match[1];
+				}
+				
+				if (!locationUrl) {
+					const descMatch = description.match(urlRegex);
+					if (descMatch) {
+						locationUrl = descMatch[0];
+					}
 				}
 			}
 
@@ -81,6 +118,7 @@ export function parseICalEvents(
 				extendedProps: {
 					location: fullLocation,
 					shortLocation,
+					locationUrl,
 					calendarId,
 					description,
 					classGroupId

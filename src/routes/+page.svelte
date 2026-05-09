@@ -87,7 +87,7 @@
 	{#each $settingsStore.homeSections as section, i (section.id)}
 		{#if section.enabled}
 			{#if section.id === "header"}
-				<header class="page-header narrow" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
+				<header class="page-header narrow">
 					<div class="logo-container">
 						<img
 							src="/icon-light.png"
@@ -95,6 +95,8 @@
 							class="logo light-mode"
 							width="36"
 							height="36"
+							loading="eager"
+							fetchpriority="high"
 						/>
 						<img
 							src="/icon-dark.png"
@@ -102,6 +104,8 @@
 							class="logo dark-mode"
 							width="36"
 							height="36"
+							loading="eager"
+							fetchpriority="high"
 						/>
 					</div>
 					<div class="header-text">
@@ -110,7 +114,7 @@
 					</div>
 				</header>
 			{:else if section.id === "favorites"}
-				<section class="links-section" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
+				<section class="links-section" style={i <= 1 ? "" : "animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;"}>
 					<div class="favorite-links-header">
 						<div class="favorite-links-title-group">
 							<h2>{$t.home.universityLinks || 'Favorite Links'}</h2>
@@ -190,6 +194,8 @@
 
 <style>
 	.home-page {
+		max-width: 1200px;
+		margin: 0 auto;
 		padding-bottom: calc(var(--spacing-xl) * 2.5);
 	}
 

@@ -37,7 +37,7 @@
   // ─── Calendar Reference & State ──────────────────────────────────
   let ecComponent: any;
   let isMounted = false;
-  let isLoading = true;
+  let isLoading = false;
   let currentViewLabel = "";
   let currentTitleText = "";
   let isTodayInView = true;
@@ -213,7 +213,9 @@
 
       const rawLoc = info.event.extendedProps?.shortLocation || "";
       const loc = esc(rawLoc);
-      const locHtml = loc ? `<span class="ec-event-loc">📍${loc}</span>` : "";
+      const hasUrl = !!info.event.extendedProps?.locationUrl;
+      const icon = hasUrl ? "🌐 " : "📍";
+      const locHtml = loc ? `<span class="ec-event-loc">${icon}${loc}</span>` : "";
       const texture = info.event.extendedProps?.texture || "solid";
       const color = info.event.backgroundColor || "var(--primary-color)";
       const textColor = color.replace("var(--event-", "var(--event-text-");
@@ -593,9 +595,15 @@
     const init = async () => {
       try {
         calendarStore.refreshAll();
-        staticEvents = await loadCalendarEvents();
+        // Load academic events asynchronously to unblock first paint & LCP
+        loadCalendarEvents().then((evts) => {
+          if (isMounted) {
+            staticEvents = evts;
+            options = { ...options, events: getAllEvents() };
+            setTimeout(updateToolbarState, 150);
+          }
+        });
         if (!isMounted) return;
-        options = { ...options, events: getAllEvents() };
         isLoading = false;
         setTimeout(updateToolbarState, 150);
       } catch (error) {
@@ -651,6 +659,8 @@
           class="logo light-mode"
           width="36"
           height="36"
+          loading="eager"
+          fetchpriority="high"
         />
         <img
           src="/icon-dark.png"
@@ -658,6 +668,8 @@
           class="logo dark-mode"
           width="36"
           height="36"
+          loading="eager"
+          fetchpriority="high"
         />
       </div>
       <div class="header-text">
@@ -684,7 +696,7 @@
         <span class="toolbar-title">{currentTitleText}</span>
       </div>
 
-      {#if isMounted && currentSubs.length === 0}
+      {#if !isMounted || currentSubs.length === 0}
         <div class="suggestion-banner link-banner">
         <div class="suggestion-icon"><i class="ph-bold ph-calendar"></i></div>
           <div class="suggestion-content">
@@ -978,7 +990,28 @@
       </div>
     {/if}
 
-    {#if popupEvent.extendedProps?.location || popupEvent.extendedProps?.shortLocation}
+    {#if popupEvent.extendedProps?.locationUrl}
+      <div class="popup-online-section">
+        <a
+          href={popupEvent.extendedProps.locationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="popup-online-btn"
+          aria-label="Join online meeting"
+        >
+          <i class="ph-bold ph-video-camera" style="font-size: 1.15rem;"></i>
+          <span>Join Online Meeting</span>
+        </a>
+        <div class="popup-location-badge online">
+          {popupEvent.extendedProps?.shortLocation || "Online"}
+        </div>
+        {#if popupEvent.extendedProps?.location && !popupEvent.extendedProps.location.startsWith('http')}
+          <div class="popup-location">
+            {popupEvent.extendedProps?.location}
+          </div>
+        {/if}
+      </div>
+    {:else if popupEvent.extendedProps?.location || popupEvent.extendedProps?.shortLocation}
       <a
         href="https://maps.google.com/?q={encodeURIComponent(
           popupEvent.extendedProps?.location,
@@ -1008,8 +1041,13 @@
 
 <style>
   .calendar-page {
+    max-width: 1200px;
+    margin: 0 auto;
     padding-bottom: calc(var(--spacing-xl) * 2.5);
     min-height: 100vh;
+  }
+
+  .calendar-page > *:not(.page-header) {
     animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
@@ -1591,6 +1629,47 @@
     font-weight: 600;
     margin-bottom: var(--spacing-xs);
     letter-spacing: 0.01em;
+  }
+
+  .popup-online-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .popup-online-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--primary-color);
+    color: white !important;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(212, 68, 7, 0.25);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .popup-online-btn:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 16px rgba(212, 68, 7, 0.35);
+    background: var(--srh-orange-dark, #d44407);
+  }
+
+  .popup-online-btn:active {
+    transform: translateY(0);
+  }
+
+  .popup-location-badge.online {
+    align-self: flex-start;
+    background: rgba(34, 197, 94, 0.1);
+    color: rgb(34, 197, 94);
+    border-color: rgba(34, 197, 94, 0.25);
   }
 
   .popup-location {

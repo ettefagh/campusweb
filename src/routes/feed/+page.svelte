@@ -160,6 +160,8 @@
         class="logo light-mode"
         width="36"
         height="36"
+        loading="eager"
+        fetchpriority="high"
       />
       <img
         src="/icon-dark.png"
@@ -167,6 +169,8 @@
         class="logo dark-mode"
         width="36"
         height="36"
+        loading="eager"
+        fetchpriority="high"
       />
     </div>
     <div class="header-text">
@@ -277,6 +281,9 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .feed-container > *:not(.page-header) {
     animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
@@ -286,7 +293,7 @@
     justify-content: flex-start;
     text-align: left;
     padding: var(--spacing-sm) var(--spacing-md);
-    margin: var(--spacing-sm) 0 var(--spacing-md) 0;
+    margin: var(--spacing-sm) var(--spacing-md);
     gap: var(--spacing-md);
     /* Respect Apple top notch and safe area */
     padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));

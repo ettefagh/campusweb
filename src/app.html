@@ -10,9 +10,24 @@
 		<meta name="description" content="Quick access to SRH University resources - optimized for mobile" />
 		<link rel="manifest" href="%sveltekit.assets%/manifest.json" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/icon-192.png" />
-		<link rel="stylesheet" type="text/css" href="%sveltekit.assets%/phosphor/regular/style.css" />
-		<link rel="stylesheet" type="text/css" href="%sveltekit.assets%/phosphor/bold/style.css" />
-		<link rel="stylesheet" type="text/css" href="%sveltekit.assets%/phosphor/fill/style.css" />
+		
+		<!-- Preload Local Custom Fonts and Logos -->
+		<link rel="preload" href="%sveltekit.assets%/fonts/SRHHeadline_W_Bd.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+		<link rel="preload" href="%sveltekit.assets%/fonts/SRHHeadline_W_Rg.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+		<link rel="preload" href="%sveltekit.assets%/fonts/SRHText_W_Bd.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+		<link rel="preload" href="%sveltekit.assets%/fonts/SRHText_W_Rg.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+		<link rel="preload" href="/icon-light.png" as="image" type="image/png" />
+		<link rel="preload" href="/icon-dark.png" as="image" type="image/png" />
+
+		<!-- Optimize Google Fonts Preconnect and Link Loading -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" />
+
+		<!-- Asynchronous Non-blocking Stylesheets for Icons -->
+		<link rel="stylesheet" href="%sveltekit.assets%/phosphor/regular/style.css" media="print" onload="this.media='all'" />
+		<link rel="stylesheet" href="%sveltekit.assets%/phosphor/bold/style.css" media="print" onload="this.media='all'" />
+		<link rel="stylesheet" href="%sveltekit.assets%/phosphor/fill/style.css" media="print" onload="this.media='all'" />
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
