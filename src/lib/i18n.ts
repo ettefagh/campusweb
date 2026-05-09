@@ -92,7 +92,7 @@ const translations = {
     feed: {
       pageTitle: 'Campus News | Campusweb',
       title: 'Campus Feed',
-      subtitle: 'Latest campus updates and social media feeds',
+      subtitle: 'Posts, Stories, and Student Offers',
       instagramFeeds: 'Instagram Feeds',
       followSRH: 'Follow SRH',
       readMore: 'Read more',
@@ -338,7 +338,7 @@ const translations = {
     feed: {
       pageTitle: 'Campus Neuigkeiten | Campusweb',
       title: 'Campus Feed',
-      subtitle: 'Aktuelle Campus-Updates und Social-Media-Feeds',
+      subtitle: 'Beiträge, Stories und Studentenangebote',
       instagramFeeds: 'Instagram Feeds',
       followSRH: 'SRH folgen',
       readMore: 'Weiterlesen',

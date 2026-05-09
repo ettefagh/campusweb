@@ -14,6 +14,7 @@
     calendarStore,
     activeClasses,
     EVENT_COLORS,
+    getTextureForColor,
   } from "$lib/stores/calendarStore";
   import { classColors } from "$lib/stores/classColors";
   import { t } from "$lib/i18n";
@@ -587,6 +588,7 @@
                       class="active-color-swatch"
                       style="background-color: {$classColors[cls.id] ||
                         cls.defaultColor}"
+                      data-texture={getTextureForColor($classColors[cls.id] || cls.defaultColor)}
                       on:click={() => toggleColorChooser(cls.id)}
                       aria-label="Change color"
                     ></button>
@@ -609,6 +611,7 @@
                               class:selected={($classColors[cls.id] ||
                                 cls.defaultColor) === ec.id}
                               style="background-color: {ec.id}"
+                              data-texture={ec.texture}
                               on:click={() => selectColor(cls.id, ec.id)}
                               aria-label="Select color"
                             ></button>
@@ -811,7 +814,6 @@
   .settings-page {
     max-width: 1200px;
     margin: 0 auto;
-    padding: var(--spacing-lg) var(--spacing-md);
     padding-bottom: calc(var(--spacing-xl) * 2.5);
   }
 
@@ -862,7 +864,8 @@
   }
 
   h1 {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    line-height: 0.8rem;
     font-weight: 700;
     margin: 0 0 2px;
     color: var(--text-color);
@@ -1440,6 +1443,8 @@
     padding: 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.1s;
+    position: relative;
+    overflow: hidden;
   }
   .active-color-swatch:active {
     transform: scale(0.95);
@@ -1480,6 +1485,8 @@
     transition:
       transform 0.1s,
       border-color 0.2s;
+    position: relative;
+    overflow: hidden;
   }
   .palette-swatch:hover {
     transform: scale(1.1);
@@ -1487,6 +1494,48 @@
   .palette-swatch.selected {
     border-color: var(--text-color);
     box-shadow: 0 0 0 1px var(--bg-color) inset;
+  }
+
+  /* Swatch Texture Overlays */
+  .active-color-swatch::after,
+  .palette-swatch::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: 50%;
+    opacity: 0.45;
+  }
+
+  .active-color-swatch[data-texture="stripes"]::after,
+  .palette-swatch[data-texture="stripes"]::after {
+    background-image: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 1) 20%,
+      transparent 20%,
+      transparent 50%,
+      rgba(255, 255, 255, 1) 50%,
+      rgba(255, 255, 255, 1) 70%,
+      transparent 70%,
+      transparent
+    ) !important;
+    background-size: 8px 8px !important;
+  }
+
+  .active-color-swatch[data-texture="dots"]::after,
+  .palette-swatch[data-texture="dots"]::after {
+    background-image: radial-gradient(
+      rgba(255, 255, 255, 1) 25%,
+      transparent 25%
+    ) !important;
+    background-size: 6px 6px !important;
+  }
+
+  .active-color-swatch[data-texture="mesh"]::after,
+  .palette-swatch[data-texture="mesh"]::after {
+    background-image: linear-gradient(rgba(255, 255, 255, 1) 1.5px, transparent 1.5px),
+      linear-gradient(90deg, rgba(255, 255, 255, 1) 1.5px, transparent 1.5px) !important;
+    background-size: 6px 6px !important;
   }
   .btn-clear-color {
     background: var(--bg-color);

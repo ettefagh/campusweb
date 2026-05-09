@@ -642,7 +642,8 @@
   }
 
   h1 {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    line-height: 0.8rem;
     font-weight: 700;
     margin-bottom: 2px;
     color: var(--text-color);

@@ -99,8 +99,8 @@
       if (saved) return saved;
     }
 
-    // Portrait mobile defaults to a custom adaptive view that fits without horizontal scroll
-    if (isPortraitMobile) return "timeGridCustom";
+    // Portrait mobile defaults to Day View to fit narrow mobile layouts naturally
+    if (isPortraitMobile) return "timeGridDay";
     if (isLandscapeMobile) return "dayGridMonth";
     return "dayGridMonth";
   }
@@ -135,16 +135,7 @@
       });
   }
 
-  // Dynamic days count based on screen viewport size
-  $: customDaysCount = isDesktop 
-    ? 7 
-    : isLandscapeMobile 
-      ? 5 
-      : (innerWidth < 400 ? 2 : 3);
 
-  $: customDaysLabel = locale === "de"
-    ? `${customDaysCount} Tage`
-    : `${customDaysCount} Days`;
 
   let calendarDate = new Date();
 
@@ -181,41 +172,7 @@
       today: $t.calendar.today,
       dayGridMonth: $t.calendar.month,
       timeGridWeek: $t.calendar.week,
-      timeGridCustom: customDaysLabel,
-      timeGridDay: $t.calendar.day,
-      listWeek: $t.calendar.list,
-      listDay: $t.calendar.list,
-      listMonth: $t.calendar.list,
-    },
-    views: {
-      dayGridMonth: {
-        dayHeaderFormat: { weekday: "short" },
-      },
-      timeGridWeek: {
-        dayHeaderContent: (arg: any) => {
-          const weekday = arg.date.toLocaleDateString(locale, {
-            weekday: "short",
-          });
-          const day = arg.date.getDate();
-          return {
-            html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>`,
-          };
-        },
-      },
-      // Custom adaptive view — dynamically sets number of days based on viewport width
-      timeGridCustom: {
-        type: "timeGridDay",
-        duration: { days: customDaysCount },
-        dayHeaderContent: (arg: any) => {
-          const weekday = arg.date.toLocaleDateString(locale, {
-            weekday: "short",
-          });
-          const day = arg.date.getDate();
-          return {
-            html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>`,
-          };
-        },
-      },
+
       timeGridDay: {
         dayHeaderContent: (arg: any) => {
           const weekday = arg.date.toLocaleDateString(locale, {
@@ -349,10 +306,8 @@
       const diffTime = cal.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      // Tolerance varies by view span: ±3 for week, ±custom for custom multi-day, ±0 for single day
-      const tolerance = currentViewLabel === "timeGridWeek" ? 3
-        : currentViewLabel === "timeGridCustom" ? Math.floor(customDaysCount / 2)
-        : 0;
+      // Tolerance varies by view span: ±3 for week, ±0 for single day
+      const tolerance = currentViewLabel === "timeGridWeek" ? 3 : 0;
 
       if (Math.abs(diffDays) <= tolerance) {
         todayDirection = "center";
@@ -424,20 +379,17 @@
 
     // Smooth-scroll both axes to center the now-indicator in the viewport
     setTimeout(() => {
-      const indicator = document.querySelector(
-        ".ec-now-indicator",
-      ) as HTMLElement;
-      if (indicator) {
-        let parent = indicator.parentElement;
+      const targetEl = (document.querySelector(".ec-now-indicator") || document.querySelector(".ec-today")) as HTMLElement;
+      if (targetEl) {
+        let parent = targetEl.parentElement;
         while (parent && parent !== document.body) {
-          const style = window.getComputedStyle(parent);
-          if (style.overflowY === "auto" || style.overflowY === "scroll") {
+          if (parent.classList.contains("ec-body") || parent.classList.contains("ec-main")) {
             const parentRect = parent.getBoundingClientRect();
-            const indicatorRect = indicator.getBoundingClientRect();
+            const targetRect = targetEl.getBoundingClientRect();
             const relativeTop =
-              indicatorRect.top - parentRect.top + parent.scrollTop;
+              targetRect.top - parentRect.top + parent.scrollTop;
             parent.scrollTo({
-              top: relativeTop - parentRect.height / 2,
+              top: relativeTop - parentRect.height / 2 + targetRect.height / 2,
               behavior: "smooth",
             });
             break;
@@ -447,7 +399,7 @@
       }
 
       const todayCol = document.querySelector(".ec-today") as HTMLElement;
-      const scrollPort = document.querySelector(".ec-main") as HTMLElement;
+      const scrollPort = document.querySelector(".calendar-scroll-area") as HTMLElement;
       if (todayCol && scrollPort) {
         const portRect = scrollPort.getBoundingClientRect();
         const colRect = todayCol.getBoundingClientRect();
@@ -489,20 +441,17 @@
 
     setTimeout(() => {
       updateToolbarState();
-      const indicator = document.querySelector(
-        ".ec-now-indicator",
-      ) as HTMLElement;
-      if (indicator) {
-        let parent = indicator.parentElement;
+      const targetEl = (document.querySelector(".ec-now-indicator") || document.querySelector(".ec-today")) as HTMLElement;
+      if (targetEl) {
+        let parent = targetEl.parentElement;
         while (parent && parent !== document.body) {
-          const style = window.getComputedStyle(parent);
-          if (style.overflowY === "auto" || style.overflowY === "scroll") {
+          if (parent.classList.contains("ec-body") || parent.classList.contains("ec-main")) {
             const parentRect = parent.getBoundingClientRect();
-            const indicatorRect = indicator.getBoundingClientRect();
+            const targetRect = targetEl.getBoundingClientRect();
             const relativeTop =
-              indicatorRect.top - parentRect.top + parent.scrollTop;
+              targetRect.top - parentRect.top + parent.scrollTop;
             parent.scrollTo({
-              top: relativeTop - parentRect.height / 2,
+              top: relativeTop - parentRect.height / 2 + targetRect.height / 2,
               behavior: "smooth",
             });
             break;
@@ -512,7 +461,7 @@
       }
 
       const todayCol = document.querySelector(".ec-today") as HTMLElement;
-      const scrollPort = document.querySelector(".ec-main") as HTMLElement;
+      const scrollPort = document.querySelector(".calendar-scroll-area") as HTMLElement;
       if (todayCol && scrollPort) {
         const portRect = scrollPort.getBoundingClientRect();
         const colRect = todayCol.getBoundingClientRect();
@@ -570,37 +519,15 @@
         today: $t.calendar.today,
         dayGridMonth: $t.calendar.month,
         timeGridWeek: $t.calendar.week,
-        timeGridCustom: customDaysLabel,
         timeGridDay: $t.calendar.day,
         listWeek: $t.calendar.list,
         listDay: $t.calendar.list,
         listMonth: $t.calendar.list,
       },
-      views: {
-        ...options.views,
-        timeGridCustom: {
-          type: "timeGridDay",
-          duration: { days: customDaysCount },
-          dayHeaderContent: (arg: any) => {
-            const weekday = arg.date.toLocaleDateString(locale, {
-              weekday: "short",
-            });
-            const day = arg.date.getDate();
-            return {
-              html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>`,
-            };
-          },
-        },
-      }
     };
   }
 
-  // Force re-render of dynamic view columns when viewport size / customDaysCount changes
-  $: if (isMounted && ecComponent && currentViewLabel === "timeGridCustom" && customDaysCount) {
-    try {
-      ecComponent.setView("timeGridCustom");
-    } catch {}
-  }
+
 
   // ─── Reactive Store Subscriptions ─────────────────────────────────
   const unsubscribe = calendarStore.subscribe((subs) => {
@@ -793,7 +720,7 @@
         class="calendar-container"
         class:loading={isLoading}
         class:view-week={currentViewLabel === "timeGridWeek"}
-        class:view-custom={currentViewLabel === "timeGridCustom"}
+        class:view-month={currentViewLabel === "dayGridMonth"}
         class:is-landscape={isLandscapeMobile}
       >
         <div class="calendar-scroll-area">
@@ -826,12 +753,7 @@
               on:click={() => switchView("timeGridWeek")}
               >{$t.calendar.week}</button
             >
-            <button
-              class="toolbar-btn"
-              class:active={currentViewLabel === "timeGridCustom"}
-              on:click={() => switchView("timeGridCustom")}
-              >{customDaysLabel}</button
-            >
+
             <button
               class="toolbar-btn"
               class:active={currentViewLabel === "timeGridDay"}
@@ -1258,7 +1180,8 @@
   }
 
   h1 {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    line-height: 0.8rem;
     font-weight: 700;
     margin: 0;
     color: var(--text-color);
@@ -1418,6 +1341,7 @@
   /* ─── Week View: Enable smooth horizontal scroll with wide spacious layout ─── */
   .view-week .calendar-scroll-area {
     overflow-x: auto !important; /* Allow horizontal scrolling */
+    overflow-y: auto !important; /* Allow smooth vertical scrolling */
     -webkit-overflow-scrolling: touch;
   }
 
@@ -1432,10 +1356,7 @@
     overflow: visible !important;
   }
 
-  /* ─── Custom Adaptive View — fits viewport naturally, no horizontal scroll ── */
-  .view-custom .calendar-scroll-area {
-    overflow-x: hidden;
-  }
+
 
   /* ─── Empty State Overlay ───────────────────────────────────────── */
   .empty-state {
@@ -1519,6 +1440,7 @@
     flex-direction: row;
     padding-bottom: 0;
     padding-right: 68px;
+    height: 44px;
   }
 
   .calendar-container.is-landscape .calendar-toolbar {
@@ -1932,7 +1854,11 @@
     color: black !important;
     position: relative;
     z-index: 1;
-    transition: transform 0.1s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .view-month :global(.ec-event-inner) {
+    padding: 2px !important;
   }
 
   /* Pastel color tint overlay on the translucent white base */
@@ -2088,10 +2014,10 @@
       .a11y-assistive-patterns .ec-event-inner[data-texture="dots"]::after
     ) {
     background-image: radial-gradient(
-      rgba(0, 0, 0, 1) 15%,
-      transparent 15%
+      rgba(0, 0, 0, 1) 28%,
+      transparent 28%
     ) !important;
-    background-size: 9px 9px !important;
+    background-size: 8px 8px !important;
   }
 
   :global(
@@ -2130,8 +2056,8 @@
         .ec-event-inner[data-texture="dots"]::after
     ) {
     background-image: radial-gradient(
-      rgba(255, 255, 255, 1) 15%,
-      transparent 15%
+      rgba(255, 255, 255, 1) 28%,
+      transparent 28%
     ) !important;
   }
 
@@ -2166,8 +2092,6 @@
   :global(.ec-now-indicator::before) {
     content: "" !important;
     position: absolute !important;
-    left: -5px !important; /* Extend into the sidebar so the dot remains fully visible */
-    top: -4px !important;  /* Vertically center the 10px dot on the 2px indicator line */
     width: 10px !important;
     height: 10px !important;
     background: var(--primary-color) !important;

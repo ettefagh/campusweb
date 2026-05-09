@@ -236,7 +236,8 @@
 	}
 
 	.page-header.narrow h1 {
-		font-size: 1.2rem;
+		font-size: 1.3rem;
+		line-height: 0.8rem;
 		margin-bottom: 2px;
 	}
 
@@ -270,6 +271,8 @@
 	}
 
 	h1 {
+		font-size: 1.3rem;
+		line-height: 0.8rem;
 		margin-bottom: var(--spacing-sm);
 	}
 

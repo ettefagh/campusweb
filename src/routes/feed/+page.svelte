@@ -277,10 +277,11 @@
   .feed-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: var(--spacing-lg) var(--spacing-md) calc(var(--spacing-xl) * 2.5);
+    padding-bottom: calc(var(--spacing-xl) * 2.5);
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    gap: 16px;
   }
 
   .feed-container > *:not(.page-header) {
@@ -324,7 +325,8 @@
   }
 
   h1 {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
+    line-height: 0.8rem;
     font-weight: 700;
     margin-bottom: 2px;
     color: var(--text-color);
@@ -353,12 +355,12 @@
   /* ─── Feature 1: News Preview Cards ──────────────────────────── */
   .news-cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr;
     gap: 0;
-    margin-bottom: var(--spacing-xl);
     border-radius: var(--radius-lg);
     overflow: hidden;
     border: 1px solid var(--border-color);
+    grid-auto-flow: column;
   }
 
   @media (max-width: 768px) {
@@ -905,8 +907,6 @@
     font-size: 0.9rem;
     font-style: italic;
   }
-
-
 
   /* ─── Contact Sheet / Modal (shared) ──────────────────────────── */
   .sheet-overlay {
