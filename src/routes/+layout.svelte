@@ -2,6 +2,7 @@
   import "../app.css";
   import BottomNav from "$lib/components/BottomNav.svelte";
   import UpdatePrompt from "$lib/components/UpdatePrompt.svelte";
+  import GlobalAlert from "$lib/components/GlobalAlert.svelte";
   import { browser } from "$app/environment";
   import { afterNavigate } from "$app/navigation";
   import { activeA11yClasses, A11Y_CLASS_MAP } from "$lib/stores/accessibility";
@@ -63,6 +64,7 @@
 <a href="#main" class="skip-to-main">Skip to main content</a>
 
 <div class="app-container">
+  <GlobalAlert />
   <main id="main" class="content-area">
     <slot />
 

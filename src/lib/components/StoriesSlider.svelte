@@ -6,6 +6,7 @@
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import StorySuggestionModal from "./StorySuggestionModal.svelte";
 
   export interface Story {
     id: string;
@@ -19,6 +20,9 @@
   }
 
   export let stories: Story[] = [];
+  export let allowSuggestions: boolean = true;
+  
+  let isSuggestionModalOpen = false;
 
   // Reactive filtering of expired stories
   $: storiesToShow = stories.filter((story) => {
@@ -70,10 +74,15 @@
   }
 
   // ── Progress bar ─────────────────────────────────────────────────
-  function startProgress() {
+  let isPaused = false;
+
+  function startProgress(reset = true) {
+    if (reset) progressPct = 0;
+    isPaused = false;
     stopProgress();
-    progressPct = 0;
+    
     progressInterval = setInterval(() => {
+      if (isPaused) return;
       progressPct += (TICK_MS / STORY_DURATION_MS) * 100;
       if (progressPct >= 100) {
         progressPct = 100;
@@ -87,6 +96,14 @@
       clearInterval(progressInterval);
       progressInterval = null;
     }
+  }
+
+  function pauseStory() {
+    isPaused = true;
+  }
+
+  function resumeStory() {
+    isPaused = false;
   }
 
   function goNext() {
@@ -110,12 +127,20 @@
 
   // ── Swipe support ─────────────────────────────────────────────────
   let touchStartX = 0;
+  let touchStartTime = 0;
   function onTouchStart(e: TouchEvent) {
     touchStartX = e.touches[0].clientX;
+    touchStartTime = Date.now();
+    pauseStory();
   }
   function onTouchEnd(e: TouchEvent) {
+    resumeStory();
     const diff = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(diff) > 50) diff < 0 ? goNext() : goPrev();
+    const timeDiff = Date.now() - touchStartTime;
+    // Only register as swipe if it was relatively fast and moved enough
+    if (Math.abs(diff) > 50 && timeDiff < 500) {
+      diff < 0 ? goNext() : goPrev();
+    }
   }
 
   // ── Keyboard support ─────────────────────────────────────────────
@@ -126,27 +151,61 @@
     else if (e.key === "Escape") closeViewer();
   }
 
-  // ── Restore seen state from localStorage ─────────────────────────
-  function restoreSeenState() {
+  // ── Restore seen state and sort ──────────────────────────────────
+  let initialSortDone = false;
+
+  $: if (typeof window !== "undefined" && stories.length > 0 && !initialSortDone) {
     try {
       const seenIds = JSON.parse(
         localStorage.getItem("srh-stories-seen") || "[]",
       ) as string[];
-      stories = stories.map((s) => ({ ...s, seen: seenIds.includes(s.id) }));
+      
+      // Update seen status based on localStorage
+      let updatedStories = stories.map((s) => ({ ...s, seen: seenIds.includes(s.id) }));
+      
+      // Sort unseen stories first, then sort by newest
+      updatedStories.sort((a, b) => {
+        if (a.seen === b.seen) {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        return a.seen ? 1 : -1;
+      });
+      
+      stories = updatedStories;
+      initialSortDone = true;
     } catch {}
   }
 
-  $: if (typeof window !== "undefined" && stories.length > 0) {
-    restoreSeenState();
-  }
-
   onDestroy(stopProgress);
+
+  // Action to teleport fullscreen viewer to document.body to override stacked nav containers
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        if (node.parentNode) node.parentNode.removeChild(node);
+      }
+    };
+  }
 </script>
 
 <svelte:window on:keydown={onKeydown} />
 
 <!-- ── Stories bar ───────────────────────────────────────────────── -->
 <div class="stories-bar" role="list" aria-label="SRH Campus Stories">
+  {#if allowSuggestions}
+    <button
+      class="story-bubble add-story-btn"
+      on:click={() => (isSuggestionModalOpen = true)}
+      aria-label="Suggest a Story"
+    >
+      <div class="story-ring add-ring">
+        <div class="add-icon">+</div>
+      </div>
+      <span class="story-label">Add Story</span>
+    </button>
+  {/if}
+
   {#each storiesToShow as story, idx}
     <button
       class="story-bubble"
@@ -161,6 +220,8 @@
           class="story-avatar"
           loading={idx < 5 ? 'eager' : 'lazy'}
           fetchpriority={idx < 3 ? 'high' : 'auto'}
+          draggable="false"
+          on:contextmenu|preventDefault
           on:error={(e) => {
             // Fallback to SRH logo on broken image
             const img = e.currentTarget as HTMLImageElement;
@@ -177,11 +238,16 @@
 {#if viewerOpen && storiesToShow[activeIndex]}
   <div
     class="story-overlay"
+    use:portal
     role="dialog"
     aria-modal="true"
     aria-label="Viewing story: {storiesToShow[activeIndex].title}"
     on:touchstart={onTouchStart}
     on:touchend={onTouchEnd}
+    on:mousedown={pauseStory}
+    on:mouseup={resumeStory}
+    on:mouseleave={resumeStory}
+    on:contextmenu|preventDefault
   >
     <!-- Progress bars -->
     <div class="story-progress-bars">
@@ -243,6 +309,8 @@
         alt=""
         class="story-blurred-bg {imageLoaded ? 'loaded' : ''}"
         aria-hidden="true"
+        draggable="false"
+        on:contextmenu|preventDefault
         on:error={(e) => {
           (e.currentTarget as HTMLImageElement).src = "/icon-light.png";
         }}
@@ -252,6 +320,8 @@
         src={storiesToShow[activeIndex].imageUrl}
         alt={storiesToShow[activeIndex].title}
         class="story-image {imageLoaded ? 'loaded' : ''}"
+        draggable="false"
+        on:contextmenu|preventDefault
         on:load={() => {
           imageLoaded = true;
         }}
@@ -358,6 +428,8 @@
     object-fit: cover;
     background: var(--card-bg, #fff);
     border: 1.5px solid var(--card-bg, #fff);
+    -webkit-touch-callout: none;
+    user-select: none;
   }
 
   .add-icon {
@@ -394,6 +466,9 @@
     display: flex;
     flex-direction: column;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none; /* Disables default browser long-press context menu */
+    touch-action: none; /* Prevent browser pull-to-refresh / swipe-back default behaviors */
   }
 
   .story-progress-bars {
@@ -537,6 +612,10 @@
     opacity: 0;
     transition: opacity 0.3s ease;
     z-index: 2;
+    pointer-events: none; /* Lets touch events pass through to the main overlay handler */
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    user-select: none;
   }
 
   .story-image.loaded {
@@ -622,3 +701,5 @@
     }
   }
 </style>
+
+<StorySuggestionModal bind:isOpen={isSuggestionModalOpen} />

@@ -101,8 +101,8 @@
     }
   });
 
-  function handleToggleFavorite(event: CustomEvent<{ id: string }>) {
-    favorites.toggle(event.detail.id);
+  function handleToggleFavorite(event: CustomEvent<{ linkId: string }>) {
+    favorites.toggle(event.detail.linkId);
   }
 
   // ─── Search Logic ──────────────────────────────────────────

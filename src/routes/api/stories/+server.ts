@@ -106,22 +106,52 @@ async function writeStories(stories: any[]) {
 }
 
 /** GET /api/stories */
-export const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async ({ platform }) => {
+  let stories: any[] = [];
+
+  // 1. Fetch from Google Sheets if configured
   const googleSheetsUrl = env.PRIVATE_GOOGLE_SHEETS_URL;
   if (googleSheetsUrl) {
     try {
       const response = await fetch(googleSheetsUrl);
       if (response.ok) {
         const csvText = await response.text();
-        const stories = parseCSV(csvText);
-        return json(stories);
+        stories = parseCSV(csvText);
       }
     } catch (err) {
-      console.warn("Failed to fetch server-side Google Sheets stories, falling back to local stories:", err);
+      console.warn("Failed to fetch Google Sheets stories:", err);
     }
   }
 
-  const stories = await readStories();
+  // 2. Fetch from Cloudflare KV if bound
+  const kv = platform?.env?.STORIES_KV;
+  if (kv) {
+    try {
+      const kvData = await kv.get("stories");
+      if (kvData) {
+        const kvStories = JSON.parse(kvData);
+        
+        // Auto-cleanup: purge expired stories from database
+        const now = new Date();
+        const validStories = kvStories.filter(s => !s.expiresAt || new Date(s.expiresAt) > now);
+        
+        if (validStories.length < kvStories.length) {
+          kv.put("stories", JSON.stringify(validStories)).catch(console.error);
+        }
+        
+        // Prepend KV stories (newer ones) to the Google Sheet ones
+        stories = [...validStories, ...stories];
+      }
+    } catch (err) {
+      console.warn("Failed to fetch KV stories:", err);
+    }
+  }
+
+  // Fallback to local files only if neither KV nor Google Sheet worked AND we are in local dev
+  if (stories.length === 0 && !kv && !googleSheetsUrl) {
+    stories = await readStories();
+  }
+
   return json(stories);
 };
 

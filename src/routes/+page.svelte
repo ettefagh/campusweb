@@ -51,7 +51,9 @@
 					desc.toLowerCase().includes(query)
 				);
 			})
-		: allLinks.filter((link) => $favorites.includes(link.id));
+		: $favorites
+				.map((favId) => allLinks.find((link) => link.id === favId))
+				.filter((link): link is typeof allLinks[number] => !!link);
 
 	function toggleEditMode() {
 		isEditMode = !isEditMode;

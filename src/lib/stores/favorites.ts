@@ -15,26 +15,37 @@ const DEFAULT_FAVORITES = [
 ];
 
 function createFavoritesStore() {
-	// Load from localStorage on client
-	const initialFavorites = browser
-		? JSON.parse(localStorage.getItem(STORAGE_KEY) || JSON.stringify(DEFAULT_FAVORITES))
-		: DEFAULT_FAVORITES;
+	// Start with defaults, let it hydrate safely
+	let current = [...DEFAULT_FAVORITES];
+	
+	if (browser) {
+		try {
+			const stored = localStorage.getItem(STORAGE_KEY);
+			if (stored) {
+				const parsed = JSON.parse(stored);
+				if (Array.isArray(parsed)) {
+					current = parsed.filter(id => typeof id === 'string');
+				}
+			}
+		} catch (e) {
+			console.error("Failed to parse cached favorites", e);
+		}
+	}
 
-	const { subscribe, set, update } = writable<string[]>(initialFavorites);
+	const { subscribe, set, update } = writable<string[]>(current);
 
 	return {
 		subscribe,
 		toggle: (linkId: string) => {
+			if (!linkId) return;
 			update(favs => {
 				const newFavs = favs.includes(linkId)
 					? favs.filter(id => id !== linkId)
 					: [...favs, linkId];
 				
-				// Persist to localStorage
 				if (browser) {
 					localStorage.setItem(STORAGE_KEY, JSON.stringify(newFavs));
 				}
-				
 				return newFavs;
 			});
 		},
