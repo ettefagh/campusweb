@@ -186,6 +186,8 @@
     -ms-overflow-style: none; /* IE and Edge */
     width: 100%;
     gap: 0px;
+    padding: 15px 0;
+    margin: -15px 0;
   }
 
   .slider-container::-webkit-scrollbar {

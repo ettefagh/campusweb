@@ -22,7 +22,7 @@
     if (isContactsLoaded || isContactsLoading) return;
     isContactsLoading = true;
     try {
-      const res = await fetch('/api/contacts');
+      const res = await fetch("/api/contacts");
       if (res.ok) {
         const data = await res.json();
         campusContacts = data.campusContacts || [];
@@ -31,7 +31,7 @@
         isContactsLoaded = true;
       }
     } catch (err) {
-      console.error('Failed to load private directory:', err);
+      console.error("Failed to load private directory:", err);
     } finally {
       isContactsLoading = false;
     }
@@ -55,8 +55,6 @@
       loadPrivateContacts();
     }
 
-
-
     container = document.querySelector(".app-container");
     const handleScroll = () => {
       if (container) {
@@ -74,7 +72,11 @@
   }
 
   $effect(() => {
-    if ($settingsStore.emailVerified && !isContactsLoaded && !isContactsLoading) {
+    if (
+      $settingsStore.emailVerified &&
+      !isContactsLoaded &&
+      !isContactsLoading
+    ) {
       loadPrivateContacts();
     }
   });
@@ -83,12 +85,16 @@
     if ($page.url.searchParams.get("focus") === "true") {
       isSearchActive = true;
       // Focus the input instantly to catch the user gesture, and try again slightly later if not fully rendered
-      const searchInput = document.getElementById("search-input") as HTMLInputElement;
+      const searchInput = document.getElementById(
+        "search-input",
+      ) as HTMLInputElement;
       if (searchInput) {
         searchInput.focus();
       } else {
         setTimeout(() => {
-          const el = document.getElementById("search-input") as HTMLInputElement;
+          const el = document.getElementById(
+            "search-input",
+          ) as HTMLInputElement;
           el?.focus();
         }, 50);
       }
@@ -159,7 +165,7 @@
         services: [],
         programs: [`${p.degree || ""} ${p.program}`.trim()],
         school: p.school.toLowerCase(),
-        tags: p.degree ? [p.degree, ...(p.tags || [])] : (p.tags || []),
+        tags: p.degree ? [p.degree, ...(p.tags || [])] : p.tags || [],
       })),
     ];
 
@@ -222,7 +228,9 @@
         c.programs.some((p: string) => {
           const normUser = normalizeProgram(programName);
           const normContact = normalizeProgram(p);
-          return normContact.includes(normUser) || normUser.includes(normContact);
+          return (
+            normContact.includes(normUser) || normUser.includes(normContact)
+          );
         });
 
       return isGeneralLayer || isSchoolLayer || isProgramLayer;
@@ -332,7 +340,8 @@
           <!-- First Tag: SRH Contact List -->
           <button
             class="cat-chip"
-            onclick={() => {
+            onclick={(e) => {
+              e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
               const el = document.getElementById(DIRECTORY_ID);
               if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
@@ -343,7 +352,8 @@
           {#each categoryOrder as category}
             <button
               class="cat-chip"
-              onclick={() => {
+              onclick={(e) => {
+                e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
                 const el = document.getElementById(
                   `category-${category.replace(/\s+/g, "-")}`,
                 );
@@ -439,7 +449,11 @@
                         <div class="contact-program-list">
                           {#each contact.programs as prog}
                             <div class="program-item">
-                              <i class="ph-bold ph-graduation-cap" style="margin-right: 4px; color: var(--primary-color);"></i> {@html highlightMatch(prog, searchQuery)}
+                              <i
+                                class="ph-bold ph-graduation-cap"
+                                style="margin-right: 4px; color: var(--primary-color);"
+                              ></i>
+                              {@html highlightMatch(prog, searchQuery)}
                             </div>
                           {/each}
                         </div>
@@ -448,7 +462,11 @@
                         <div class="contact-service-list">
                           {#each contact.services as service}
                             <div class="service-item">
-                              <i class="ph-bold ph-wrench" style="margin-right: 4px; color: var(--primary-color);"></i> {@html highlightMatch(service, searchQuery)}
+                              <i
+                                class="ph-bold ph-wrench"
+                                style="margin-right: 4px; color: var(--primary-color);"
+                              ></i>
+                              {@html highlightMatch(service, searchQuery)}
                             </div>
                           {/each}
                         </div>
@@ -485,8 +503,7 @@
                     <a
                       href="mailto:{contact.email}"
                       class="search-contact-btn mail"
-                      title="Email"
-                      ><i class="ph-bold ph-envelope"></i></a
+                      title="Email"><i class="ph-bold ph-envelope"></i></a
                     >
                     <a
                       href={getTeamsChatUrl(contact.email)}
@@ -500,8 +517,7 @@
                       <a
                         href="tel:{contact.phone.replace(/[\s-]/g, '')}"
                         class="search-contact-btn call"
-                        title="Call"
-                        ><i class="ph-bold ph-phone"></i></a
+                        title="Call"><i class="ph-bold ph-phone"></i></a
                       >
                     {/if}
                   </div>
@@ -567,15 +583,53 @@
   </div>
 
   <!-- Floating Action Buttons -->
-  {#if showGoToTop}
-    <div class="fab-group">
-      <button class="fab-btn go-to-top glass" onclick={goToTop} aria-label="Go to top">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+  <div class="fab-group">
+    {#if showGoToTop}
+      <button
+        class="fab-btn go-to-top glass"
+        onclick={goToTop}
+        aria-label="Go to top"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <polyline points="18 15 12 9 6 15"></polyline>
         </svg>
       </button>
-    </div>
-  {/if}
+    {/if}
+    <button
+      class="fab-btn search-fab"
+      onclick={() => {
+        isSearchActive = true;
+        const input = document.getElementById('search-input');
+        input?.focus();
+      }}
+      aria-label="Search Explore"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+    </button>
+  </div>
 </div>
 
 <style>
@@ -660,7 +714,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding-top: var(--spacing-lg);
     transition: all 0.3s ease;
     margin-bottom: 20px;
     margin-top: 0; /* no margin-top in !is.searching */
@@ -678,6 +732,7 @@
   .search-bar-container {
     max-width: 600px;
     margin: 0 auto;
+    padding-inline: var(--spacing-lg);
   }
 
   .category-nav-wrapper {
@@ -685,7 +740,7 @@
     width: 100%;
     display: flex;
     justify-content: center;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .category-nav {
@@ -695,7 +750,7 @@
     border: 1px solid var(--border-color);
     border-radius: 100px;
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .category-nav-scroll {
@@ -704,7 +759,8 @@
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding: 2px 8px;
+    padding: 6px 8px;
+    margin: -4px 0;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -721,6 +777,7 @@
 
   .category-section {
     margin-bottom: 50px;
+    scroll-margin-top: 150px; /* Accounts for the sticky search bar and sticky category chips */
     animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
@@ -1045,8 +1102,12 @@
   }
 
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
   }
 
   .fab-group {
@@ -1087,6 +1148,11 @@
     border: 1px solid var(--glass-border);
     backdrop-filter: blur(8px);
     color: var(--text-color);
+  }
+
+  .search-fab {
+    background: var(--primary-color, #d44407);
+    color: white;
   }
 
   @media (min-width: 1024px) {
