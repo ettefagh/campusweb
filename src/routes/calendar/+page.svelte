@@ -25,16 +25,16 @@
 
   import { t } from "$lib/i18n";
 
-  // ─── i18n — driven by global settings store ───────────────────────
+  // ─── Internationalization ──────────────────────────────────────────
   $: locale = $settingsStore.language ?? "en";
 
-  // ─── Responsive Breakpoints ──────────────────────────────────────
+  // ─── Responsive Layout Breakpoints ─────────────────────────────────
   let innerWidth = 1024;
   $: isDesktop = innerWidth >= 1024;
   $: isLandscapeMobile = innerWidth >= 600 && innerWidth < 1024;
   $: isPortraitMobile = innerWidth < 600;
 
-  // ─── Calendar Reference & State ──────────────────────────────────
+  // ─── Calendar Instance & UI State ─────────────────────────────────
   let ecComponent: any;
   let isMounted = false;
   let isLoading = false;
@@ -43,16 +43,16 @@
   let isTodayInView = true;
   let todayDirection: "left" | "right" | "center" = "center";
 
-  // State for events
+  // Event data sources
   let staticEvents: CalendarEvent[] = [];
   let currentSubs: any[] = [];
 
-  // Event detail popup state
+  // Event detail popup
   let popupEvent: any = null;
   let popupPosition = { x: 0, y: 0 };
 
-  // ─── Feature 1: Interactive Legend Filter ────────────────────────
-  // Default: Hide modules, welcome-week, and semester-dates
+  // ─── Interactive Legend Filter ────────────────────────────────────
+  // Calendar sources hidden by default to reduce visual clutter on first load
   let hiddenSources: Set<string> = new Set([
     "modules",
     "welcome-week",
@@ -65,13 +65,13 @@
     } else {
       hiddenSources.add(sourceId);
     }
-    hiddenSources = hiddenSources; // trigger reactivity
+    hiddenSources = hiddenSources; // Reassign to trigger Svelte reactivity
     if (isMounted) {
       options = { ...options, events: getAllEvents() };
     }
   }
 
-  // ─── Feature 5: Import Suggestion ──────────────────────────────
+  // ─── Department Calendar Import Suggestion ────────────────────────
   let dismissedSuggestion = false;
 
   function handleImportSuggestion() {
@@ -79,13 +79,13 @@
       calendarStore.addSubscription(
         $activeDepartment.icalUrl,
         $activeDepartment.shortName,
-        "var(--event-srh)", // SRH Orange
+        "var(--event-srh)",
       );
       dismissedSuggestion = true;
     }
   }
 
-  // ─── Feature 4: Empty State ─────────────────────────────────────
+  // ─── Empty State Detection ─────────────────────────────────────────
   $: currentEventsCount = options.events?.length ?? 0;
 
   function getDefaultView(): string {
@@ -99,7 +99,8 @@
       if (saved) return saved;
     }
 
-    if (isPortraitMobile) return "timeGridWeek";
+    // Portrait mobile defaults to a custom adaptive view that fits without horizontal scroll
+    if (isPortraitMobile) return "timeGridCustom";
     if (isLandscapeMobile) return "dayGridMonth";
     return "dayGridMonth";
   }
@@ -134,9 +135,20 @@
       });
   }
 
+  // Dynamic days count based on screen viewport size
+  $: customDaysCount = isDesktop 
+    ? 7 
+    : isLandscapeMobile 
+      ? 5 
+      : (innerWidth < 400 ? 2 : 3);
+
+  $: customDaysLabel = locale === "de"
+    ? `${customDaysCount} Tage`
+    : `${customDaysCount} Days`;
+
   let calendarDate = new Date();
 
-  // ─── EC Options ──────────────────────────────────────────────────
+  // ─── Event Calendar Configuration ─────────────────────────────────
   let plugins = [TimeGrid, DayGrid, List];
 
   let options: any = {
@@ -169,6 +181,7 @@
       today: $t.calendar.today,
       dayGridMonth: $t.calendar.month,
       timeGridWeek: $t.calendar.week,
+      timeGridCustom: customDaysLabel,
       timeGridDay: $t.calendar.day,
       listWeek: $t.calendar.list,
       listDay: $t.calendar.list,
@@ -179,6 +192,20 @@
         dayHeaderFormat: { weekday: "short" },
       },
       timeGridWeek: {
+        dayHeaderContent: (arg: any) => {
+          const weekday = arg.date.toLocaleDateString(locale, {
+            weekday: "short",
+          });
+          const day = arg.date.getDate();
+          return {
+            html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>`,
+          };
+        },
+      },
+      // Custom adaptive view — dynamically sets number of days based on viewport width
+      timeGridCustom: {
+        type: "timeGridDay",
+        duration: { days: customDaysCount },
         dayHeaderContent: (arg: any) => {
           const weekday = arg.date.toLocaleDateString(locale, {
             weekday: "short",
@@ -203,7 +230,7 @@
     },
     height: "100%",
     eventContent: (info: any) => {
-      // Escape HTML entities in user-sourced data to prevent XSS
+      // Sanitize user-sourced strings to prevent XSS injection
       const esc = (s: string) =>
         s
           .replace(/&/g, "&amp;")
@@ -222,7 +249,7 @@
       const style = `--event-color: ${esc(color)}; --event-text-color: ${esc(textColor)};`;
       const title = esc(info.event.title || "");
 
-      // List view: flat layout with title + location tag
+      // List view: horizontal layout with title and location metadata
       if (info.view?.type?.startsWith("list")) {
         const isAllDay = info.event.allDay;
         const formatTime = (d: Date) =>
@@ -251,7 +278,7 @@
         };
       }
 
-      // Time grid / day grid: stacked layout
+      // Time grid / day grid: vertical stacked layout
       const timeHtml =
         !info.event.allDay && info.timeText
           ? `<div class="ec-event-time-custom">${esc(info.timeText)}</div>`
@@ -262,7 +289,7 @@
     },
     eventClick: (info: any) => {
       const jsEvent = info.jsEvent;
-      jsEvent.stopPropagation(); // prevent window click from closing popup immediately
+      jsEvent.stopPropagation(); // Prevent immediate dismiss by the window click handler
       popupEvent = info.event;
       popupPosition = {
         x: Math.min(jsEvent.clientX, innerWidth - 280),
@@ -274,13 +301,13 @@
     },
   };
 
-  // calendarDate is declared above options for temporal access
+
 
   function checkTodayPosition() {
     const todayCol = document.querySelector(".ec-today") as HTMLElement;
     const scrollPort = document.querySelector(".ec-main") as HTMLElement;
 
-    // Boundary-aware pointers when horizontally scrollable on mobile
+    // On portrait mobile week view, determine today's direction relative to the visible scroll port
     if (
       scrollPort &&
       todayCol &&
@@ -318,11 +345,16 @@
         todayDirection = "left";
       }
     } else {
-      // For weekly or daily views, check date difference
+      // Multi-day views: compare by day offset from today
       const diffTime = cal.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      if (Math.abs(diffDays) <= (currentViewLabel === "timeGridWeek" ? 3 : 0)) {
+      // Tolerance varies by view span: ±3 for week, ±custom for custom multi-day, ±0 for single day
+      const tolerance = currentViewLabel === "timeGridWeek" ? 3
+        : currentViewLabel === "timeGridCustom" ? Math.floor(customDaysCount / 2)
+        : 0;
+
+      if (Math.abs(diffDays) <= tolerance) {
         todayDirection = "center";
       } else if (diffDays < 0) {
         todayDirection = "right";
@@ -343,7 +375,7 @@
         checkTodayPosition();
       }
     } catch {
-      // Component may not be fully initialized yet
+      // Silently ignore — the calendar component may not be fully initialized yet
     }
   }
 
@@ -351,7 +383,7 @@
     if (!view || !view.currentStart) return "";
     const start = new Date(view.currentStart);
     const end = new Date(view.currentEnd);
-    // Subtract 1 day from end since EC's currentEnd is exclusive
+    // EC uses exclusive end dates — subtract one day for display purposes
     end.setDate(end.getDate() - 1);
 
     const opts: Intl.DateTimeFormatOptions = {
@@ -369,6 +401,7 @@
         year: "numeric",
       });
     }
+    // Single-day views: show full date with weekday
     if (view.type === "timeGridDay" || view.type === "listDay") {
       return start.toLocaleDateString(locale, {
         weekday: "short",
@@ -376,20 +409,20 @@
       });
     }
 
-    // Multi-day views (week, 3-day, etc.)
+    // Multi-day views (week, 3-day): show date range with month boundary handling
     if (start.getMonth() === end.getMonth()) {
       return `${start.toLocaleDateString(locale, opts)} – ${end.getDate()}, ${start.getFullYear()}`;
     }
     return `${start.toLocaleDateString(locale, opts)} – ${end.toLocaleDateString(locale, yearOpts)}`;
   }
 
-  // ─── Navigation Functions ────────────────────────────────────────
+  // ─── Calendar Navigation ──────────────────────────────────────────
   function goToToday() {
     if (!ecComponent) return;
     ecComponent.setOption("date", new Date());
     updateToolbarState();
 
-    // Layout-safe custom dual-axis scroll centering
+    // Smooth-scroll both axes to center the now-indicator in the viewport
     setTimeout(() => {
       const indicator = document.querySelector(
         ".ec-now-indicator",
@@ -509,7 +542,7 @@
     popupEvent = null;
   }
 
-  // ─── Responsive View Switching ───────────────────────────────────
+  // ─── Responsive View Switching ────────────────────────────────────
   let prevBreakpoint = "";
   $: currentBreakpoint = isDesktop
     ? "desktop"
@@ -537,15 +570,39 @@
         today: $t.calendar.today,
         dayGridMonth: $t.calendar.month,
         timeGridWeek: $t.calendar.week,
+        timeGridCustom: customDaysLabel,
         timeGridDay: $t.calendar.day,
         listWeek: $t.calendar.list,
         listDay: $t.calendar.list,
         listMonth: $t.calendar.list,
       },
+      views: {
+        ...options.views,
+        timeGridCustom: {
+          type: "timeGridDay",
+          duration: { days: customDaysCount },
+          dayHeaderContent: (arg: any) => {
+            const weekday = arg.date.toLocaleDateString(locale, {
+              weekday: "short",
+            });
+            const day = arg.date.getDate();
+            return {
+              html: `<div class="custom-header"><span>${weekday}</span><span class="header-day-num">${day}</span></div>`,
+            };
+          },
+        },
+      }
     };
   }
 
-  // ─── Store Subscription ──────────────────────────────────────────
+  // Force re-render of dynamic view columns when viewport size / customDaysCount changes
+  $: if (isMounted && ecComponent && currentViewLabel === "timeGridCustom" && customDaysCount) {
+    try {
+      ecComponent.setView("timeGridCustom");
+    } catch {}
+  }
+
+  // ─── Reactive Store Subscriptions ─────────────────────────────────
   const unsubscribe = calendarStore.subscribe((subs) => {
     currentSubs = subs;
     if (isMounted) {
@@ -569,7 +626,7 @@
     if (isLoading) return;
     isLoading = true;
     try {
-      // Refresh both the centralized store (forcing update) and the local static events
+      // Force-refresh all subscription feeds and reload static academic events in parallel
       await Promise.all([
         calendarStore.refreshAll(true),
         (async () => {
@@ -587,7 +644,7 @@
     }
   }
 
-  // ─── Lifecycle ───────────────────────────────────────────────────
+  // ─── Component Lifecycle ──────────────────────────────────────────
   onMount(() => {
     isMounted = true;
     prevBreakpoint = currentBreakpoint;
@@ -595,7 +652,7 @@
     const init = async () => {
       try {
         calendarStore.refreshAll();
-        // Load academic events asynchronously to unblock first paint & LCP
+        // Load academic events asynchronously to avoid blocking first paint (LCP)
         loadCalendarEvents().then((evts) => {
           if (isMounted) {
             staticEvents = evts;
@@ -736,12 +793,13 @@
         class="calendar-container"
         class:loading={isLoading}
         class:view-week={currentViewLabel === "timeGridWeek"}
+        class:view-custom={currentViewLabel === "timeGridCustom"}
         class:is-landscape={isLandscapeMobile}
       >
         <div class="calendar-scroll-area">
           <Calendar bind:this={ecComponent} {plugins} {options} />
 
-          <!-- Feature 4: Empty State -->
+          <!-- Empty state overlay — shown when no events match the current view -->
           {#if !isLoading && currentEventsCount === 0}
             <div class="empty-state">
               <div class="empty-icon">📭</div>
@@ -753,7 +811,7 @@
           {/if}
         </div>
 
-        <!-- Custom Bottom Toolbar -->
+        <!-- Calendar Navigation Toolbar -->
         <div class="calendar-toolbar">
           <div class="toolbar-group toolbar-views">
             <button
@@ -767,6 +825,12 @@
               class:active={currentViewLabel === "timeGridWeek"}
               on:click={() => switchView("timeGridWeek")}
               >{$t.calendar.week}</button
+            >
+            <button
+              class="toolbar-btn"
+              class:active={currentViewLabel === "timeGridCustom"}
+              on:click={() => switchView("timeGridCustom")}
+              >{customDaysLabel}</button
             >
             <button
               class="toolbar-btn"
@@ -804,7 +868,7 @@
         </div>
       </div>
 
-      <!-- Interactive Legend (Always Visible) -->
+      <!-- Calendar Source Legend — toggleable visibility filters -->
       <section class="calendar-legend-section">
         <div class="calendar-legend">
           <button
@@ -890,7 +954,7 @@
         </div>
       </section>
 
-      <!-- Calendar Quick Links -->
+      <!-- Quick Links — external university resources -->
       <section class="quick-links-section">
         <h2 class="section-title">🔗 Quick Links</h2>
         <div class="quick-links-grid">
@@ -1057,7 +1121,7 @@
     border-radius: var(--radius-lg);
   }
 
-  /* Suggestion Banner */
+  /* ─── Suggestion Banner ─────────────────────────────────────────── */
   .suggestion-banner {
     background: var(--card-bg);
     border: 1px solid var(--primary-color);
@@ -1160,7 +1224,7 @@
     justify-content: space-between;
     padding: var(--spacing-sm) var(--spacing-md);
     margin: var(--spacing-sm) var(--spacing-md);
-    /* Respect Apple top notch and safe area */
+    /* Accommodate iOS safe area inset (notch/Dynamic Island) */
     padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
   }
 
@@ -1180,7 +1244,7 @@
     border-radius: 8px;
   }
 
-  /* Dark mode support for logo */
+  /* Theme-aware logo visibility */
   :global([data-theme="dark"]) .light-mode {
     display: none;
   }
@@ -1244,7 +1308,7 @@
     font-size: 0.85rem;
   }
 
-  /* ─── Legend (inside Settings) ───────────────────────────────── */
+  /* ─── Calendar Source Legend ────────────────────────────────────── */
   .calendar-legend {
     display: flex;
     justify-content: flex-start;
@@ -1319,13 +1383,13 @@
     pointer-events: none;
   }
 
-  /* ─── Calendar Container — Liquid Glass ──────────────────────── */
+  /* ─── Calendar Container — Liquid Glass Surface ────────────────── */
   .calendar-container {
     display: flex;
     flex-direction: column;
     position: relative;
     margin: 0 var(--spacing-sm);
-    /* Light mode: white base at 70% opacity (less transparent than before) */
+    /* Light mode: translucent white base for glass effect */
     background: rgba(255, 255, 255, 0.70);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
@@ -1335,7 +1399,7 @@
     box-shadow: var(--glass-shadow-lg);
     height: calc(100vh - 280px);
     min-height: 400px;
-    padding-bottom: 67px; /* Space for the absolute toolbar */
+    padding-bottom: 67px; /* Reserve space for the absolutely-positioned navigation toolbar */
     transition: opacity 0.3s ease;
   }
 
@@ -1346,33 +1410,34 @@
   .calendar-scroll-area {
     flex: 1;
     overflow-x: hidden;
-    overflow-y: hidden; /* Vertical scroll is handled internally by ec */
+    overflow-y: hidden; /* Vertical scroll is managed internally by the Event Calendar library */
     height: 100%;
     position: relative;
   }
 
+  /* ─── Week View: Enable smooth horizontal scroll with wide spacious layout ─── */
   .view-week .calendar-scroll-area {
-    /* Horizontal scroll is now handled inside .ec-main so sticky sidebar works.
-       Blocking it here prevents the double-scroll-container problem. */
+    overflow-x: auto !important; /* Allow horizontal scrolling */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .view-week :global(.ec) {
+    min-width: 1200px !important; /* Force a wide grid for big, highly readable cards */
+    max-width: none !important;
+  }
+
+  /* Ensure intermediate elements let the sticky left-rail bubble up to .calendar-scroll-area */
+  .view-week :global(.ec-main),
+  .view-week :global(.ec-body) {
+    overflow: visible !important;
+  }
+
+  /* ─── Custom Adaptive View — fits viewport naturally, no horizontal scroll ── */
+  .view-custom .calendar-scroll-area {
     overflow-x: hidden;
   }
 
-  /* On portrait mobile, force fixed column width so .ec-main overflows
-     horizontally — this makes position:sticky on .ec-sidebar work correctly. */
-  @media (max-width: 599px) {
-    .view-week :global(.ec-main) {
-      --ec-col-width: 120px !important;
-    }
-  }
-
-  /* On landscape mobile, slightly smaller columns so it stays manageable */
-  @media (min-width: 600px) and (max-width: 1023px) {
-    .view-week :global(.ec-main) {
-      --ec-col-width: 110px !important;
-    }
-  }
-
-  /* ─── Feature 4: Empty State ─────────────────────────────────── */
+  /* ─── Empty State Overlay ───────────────────────────────────────── */
   .empty-state {
     position: absolute;
     top: 0;
@@ -1429,7 +1494,7 @@
     }
   }
 
-  /* ─── Custom Bottom Toolbar — Liquid Glass ────────────────────── */
+  /* ─── Navigation Toolbar — Liquid Glass ────────────────────────── */
   .calendar-toolbar {
     position: absolute;
     bottom: 0;
@@ -1449,7 +1514,7 @@
     transition: all 0.3s ease;
   }
 
-  /* Landscape Mobile: Right Nav-Bar Logic */
+  /* Landscape mobile: toolbar repositions to a vertical sidebar on the right */
   .calendar-container.is-landscape {
     flex-direction: row;
     padding-bottom: 0;
@@ -1586,7 +1651,7 @@
     transform: scale(0.98);
   }
 
-  /* ─── Event Popup (Desktop) — Liquid Glass ────────────────────── */
+  /* ─── Event Detail Popup — Liquid Glass ────────────────────────── */
   .event-popup {
     position: fixed;
     z-index: 1000;
@@ -1746,7 +1811,7 @@
     word-break: break-word;
   }
 
-  /* ─── Event Calendar Theme Overrides ──────────────────────────── */
+  /* ─── Event Calendar Library Theme Overrides ───────────────────── */
   :global(.ec) {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
       Ubuntu, Cantarell, sans-serif !important;
@@ -1761,25 +1826,53 @@
     height: 100% !important;
   }
 
-  /* No min-width on .view-week .ec — let .ec-main overflow via column widths
-     so position:sticky on .ec-sidebar has a proper scroll container to work against. */
+  /* ─── Sticky Fixed Rails (Chrome Layer): Sidebar, Header, and Toolbar ─── */
+  /* These elements form the unified premium glassmorphic frame. They are placed
+     on the same layer level (z-index: 10) so the grid content slides underneath them. */
+  :global(.ec-sidebar),
+  :global(.ec-header),
+  .calendar-toolbar {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    transition: background-color 0.3s ease !important;
+  }
 
-  /* ─── Sticky Sidebar Layer (week view horizontal scroll) ──────── */
   :global(.ec-sidebar) {
     position: sticky !important;
     left: 0 !important;
     z-index: 10 !important;
-    background-color: rgba(255, 255, 255, 0.80) !important;
-    backdrop-filter: blur(16px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
     border-right: 1px solid var(--border-color) !important;
-    box-shadow: 6px 0 20px rgba(0, 0, 0, 0.04) !important;
-    transition: background-color 0.3s ease !important;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.04) !important;
   }
 
-  :global(html[data-theme="dark"] .ec-sidebar) {
+  :global(.ec-header) {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  /* Corner Intersection (Header × Sidebar): Must stay pinned to both top and left with highest priority */
+  :global(.ec-header .ec-sidebar) {
+    position: sticky !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 15 !important;
+    background-color: rgba(255, 255, 255, 0.92) !important;
+  }
+
+  /* Dark mode theme adjustments for the chrome layers */
+  :global(html[data-theme="dark"] .ec-sidebar),
+  :global(html[data-theme="dark"] .ec-header),
+  :global([data-theme="dark"]) .calendar-toolbar {
     background-color: rgba(18, 18, 26, 0.88) !important;
-    box-shadow: 6px 0 20px rgba(0, 0, 0, 0.18) !important;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  :global(html[data-theme="dark"] .ec-header .ec-sidebar) {
+    background-color: rgba(18, 18, 26, 0.95) !important;
   }
 
   :global(.custom-header) {
@@ -1809,7 +1902,7 @@
     font-weight: 700;
   }
 
-  /* Feature 5: Color contrast — semantic colors and textures */
+  /* ─── Event Card Styling — Semantic Colors & Textures ──────────── */
   :global(.ec-event) {
     border-radius: 6px !important;
     font-size: 0.8rem !important;
@@ -1828,11 +1921,11 @@
     flex-direction: column;
     gap: 2px;
     height: 100%;
-    width: 100%; /* Fixes all-day event stretching */
+    width: 100%; /* Ensures all-day events span their full allocated width */
     overflow: hidden;
     padding: 6px 6px !important;
     border-radius: 6px !important;
-    /* Always white base — same as Apple Calendar */
+    /* Translucent white base inspired by Apple Calendar event cards */
     background-color: #ffffff70 !important;
     border: 1px solid rgba(0, 0, 0, 0.06) !important;
     border-left: 3px solid var(--event-color, var(--primary-color)) !important;
@@ -1842,7 +1935,7 @@
     transition: transform 0.1s ease;
   }
 
-  /* Light pastel tint on the white base — Apple Calendar style */
+  /* Pastel color tint overlay on the translucent white base */
   :global(.ec-event-inner::before) {
     content: "";
     position: absolute;
@@ -1853,7 +1946,7 @@
     border-radius: 6px;
   }
 
-  /* Dark mode: dark translucent base (#000000b3) with subtle color wash */
+  /* Dark mode: translucent dark base with a subtle color wash */
   :global(html[data-theme="dark"] .ec-event-inner) {
     background-color: #000000b3 !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
@@ -1861,10 +1954,10 @@
   }
 
   :global(html[data-theme="dark"] .ec-event-inner::before) {
-    opacity: 0.25; /* Stronger tint to give the dark base a colored wash */
+    opacity: 0.25; /* Increased tint intensity to remain visible against the dark base */
   }
 
-  /* Removed old Apple pastel styling to favor neon high-contrast theme */
+
 
   :global(.ec-event:hover .ec-event-inner) {
     transform: translateY(-1px);
@@ -1904,7 +1997,7 @@
     color: white !important;
   }
 
-  /* List view overrides */
+  /* ─── List View Layout Overrides ────────────────────────────────── */
   :global(.ec-event-inner--list) {
     display: flex;
     flex-direction: row;
@@ -1953,9 +2046,9 @@
     display: none !important;
   }
 
-  /* Assistive Textures - Enabled state */
+  /* ─── Accessibility: Assistive Pattern Textures ────────────────── */
   :global(.a11y-assistive-patterns .ec-event-inner) {
-    border-left-width: 8px !important; /* Thicker bar when enabled */
+    border-left-width: 8px !important; /* Wider accent bar for improved pattern visibility */
   }
 
   @media (max-width: 1023px) {
@@ -1964,7 +2057,7 @@
     }
   }
 
-  /* Assistive Texture Layer (covers entire card) */
+  /* Texture overlay layer — spans the full event card area */
   :global(.a11y-assistive-patterns .ec-event-inner::after) {
     content: "";
     position: absolute;
@@ -1974,7 +2067,7 @@
     pointer-events: none;
   }
 
-  /* Light mode textures (black) */
+  /* Light mode texture patterns (black strokes on light background) */
   :global(
       .a11y-assistive-patterns .ec-event-inner[data-texture="stripes"]::after
     ) {
@@ -2009,7 +2102,7 @@
     background-size: 7.5px 7.5px !important;
   }
 
-  /* Dark mode textures (white) */
+  /* Dark mode texture patterns (white strokes on dark background) */
   :global([data-theme="dark"] .a11y-assistive-patterns .ec-event-inner::after) {
     opacity: 0.25;
   }
@@ -2062,7 +2155,7 @@
     font-weight: normal !important;
   }
 
-  /* ─── Custom Now Indicator UI ─────────────────────────────── */
+  /* ─── Now Indicator — Current Time Marker ──────────────────────── */
   :global(.ec-now-indicator) {
     z-index: 15 !important;
     border-top: 2px solid var(--primary-color) !important;
@@ -2073,8 +2166,8 @@
   :global(.ec-now-indicator::before) {
     content: "" !important;
     position: absolute !important;
-    left: -5px !important; /* Hang slightly into sidebar so dot is fully visible */
-    top: -4px !important;  /* Center the 10px dot on the 2px line */
+    left: -5px !important; /* Extend into the sidebar so the dot remains fully visible */
+    top: -4px !important;  /* Vertically center the 10px dot on the 2px indicator line */
     width: 10px !important;
     height: 10px !important;
     background: var(--primary-color) !important;
@@ -2093,7 +2186,7 @@
     }
   }
 
-  /* Dark Mode */
+  /* ─── Dark Mode — Calendar Library Overrides ───────────────────── */
   @media (prefers-color-scheme: dark) {
     :global(.ec) {
       --ec-bg-color: transparent !important;
@@ -2107,9 +2200,9 @@
     }
   }
 
-  /* ─── Responsive ─────────────────────────────────────────────── */
+  /* ─── Responsive Layout Adjustments ────────────────────────────── */
   @media (max-width: 768px) {
-    /* Hide location in mobile month view */
+    /* Location text is hidden in month view on mobile to save space */
     :global(.ec-day-grid .ec-event-loc) {
       display: none !important;
     }
@@ -2162,7 +2255,7 @@
     }
 
     .calendar-container {
-      height: calc(100vh - 180px); /* Taller on desktop */
+      height: calc(100vh - 180px); /* Utilize additional vertical space on desktop */
     }
 
     .quick-links-section {
@@ -2170,7 +2263,7 @@
     }
   }
 
-  /* ─── Quick Links Section ────────────────────────────────────── */
+  /* ─── Quick Links Section ──────────────────────────────────────── */
   .quick-links-section {
     margin: var(--spacing-lg) var(--spacing-sm) 0;
   }
@@ -2194,7 +2287,7 @@
     }
   }
 
-  /* ─── Quick Link Cards — Liquid Glass ────────────────────────── */
+  /* ─── Quick Link Cards — Liquid Glass Surface ──────────────────── */
   .quick-link-card {
     display: flex;
     flex-direction: column;

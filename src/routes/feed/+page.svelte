@@ -906,57 +906,7 @@
     font-style: italic;
   }
 
-  /* ─── Feature 3: Contact Trigger Button ──────────────────────── */
-  .contact-trigger-section {
-    margin-bottom: var(--spacing-xl);
-  }
 
-  .contact-trigger {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    width: 100%;
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-    color: var(--text-color);
-  }
-
-  .contact-trigger:hover {
-    border-color: var(--primary-color);
-    box-shadow: var(--shadow-sm);
-  }
-
-  .contact-trigger-icon {
-    font-size: 1.6rem;
-    flex-shrink: 0;
-  }
-
-  .contact-trigger-text {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-  }
-
-  .contact-trigger-title {
-    font-weight: 700;
-    font-size: 0.95rem;
-  }
-
-  .contact-trigger-sub {
-    font-size: 0.8rem;
-    color: var(--text-color-secondary, #888);
-  }
-
-  .contact-trigger-arrow {
-    font-size: 1.4rem;
-    color: var(--text-color-secondary, #888);
-    flex-shrink: 0;
-  }
 
   /* ─── Contact Sheet / Modal (shared) ──────────────────────────── */
   .sheet-overlay {
@@ -1139,8 +1089,7 @@
       width: 100%;
     }
 
-    .social-section,
-    .contact-trigger-section {
+    .social-section {
       width: 100%;
     }
   }
