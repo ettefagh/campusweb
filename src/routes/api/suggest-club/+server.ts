@@ -3,7 +3,15 @@ import { env } from "$env/dynamic/private";
 
 export async function POST({ request, platform }) {
   try {
-    const { clubName, platform, handleOrUrl, campusId, category, contactEmail, note } = await request.json();
+    const {
+      clubName,
+      platform: socialPlatform,
+      handleOrUrl,
+      campusId,
+      category,
+      contactEmail,
+      note,
+    } = await request.json();
 
     // 1. Validation
     if (!clubName || !handleOrUrl || !campusId) {
@@ -27,7 +35,7 @@ export async function POST({ request, platform }) {
 🤝 <b>New Club Suggestion</b>
 
 <b>Club Name:</b> ${cleanClubName}
-<b>Platform:</b> ${platform}
+<b>Platform:</b> ${socialPlatform}
 <b>Link/Handle:</b> ${handleOrUrl}
 <b>Campus:</b> ${campusId}
 <b>Category:</b> ${category || "None"}

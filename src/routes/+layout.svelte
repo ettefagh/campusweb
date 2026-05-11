@@ -13,7 +13,7 @@
   // Bridge: sync accessibility store → <html> class list.
   if (browser) {
     // Frame Buster: Prevent nested loading of SvelteKit inside iframes
-    if (window.self !== window.top) {
+    if (window.top && window.self !== window.top) {
       window.top.location.href = window.location.href;
     }
 

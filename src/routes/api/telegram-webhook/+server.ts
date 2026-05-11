@@ -26,8 +26,9 @@ function parseExpiration(expiresParsed: string): string {
 export async function POST({ request, platform }) {
   try {
     const body = await request.json();
-    const botToken = env.PRIVATE_TELEGRAM_BOT_TOKEN || platform?.env?.PRIVATE_TELEGRAM_BOT_TOKEN;
-    const adminChatId = env.PRIVATE_TELEGRAM_CHAT_ID || platform?.env?.PRIVATE_TELEGRAM_CHAT_ID;
+    const runtimeEnv = platform?.env;
+    const botToken = env.PRIVATE_TELEGRAM_BOT_TOKEN || runtimeEnv?.PRIVATE_TELEGRAM_BOT_TOKEN;
+    const adminChatId = env.PRIVATE_TELEGRAM_CHAT_ID || runtimeEnv?.PRIVATE_TELEGRAM_CHAT_ID;
 
     if (!botToken) return json({ error: "No bot token" }, { status: 500 });
 
@@ -61,7 +62,7 @@ export async function POST({ request, platform }) {
           })
         });
         
-        const kv = platform?.env?.STORIES_KV;
+        const kv = runtimeEnv?.STORIES_KV;
         if (kv) incrementStat(kv, "actions", "edited").catch(() => {});
       }
       return json({ success: true });
@@ -71,7 +72,7 @@ export async function POST({ request, platform }) {
     if (body.message && body.message.text?.startsWith("/alert")) {
       const msgChatId = body.message.chat.id.toString();
       if (msgChatId === adminChatId) {
-        const kv = platform?.env?.STORIES_KV;
+        const kv = runtimeEnv?.STORIES_KV;
         if (kv) {
           const text = body.message.text.replace("/alert", "").trim();
           if (text === "clear" || text === "") {
@@ -122,7 +123,7 @@ export async function POST({ request, platform }) {
     if (body.message && body.message.text === "/stats") {
       const msgChatId = body.message.chat.id.toString();
       if (msgChatId === adminChatId) {
-        const kv = platform?.env?.STORIES_KV;
+        const kv = runtimeEnv?.STORIES_KV;
         if (!kv) {
           await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -164,7 +165,7 @@ export async function POST({ request, platform }) {
     if (body.message && body.message.text === "/list") {
       const msgChatId = body.message.chat.id.toString();
       if (msgChatId === adminChatId) {
-        const kv = platform?.env?.STORIES_KV;
+        const kv = runtimeEnv?.STORIES_KV;
         if (!kv) {
           await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -173,7 +174,7 @@ export async function POST({ request, platform }) {
           return json({ success: true });
         }
         
-        let stories = [];
+        let stories: Array<{ id: string; title: string; createdAt: string; expiresAt: string }> = [];
         const kvData = await kv.get("stories");
         if (kvData) {
           try { stories = JSON.parse(kvData); } catch(e) {}
@@ -192,7 +193,7 @@ export async function POST({ request, platform }) {
         }
         
         let text = "📚 <b>Active Stories Management</b>\n\n";
-        const inline_keyboard = [];
+        const inline_keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
         
         activeStories.forEach((s, idx) => {
           const addedStr = new Date(s.createdAt).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' });
@@ -218,7 +219,7 @@ export async function POST({ request, platform }) {
         const isAlbumSecondary = msg.media_group_id && !msg.caption;
         
         if (isCreate || isAlbumSecondary) {
-          const kv = platform?.env?.STORIES_KV;
+          const kv = runtimeEnv?.STORIES_KV;
           if (!kv) return json({ error: "No KV bound" });
           
           let title = "Direct Story", subtitle = "", linkUrl = "", expiresParsed = "";
@@ -264,7 +265,7 @@ export async function POST({ request, platform }) {
           if (!fileData.ok) return json({ error: "File fetch failed" });
           
           const fileUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-          const r2 = platform?.env?.IMAGES_BUCKET;
+          const r2 = runtimeEnv?.IMAGES_BUCKET;
           if (!r2) return json({ error: "No R2 bound" });
           
           let imgBlob;
@@ -321,7 +322,21 @@ export async function POST({ request, platform }) {
           message_id: messageId,
           caption: newCaption,
           parse_mode: "HTML",
-          reply_markup: { inline_keyboard: [] } // Removes the buttons
+          reply_markup: { inline_keyboard: [] }
+        })
+      });
+    };
+
+    const editTextMessage = async (newText: string) => {
+      await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          text: newText,
+          parse_mode: "HTML",
+          reply_markup: { inline_keyboard: [] }
         })
       });
     };
@@ -340,9 +355,9 @@ export async function POST({ request, platform }) {
 
     if (action.startsWith("action_delete_story_")) {
       const storyId = action.replace("action_delete_story_", "");
-      const kv = platform?.env?.STORIES_KV;
+      const kv = runtimeEnv?.STORIES_KV;
       if (kv) {
-        let stories = [];
+        let stories: Array<{ id: string }> = [];
         const kvData = await kv.get("stories");
         if (kvData) {
           try { stories = JSON.parse(kvData); } catch(e) {}
@@ -366,11 +381,17 @@ export async function POST({ request, platform }) {
     }
 
     if (action === "action_reject" || action === "club_reject") {
-      const kv = platform?.env?.STORIES_KV;
+      const kv = runtimeEnv?.STORIES_KV;
       if (kv && action === "action_reject") incrementStat(kv, "actions", "declined").catch(() => {});
       
       const label = action === "club_reject" ? "Club Suggestion" : "Suggestion";
-      await editMessage(`❌ <b>${label} Rejected</b>\n\n` + (message.text || message.caption || ""));
+      const newText = `❌ <b>${label} Rejected</b>\n\n` + (message.text || message.caption || "");
+      
+      if (action === "club_reject") {
+        await editTextMessage(newText);
+      } else {
+        await editMessage(newText);
+      }
       
       await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -386,7 +407,7 @@ export async function POST({ request, platform }) {
         body: JSON.stringify({ callback_query_id: cb.id, text: "Approved! (Logic to be finalized in Phase 7)" })
       }).catch(() => {});
 
-      await editMessage("✅ <b>Club Approved!</b> (Note: Manual entry to socialAccounts.ts required for now)\n\n" + (message.text || ""));
+      await editTextMessage("✅ <b>Club Approved!</b> (Note: Manual entry to socialAccounts.ts required for now)\n\n" + (message.text || ""));
       return json({ success: true });
     }
 
@@ -420,7 +441,7 @@ export async function POST({ request, platform }) {
       const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
 
       // 2. Upload to Cloudflare R2
-      const r2 = platform?.env?.IMAGES_BUCKET;
+      const r2 = runtimeEnv?.IMAGES_BUCKET;
       if (!r2) {
         await editMessage("⚠️ Error: Cloudflare R2 (IMAGES_BUCKET) is not bound.");
         return json({ error: "No R2 bound" });
@@ -469,7 +490,7 @@ export async function POST({ request, platform }) {
       const finalExpiresAt = parseExpiration(expiresParsed);
 
       // 4. Save to Cloudflare KV
-      const kv = platform?.env?.STORIES_KV;
+      const kv = runtimeEnv?.STORIES_KV;
       if (!kv) {
         await editMessage("⚠️ Error: Cloudflare KV (STORIES_KV) is not bound. Image uploaded but story not saved.");
         return json({ error: "No KV bound" });

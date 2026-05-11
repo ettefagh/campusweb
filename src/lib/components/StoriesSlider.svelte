@@ -4,10 +4,7 @@
   fullscreen viewer on click, auto-advances with a progress bar, and supports
   swipe gestures on mobile.
 -->
-<script lang="ts">
-  import { onDestroy } from "svelte";
-  import StorySuggestionModal from "./StorySuggestionModal.svelte";
-
+<script module lang="ts">
   export interface Story {
     id: string;
     title: string;
@@ -19,6 +16,11 @@
     createdAt: string;
     expiresAt?: string;
   }
+</script>
+
+<script lang="ts">
+  import { onDestroy } from "svelte";
+  import StorySuggestionModal from "./StorySuggestionModal.svelte";
 
   export let stories: Story[] = [];
   export let allowSuggestions: boolean = true;

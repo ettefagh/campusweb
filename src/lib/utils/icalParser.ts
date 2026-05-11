@@ -63,7 +63,8 @@ export function parseICalEvents(
 			const uid = event.uid;
 			const summary = event.summary;
 			const location = event.location;
-			const description = vevent.getFirstPropertyValue('description');
+				const rawDescription = vevent.getFirstPropertyValue('description');
+				const description = typeof rawDescription === 'string' ? rawDescription : '';
 			const dtstart = event.startDate;
 			const dtend = event.endDate;
 

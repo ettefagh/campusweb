@@ -1,5 +1,5 @@
 import { socialAccounts } from "./socialAccounts";
-import { promotions } from "./promotions";
+import { promotions, isPromotionActive } from "./promotions";
 import { t } from "$lib/i18n";
 import { get } from "svelte/store";
 
@@ -32,13 +32,14 @@ export interface FeedItem {
 /**
  * Normalizes all disparate data sources into a single feed stream.
  */
-export function getNormalizedFeed(campusId: string): FeedItem[] {
+export function getNormalizedFeed(campusId: string | null): FeedItem[] {
+  const resolvedCampusId = campusId ?? "all";
   const items: FeedItem[] = [];
   const i18n = get(t);
 
   // 1. Official Social Accounts (mapped to FeedItem)
   socialAccounts
-    .filter(acc => acc.type === "official" && (acc.campusIds.includes("all") || acc.campusIds.includes(campusId)))
+    .filter(acc => acc.type === "official" && (acc.campusIds.includes("all") || acc.campusIds.includes(resolvedCampusId)))
     .forEach(acc => {
       items.push({
         id: acc.id,
@@ -54,7 +55,7 @@ export function getNormalizedFeed(campusId: string): FeedItem[] {
 
   // 2. Student Clubs
   socialAccounts
-    .filter(acc => acc.type === "club" && (acc.campusIds.includes("all") || acc.campusIds.includes(campusId)))
+    .filter(acc => acc.type === "club" && (acc.campusIds.includes("all") || acc.campusIds.includes(resolvedCampusId)))
     .forEach(acc => {
       items.push({
         id: acc.id,
@@ -70,7 +71,7 @@ export function getNormalizedFeed(campusId: string): FeedItem[] {
 
   // 3. Promotions
   promotions
-    .filter(promo => (promo.campusIds.includes("all") || promo.campusIds.includes(campusId)))
+    .filter(promo => isPromotionActive(promo) && (promo.campusIds.includes("all") || promo.campusIds.includes(resolvedCampusId)))
     .forEach(promo => {
       items.push({
         id: promo.id,

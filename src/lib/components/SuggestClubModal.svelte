@@ -25,8 +25,15 @@
     if (submitting) return;
     isOpen = false;
     setTimeout(() => {
-      clubName = ""; instagramUrl = ""; campusId = ""; category = "";
-      contactEmail = ""; note = ""; success = false; errorMsg = "";
+      clubName = ""; 
+      handleOrUrl = ""; 
+      campusId = ""; 
+      category = "";
+      platform = "instagram";
+      contactEmail = ""; 
+      note = ""; 
+      success = false; 
+      errorMsg = "";
     }, 300);
     dispatch("close");
   }

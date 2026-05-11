@@ -31,6 +31,7 @@ export interface Campus {
   id: string;
   university: string;
   name: string;
+  city: string;
   country: string;
   stateCode?: string; // e.g., 'BE', 'BW', 'BY'
   libraryUrl?: string;
@@ -199,9 +200,9 @@ function readFromStorage(): AppSettings {
     
     // Additional safeguard: ensure 'header' is at index 0
     if (finalSettings.homeSections) {
-      const headerItem = finalSettings.homeSections.find(s => s.id === 'header');
+      const headerItem = finalSettings.homeSections.find((s: HomeSection) => s.id === 'header');
       if (headerItem) {
-        finalSettings.homeSections = [headerItem, ...finalSettings.homeSections.filter(s => s.id !== 'header')];
+        finalSettings.homeSections = [headerItem, ...finalSettings.homeSections.filter((s: HomeSection) => s.id !== 'header')];
       }
     }
     

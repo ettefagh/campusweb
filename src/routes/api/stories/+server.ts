@@ -17,6 +17,17 @@ import type { RequestHandler } from "./$types";
 import storiesData from "$lib/data/stories.json";
 import { env } from "$env/dynamic/private";
 
+type StoryRecord = {
+  id: string;
+  title: string;
+  subtitle: string;
+  imageUrl: string;
+  linkUrl: string;
+  seen: boolean;
+  createdAt: string;
+  expiresAt?: string;
+};
+
 function parseCSV(csvText: string) {
   const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== "");
   if (lines.length < 2) return [];
@@ -57,7 +68,7 @@ function parseCSV(csvText: string) {
 }
 
 // In-memory storage fallback for serverless environments
-let activeStories = [...storiesData];
+let activeStories: StoryRecord[] = [...storiesData];
 
 /**
  * Dynamically import 'fs' and 'path' only when running in Node.js (local dev).
@@ -66,8 +77,9 @@ let activeStories = [...storiesData];
 async function getNodeModules() {
   if (typeof process !== "undefined" && process.versions && process.versions.node) {
     try {
-      const fs = await import("fs");
-      const path = await import("path");
+      const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<any>;
+      const fs = await dynamicImport("fs");
+      const path = await dynamicImport("path");
       return { fs, path };
     } catch {
       return null;
@@ -92,7 +104,7 @@ async function readStories() {
   return activeStories;
 }
 
-async function writeStories(stories: any[]) {
+async function writeStories(stories: StoryRecord[]) {
   activeStories = stories;
   const node = await getNodeModules();
   if (node) {
@@ -129,11 +141,11 @@ export const GET: RequestHandler = async ({ platform }) => {
     try {
       const kvData = await kv.get("stories");
       if (kvData) {
-        const kvStories = JSON.parse(kvData);
+        const kvStories = JSON.parse(kvData) as StoryRecord[];
         
         // Auto-cleanup: purge expired stories from database
         const now = new Date();
-        const validStories = kvStories.filter(s => !s.expiresAt || new Date(s.expiresAt) > now);
+        const validStories = kvStories.filter((s) => !s.expiresAt || new Date(s.expiresAt) > now);
         
         if (validStories.length < kvStories.length) {
           kv.put("stories", JSON.stringify(validStories)).catch(console.error);

@@ -10,6 +10,7 @@
 		icon: string;
 		description?: string;
 		category_name?: string;
+		iframeable?: boolean;
 	};
 	export let isFavorite: boolean = false;
 	export let useViewer: boolean = false;

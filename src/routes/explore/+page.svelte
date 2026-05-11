@@ -48,7 +48,7 @@
 
   onMount(() => {
     // Dynamic library URL based on campus if needed
-    if ($settingsStore.campus === "Berlin") {
+    if ($settingsStore.campusId === "berlin") {
       libraryUrl = "https://login.srh-berlin.idm.oclc.org/menu";
     }
     if ($settingsStore.emailVerified) {
@@ -175,10 +175,10 @@
       const email = c.email.toLowerCase().trim();
       if (merged.has(email)) {
         const existing = merged.get(email);
-        c.services.forEach((s) => {
+        c.services.forEach((s: string) => {
           if (!existing.services.includes(s)) existing.services.push(s);
         });
-        c.programs.forEach((p) => {
+        c.programs.forEach((p: string) => {
           if (!existing.programs.includes(p)) existing.programs.push(p);
         });
         if (c.tags) {
@@ -426,7 +426,13 @@
             </p>
             <button
               class="hint-btn primary"
-              onclick={() => (window.location.href = "/settings")}
+              onclick={() => {
+                if (window.top && window.self !== window.top) {
+                  window.top.location.href = "/settings";
+                } else {
+                  window.location.href = "/settings";
+                }
+              }}
             >
               Go to Settings
             </button>

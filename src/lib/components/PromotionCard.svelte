@@ -5,16 +5,16 @@
   export let promotion: Promotion;
   export let onDismiss: (id: string) => void;
 
-  const labelKeys = {
-    "Promotion": "promotionLabel",
-    "Student Offer": "studentOfferLabel",
-    "Official Offer": "officialOfferLabel"
-  };
+  function getLabel(label: Promotion["label"]) {
+    if (label === "Promotion") return $t.feed.promotionLabel;
+    if (label === "Student Offer") return $t.feed.studentOfferLabel;
+    return $t.feed.officialOfferLabel;
+  }
 </script>
 
 <div class="promo-card">
   <div class="promo-badge">
-    {$t.feed[labelKeys[promotion.label]] || promotion.label}
+    {getLabel(promotion.label)}
   </div>
   
   <button class="dismiss-btn" on:click|preventDefault={() => onDismiss(promotion.id)} aria-label={$t.feed.dismiss}>

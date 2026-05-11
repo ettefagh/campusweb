@@ -4,12 +4,10 @@
   import {
     settingsStore,
     CAMPUSES,
-    DEPARTMENTS,
   } from "$lib/stores/settingsStore";
   import { getEmailUrl } from "$lib/utils/emailHelper";
-  import { getDirectPhone, getTeamsChatUrl } from "$lib/utils/phoneHelper";
+  import { getTeamsChatUrl } from "$lib/utils/phoneHelper";
   import StoriesSlider from "$lib/components/StoriesSlider.svelte";
-  import SocialAccountCard from "$lib/components/SocialAccountCard.svelte";
   import SuggestClubModal from "$lib/components/SuggestClubModal.svelte";
   import PromotionCard from "$lib/components/PromotionCard.svelte";
   import OfficialAccountsSection from "$lib/components/OfficialAccountsSection.svelte";
@@ -17,7 +15,7 @@
   import NewsCardGrid from "$lib/components/NewsCardGrid.svelte";
   import { cachedStories, getStories } from "$lib/stores/feedCache";
   import { socialAccounts } from "$lib/data/socialAccounts";
-  import { promotions } from "$lib/data/promotions";
+  import { promotions, isPromotionActive } from "$lib/data/promotions";
   import { getNormalizedFeed } from "$lib/data/feedItems";
 
   export let active = false;
@@ -31,12 +29,8 @@
   $: isPortraitMobile = innerWidth < 600;
 
   // ── Directory state ──────────────────────────────────────────
-  let dirTab: "services" | "general" = "services";
-  let expandedId: string | null = null;
-  $: currentCampusName =
-    CAMPUSES.find((c) => c.id === $settingsStore.campusId)?.name ?? "";
   
-  $: currentCampusId = $settingsStore.campusId;
+  $: currentCampusId = $settingsStore.campusId ?? "all";
   $: feedItems = getNormalizedFeed(currentCampusId);
 
   $: officialAccounts = socialAccounts.filter(acc => 
@@ -53,6 +47,7 @@
 
   let dismissedPromoIds: string[] = [];
   $: activePromotions = promotions.filter(promo => 
+    isPromotionActive(promo) &&
     !dismissedPromoIds.includes(promo.id) &&
     (promo.campusIds.includes("all") || promo.campusIds.includes(currentCampusId))
   );
@@ -62,9 +57,6 @@
     localStorage.setItem("dismissed_promotions", JSON.stringify(dismissedPromoIds));
   }
 
-  function toggleExpand(id: string) {
-    expandedId = expandedId === id ? null : id;
-  }
 
   onMount(() => {
     getStories(); // Only hits network if last load > refreshRate
@@ -538,50 +530,6 @@
     animation: spin 1s linear infinite;
   }
 
-  /* ─── Social Chips ────────────────────────────────────────────── */
-  .social-scroll {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    padding-bottom: 8px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .social-scroll::-webkit-scrollbar {
-    display: none;
-  }
-
-  .social-chip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 100px;
-    text-decoration: none;
-    color: var(--text-color);
-    white-space: nowrap;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm);
-  }
-
-  .social-chip:hover {
-    border-color: var(--chip-color);
-    background: color-mix(in srgb, var(--chip-color) 8%, var(--card-bg));
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-  }
-
-  .chip-icon {
-    font-size: 1.1rem;
-  }
-
-  .chip-name {
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
 
   @keyframes pulse {
     0% { opacity: 0.6; }

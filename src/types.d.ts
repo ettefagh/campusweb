@@ -8,6 +8,7 @@ declare module 'ical.js' {
 		constructor(vevent: any);
 		uid: string;
 		summary: string;
+		description: string;
 		location: string;
 		startDate: Time;
 		endDate: Time;
@@ -17,3 +18,36 @@ declare module 'ical.js' {
 		toJSDate(): Date;
 	}
 }
+
+declare module 'fs' {
+	export const readFileSync: any;
+	export const writeFileSync: any;
+}
+
+declare module 'path' {
+	export const resolve: (...parts: string[]) => string;
+}
+
+declare global {
+	const process:
+		| {
+				versions?: {
+					node?: string;
+				};
+		  }
+		| undefined;
+
+	namespace App {
+		interface Platform {
+			env?: {
+				PRIVATE_TELEGRAM_BOT_TOKEN?: string;
+				PRIVATE_TELEGRAM_CHAT_ID?: string;
+				PRIVATE_VIRUSTOTAL_API_KEY?: string;
+				STORIES_KV?: any;
+				IMAGES_BUCKET?: any;
+			};
+		}
+	}
+}
+
+export {};
