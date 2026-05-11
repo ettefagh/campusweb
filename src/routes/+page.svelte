@@ -1,6 +1,8 @@
 <script lang="ts">
 	import LinkCard from "$lib/components/LinkCard.svelte";
 	import IdSlider from "$lib/components/IdSlider.svelte";
+	import StoriesSlider from "$lib/components/StoriesSlider.svelte";
+	import { cachedStories } from "$lib/stores/feedCache";
 	import { favorites } from "$lib/stores/favorites";
 	import { allLinks } from "$lib/data/links";
 	import { t } from "$lib/i18n";
@@ -115,6 +117,13 @@
 						<p class="subtitle">{$t.home.subtitle}</p>
 					</div>
 				</header>
+			{:else if section.id === "stories"}
+				<section class="stories-section" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
+					<div class="modular-section-header" style="margin-bottom: 0;">
+						<h2>{$t.home.campusStories}</h2>
+					</div>
+					<StoriesSlider stories={$cachedStories} allowSuggestions={true} />
+				</section>
 			{:else if section.id === "favorites"}
 				<section class="links-section" style={i <= 1 ? "" : "animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;"}>
 					<div class="favorite-links-header">
@@ -290,32 +299,6 @@
 		}
 	}
 
-	.page-footer {
-		text-align: center;
-		margin-top: var(--spacing-xl);
-		padding-bottom: var(--spacing-lg);
-	}
-
-	.edit-link {
-		background: none;
-		border: none;
-		color: var(--text-color-secondary);
-		font-size: 0.9rem;
-		text-decoration: underline;
-		cursor: pointer;
-		padding: var(--spacing-sm);
-	}
-
-	.edit-link:hover {
-		color: var(--primary-color);
-	}
-
-	.edit-link.editing {
-		color: var(--primary-color);
-		font-weight: 600;
-		text-decoration: none;
-	}
-
 	.search-container {
 		margin: 0 0 var(--spacing-md) 0;
 		padding: 0 var(--spacing-md);
@@ -361,10 +344,15 @@
 		}
 	}
 
-	.full-width-section {
+	.full-width-section, .stories-section {
 		display: block !important;
 		grid-column: 1 / -1;
 		margin-top: var(--spacing-xl);
+	}
+
+	.stories-section {
+		margin-top: var(--spacing-md);
+		margin-bottom: var(--spacing-sm);
 	}
 
 	.modular-section-header {

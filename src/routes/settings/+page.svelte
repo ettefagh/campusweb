@@ -393,6 +393,8 @@
                     {:else if sec.id === "calendar"}<i class="ph-bold ph-calendar" style="margin-right: 8px; color: var(--primary-color);"></i>
                     {:else if sec.id === "cards"}<i class="ph-bold ph-identification-card" style="margin-right: 8px; color: var(--primary-color);"></i>
                     {:else if sec.id === "header"}<i class="ph-bold ph-house" style="margin-right: 8px; color: var(--primary-color);"></i>
+                    {:else if sec.id === "stories"}<i class="ph-bold ph-circles-three-plus" style="margin-right: 8px; color: var(--primary-color);"></i>
+                    {:else if sec.id === "feed"}<i class="ph-bold ph-newspaper" style="margin-right: 8px; color: var(--primary-color);"></i>
                     {/if}
                     {sec.id === "favorites"
                       ? "Favorite Links"
@@ -402,7 +404,11 @@
                           ? "Cards"
                           : sec.id === "header"
                             ? "Header Section"
-                            : sec.id}
+                            : sec.id === "stories"
+                              ? "Campus Stories"
+                              : sec.id === "feed"
+                                ? "Feed Summary"
+                                : sec.id}
                   </span>
                 </div>
                 <div class="section-actions">
@@ -1283,29 +1289,6 @@
     border-radius: var(--radius-md);
     font-size: 0.9rem;
     cursor: pointer;
-  }
-
-  /* ── Guest Section ── */
-  .guest-section {
-    border-color: var(--primary-color);
-    background: rgba(var(--primary-color-rgb, 212, 68, 7), 0.03);
-  }
-
-  .btn-signin {
-    width: 100%;
-    padding: var(--spacing-md);
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-signin:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(var(--primary-color-rgb, 212, 68, 7), 0.3);
   }
 
   /* ── Update Card ── */

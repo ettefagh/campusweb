@@ -1011,11 +1011,6 @@
     border-color: var(--border-color);
   }
 
-  .cat-chip.active {
-    background: var(--primary-color);
-    color: white;
-  }
-
   .view-more-hint {
     grid-column: 1 / -1;
     text-align: center;

@@ -27,14 +27,15 @@ const translations = {
 
     // ── Home page ──
     home: {
-      title: 'Campusweb',
-      subtitle: 'Quick access to university resources',
-      pageTitle: 'CampusWeb Pages - Quick Access to University Resources',
-      searchPlaceholder: 'Search links…',
-      emptyState: 'No favorites yet. Click Edit below to add some!',
-      editFavorites: 'Edit Favorites',
-      done: 'Done',
+      pageTitle: 'Home',
+      title: 'SRH Campus',
+      subtitle: 'Your university companion',
       universityLinks: 'Favorite Links',
+      campusStories: 'Campus Stories',
+      searchPlaceholder: 'Search favorites...',
+      emptyState: 'No favorites yet. Add some from the Explore tab!',
+      viewAll: 'View Calendar',
+      viewAllNews: 'View Feed',
     },
 
     // ── Explore page ──
@@ -166,6 +167,16 @@ const translations = {
       refreshRate15m: '15 min',
       refreshRate1h: '1 hour',
       refreshRateManual: 'On App Load',
+      suggestStoryTitle: 'Suggest a Story',
+      storyTitleLabel: 'Story Title',
+      storySubtitleLabel: 'Description',
+      storyTagLabel: 'Live Tag',
+      storyTagPlaceholder: 'e.g. LIVE, EVENT',
+      storyImageLabel: 'Image',
+      storyLinkLabel: 'Read More Link',
+      storyExpiresLabel: 'Expiration Date',
+      storySuccessTitle: 'Awesome!',
+      storySuccessText: 'We sent it directly to the curation team!',
       resetTitle: 'Reset',
       resetDesc: 'Restore all settings to factory defaults',
       resetButton: 'Reset all settings…',
@@ -280,14 +291,15 @@ const translations = {
 
     // ── Home page ──
     home: {
-      title: 'Campusweb',
-      subtitle: 'Schnellzugriff auf Universitätsressourcen',
-      pageTitle: 'CampusWeb Pages – Schnellzugriff auf Uni-Ressourcen',
-      searchPlaceholder: 'Links suchen…',
-      emptyState: 'Noch keine Favoriten. Klicke unten auf Bearbeiten!',
-      editFavorites: 'Favoriten bearbeiten',
-      done: 'Fertig',
-      universityLinks: 'Favoriten-Links',
+      pageTitle: 'Home',
+      title: 'SRH Campus',
+      subtitle: 'Dein Campus-Begleiter',
+      universityLinks: 'Favoriten',
+      campusStories: 'Campus-Stories',
+      searchPlaceholder: 'Favoriten suchen...',
+      emptyState: 'Noch keine Favoriten. Füge welche aus dem Entdecken-Tab hinzu!',
+      viewAll: 'Kalender öffnen',
+      viewAllNews: 'Feed öffnen',
     },
 
     // ── Explore page ──

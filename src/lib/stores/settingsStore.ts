@@ -159,6 +159,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   defaultPage: 'home',
   homeSections: [
     { id: 'header', enabled: true },
+    { id: 'stories', enabled: true },
     { id: 'favorites', enabled: true },
     { id: 'cards', enabled: true },
     { id: 'calendar', enabled: false },

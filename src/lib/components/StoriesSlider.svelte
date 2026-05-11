@@ -15,6 +15,7 @@
     imageUrl: string;
     linkUrl: string;
     seen: boolean;
+    tag?: string;
     createdAt: string;
     expiresAt?: string;
   }
@@ -211,9 +212,8 @@
       class="story-bubble"
       on:click={() => openStory(idx)}
       aria-label="Open story: {story.title}"
-      role="listitem"
     >
-      <div class="story-ring {story.seen ? 'seen' : 'unseen'}">
+      <div class="story-ring {story.seen ? 'seen' : 'unseen'}" class:has-tag={!!story.tag}>
         <img
           src={story.imageUrl}
           alt={story.title}
@@ -228,6 +228,9 @@
             img.src = "/icon-light.png";
           }}
         />
+        {#if story.tag}
+          <span class="story-tag" class:is-live={story.tag.toUpperCase() === 'LIVE'}>{story.tag}</span>
+        {/if}
       </div>
       <span class="story-label">{story.title}</span>
     </button>
@@ -241,6 +244,7 @@
     use:portal
     role="dialog"
     aria-modal="true"
+    tabindex="-1"
     aria-label="Viewing story: {storiesToShow[activeIndex].title}"
     on:touchstart={onTouchStart}
     on:touchend={onTouchEnd}
@@ -386,11 +390,79 @@
     width: 68px;
     height: 68px;
     border-radius: 50%;
-    padding: 1.5px;
+    padding: 3.2px; /* 5% thicker */
     display: flex;
     align-items: center;
     justify-content: center;
     transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+
+  .story-ring::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    z-index: 0;
+    /* Make the ring truly transparent in the middle */
+    mask-image: radial-gradient(circle, transparent 30px, black 30.5px);
+    -webkit-mask-image: radial-gradient(circle, transparent 30px, black 30.5px);
+  }
+
+  .story-ring.has-tag::before {
+    /* Intersection cropping: creates a "notch" for the tag AND keeps the inner hole */
+    mask-image: 
+      radial-gradient(circle at 50% 100%, transparent 22px, black 22.5px),
+      radial-gradient(circle, transparent 30px, black 30.5px);
+    -webkit-mask-image: 
+      radial-gradient(circle at 50% 100%, transparent 22px, black 22.5px),
+      radial-gradient(circle, transparent 30px, black 30.5px);
+    mask-composite: intersect;
+    -webkit-mask-composite: source-in;
+  }
+
+  .story-tag {
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-color, #e5201e);
+    color: white;
+    font-size: 0.58rem;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: 2px solid var(--card-bg, #fff);
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    white-space: nowrap;
+    line-height: 1;
+  }
+
+  /* Specific 'LIVE' tag styling - more prominent and slightly different shape */
+  .story-tag.is-live {
+    background: linear-gradient(135deg, #FF0000 0%, #D6249F 50%, #285AEB 100%);
+    padding: 3px 12px;
+    border-radius: 4px;
+    bottom: -5px;
+    box-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
+    animation: livePulse 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes livePulse {
+    0%, 100% {
+      transform: translateX(-50%) scale(1);
+      box-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
+    }
+    50% {
+      transform: translateX(-50%) scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+    }
   }
 
   .story-bubble:hover .story-ring,
@@ -398,7 +470,7 @@
     transform: scale(1.08);
   }
 
-  .story-ring.unseen {
+  .story-ring.unseen::before {
     background: linear-gradient(
       135deg,
       #f09433 0%,
@@ -409,27 +481,30 @@
     );
   }
 
-  .story-ring.seen {
+  .story-ring.seen::before {
     background: var(--border-color, #ccc);
   }
 
-  .add-ring {
+  .add-ring::before {
     background: linear-gradient(
       135deg,
-      var(--primary-color, #e5201e),
-      color-mix(in srgb, var(--primary-color, #e5201e) 60%, #000)
+      var(--primary-color, #e5201e) 0%,
+      #cc2366 100%
     );
+    opacity: 0.15;
   }
 
   .story-avatar {
-    width: 65px;
-    height: 65px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    background: var(--card-bg, #fff);
-    border: 1.5px solid var(--card-bg, #fff);
+    background: none;
+    border: 2.5px solid transparent; /* The truly transparent gap */
     -webkit-touch-callout: none;
     user-select: none;
+    z-index: 1;
+    position: relative;
   }
 
   .add-icon {

@@ -135,8 +135,6 @@
       });
   }
 
-
-
   let calendarDate = new Date();
 
   // ─── Event Calendar Configuration ─────────────────────────────────
@@ -199,7 +197,9 @@
       const loc = esc(rawLoc);
       const hasUrl = !!info.event.extendedProps?.locationUrl;
       const icon = hasUrl ? "🌐 " : "📍";
-      const locHtml = loc ? `<span class="ec-event-loc">${icon}${loc}</span>` : "";
+      const locHtml = loc
+        ? `<span class="ec-event-loc">${icon}${loc}</span>`
+        : "";
       const texture = info.event.extendedProps?.texture || "solid";
       const color = info.event.backgroundColor || "var(--primary-color)";
       const textColor = color.replace("var(--event-", "var(--event-text-");
@@ -257,8 +257,6 @@
       updateToolbarState();
     },
   };
-
-
 
   function checkTodayPosition() {
     const todayCol = document.querySelector(".ec-today") as HTMLElement;
@@ -379,11 +377,15 @@
 
     // Smooth-scroll both axes to center the now-indicator in the viewport
     setTimeout(() => {
-      const targetEl = (document.querySelector(".ec-now-indicator") || document.querySelector(".ec-today")) as HTMLElement;
+      const targetEl = (document.querySelector(".ec-now-indicator") ||
+        document.querySelector(".ec-today")) as HTMLElement;
       if (targetEl) {
         let parent = targetEl.parentElement;
         while (parent && parent !== document.body) {
-          if (parent.classList.contains("ec-body") || parent.classList.contains("ec-main")) {
+          if (
+            parent.classList.contains("ec-body") ||
+            parent.classList.contains("ec-main")
+          ) {
             const parentRect = parent.getBoundingClientRect();
             const targetRect = targetEl.getBoundingClientRect();
             const relativeTop =
@@ -399,7 +401,9 @@
       }
 
       const todayCol = document.querySelector(".ec-today") as HTMLElement;
-      const scrollPort = document.querySelector(".calendar-scroll-area") as HTMLElement;
+      const scrollPort = document.querySelector(
+        ".calendar-scroll-area",
+      ) as HTMLElement;
       if (todayCol && scrollPort) {
         const portRect = scrollPort.getBoundingClientRect();
         const colRect = todayCol.getBoundingClientRect();
@@ -441,11 +445,15 @@
 
     setTimeout(() => {
       updateToolbarState();
-      const targetEl = (document.querySelector(".ec-now-indicator") || document.querySelector(".ec-today")) as HTMLElement;
+      const targetEl = (document.querySelector(".ec-now-indicator") ||
+        document.querySelector(".ec-today")) as HTMLElement;
       if (targetEl) {
         let parent = targetEl.parentElement;
         while (parent && parent !== document.body) {
-          if (parent.classList.contains("ec-body") || parent.classList.contains("ec-main")) {
+          if (
+            parent.classList.contains("ec-body") ||
+            parent.classList.contains("ec-main")
+          ) {
             const parentRect = parent.getBoundingClientRect();
             const targetRect = targetEl.getBoundingClientRect();
             const relativeTop =
@@ -461,7 +469,9 @@
       }
 
       const todayCol = document.querySelector(".ec-today") as HTMLElement;
-      const scrollPort = document.querySelector(".calendar-scroll-area") as HTMLElement;
+      const scrollPort = document.querySelector(
+        ".calendar-scroll-area",
+      ) as HTMLElement;
       if (todayCol && scrollPort) {
         const portRect = scrollPort.getBoundingClientRect();
         const colRect = todayCol.getBoundingClientRect();
@@ -526,8 +536,6 @@
       },
     };
   }
-
-
 
   // ─── Reactive Store Subscriptions ─────────────────────────────────
   const unsubscribe = calendarStore.subscribe((subs) => {
@@ -670,7 +678,8 @@
       aria-label={$t.calendar.refresh}
       title={$t.calendar.refresh}
     >
-      <i class="ph-bold ph-arrows-counter-clockwise" class:spinning={isLoading}></i>
+      <i class="ph-bold ph-arrows-counter-clockwise" class:spinning={isLoading}
+      ></i>
     </button>
   </header>
 
@@ -682,7 +691,7 @@
 
       {#if !isMounted || currentSubs.length === 0}
         <div class="suggestion-banner link-banner">
-        <div class="suggestion-icon"><i class="ph-bold ph-calendar"></i></div>
+          <div class="suggestion-icon"><i class="ph-bold ph-calendar"></i></div>
           <div class="suggestion-content">
             <p class="suggestion-title">See your university schedule here</p>
             <p class="suggestion-desc">
@@ -991,7 +1000,7 @@
         <div class="popup-location-badge online">
           {popupEvent.extendedProps?.shortLocation || "Online"}
         </div>
-        {#if popupEvent.extendedProps?.location && !popupEvent.extendedProps.location.startsWith('http')}
+        {#if popupEvent.extendedProps?.location && !popupEvent.extendedProps.location.startsWith("http")}
           <div class="popup-location">
             {popupEvent.extendedProps?.location}
           </div>
@@ -1313,7 +1322,7 @@
     position: relative;
     margin: 0 var(--spacing-sm);
     /* Light mode: translucent white base for glass effect */
-    background: rgba(255, 255, 255, 0.70);
+    background: rgba(255, 255, 255, 0.7);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-border);
@@ -1355,8 +1364,6 @@
   .view-week :global(.ec-body) {
     overflow: visible !important;
   }
-
-
 
   /* ─── Empty State Overlay ───────────────────────────────────────── */
   .empty-state {
@@ -1514,7 +1521,7 @@
 
   .toolbar-group {
     display: flex;
-    gap: 4px;
+    gap: 0px;
     background: rgba(0, 0, 0, 0.04);
     padding: 3px;
     border-radius: 12px;
@@ -1883,8 +1890,6 @@
     opacity: 0.25; /* Increased tint intensity to remain visible against the dark base */
   }
 
-
-
   :global(.ec-event:hover .ec-event-inner) {
     transform: translateY(-1px);
   }
@@ -2103,10 +2108,14 @@
   @keyframes indicatorPulse {
     0%,
     100% {
-      box-shadow: 0 0 0 0px rgba(212, 68, 7, 0.4), 0 0 8px var(--primary-color) !important;
+      box-shadow:
+        0 0 0 0px rgba(212, 68, 7, 0.4),
+        0 0 8px var(--primary-color) !important;
     }
     50% {
-      box-shadow: 0 0 0 6px rgba(212, 68, 7, 0), 0 0 12px var(--primary-color) !important;
+      box-shadow:
+        0 0 0 6px rgba(212, 68, 7, 0),
+        0 0 12px var(--primary-color) !important;
     }
   }
 
@@ -2179,7 +2188,9 @@
     }
 
     .calendar-container {
-      height: calc(100vh - 180px); /* Utilize additional vertical space on desktop */
+      height: calc(
+        100vh - 180px
+      ); /* Utilize additional vertical space on desktop */
     }
 
     .quick-links-section {

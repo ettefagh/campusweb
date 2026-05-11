@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
+  import { t } from "$lib/i18n";
 
   export let isOpen = false;
 
@@ -7,6 +8,7 @@
 
   let title = "";
   let subtitle = "";
+  let tag = "";
   let linkUrl = "";
   let expiresAt = "";
 
@@ -93,6 +95,7 @@
       const fd = new FormData();
       fd.append("title", title);
       fd.append("subtitle", subtitle);
+      fd.append("tag", tag);
       fd.append("linkUrl", linkUrl);
       fd.append("expiresAt", expiresAt);
       fd.append("image", imagePayload); // Can append a File object or String seamlessly!
@@ -133,7 +136,7 @@
     <div class="modal-content" on:click|stopPropagation>
       
       <div class="modal-header">
-        <h2>Suggest a Story</h2>
+        <h2>{$t.settings.suggestStoryTitle}</h2>
         <button class="close-btn" on:click={close}>✕</button>
       </div>
 
@@ -150,13 +153,18 @@
           {/if}
 
           <div class="input-group">
-            <label for="title">Story Title <span class="req">*</span></label>
+            <label for="title">{$t.settings.storyTitleLabel} <span class="req">*</span></label>
             <input type="text" id="title" bind:value={title} placeholder="e.g., New Semester Welcome!" maxlength="40" disabled={submitting} />
           </div>
 
           <div class="input-group">
-            <label for="subtitle">Description/Subtitle</label>
+            <label for="subtitle">{$t.settings.storySubtitleLabel}</label>
             <input type="text" id="subtitle" bind:value={subtitle} placeholder="Details, times, location..." disabled={submitting} />
+          </div>
+
+          <div class="input-group">
+            <label for="tag">{$t.settings.storyTagLabel}</label>
+            <input type="text" id="tag" bind:value={tag} placeholder={$t.settings.storyTagPlaceholder} maxlength="10" disabled={submitting} />
           </div>
 
           <!-- DYNAMIC IMAGE SELECTOR -->
@@ -189,12 +197,12 @@
           </div>
 
           <div class="input-group mt-sm">
-            <label for="linkUrl">Read More Link (Optional)</label>
+            <label for="linkUrl">{$t.settings.storyLinkLabel}</label>
             <input type="url" id="linkUrl" bind:value={linkUrl} placeholder="https://..." disabled={submitting} />
           </div>
 
           <div class="input-group mt-sm">
-            <label for="expiresAt">Expiration Date (Optional)</label>
+            <label for="expiresAt">{$t.settings.storyExpiresLabel}</label>
             <div class="date-wrapper">
               <input type="date" id="expiresAt" bind:value={expiresAt} disabled={submitting} />
               <div class="quick-dates">
