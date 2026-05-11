@@ -66,6 +66,8 @@ export interface AppSettings {
   headerSize: 'big' | 'small';
   /** Default Landing Page */
   defaultPage: 'home' | 'calendar';
+  /** Feed refresh rate in minutes */
+  feedRefreshRate: number;
 }
 
 // ── Static Data: Campuses ─────────────────────────────────────────────────────
@@ -162,6 +164,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     { id: 'calendar', enabled: false },
     { id: 'feed', enabled: false }
   ],
+  feedRefreshRate: 5,
 };
 
 const STORAGE_KEY = 'app_settings';

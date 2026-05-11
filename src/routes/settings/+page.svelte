@@ -513,6 +513,58 @@
       </div>
     </details>
   </section>
+  
+  <!-- ── Feed ──────────────────────────────── -->
+  <section class="settings-section">
+    <details>
+      <summary class="section-header section-header--collapsible">
+        <span class="section-icon"><i class="ph-bold ph-rss"></i></span>
+        <div>
+          <h2>{$t.settings.feedTitle}</h2>
+          <p class="section-desc">{$t.settings.feedDesc}</p>
+        </div>
+        <span class="chevron" aria-hidden="true">›</span>
+      </summary>
+
+      <div class="a11y-body" style="padding-top: var(--spacing-md);">
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">{$t.settings.refreshRateLabel}</span>
+          </div>
+          <div class="segment-control">
+            <button
+              class="segment-btn"
+              class:active={$settingsStore.feedRefreshRate === 5}
+              on:click={() => settingsStore.patch({ feedRefreshRate: 5 })}
+            >
+              {$t.settings.refreshRate5m}
+            </button>
+            <button
+              class="segment-btn"
+              class:active={$settingsStore.feedRefreshRate === 15}
+              on:click={() => settingsStore.patch({ feedRefreshRate: 15 })}
+            >
+              {$t.settings.refreshRate15m}
+            </button>
+            <button
+              class="segment-btn"
+              class:active={$settingsStore.feedRefreshRate === 60}
+              on:click={() => settingsStore.patch({ feedRefreshRate: 60 })}
+            >
+              {$t.settings.refreshRate1h}
+            </button>
+            <button
+              class="segment-btn"
+              class:active={$settingsStore.feedRefreshRate === 0}
+              on:click={() => settingsStore.patch({ feedRefreshRate: 0 })}
+            >
+              {$t.settings.refreshRateManual}
+            </button>
+          </div>
+        </div>
+      </div>
+    </details>
+  </section>
 
   <!-- ── Calendar Settings (Collapsible) ────────────── -->
   <section class="settings-section a11y-section">

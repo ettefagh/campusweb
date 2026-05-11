@@ -1,19 +1,25 @@
-import { writable } from "svelte/store";
+import { writable, get } from "svelte/store";
 import type { Story } from "$lib/components/StoriesSlider.svelte";
 import storiesJson from "$lib/data/stories.json";
+import { settingsStore } from "$lib/stores/settingsStore";
 
 // Persistence during user session inside application
 export const cachedStories = writable<Story[]>(storiesJson as Story[]);
 export const lastFetchTime = writable<number>(0);
 
-const REFRESH_RATE_MS = 5 * 60 * 1000; // 5 Minute Cache Window
-
 export async function getStories(force = false) {
+  const settings = get(settingsStore);
+  const rateInMinutes = settings.feedRefreshRate ?? 5;
+  const refreshRateMs = rateInMinutes * 60 * 1000;
+  
   let lastTime = 0;
   lastFetchTime.subscribe(v => lastTime = v)();
 
+  // If manual (0) and not forced, skip
+  if (rateInMinutes === 0 && !force) return;
+
   // Check if enough time passed or if this is forced refresh
-  if (!force && Date.now() - lastTime < REFRESH_RATE_MS) {
+  if (!force && rateInMinutes > 0 && Date.now() - lastTime < refreshRateMs) {
     return; 
   }
 
