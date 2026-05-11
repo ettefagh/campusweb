@@ -365,11 +365,28 @@ export async function POST({ request, platform }) {
       return json({ success: true });
     }
 
-    if (action === "action_reject") {
+    if (action === "action_reject" || action === "club_reject") {
       const kv = platform?.env?.STORIES_KV;
-      if (kv) incrementStat(kv, "actions", "declined").catch(() => {});
+      if (kv && action === "action_reject") incrementStat(kv, "actions", "declined").catch(() => {});
       
-      await editMessage("❌ <b>Suggestion Rejected</b>\n\n" + (message.caption || ""));
+      const label = action === "club_reject" ? "Club Suggestion" : "Suggestion";
+      await editMessage(`❌ <b>${label} Rejected</b>\n\n` + (message.text || message.caption || ""));
+      
+      await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callback_query_id: cb.id, text: "Rejected." })
+      }).catch(() => {});
+      
+      return json({ success: true });
+    }
+
+    if (action === "club_approve") {
+      await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callback_query_id: cb.id, text: "Approved! (Logic to be finalized in Phase 7)" })
+      }).catch(() => {});
+
+      await editMessage("✅ <b>Club Approved!</b> (Note: Manual entry to socialAccounts.ts required for now)\n\n" + (message.text || ""));
       return json({ success: true });
     }
 

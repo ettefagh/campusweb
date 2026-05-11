@@ -9,7 +9,16 @@
   import { getEmailUrl } from "$lib/utils/emailHelper";
   import { getDirectPhone, getTeamsChatUrl } from "$lib/utils/phoneHelper";
   import StoriesSlider from "$lib/components/StoriesSlider.svelte";
+  import SocialAccountCard from "$lib/components/SocialAccountCard.svelte";
+  import SuggestClubModal from "$lib/components/SuggestClubModal.svelte";
+  import PromotionCard from "$lib/components/PromotionCard.svelte";
+  import OfficialAccountsSection from "$lib/components/OfficialAccountsSection.svelte";
+  import ClubsSection from "$lib/components/ClubsSection.svelte";
+  import NewsCardGrid from "$lib/components/NewsCardGrid.svelte";
   import { cachedStories, getStories } from "$lib/stores/feedCache";
+  import { socialAccounts } from "$lib/data/socialAccounts";
+  import { promotions } from "$lib/data/promotions";
+  import { getNormalizedFeed } from "$lib/data/feedItems";
 
   export let active = false;
 
@@ -18,6 +27,7 @@
 
   let innerWidth = 0;
   let contactSheetOpen = false;
+  let clubModalOpen = false;
   $: isPortraitMobile = innerWidth < 600;
 
   // ── Directory state ──────────────────────────────────────────
@@ -25,6 +35,32 @@
   let expandedId: string | null = null;
   $: currentCampusName =
     CAMPUSES.find((c) => c.id === $settingsStore.campusId)?.name ?? "";
+  
+  $: currentCampusId = $settingsStore.campusId;
+  $: feedItems = getNormalizedFeed(currentCampusId);
+
+  $: officialAccounts = socialAccounts.filter(acc => 
+    acc.type === "official" && (acc.campusIds.includes("all") || acc.campusIds.includes(currentCampusId))
+  ).sort((a, b) => b.priority - a.priority);
+
+  $: clubAccounts = socialAccounts.filter(acc => 
+    acc.type === "club" && (acc.campusIds.includes("all") || acc.campusIds.includes(currentCampusId))
+  ).sort((a, b) => b.priority - a.priority);
+
+  $: instagramEmbeds = officialAccounts
+    .filter(acc => acc.platform === "instagram")
+    .slice(0, 2);
+
+  let dismissedPromoIds: string[] = [];
+  $: activePromotions = promotions.filter(promo => 
+    !dismissedPromoIds.includes(promo.id) &&
+    (promo.campusIds.includes("all") || promo.campusIds.includes(currentCampusId))
+  );
+
+  function dismissPromotion(id: string) {
+    dismissedPromoIds = [...dismissedPromoIds, id];
+    localStorage.setItem("dismissed_promotions", JSON.stringify(dismissedPromoIds));
+  }
 
   function toggleExpand(id: string) {
     expandedId = expandedId === id ? null : id;
@@ -32,6 +68,16 @@
 
   onMount(() => {
     getStories(); // Only hits network if last load > refreshRate
+
+    // Load dismissed promotions
+    const stored = localStorage.getItem("dismissed_promotions");
+    if (stored) {
+      try {
+        dismissedPromoIds = JSON.parse(stored);
+      } catch (e) {
+        console.error("Failed to parse dismissed promotions", e);
+      }
+    }
     
     // Defer loading of heavy third-party scripts to optimize initial FCP, LCP, and Speed Index
     if (typeof window !== "undefined") {
@@ -101,48 +147,8 @@
       url: "/viewer?url=https://www.srh-university.de/en/news/",
       color: "#ef4444",
     },
-    {
-      tag: "AD",
-      emoji: "🛒",
-      title: $t.feed.merchTitle,
-      desc: $t.feed.merchDesc,
-      url: "https://srh-store.de/employees/bildung.html",
-      color: "#8b5cf6",
-    },
   ];
 
-  const socialMedia = [
-    {
-      name: "Instagram",
-      url: "https://www.instagram.com/srh_university_international/",
-      icon: "📷",
-      color: "#E1306C",
-    },
-    {
-      name: "Facebook",
-      url: "http://facebook.com/srhuniversityinternational",
-      icon: "📘",
-      color: "#1877F2",
-    },
-    {
-      name: "TikTok",
-      url: "https://www.tiktok.com/@srhuniversity",
-      icon: "🎵",
-      color: "#000000",
-    },
-    {
-      name: "YouTube",
-      url: "https://www.youtube.com/@srhuniversity",
-      icon: "📺",
-      color: "#FF0000",
-    },
-    {
-      name: "LinkedIn",
-      url: "https://www.linkedin.com/school/srh-university/posts/",
-      icon: "🔗",
-      color: "#0A66C2",
-    },
-  ];
 
   let contacts: Array<{
     icon: string;
@@ -211,54 +217,39 @@
   <!-- Stories bar -->
   <StoriesSlider {stories} />
 
-  <!-- Feature 4: Modernized Instagram Embed Wrapper -->
-  <section class="embed-section">
-    <h2 class="section-title">{$t.feed.instagramFeeds}</h2>
-    <div class="embed-wrapper">
-      <div class="embed-card">
-        <div class="embed-label">@srh.students</div>
-        <blockquote
-          class="instagram-media"
-          data-instgrm-permalink="https://www.instagram.com/srh.students/"
-          data-instgrm-version="14"
-          style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:0; width:100%;"
-        >
-          <div class="insta-placeholder">
-            <div class="insta-skeleton-header">
-              <div class="insta-skeleton-avatar"></div>
-              <div class="insta-skeleton-text"></div>
-            </div>
-            <div class="insta-skeleton-image">
-              <div class="insta-spinner"></div>
-            </div>
+  <!-- Official Instagram Embeds -->
+  {#if instagramEmbeds.length > 0}
+    <section class="embed-section">
+      <h2 class="section-title">{$t.feed.officialInstagram}</h2>
+      <div class="embed-wrapper">
+        {#each instagramEmbeds as acc}
+          <div class="embed-card">
+            <div class="embed-label">@{acc.handle}</div>
+            <blockquote
+              class="instagram-media"
+              data-instgrm-permalink={acc.url}
+              data-instgrm-version="14"
+              style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:0; width:100%;"
+            >
+              <div class="insta-placeholder">
+                <div class="insta-skeleton-header">
+                  <div class="insta-skeleton-avatar"></div>
+                  <div class="insta-skeleton-text"></div>
+                </div>
+                <div class="insta-skeleton-image">
+                  <div class="insta-spinner"></div>
+                </div>
+              </div>
+            </blockquote>
           </div>
-        </blockquote>
+        {/each}
       </div>
-      <div class="embed-card">
-        <div class="embed-label">@srh_university_international</div>
-        <blockquote
-          class="instagram-media"
-          data-instgrm-permalink="https://www.instagram.com/srh_university_international/"
-          data-instgrm-version="14"
-          style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:0; width:100%;"
-        >
-          <div class="insta-placeholder">
-            <div class="insta-skeleton-header">
-              <div class="insta-skeleton-avatar"></div>
-              <div class="insta-skeleton-text"></div>
-            </div>
-            <div class="insta-skeleton-image">
-              <div class="insta-spinner"></div>
-            </div>
-          </div>
-        </blockquote>
-      </div>
-    </div>
-  </section>
+    </section>
+  {/if}
 
-  <!-- Feature 6: TikTok Embed Wrapper -->
+  <!-- TikTok Feed -->
   <section class="tiktok-section">
-    <h2 class="section-title">{($t.feed as any)?.tiktokFeed || "TikTok Feed"}</h2>
+    <h2 class="section-title">{$t.feed.tiktokFeed}</h2>
     <div class="tiktok-card">
       <blockquote
         class="tiktok-embed"
@@ -288,64 +279,27 @@
     </div>
   </section>
 
-  <!-- Feature 2: Horizontal Scroll Social Chips -->
-  <section class="social-section">
-    <h2 class="section-title">{$t.feed.followSRH}</h2>
-    <div class="social-scroll">
-      {#each socialMedia as platform}
-        <a
-          href={platform.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="social-chip"
-          style="--chip-color: {platform.color};"
-        >
-          <span class="chip-icon">{platform.icon}</span>
-          <span class="chip-name">{platform.name}</span>
-        </a>
-      {/each}
-    </div>
-  </section>
+  <!-- Official Pages Chips -->
+  <OfficialAccountsSection accounts={officialAccounts} />
+
+  <!-- Student Clubs -->
+  <ClubsSection accounts={clubAccounts} onSuggest={() => (clubModalOpen = true)} />
+
+  <!-- Promotions Section -->
+  {#if activePromotions.length > 0}
+    <section class="promotions-section">
+      <div class="promotions-grid">
+        {#each activePromotions as promotion (promotion.id)}
+          <PromotionCard {promotion} onDismiss={dismissPromotion} />
+        {/each}
+      </div>
+    </section>
+  {/if}
+
   <!-- Feature 1: News Preview Cards -->
-  <section class="news-cards">
-    {#each newsCards as card}
-      <a href={card.url} class="news-card" style="--card-accent: {card.color}">
-        <div class="news-card-header">
-          <span
-            class="news-card-icon"
-            style="background: color-mix(in srgb, {card.color} 12%, transparent); color: {card.color};"
-          >
-            {card.emoji}
-          </span>
-          <span
-            class="news-card-tag"
-            style="background: color-mix(in srgb, {card.color} 15%, transparent); color: {card.color}; border: 1px solid color-mix(in srgb, {card.color} 25%, transparent);"
-          >
-            {card.tag}
-          </span>
-        </div>
-        <div class="news-card-content">
-          <h3 class="news-card-title">{card.title}</h3>
-          <p class="news-card-desc">{card.desc}</p>
-        </div>
-        <span class="news-card-cta">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </span>
-      </a>
-    {/each}
-  </section>
+  <NewsCardGrid cards={newsCards} />
+
+  <SuggestClubModal bind:isOpen={clubModalOpen} />
 </div>
 
 <style>
@@ -420,162 +374,10 @@
   .section-title {
     font-size: 1.1rem;
     font-weight: 700;
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
     color: var(--text-color);
   }
 
-  /* ─── Feature 1: News Preview Cards ──────────────────────────── */
-  .news-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-md);
-    margin: var(--spacing-sm) 0;
-  }
-
-  @media (max-width: 1024px) {
-    .news-cards {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .news-cards {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .news-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: var(--spacing-lg);
-    padding-bottom: calc(var(--spacing-lg) + 24px);
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
-    text-decoration: none;
-    color: var(--text-color);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    height: 100%;
-    box-sizing: border-box;
-  }
-
-  .news-card::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: var(--card-accent);
-    opacity: 0.8;
-    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  }
-
-  .news-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--card-accent);
-    box-shadow: 0 12px 24px -10px color-mix(in srgb, var(--card-accent) 25%, transparent);
-    background: color-mix(in srgb, var(--card-accent) 2%, var(--card-bg));
-  }
-
-  .news-card:hover::before {
-    width: 6px;
-  }
-
-  .news-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-md);
-    gap: var(--spacing-sm);
-  }
-
-  .news-card-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: var(--radius-lg);
-    font-size: 1.25rem;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .news-card:hover .news-card-icon {
-    transform: scale(1.1) rotate(5deg);
-  }
-
-  .news-card-tag {
-    padding: 4px 10px;
-    border-radius: 99px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .news-card-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    flex: 1;
-    padding-right: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .news-card-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    line-height: 1.35;
-    color: var(--text-color);
-    margin: 0;
-    transition: color 0.2s ease;
-  }
-
-  .news-card:hover .news-card-title {
-    color: var(--card-accent);
-  }
-
-  .news-card-desc {
-    font-size: 0.85rem;
-    color: var(--text-color-secondary);
-    line-height: 1.5;
-    margin: 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .news-card-cta {
-    position: absolute;
-    bottom: var(--spacing-lg);
-    right: var(--spacing-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--card-accent) 8%, var(--card-bg));
-    border: 1px solid
-      color-mix(in srgb, var(--card-accent) 15%, var(--border-color));
-    color: var(--card-accent);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  }
-
-  .news-card:hover .news-card-cta {
-    background: var(--card-accent);
-    color: #fff;
-    border-color: var(--card-accent);
-    transform: scale(1.1) translateX(2px);
-    box-shadow: 0 4px 10px
-      color-mix(in srgb, var(--card-accent) 30%, transparent);
-  }
 
   /* ─── Embeds ──────────────────────────────────────────────────── */
   .embed-wrapper {

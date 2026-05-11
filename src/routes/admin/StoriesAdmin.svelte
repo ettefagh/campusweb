@@ -128,13 +128,9 @@
   }
 </script>
 
-<svelte:head>
-  <title>Stories Admin – SRH CampusWeb</title>
-</svelte:head>
 
-<div class="admin-page">
-  <header class="admin-header">
-    <a href="/feed" class="back-link">← Back to Feed</a>
+<div class="admin-section">
+  <header class="section-header">
     <h1>📸 Stories Manager</h1>
     <p class="header-sub">Add, reorder, or remove campus stories that appear at the top of the Feed page.</p>
   </header>
@@ -272,28 +268,15 @@
 </div>
 
 <style>
-  .admin-page {
-    max-width: 780px;
-    margin: 0 auto;
-    padding: 24px 16px 60px;
-    font-family: var(--font-family, system-ui, sans-serif);
-    color: var(--text-color, #111);
+  .admin-section {
+    max-width: 800px;
   }
 
-  .admin-header {
+  .section-header {
     margin-bottom: 28px;
   }
 
-  .back-link {
-    font-size: 0.85rem;
-    color: var(--primary-color, #e5201e);
-    text-decoration: none;
-    font-weight: 600;
-    display: inline-block;
-    margin-bottom: 8px;
-  }
-
-  .admin-header h1 {
+  .section-header h1 {
     font-size: 1.8rem;
     font-weight: 800;
     margin: 0 0 6px;

@@ -113,6 +113,24 @@ const translations = {
       phone: 'Phone',
       email: 'Email',
       address: 'Address',
+      // Social Accounts
+      officialInstagram: 'Official Instagram',
+      officialPages: 'Official SRH Pages',
+      openInstagram: 'Open Instagram',
+      verifiedBadge: 'Verified official page',
+      officialLabel: 'Official',
+      studentClubs: 'Student Clubs',
+      studentRun: 'Student-run',
+      suggestClub: 'Suggest Club',
+      tiktokFeed: 'TikTok Feed',
+      allCategories: 'All',
+      thanks: 'Thank you!',
+      clubSuggestionReceived: 'We\'ll review your club suggestion and add it soon.',
+      // Promotions
+      promotionLabel: 'Promotion',
+      studentOfferLabel: 'Student Offer',
+      officialOfferLabel: 'Official Offer',
+      dismiss: 'Dismiss',
     },
 
     // ── Settings page ──
@@ -375,6 +393,24 @@ const translations = {
       phone: 'Telefon',
       email: 'E-Mail',
       address: 'Adresse',
+      // Social Accounts
+      officialInstagram: 'Offizielles Instagram',
+      officialPages: 'Offizielle SRH Seiten',
+      openInstagram: 'Instagram öffnen',
+      verifiedBadge: 'Verifizierte offizielle Seite',
+      officialLabel: 'Offiziell',
+      studentClubs: 'Studentische Clubs',
+      studentRun: 'Studentisch geführt',
+      suggestClub: 'Club vorschlagen',
+      tiktokFeed: 'TikTok Feed',
+      allCategories: 'Alle',
+      thanks: 'Vielen Dank!',
+      clubSuggestionReceived: 'Wir prüfen deinen Club-Vorschlag und fügen ihn bald hinzu.',
+      // Promotions
+      promotionLabel: 'Promotion',
+      studentOfferLabel: 'Studentenangebot',
+      officialOfferLabel: 'Offizielles Angebot',
+      dismiss: 'Ausblenden',
     },
 
     // ── Settings page ──
