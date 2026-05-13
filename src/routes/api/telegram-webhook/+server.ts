@@ -1,6 +1,7 @@
 import { json } from "@sveltejs/kit";
 import { env } from "$env/dynamic/private";
 import { incrementStat } from "$lib/server/stats";
+import { sendApprovalEmail } from "$lib/server/email";
 
 function parseExpiration(expiresParsed: string): string {
   let finalExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -27,8 +28,9 @@ export async function POST({ request, platform }) {
   try {
     const body = await request.json();
     const runtimeEnv = platform?.env;
-    const botToken = env.PRIVATE_TELEGRAM_BOT_TOKEN || runtimeEnv?.PRIVATE_TELEGRAM_BOT_TOKEN;
-    const adminChatId = env.PRIVATE_TELEGRAM_CHAT_ID || runtimeEnv?.PRIVATE_TELEGRAM_CHAT_ID;
+    const botToken = (env as any).PRIVATE_TELEGRAM_BOT_TOKEN || (runtimeEnv as any)?.PRIVATE_TELEGRAM_BOT_TOKEN;
+    const adminChatId = (env as any).PRIVATE_TELEGRAM_CHAT_ID || (runtimeEnv as any)?.PRIVATE_TELEGRAM_CHAT_ID;
+    const siteUrl = (env as any).PRIVATE_SITE_URL || (runtimeEnv as any)?.PRIVATE_SITE_URL || "https://campusweb.pages.dev";
 
     if (!botToken) return json({ error: "No bot token" }, { status: 500 });
 
@@ -75,17 +77,23 @@ export async function POST({ request, platform }) {
         const kv = runtimeEnv?.STORIES_KV;
         if (kv) {
           const text = body.message.text.replace("/alert", "").trim();
+          const adminName = body.message.from.first_name || "Admin";
+          
           if (text === "clear" || text === "") {
             await kv.delete("campus_alert");
             await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
               method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ chat_id: msgChatId, text: "✅ Global alert cleared." })
+              body: JSON.stringify({ chat_id: msgChatId, text: `✅ <b>Global alert cleared</b> by ${adminName}.`, parse_mode: "HTML" })
             });
           } else {
-            await kv.put("campus_alert", JSON.stringify({ text, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() }));
+            await kv.put("campus_alert", JSON.stringify({ 
+              text, 
+              expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+              createdBy: adminName
+            }));
             await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
               method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ chat_id: msgChatId, text: "🚨 Global alert broadcasted for 24 hours!" })
+              body: JSON.stringify({ chat_id: msgChatId, text: `🚨 <b>Global alert broadcasted</b> by ${adminName} for 24h!\n\n"${text}"`, parse_mode: "HTML" })
             });
           }
         }
@@ -99,18 +107,18 @@ export async function POST({ request, platform }) {
       if (msgChatId === adminChatId) {
         const text = `🛠 <b>CampusWeb Bot Guide</b>\n\n` +
           `<b>Commands:</b>\n` +
-          `/list - View and manage active stories\n` +
-          `/stats - View suggestion statistics\n` +
+          `/list - Manage active Stories\n` +
+          `/clubs - Manage approved Clubs\n` +
+          `/alert [text] - Set global app alert\n` +
+          `/alert clear - Remove global alert\n` +
+          `/stats - View system statistics\n` +
           `/help - Show this guide\n\n` +
-          `<b>Managing Suggestions:</b>\n` +
-          `When a student submits a suggestion, you can:\n` +
-          `- Click <b>Approve & Publish</b> to immediately add it.\n` +
-          `- Click <b>Edit Text</b> for instructions on how to reply and fix typos before approving.\n` +
-          `- Click <b>Reject</b> to discard it.\n\n` +
-          `<b>Directly Creating Stories:</b>\n` +
-          `You can bypass the web form and create stories directly!\n` +
-          `Send a Photo to this bot with a caption in this format:\n\n` +
-          `/create\nTitle: Your Title\nSubtitle: Optional details\nLink: https://...\nExpires: DD/MM/YYYY`;
+          `<b>Workflow:</b>\n` +
+          `1. Student submits suggestion via Web App.\n` +
+          `2. You receive a notification with <b>Approve/Reject</b> buttons.\n` +
+          `3. Approving automatically publishes and notifies the student.\n\n` +
+          `<b>Direct Entry:</b>\n` +
+          `Send a Photo with <code>/create</code> in the caption to bypass the form.`;
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chat_id: msgChatId, text, parse_mode: "HTML" })
@@ -131,28 +139,38 @@ export async function POST({ request, platform }) {
           });
           return json({ success: true });
         }
+        
         const raw = await kv.get("bot_stats");
-        let statsStr = "No stats yet.";
+        const dynamicClubsRaw = await kv.get("dynamic_clubs");
+        const storiesRaw = await kv.get("stories");
+        
+        let statsStr = `📊 <b>System Statistics</b>\n\n`;
+        
+        // Active Content
+        let clubsCount = 0;
+        try { clubsCount = JSON.parse(dynamicClubsRaw || "[]").length; } catch(e) {}
+        let storiesCount = 0;
+        try { storiesCount = JSON.parse(storiesRaw || "[]").length; } catch(e) {}
+        
+        statsStr += `<b>Live Content:</b>\n`;
+        statsStr += `- Active Stories: ${storiesCount}\n`;
+        statsStr += `- Approved Clubs: ${clubsCount}\n\n`;
+
         if (raw) {
           try {
             const st = JSON.parse(raw);
-            statsStr = `📊 <b>Bot Statistics</b>\n\n`;
-            statsStr += `<b>Suggestions Received:</b>\n`;
-            statsStr += `- All Time: ${st.suggestions?.allTime || 0}\n`;
+            statsStr += `<b>Engagement:</b>\n`;
+            statsStr += `- Suggestions (All Time): ${st.suggestions?.allTime || 0}\n`;
             const today = new Date().toISOString().split("T")[0];
-            const thisMonth = today.substring(0, 7);
-            statsStr += `- Today: ${st.suggestions?.daily?.[today] || 0}\n`;
-            statsStr += `- This Month: ${st.suggestions?.monthly?.[thisMonth] || 0}\n\n`;
-            statsStr += `<b>Fields Usage:</b>\n`;
-            statsStr += `- Included Expiry: ${st.fields?.hasExpiry || 0}\n`;
-            statsStr += `- Included URL: ${st.fields?.hasUrl || 0}\n\n`;
-            statsStr += `<b>Admin Actions:</b>\n`;
+            statsStr += `- Suggestions (Today): ${st.suggestions?.daily?.[today] || 0}\n\n`;
+            
+            statsStr += `<b>Admin Performance:</b>\n`;
             statsStr += `- Approved: ${st.actions?.approved || 0}\n`;
             statsStr += `- Declined: ${st.actions?.declined || 0}\n`;
-            statsStr += `- Edited: ${st.actions?.edited || 0}\n`;
             statsStr += `- Direct Created: ${st.actions?.directCreated || 0}\n`;
           } catch(e) {}
         }
+        
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chat_id: msgChatId, text: statsStr, parse_mode: "HTML" })
@@ -161,8 +179,8 @@ export async function POST({ request, platform }) {
       return json({ success: true });
     }
 
-    // Handle /list Command (Story Management)
-    if (body.message && body.message.text === "/list") {
+    // Handle /list and /clubs Commands (Management)
+    if (body.message && (body.message.text === "/list" || body.message.text === "/clubs")) {
       const msgChatId = body.message.chat.id.toString();
       if (msgChatId === adminChatId) {
         const kv = runtimeEnv?.STORIES_KV;
@@ -174,33 +192,34 @@ export async function POST({ request, platform }) {
           return json({ success: true });
         }
         
-        let stories: Array<{ id: string; title: string; createdAt: string; expiresAt: string }> = [];
-        const kvData = await kv.get("stories");
-        if (kvData) {
-          try { stories = JSON.parse(kvData); } catch(e) {}
-        }
+        const isClubs = body.message.text === "/clubs";
+        const key = isClubs ? "dynamic_clubs" : "stories";
+        const label = isClubs ? "Clubs" : "Stories";
+        const prefix = isClubs ? "club" : "story";
         
-        // Filter out expired stories
-        const now = new Date();
-        const activeStories = stories.filter(s => new Date(s.expiresAt) > now);
+        let items: any[] = [];
+        const kvData = await kv.get(key);
+        if (kvData) { try { items = JSON.parse(kvData); } catch(e) {} }
         
-        if (activeStories.length === 0) {
+        if (items.length === 0) {
           await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: msgChatId, text: "📭 There are no active stories right now." })
+            body: JSON.stringify({ chat_id: msgChatId, text: `📭 There are no active dynamic ${label.toLowerCase()}.` })
           });
           return json({ success: true });
         }
         
-        let text = "📚 <b>Active Stories Management</b>\n\n";
+        let text = `📚 <b>Dynamic ${label} Management</b>\n\n`;
         const inline_keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
         
-        activeStories.forEach((s, idx) => {
-          const addedStr = new Date(s.createdAt).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' });
-          const expireStr = new Date(s.expiresAt).toLocaleDateString('en-GB');
-          text += `${idx + 1}. <b>${s.title}</b>\n   🗓 Added: ${addedStr}\n   ⏳ Expires: ${expireStr}\n\n`;
-          inline_keyboard.push([{ text: `❌ Delete #${idx + 1}`, callback_data: `action_delete_story_${s.id}` }]);
+        items.slice(0, 15).forEach((item, idx) => {
+          const name = item.name || item.title || "Untitled";
+          const sub = item.handle || item.subtitle || "";
+          text += `${idx + 1}. <b>${name}</b> ${sub ? `(@${sub})` : ""}\n`;
+          inline_keyboard.push([{ text: `🗑 Delete ${idx + 1}`, callback_data: `action_delete_${prefix}_${item.id}` }]);
         });
+        
+        if (items.length > 15) text += `\n<i>(Showing first 15 of ${items.length})</i>`;
         
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: "POST", headers: { "Content-Type": "application/json" },
@@ -353,25 +372,25 @@ export async function POST({ request, platform }) {
       return json({ success: true });
     }
 
-    if (action.startsWith("action_delete_story_")) {
-      const storyId = action.replace("action_delete_story_", "");
+    if (action.startsWith("action_delete_story_") || action.startsWith("action_delete_club_")) {
+      const isClub = action.startsWith("action_delete_club_");
+      const id = action.replace(isClub ? "action_delete_club_" : "action_delete_story_", "");
       const kv = runtimeEnv?.STORIES_KV;
+      
       if (kv) {
-        let stories: Array<{ id: string }> = [];
-        const kvData = await kv.get("stories");
-        if (kvData) {
-          try { stories = JSON.parse(kvData); } catch(e) {}
-        }
-        const updated = stories.filter(s => s.id !== storyId);
-        await kv.put("stories", JSON.stringify(updated));
+        const key = isClub ? "dynamic_clubs" : "stories";
+        let items: Array<{ id: string }> = [];
+        const kvData = await kv.get(key);
+        if (kvData) { try { items = JSON.parse(kvData); } catch(e) {} }
         
-        // Let the user know by answering callback query with an alert
+        const updated = items.filter(item => item.id !== id);
+        await kv.put(key, JSON.stringify(updated));
+        
         await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ callback_query_id: cb.id, text: "🗑 Story deleted successfully!", show_alert: true })
+          body: JSON.stringify({ callback_query_id: cb.id, text: `🗑 ${isClub ? "Club" : "Story"} deleted!`, show_alert: true })
         }).catch(() => {});
         
-        // Delete the old list message so they have to type /list to get fresh data
         await fetch(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chat_id: chatId, message_id: messageId })
@@ -380,34 +399,184 @@ export async function POST({ request, platform }) {
       return json({ success: true });
     }
 
-    if (action === "action_reject" || action === "club_reject") {
+    // --- ADVANCED REJECTION FLOW ---
+    if (action === "action_reject" || action === "club_reject" || action.startsWith("club_reject_")) {
+      const isClub = action.startsWith("club_reject");
+      const suggestionId = isClub ? action.replace("club_reject_", "") : null;
+      const adminName = cb.from.first_name || "Admin";
+      
+      // Step 1: Confirmation
+      if (!action.includes("_confirm")) {
+        const confirmAction = `${action}_confirm`;
+        const cancelAction = isClub ? `club_cancel_reject_${suggestionId}` : "action_cancel_reject";
+        
+        await fetch(`https://api.telegram.org/bot${botToken}/editMessageReplyMarkup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: messageId,
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: "⚠️ Confirm Rejection", callback_data: confirmAction },
+                  { text: "🔙 Cancel", callback_data: isClub ? `club_reset_${suggestionId}` : "action_reset" }
+                ]
+              ]
+            }
+          })
+        });
+        
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: cb.id, text: "Are you sure?" })
+        }).catch(() => {});
+        return json({ success: true });
+      }
+
+      // Step 2: Finalize Rejection
       const kv = runtimeEnv?.STORIES_KV;
-      if (kv && action === "action_reject") incrementStat(kv, "actions", "declined").catch(() => {});
+      if (kv && !isClub) incrementStat(kv, "actions", "declined").catch(() => {});
       
-      const label = action === "club_reject" ? "Club Suggestion" : "Suggestion";
-      const newText = `❌ <b>${label} Rejected</b>\n\n` + (message.text || message.caption || "");
+      const label = isClub ? "Club Suggestion" : "Suggestion";
+      const originalText = (message.text || message.caption || "").split("\n---")[0];
+      const newText = originalText + `\n\n---\n❌ <b>${label} Rejected</b> by ${adminName}`;
       
-      if (action === "club_reject") {
+      if (isClub) {
         await editTextMessage(newText);
+        if (suggestionId && kv) await kv.delete(`club_suggestion:${suggestionId}`);
       } else {
         await editMessage(newText);
       }
       
-      await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ callback_query_id: cb.id, text: "Rejected." })
-      }).catch(() => {});
-      
       return json({ success: true });
     }
 
-    if (action === "club_approve") {
+    // Reset button to go back to original Approve/Reject
+    if (action.startsWith("club_reset_") || action === "action_reset") {
+      const isClub = action.startsWith("club_reset_");
+      const suggestionId = isClub ? action.replace("club_reset_", "") : null;
+      
+      const keyboard = isClub ? {
+        inline_keyboard: [
+          [
+            { text: "✅ Approve", callback_data: `club_approve_${suggestionId}` },
+            { text: "❌ Reject", callback_data: `club_reject_${suggestionId}` }
+          ]
+        ]
+      } : {
+        inline_keyboard: [
+          [
+            { text: "✅ Approve & Publish", callback_data: "action_approve" },
+            { text: "✏️ Edit Text", callback_data: "action_edit_hint" },
+            { text: "❌ Reject", callback_data: "action_reject" }
+          ]
+        ]
+      };
+
+      await fetch(`https://api.telegram.org/bot${botToken}/editMessageReplyMarkup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          reply_markup: keyboard
+        })
+      });
+      return json({ success: true });
+    }
+
+    if (action.startsWith("club_approve_")) {
+      const suggestionId = action.replace("club_approve_", "");
+      const kv = runtimeEnv?.STORIES_KV;
+      const adminName = cb.from.first_name || "Admin";
+      
+      // Immediate feedback
       await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ callback_query_id: cb.id, text: "Approved! (Logic to be finalized in Phase 7)" })
+        body: JSON.stringify({ callback_query_id: cb.id, text: "🚀 Publishing club..." })
       }).catch(() => {});
 
-      await editTextMessage("✅ <b>Club Approved!</b> (Note: Manual entry to socialAccounts.ts required for now)\n\n" + (message.text || ""));
+      if (!kv) {
+        await editTextMessage(`⚠️ <b>Error:</b> STORIES_KV not bound.\n\n` + (message.text || ""));
+        return json({ success: true });
+      }
+
+      // 1. Fetch suggestion
+      const suggestionRaw = await kv.get(`club_suggestion:${suggestionId}`);
+      if (!suggestionRaw) {
+        await editTextMessage(`⚠️ <b>Error:</b> Suggestion expired or not found.\n\n` + (message.text || ""));
+        return json({ success: true });
+      }
+
+      const suggestion = JSON.parse(suggestionRaw);
+
+      // 2. Map to SocialAccount
+      const platform = suggestion.platform;
+      let handle = suggestion.handleOrUrl;
+      let url = suggestion.handleOrUrl;
+
+      if (platform === "instagram") {
+        handle = handle.replace("@", "").replace("https://www.instagram.com/", "").replace("/", "");
+        url = `https://www.instagram.com/${handle}/`;
+      }
+
+      const newClub = {
+        id: `club-${suggestionId.substring(0, 8)}`,
+        type: "club",
+        name: suggestion.clubName,
+        handle: platform === "instagram" ? handle : "Join Group",
+        platform: platform,
+        url: url,
+        campusIds: [suggestion.campusId],
+        categories: suggestion.category ? [suggestion.category] : [],
+        verified: true,
+        priority: 0
+      };
+
+      // 3. Add to dynamic_clubs list
+      const dynamicClubsRaw = await kv.get("dynamic_clubs");
+      let dynamicClubs = [];
+      if (dynamicClubsRaw) {
+        try { dynamicClubs = JSON.parse(dynamicClubsRaw); } catch(e) {}
+      }
+      
+      // Avoid duplicates
+      if (!dynamicClubs.some((c: any) => c.url === newClub.url)) {
+        dynamicClubs.unshift(newClub);
+        await kv.put("dynamic_clubs", JSON.stringify(dynamicClubs));
+      }
+
+      // 4. Notify Student
+      if (suggestion.contactEmail) {
+        sendApprovalEmail(suggestion.contactEmail, suggestion.clubName, runtimeEnv).catch(console.error);
+      }
+
+      // 5. Update Telegram with "View on Web" button
+      const finalKeyboard = {
+        inline_keyboard: [
+          [{ text: "🌐 View on Website", url: `${siteUrl}/feed` }]
+        ]
+      };
+
+      const originalText = (message.text || "").split("\n---")[0];
+      const timeStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+      await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          text: originalText + `\n\n---\n✅ <b>Published</b> by ${adminName} at ${timeStr}`,
+          parse_mode: "HTML",
+          reply_markup: finalKeyboard
+        })
+      });
+      
+      // Cleanup suggestion
+      await kv.delete(`club_suggestion:${suggestionId}`);
+      
       return json({ success: true });
     }
 
@@ -522,7 +691,25 @@ export async function POST({ request, platform }) {
       incrementStat(kv, "actions", "approved").catch(() => {});
 
       // 5. Success!
-      await editMessage("✅ <b>Published to CampusWeb!</b>\n\n" + caption);
+      const adminName = cb.from.first_name || "Admin";
+      const timeStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const originalCaption = (message.caption || "").split("\n---")[0];
+
+      await fetch(`https://api.telegram.org/bot${botToken}/editMessageCaption`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          caption: originalCaption + `\n\n---\n✅ <b>Published</b> by ${adminName} at ${timeStr}`,
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "🌐 View on Website", url: `${siteUrl}/feed` }]
+            ]
+          }
+        })
+      });
       
       return json({ success: true });
     }

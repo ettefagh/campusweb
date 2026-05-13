@@ -3,6 +3,7 @@ import { env } from "$env/dynamic/private";
 
 export async function POST({ request, platform }) {
   try {
+    const data = await request.json();
     const {
       clubName,
       platform: socialPlatform,
@@ -11,7 +12,7 @@ export async function POST({ request, platform }) {
       category,
       contactEmail,
       note,
-    } = await request.json();
+    } = data;
 
     // 1. Validation
     if (!clubName || !handleOrUrl || !campusId) {
@@ -21,11 +22,26 @@ export async function POST({ request, platform }) {
     // Initialize telegram Payload
     const botToken = env.PRIVATE_TELEGRAM_BOT_TOKEN || platform?.env?.PRIVATE_TELEGRAM_BOT_TOKEN;
     const chatId = env.PRIVATE_TELEGRAM_CHAT_ID || platform?.env?.PRIVATE_TELEGRAM_CHAT_ID;
+    const kv = platform?.env?.STORIES_KV;
 
     if (!botToken || !chatId) {
       console.error("Missing Telegram keys for club suggestion");
       // Fail soft: tell user it's sent even if bot keys are missing (to avoid breaking UX in dev)
       return json({ success: true, warning: "Configuration missing on server" });
+    }
+
+    // Generate unique ID for this suggestion
+    const suggestionId = crypto.randomUUID();
+
+    // Store suggestion in KV for later approval
+    if (kv) {
+      await kv.put(`club_suggestion:${suggestionId}`, JSON.stringify({
+        ...data,
+        id: suggestionId,
+        submittedAt: new Date().toISOString()
+      }), {
+        expirationTtl: 60 * 60 * 24 * 30 // 30 days
+      });
     }
 
     const cleanClubName = clubName.replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -48,8 +64,8 @@ ${cleanNote ? `<b>Note:</b>\n<i>${cleanNote}</i>` : ""}
     const keyboard = {
       inline_keyboard: [
         [
-          { text: "✅ Approve", callback_data: "club_approve" },
-          { text: "❌ Reject", callback_data: "club_reject" }
+          { text: "✅ Approve", callback_data: `club_approve_${suggestionId}` },
+          { text: "❌ Reject", callback_data: `club_reject_${suggestionId}` }
         ]
       ]
     };
@@ -71,7 +87,7 @@ ${cleanNote ? `<b>Note:</b>\n<i>${cleanNote}</i>` : ""}
       return json({ error: "Telegram failed to accept submission." }, { status: 500 });
     }
 
-    return json({ success: true });
+    return json({ success: true, id: suggestionId });
   } catch (err) {
     console.error("Internal error in suggest-club:", err);
     return json({ error: "Internal server failure." }, { status: 500 });

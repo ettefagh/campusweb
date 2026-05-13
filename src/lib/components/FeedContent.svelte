@@ -17,6 +17,7 @@
   import { socialAccounts } from "$lib/data/socialAccounts";
   import { promotions, isPromotionActive } from "$lib/data/promotions";
   import { getNormalizedFeed } from "$lib/data/feedItems";
+  import { dynamicClubs, fetchClubs } from "$lib/stores/clubStore";
 
   export let active = false;
 
@@ -37,9 +38,10 @@
     acc.type === "official" && (acc.campusIds.includes("all") || acc.campusIds.includes(currentCampusId))
   ).sort((a, b) => b.priority - a.priority);
 
-  $: clubAccounts = socialAccounts.filter(acc => 
-    acc.type === "club" && (acc.campusIds.includes("all") || acc.campusIds.includes(currentCampusId))
-  ).sort((a, b) => b.priority - a.priority);
+  $: clubAccounts = [...socialAccounts, ...$dynamicClubs]
+    .filter(acc => 
+      acc.type === "club" && (acc.campusIds.includes("all") || acc.campusIds.includes(currentCampusId))
+    ).sort((a, b) => b.priority - a.priority);
 
   $: instagramEmbeds = officialAccounts
     .filter(acc => acc.platform === "instagram")
@@ -60,6 +62,7 @@
 
   onMount(() => {
     getStories(); // Only hits network if last load > refreshRate
+    fetchClubs(); // Load dynamic clubs from KV
 
     // Load dismissed promotions
     const stored = localStorage.getItem("dismissed_promotions");

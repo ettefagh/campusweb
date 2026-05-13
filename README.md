@@ -85,6 +85,22 @@ campusweb/
    npm run dev
    ```
 
+### Cloudflare Configuration
+
+To enable the Telegram Bot and Email notifications, you must set the following environment variables in the Cloudflare Pages Dashboard (or `wrangler.toml`):
+
+| Variable | Description |
+| :--- | :--- |
+| `PRIVATE_TELEGRAM_BOT_TOKEN` | Your Telegram Bot token from @BotFather. |
+| `PRIVATE_TELEGRAM_CHAT_ID` | Your personal or group Chat ID for admin notifications. |
+| `PRIVATE_SITE_URL` | The public URL of your deployment (default: `https://campusweb.pages.dev`). |
+| `PRIVATE_EMAIL_SENDER` | The verified sender email in Cloudflare Email Routing. |
+
+**Required Bindings:**
+- `STORIES_KV`: A KV namespace for caching and suggestions.
+- `IMAGES_BUCKET`: An R2 bucket for story image hosting.
+- `EMAIL`: A Workers Send Email binding.
+
 ## 🔒 Privacy & Security
 
 CampusWeb is built with a **Privacy-First** architecture:
