@@ -1,7 +1,7 @@
 import { env } from "$env/dynamic/private";
 
 export async function checkUrlSecurity(url: string, platformEnv?: any): Promise<string> {
-  const vtKey = env.PRIVATE_VIRUSTOTAL_API_KEY || platformEnv?.PRIVATE_VIRUSTOTAL_API_KEY;
+  const vtKey = (env as any).PRIVATE_VIRUSTOTAL_API_KEY || platformEnv?.PRIVATE_VIRUSTOTAL_API_KEY;
   
   if (!url || !vtKey) {
     return "";

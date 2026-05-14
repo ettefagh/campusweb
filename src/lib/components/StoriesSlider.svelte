@@ -129,20 +129,28 @@
   }
 
   // ── Swipe support ─────────────────────────────────────────────────
-  let touchStartX = 0;
-  let touchStartTime = 0;
-  function onTouchStart(e: TouchEvent) {
-    touchStartX = e.touches[0].clientX;
-    touchStartTime = Date.now();
+  let pointerStartX = 0;
+  let pointerStartY = 0;
+  let pointerStartTime = 0;
+  function onPointerDown(e: PointerEvent) {
+    pointerStartX = e.clientX;
+    pointerStartY = e.clientY;
+    pointerStartTime = Date.now();
     pauseStory();
   }
-  function onTouchEnd(e: TouchEvent) {
+
+  function onPointerUp(e: PointerEvent) {
     resumeStory();
-    const diff = e.changedTouches[0].clientX - touchStartX;
-    const timeDiff = Date.now() - touchStartTime;
+    const diffX = e.clientX - pointerStartX;
+    const diffY = e.clientY - pointerStartY;
+    const timeDiff = Date.now() - pointerStartTime;
     // Only register as swipe if it was relatively fast and moved enough
-    if (Math.abs(diff) > 50 && timeDiff < 500) {
-      diff < 0 ? goNext() : goPrev();
+    if (timeDiff < 500) {
+      if (diffY > 70 && Math.abs(diffY) > Math.abs(diffX) * 1.2) {
+        closeViewer();
+      } else if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+        diffX < 0 ? goNext() : goPrev();
+      }
     }
   }
 
@@ -248,10 +256,8 @@
     aria-modal="true"
     tabindex="-1"
     aria-label="Viewing story: {storiesToShow[activeIndex].title}"
-    on:touchstart={onTouchStart}
-    on:touchend={onTouchEnd}
-    on:mousedown={pauseStory}
-    on:mouseup={resumeStory}
+    on:pointerdown={onPointerDown}
+    on:pointerup={onPointerUp}
     on:mouseleave={resumeStory}
     on:contextmenu|preventDefault
   >

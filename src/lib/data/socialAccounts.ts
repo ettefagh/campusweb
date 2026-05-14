@@ -10,6 +10,8 @@ export interface SocialAccount {
   campusIds: string[]; // ["all"] or specific campus ids
   schoolIds?: string[];
   categories?: string[];
+  logoUrl?: string;
+  description?: string;
   verified: boolean;
   priority: number;
 }

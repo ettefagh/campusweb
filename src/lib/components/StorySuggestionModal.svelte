@@ -11,6 +11,7 @@
   let tag = "";
   let linkUrl = "";
   let expiresAt = "";
+  let contactEmail = "";
 
   // Image input management
   let inputMode: 'file' | 'url' = 'file'; // default to file for better mobile experience
@@ -22,6 +23,7 @@
   let submitting = false;
   let success = false;
   let errorMsg = "";
+  let emailStatus: "sent" | "skipped" | "failed" = "skipped";
 
   function handleFileChange(e: Event) {
     const target = e.target as HTMLInputElement;
@@ -57,9 +59,9 @@
     if (submitting) return;
     isOpen = false;
     setTimeout(() => {
-      title = ""; subtitle = ""; linkUrl = ""; expiresAt = "";
+      title = ""; subtitle = ""; linkUrl = ""; expiresAt = ""; contactEmail = "";
       imageUrl = ""; selectedFile = null; previewSrc = "";
-      success = false; errorMsg = ""; inputMode = "file";
+      success = false; errorMsg = ""; inputMode = "file"; emailStatus = "skipped";
     }, 300);
     dispatch("close");
   }
@@ -98,6 +100,7 @@
       fd.append("tag", tag);
       fd.append("linkUrl", linkUrl);
       fd.append("expiresAt", expiresAt);
+      fd.append("contactEmail", contactEmail);
       fd.append("image", imagePayload); // Can append a File object or String seamlessly!
 
       const res = await fetch("/api/suggest-story", {
@@ -110,6 +113,7 @@
       if (!res.ok) {
         errorMsg = data.error || "Failed to submit. Please check your image.";
       } else {
+        emailStatus = data.emailStatus || "skipped";
         success = true;
         setTimeout(() => close(), 2200);
       }
@@ -144,7 +148,12 @@
         <div class="success-state">
           <div class="success-icon">✓</div>
           <h3>Awesome!</h3>
-          <p>We sent it directly to the curation team!</p>
+          <p>We sent it directly to the curation team.</p>
+          {#if emailStatus === "sent"}
+            <p class="email-status success">Confirmation email sent.</p>
+          {:else if emailStatus === "failed"}
+            <p class="email-status warning">Suggestion received, but the confirmation email could not be sent.</p>
+          {/if}
         </div>
       {:else}
         <div class="modal-body">
@@ -202,6 +211,17 @@
           </div>
 
           <div class="input-group mt-sm">
+            <label for="storyContactEmail">Contact Email (Optional)</label>
+            <input
+              type="email"
+              id="storyContactEmail"
+              bind:value={contactEmail}
+              placeholder="your@email.com"
+              disabled={submitting}
+            />
+          </div>
+
+          <div class="input-group mt-sm">
             <label for="expiresAt">{$t.settings.storyExpiresLabel}</label>
             <div class="date-wrapper">
               <input type="date" id="expiresAt" bind:value={expiresAt} disabled={submitting} />
@@ -245,6 +265,9 @@
     border-radius: 20px;
     width: 100%;
     max-width: 420px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     box-shadow: var(--glass-shadow-lg, 0 12px 40px rgba(0, 0, 0, 0.25));
     animation: slideUp 0.3s cubic-bezier(0.19, 1, 0.22, 1);
     color: var(--text-color, #111);
@@ -283,7 +306,7 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
-    max-height: 70vh;
+    flex: 1;
     overflow-y: auto;
   }
 
@@ -467,6 +490,20 @@
     font-size: 3rem; color: #4caf50;
     margin-bottom: 10px;
     animation: bounceIn 0.4s ease forwards;
+  }
+
+  .email-status {
+    margin: 10px 0 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .email-status.success {
+    color: #4caf50;
+  }
+
+  .email-status.warning {
+    color: #f59e0b;
   }
   
   @keyframes fadeIn { from {opacity: 0} to {opacity: 1} }

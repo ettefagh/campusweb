@@ -136,8 +136,12 @@ export function parseICalEvents(
 /**
  * Load and parse multiple iCal files for the academic calendar
  */
-export async function loadCalendarEvents(): Promise<CalendarEvent[]> {
+export async function loadCalendarEvents(isVerified = false): Promise<CalendarEvent[]> {
 	const allEvents: CalendarEvent[] = [];
+
+	if (!isVerified) {
+		return allEvents;
+	}
 	
 	const sources = [
 		{ id: 'lecture-free', file: 'academic-calendar-lecture-free.ics', color: 'var(--event-lecture-free)' },
@@ -150,7 +154,7 @@ export async function loadCalendarEvents(): Promise<CalendarEvent[]> {
 	try {
 		const results = await Promise.all(sources.map(async (src) => {
 			try {
-				const response = await fetch(`/Documents/${src.file}`);
+				const response = await fetch(`/api/calendar/academic/${src.file}`);
 				if (!response.ok) return [];
 				const content = await response.text();
 				return parseICalEvents(content, src.id, src.color, src.color);

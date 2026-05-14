@@ -45,7 +45,11 @@
   >
     <div class="card-header">
       <div class="platform-icon" style="background: {platformColors[account.platform]}">
-        {platformIcons[account.platform]}
+        {#if account.logoUrl}
+          <img src={account.logoUrl} alt="" />
+        {:else}
+          {platformIcons[account.platform]}
+        {/if}
       </div>
       {#if account.verified}
         <span class="verified-badge" title={$t.feed.verifiedBadge || "Verified official page"}>
@@ -59,10 +63,16 @@
     <div class="card-content">
       <h3 class="account-name">{account.name}</h3>
       <p class="account-handle">@{account.handle}</p>
+      {#if account.description}
+        <p class="account-description">{account.description}</p>
+      {/if}
       
       {#if account.type === "club"}
         <div class="tag-row">
           <span class="tag type-tag">{$t.feed.studentRun || "Student-run"}</span>
+          {#if account.campusIds && !account.campusIds.includes("all")}
+            <span class="tag campus-tag">{account.campusIds.join(", ")}</span>
+          {/if}
           {#if account.categories}
             {#each account.categories as cat}
               <span class="tag category-tag">{cat}</span>
@@ -158,6 +168,14 @@
     justify-content: center;
     font-size: 1.2rem;
     color: white;
+    overflow: hidden;
+  }
+
+  .platform-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .verified-badge {
@@ -186,6 +204,13 @@
     margin: 0 0 8px 0;
   }
 
+  .account-description {
+    font-size: 0.78rem;
+    color: var(--text-color-secondary);
+    margin: 0 0 6px 0;
+    line-height: 1.35;
+  }
+
   .tag-row {
     display: flex;
     flex-wrap: wrap;
@@ -209,6 +234,11 @@
   .category-tag {
     background: color-mix(in srgb, var(--accent-color) 10%, transparent);
     color: var(--accent-color);
+  }
+
+  .campus-tag {
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    color: var(--primary-color);
   }
 
   .official-label {

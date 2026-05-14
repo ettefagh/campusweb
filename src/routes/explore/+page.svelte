@@ -5,7 +5,7 @@
     activeCampus,
     activeDepartment,
   } from "$lib/stores/settingsStore";
-  import { allLinks, categoryOrder } from "$lib/data/links";
+  import { allLinks, categoryOrder, type AppLink } from "$lib/data/links";
   import { favorites } from "$lib/stores/favorites";
   import LinkCard from "$lib/components/LinkCard.svelte";
   import SearchBar from "$lib/components/SearchBar.svelte";
@@ -15,6 +15,7 @@
   let campusContacts = $state<any[]>([]);
   let generalContacts = $state<any[]>([]);
   let programDirectors = $state<any[]>([]);
+  let publicContacts = $state<any[]>([]);
   let isContactsLoaded = $state(false);
   let isContactsLoading = $state(false);
 
@@ -29,11 +30,25 @@
         generalContacts = data.generalContacts || [];
         programDirectors = data.programDirectors || [];
         isContactsLoaded = true;
+      } else if (res.status === 401) {
+        settingsStore.patch({ emailVerified: false } as any);
       }
     } catch (err) {
       console.error("Failed to load private directory:", err);
     } finally {
       isContactsLoading = false;
+    }
+  }
+
+  async function loadPublicContacts() {
+    try {
+      const res = await fetch("/api/public-contacts");
+      if (res.ok) {
+        const data = await res.json();
+        publicContacts = data.publicContacts || [];
+      }
+    } catch (err) {
+      console.error("Failed to load public contacts:", err);
     }
   }
 
@@ -47,6 +62,7 @@
   let container: HTMLElement | null = null;
 
   onMount(() => {
+    loadPublicContacts();
     // Dynamic library URL based on campus if needed
     if ($settingsStore.campusId === "berlin") {
       libraryUrl = "https://login.srh-berlin.idm.oclc.org/menu";
@@ -110,8 +126,27 @@
   // 1. Filtered Links
   let filteredLinks = $derived.by(() => {
     const query = searchQuery.toLowerCase().trim();
-    if (!query) return [];
-    return allLinks.filter(
+    const campusId = $settingsStore.campusId;
+    const visibleLinks = allLinks
+      .map((link): AppLink | null => {
+        if (link.id === "library-campus") {
+          const libraryUrl = $activeCampus?.libraryUrl;
+          if (!libraryUrl) return null;
+          return {
+            ...link,
+            url: libraryUrl,
+            description: `${$activeCampus?.name || "Campus"} library catalogue`,
+            campusIds: campusId ? [campusId] : []
+          };
+        }
+        return link;
+      })
+      .filter((link): link is AppLink => Boolean(link))
+      .filter((link) => !link.requiresAuth || $settingsStore.emailVerified)
+      .filter((link) => !link.campusIds || link.campusIds.includes("all") || (campusId && link.campusIds.includes(campusId)));
+
+    if (!query) return visibleLinks;
+    return visibleLinks.filter(
       (link) =>
         link.title.toLowerCase().includes(query) ||
         link.description.toLowerCase().includes(query) ||
@@ -153,6 +188,13 @@
         services: [c.service],
         programs: [],
         school: getSchoolFromTags(c.tags),
+      })),
+      ...publicContacts.map((c) => ({
+        ...c,
+        services: [c.service],
+        programs: [],
+        school: getSchoolFromTags(c.tags),
+        isPublic: true,
       })),
       ...generalContacts.map((c) => ({
         ...c,
@@ -198,9 +240,11 @@
     });
 
     return Array.from(merged.values()).filter((c) => {
+      if (c.isPublic && !query) return true;
+
       // 1. Campus Filter (Must match or be general)
       const isCampusMatch =
-        (campusId && c.campusId === campusId) || c.campusId === "general";
+        c.isPublic || (campusId && c.campusId === campusId) || c.campusId === "general";
       if (!isCampusMatch) return false;
 
       // 2. If searching, apply search query logic
@@ -283,7 +327,9 @@
   }
 
   let displayCategories = $derived.by(() => {
-    if (!searchQuery.trim()) return categoryOrder;
+    if (!searchQuery.trim()) {
+      return categoryOrder.filter((cat) => filteredLinks.some((l) => l.category_name === cat));
+    }
     return categoryOrder.filter((cat) =>
       filteredLinks.some((l) => l.category_name === cat),
     );
@@ -349,7 +395,7 @@
             Contact List
           </button>
 
-          {#each categoryOrder as category}
+          {#each displayCategories as category}
             <button
               class="cat-chip"
               onclick={(e) => {
@@ -380,7 +426,7 @@
           {getCategoryName(category, $t.linkCategory)}
         </h2>
         <div class="links-grid">
-          {#each (searchQuery.trim() ? filteredLinks : allLinks).filter((link) => link.category_name === category) as link (link.id)}
+          {#each filteredLinks.filter((link) => link.category_name === category) as link (link.id)}
             <LinkCard
               {link}
               isFavorite={$favorites.includes(link.id)}
@@ -416,7 +462,7 @@
         </p>
       {/if}
 
-      {#if !$settingsStore.campusId}
+      {#if !$settingsStore.campusId && filteredContacts.length === 0}
         <div class="verification-hint glass">
           <div class="hint-icon">📍</div>
           <div class="hint-text">
@@ -439,16 +485,15 @@
           </div>
         </div>
       {:else if !searchQuery.trim() || filteredContacts.length > 0}
-        {#if $settingsStore.emailVerified}
-          {#if isContactsLoading}
-            <div class="contacts-loading glass">
-              <div class="spinner"></div>
-              <p>Securely loading private directory...</p>
-            </div>
-          {:else}
-            <div class="contact-results-list">
-              {#each searchQuery.trim() ? filteredContacts : filteredContacts.slice(0, 15) as contact}
-                <div class="search-contact-card glass">
+        {#if isContactsLoading}
+          <div class="contacts-loading glass">
+            <div class="spinner"></div>
+            <p>Securely loading private directory...</p>
+          </div>
+        {:else}
+          <div class="contact-results-list">
+            {#each searchQuery.trim() ? filteredContacts : filteredContacts.slice(0, 15) as contact}
+              <div class="search-contact-card glass">
                   <div class="search-contact-info">
                     <div class="search-contact-meta">
                       {#if contact.programs && contact.programs.length > 0}
@@ -527,25 +572,25 @@
                       >
                     {/if}
                   </div>
-                </div>
-              {/each}
-              {#if !searchQuery.trim()}
-                <p class="view-more-hint">Search to see more contacts...</p>
-              {/if}
-            </div>
-          {/if}
-        {:else}
+              </div>
+            {/each}
+            {#if !searchQuery.trim()}
+              <p class="view-more-hint">Search to see more contacts...</p>
+            {/if}
+          </div>
+        {/if}
+        {#if !$settingsStore.emailVerified}
           <div class="verification-hint glass">
             <div class="hint-icon">🔒</div>
             <div class="hint-text">
-              <h3>Directory Restricted</h3>
-              <p>Accessing the university directory requires verification.</p>
+              <h3>More contacts available</h3>
+              <p>Public contacts are shown. Verify your SRH email to unlock the full internal directory.</p>
               <button
                 class="hint-btn primary"
                 onclick={() =>
-                  (window.location.href = "/settings#accessibility")}
+                  (window.location.href = "/settings#directory-access")}
               >
-                Verify Email (Simple)
+                Verify SRH Email
               </button>
             </div>
           </div>

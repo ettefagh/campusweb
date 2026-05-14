@@ -155,7 +155,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   weekStartsOn: 1, // Monday
   compactCards: false,
   showSeconds: false,
-  emailVerified: true,
+  emailVerified: false,
   headerSize: 'big',
   defaultPage: 'home',
   homeSections: [

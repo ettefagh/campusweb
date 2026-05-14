@@ -39,6 +39,15 @@
       applyTheme(settings.theme);
     });
 
+    fetch("/api/auth/session")
+      .then((response) => response.ok ? response.json() : { verified: false })
+      .then((session) => {
+        settingsStore.patch({ emailVerified: Boolean(session.verified) } as any);
+      })
+      .catch(() => {
+        settingsStore.patch({ emailVerified: false } as any);
+      });
+
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
       settingsStore.subscribe((s) => applyTheme(s.theme))();
     });

@@ -126,6 +126,11 @@
     }
   }
 
+  async function handleDirectoryLogout() {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+    settingsStore.patch({ emailVerified: false } as any);
+  }
+
   let a11yOpen = false;
   let calendarSettingsOpen = false;
   let directoryOpen = false;
@@ -147,11 +152,23 @@
     if ($page.url.hash === "#accessibility") {
       a11yOpen = true;
     }
+    if ($page.url.hash === "#directory-access") {
+      directoryOpen = true;
+      setTimeout(() => {
+        document.getElementById("directory-access")?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
   });
 
   // Reactively handle hash changes while on the same page
   $: if ($page.url.hash === "#accessibility") {
     a11yOpen = true;
+  }
+  $: if ($page.url.hash === "#directory-access") {
+    directoryOpen = true;
+    setTimeout(() => {
+      document.getElementById("directory-access")?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   }
 </script>
 
@@ -251,24 +268,29 @@
     {/if}
   </section>
 
-  {#if $isSetupComplete}
-    <section class="settings-section">
+  <section id="directory-access" class="settings-section">
       <details bind:open={directoryOpen}>
         <summary class="section-header section-header--collapsible">
           {#if !$settingsStore.emailVerified}
             <span class="section-icon"><i class="ph-bold ph-lock-keyhole"></i></span>
             <div>
-              <h2>Directory Access</h2>
+              <div class="section-title-row">
+                <h2>Directory Access</h2>
+                <span class="privacy-badge">Zero-knowledge verification</span>
+              </div>
               <p class="section-desc">
-                Verify your student email to access university contacts.
+                Verify with your SRH email. The app does not store your email address.
               </p>
             </div>
           {:else}
             <span class="section-icon"><i class="ph-bold ph-shield-check"></i></span>
             <div>
-              <h2>Directory Access</h2>
+              <div class="section-title-row">
+                <h2>Directory Access</h2>
+                <span class="privacy-badge active">Secure access active</span>
+              </div>
               <p class="section-desc">
-                Your email is verified. Full access to university directory.
+                Your anonymous session can access the university directory.
               </p>
             </div>
           {/if}
@@ -282,15 +304,16 @@
             <p
               style="color: var(--text-color-secondary); font-size: 0.95rem; margin: 0; line-height: 1.5;"
             >
-              You have successfully verified your email. This grants you
-              complete search and profile privileges across the active student
-              and university contacts directory.
+              Your access is active. The verification cookie confirms SRH
+              membership without storing your email address in the session.
             </p>
+            <button class="secondary-action-btn" on:click={handleDirectoryLogout}>
+              Sign out of directory access
+            </button>
           {/if}
         </div>
       </details>
-    </section>
-  {/if}
+  </section>
 
   <!-- ── Language ──────────────────────────── -->
   <section class="settings-section">
@@ -965,6 +988,36 @@
     color: var(--text-color);
     margin: 0 0 2px;
   }
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  .section-title-row h2 {
+    margin: 0;
+  }
+  .privacy-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 3px 8px;
+    border: 1px solid rgba(22, 163, 74, 0.22);
+    border-radius: 999px;
+    background: rgba(22, 163, 74, 0.08);
+    color: #15803d;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  .privacy-badge.active {
+    border-color: rgba(212, 68, 7, 0.22);
+    background: rgba(212, 68, 7, 0.1);
+    color: var(--primary-color);
+  }
   .section-desc {
     font-size: 0.82rem;
     color: var(--text-color-secondary);
@@ -1250,6 +1303,21 @@
   }
   .btn-reset:hover {
     background: rgba(239, 68, 68, 0.06);
+  }
+  .secondary-action-btn {
+    margin-top: var(--spacing-md);
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .secondary-action-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
   }
 
   .confirm-box {

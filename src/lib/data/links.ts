@@ -1,5 +1,17 @@
+export interface AppLink {
+  id: string;
+  title: string;
+  url: string;
+  icon: string;
+  description: string;
+  category_name: string;
+  iframeable: boolean;
+  campusIds?: string[];
+  requiresAuth?: boolean;
+}
+
 // CampusWeb Portal - Main Navigation & Academic Services
-export const campusWebLinks = [
+export const campusWebLinks: AppLink[] = [
   {
     id: "campusweb",
     title: "CampusWeb Portal",
@@ -102,7 +114,7 @@ export const campusWebLinks = [
 ];
 
 // E-Campus Learning Platform
-export const eCampusLinks = [
+export const eCampusLinks: AppLink[] = [
   {
     id: "ecampus",
     title: "E-Campus Portal",
@@ -169,22 +181,13 @@ export const eCampusLinks = [
 ];
 
 // University Resources
-export const resourceLinks = [
+export const resourceLinks: AppLink[] = [
   {
     id: "library-catalogue",
     title: "Library Catalogue",
     url: "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB",
     icon: "📚",
     description: "Search books and journals",
-    category_name: "Resources",
-    iframeable: false,
-  },
-  {
-    id: "library-eresources",
-    title: "Library E-Resources",
-    url: "https://login.srh-berlin.idm.oclc.org/menu",
-    icon: "📖",
-    description: "Digital library resources",
     category_name: "Resources",
     iframeable: false,
   },
@@ -245,7 +248,111 @@ export const resourceLinks = [
 ];
 
 // International Office
-export const internationalOfficeLinks = [
+export const campusSpecificLinks: AppLink[] = [
+  {
+    id: "library-campus",
+    title: "Campus Library",
+    url: "",
+    icon: "📚",
+    description: "Library catalogue for your selected campus",
+    category_name: "Campus Resources",
+    iframeable: false,
+  },
+  {
+    id: "welcome-week-berlin",
+    title: "Welcome Week Padlet",
+    url: "https://padlet.com/srhhshd/campus-berlin-daeofkstcaqe987h",
+    icon: "👋",
+    description: "Berlin welcome week board",
+    category_name: "Campus Resources",
+    iframeable: false,
+    campusIds: ["berlin"],
+  },
+  {
+    id: "welcome-week-cologne",
+    title: "Welcome Week Padlet",
+    url: "https://padlet.com/srhhshd/campus-koln-s09a6ab061rhwib5",
+    icon: "👋",
+    description: "Köln welcome week board",
+    category_name: "Campus Resources",
+    iframeable: false,
+    campusIds: ["cologne"],
+  },
+  {
+    id: "welcome-week-fuerth",
+    title: "Welcome Week Padlet",
+    url: "https://padlet.com/srhhshd/campus-furth-ibhcufo3anal4x8p",
+    icon: "👋",
+    description: "Fürth welcome week board",
+    category_name: "Campus Resources",
+    iframeable: false,
+    campusIds: ["fuerth"],
+  },
+  {
+    id: "welcome-week-dresden",
+    title: "Welcome Week Padlet",
+    url: "https://padlet.com/srhhshd/campus-dresden-fwpepkzmweommd87",
+    icon: "👋",
+    description: "Dresden welcome week board",
+    category_name: "Campus Resources",
+    iframeable: false,
+    campusIds: ["dresden"],
+  },
+  {
+    id: "welcome-week-hamburg",
+    title: "Welcome Week Padlet",
+    url: "https://padlet.com/srhhshd/campus-hamburg-7b969ojtrdzhx7a9",
+    icon: "👋",
+    description: "Hamburg welcome week board",
+    category_name: "Campus Resources",
+    iframeable: false,
+    campusIds: ["hamburg"],
+  },
+  {
+    id: "welcome-week-heidelberg",
+    title: "Welcome Week Padlet",
+    url: "https://padlet.com/srhhshd/campus-heidelberg-z1068vxdduhtj3il",
+    icon: "👋",
+    description: "Heidelberg welcome week board",
+    category_name: "Campus Resources",
+    iframeable: false,
+    campusIds: ["heidelberg"],
+  },
+  {
+    id: "welcome-week-leipzig",
+    title: "Welcome Week Padlet",
+    url: "https://padlet.com/srhhshd/campus-leipzig-g40vc61r1u9awm6f",
+    icon: "👋",
+    description: "Leipzig welcome week board",
+    category_name: "Campus Resources",
+    iframeable: false,
+    campusIds: ["leipzig"],
+  },
+  {
+    id: "welcome-week-munich",
+    title: "Welcome Week Padlet",
+    url: "https://padlet.com/srhhshd/campus-munchen-af27wiichqv2ettx",
+    icon: "👋",
+    description: "München welcome week board",
+    category_name: "Campus Resources",
+    iframeable: false,
+    campusIds: ["munich"],
+  },
+  {
+    id: "welcome-week-stuttgart",
+    title: "Welcome Week Padlet",
+    url: "https://padlet.com/srhhshd/campus-stuttgart-mpwrc324z6zz2mnz",
+    icon: "👋",
+    description: "Stuttgart welcome week board",
+    category_name: "Campus Resources",
+    iframeable: false,
+    campusIds: ["stuttgart"],
+  },
+];
+
+export const restrictedLinks: AppLink[] = [];
+
+export const internationalOfficeLinks: AppLink[] = [
   {
     id: "study-abroad",
     title: "Study Abroad",
@@ -294,7 +401,7 @@ export const internationalOfficeLinks = [
 ];
 
 // Essential Services
-export const serviceLinks = [
+export const serviceLinks: AppLink[] = [
   {
     id: "email",
     title: "SRH Email",
@@ -334,7 +441,7 @@ export const serviceLinks = [
 ];
 
 // Student Utilities
-export const utilityLinks = [
+export const utilityLinks: AppLink[] = [
   {
     id: "pdf-tools",
     title: "PDF Tools",
@@ -356,7 +463,7 @@ export const utilityLinks = [
 ];
 
 // Internal App Sections
-export const internalAppLinks = [
+export const internalAppLinks: AppLink[] = [
   {
     id: "department-directory",
     title: "University Directory",
@@ -401,6 +508,8 @@ export const allLinks = [
   ...campusWebLinks,
   ...eCampusLinks,
   ...resourceLinks,
+  ...campusSpecificLinks,
+  ...restrictedLinks,
   ...internationalOfficeLinks,
   ...serviceLinks,
   ...utilityLinks,
@@ -415,6 +524,8 @@ export const categoryOrder = [
   "E-Campus",
   "App Sections",
   "Resources",
+  "Campus Resources",
+  "Restricted Links",
   "Utilities",
   "Career Service",
   "International Office",

@@ -15,6 +15,7 @@
 	export let isFavorite: boolean = false;
 	export let useViewer: boolean = false;
 	export let editMode: boolean = false;
+	export let reorderMode: boolean = false;
 	export let customUrl: string | undefined = undefined;
 	export let showTag: boolean = false;
 
@@ -24,7 +25,15 @@
 		if (editMode) {
 			e.preventDefault();
 			dispatch("toggleFavorite", { linkId: link.id });
+			return;
 		}
+
+		if (reorderMode) {
+			e.preventDefault();
+			return;
+		}
+
+		recordLinkClick();
 	}
 
 	function toggleFavorite(e: MouseEvent) {
@@ -33,7 +42,48 @@
 		dispatch("toggleFavorite", { linkId: link.id });
 	}
 
-	// Derive translated fields
+	function recordLinkClick() {
+		const payload = JSON.stringify({ linkId: link.id });
+
+		try {
+			if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
+				const blob = new Blob([payload], { type: "application/json" });
+				navigator.sendBeacon("/api/stats/link-click", blob);
+				return;
+			}
+		} catch (e) {}
+
+		if (typeof fetch !== "undefined") {
+			fetch("/api/stats/link-click", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: payload,
+				keepalive: true
+			}).catch(() => {});
+		}
+	}
+
+	function handleDragStart(event: DragEvent) {
+		if (!reorderMode) return;
+		event.dataTransfer?.setData("text/plain", link.id);
+		event.dataTransfer?.setDragImage?.(event.currentTarget as Element, 24, 24);
+		dispatch("reorderStart", { linkId: link.id });
+	}
+
+	function handleDragOver(event: DragEvent) {
+		if (!reorderMode) return;
+		event.preventDefault();
+		if (event.dataTransfer) {
+			event.dataTransfer.dropEffect = "move";
+		}
+	}
+
+	function handleDrop(event: DragEvent) {
+		if (!reorderMode) return;
+		event.preventDefault();
+		dispatch("reorderDrop", { linkId: link.id });
+	}
+
 	$: displayTitle = $t.linkTitle?.[link.id as keyof typeof $t.linkTitle] || link.title;
 	$: displayDesc = $t.linkDesc?.[link.id as keyof typeof $t.linkDesc] || link.description;
 	$: displayCategory = link.category_name ? ($t.linkCategory?.[link.category_name as keyof typeof $t.linkCategory] || link.category_name) : undefined;
@@ -44,9 +94,6 @@
 		? `/viewer?url=${encodeURIComponent(effectiveUrl)}&title=${encodeURIComponent(displayTitle)}`
 		: effectiveUrl;
 
-	// Accessibility: build aria-label based on context and screen reader hints setting.
-	// In edit mode: always explicit about the toggle action.
-	// In normal mode + screenReaderHints: include the destination URL as a hint.
 	$: ariaLabel = (() => {
 		if (editMode) {
 			return `${displayTitle} — ${isFavorite ? 'Remove from favorites' : 'Add to favorites'}`;
@@ -55,29 +102,40 @@
 			const dest = displayDesc ? `${displayDesc}. ` : '';
 			return `${displayTitle}. ${dest}Opens ${link.url} in a new tab.`;
 		}
-		return undefined; // Let visible text serve as the label
+		return undefined;
 	})();
 </script>
 
 <div
 	class="link-card-container"
 	class:edit-mode={editMode}
+	class:reorder-mode={reorderMode}
 	class:not-favorite={editMode && !isFavorite}
 	class:a11y-patterns={$accessibility.assistivePatterns}
+	draggable={reorderMode}
+	role={reorderMode ? "listitem" : undefined}
+	on:dragstart={handleDragStart}
+	on:dragover={handleDragOver}
+	on:drop={handleDrop}
 >
 	<a
 		href={finalUrl}
 		class="link-card"
-		class:clickable={editMode}
-		target={editMode || link.url.startsWith('/') ? undefined : "_blank"}
-		rel={editMode || link.url.startsWith('/') ? undefined : "noopener noreferrer"}
+		class:clickable={editMode || reorderMode}
+		target={editMode || reorderMode || link.url.startsWith('/') ? undefined : "_blank"}
+		rel={editMode || reorderMode || link.url.startsWith('/') ? undefined : "noopener noreferrer"}
 		on:click={handleClick}
-		role={editMode ? "button" : undefined}
-		tabindex={editMode ? 0 : undefined}
+		role={editMode || reorderMode ? "button" : undefined}
+		tabindex={editMode || reorderMode ? 0 : undefined}
 		aria-pressed={editMode ? isFavorite : undefined}
 		aria-label={ariaLabel}
 		class:is-favorite={isFavorite}
 	>
+		{#if reorderMode}
+			<span class="drag-handle" aria-hidden="true">
+				<i class="ph-bold ph-dots-six-vertical"></i>
+			</span>
+		{/if}
 		<span class="icon" aria-hidden="true">{link.icon}</span>
 		<div class="content">
 			<h3 class="title">{displayTitle}</h3>
@@ -117,11 +175,14 @@
 		opacity: 1;
 	}
 
-	.link-card-container.not-favorite {
-		/* opacity managed by the card itself now */
+	.link-card-container.reorder-mode {
+		cursor: grab;
 	}
 
-	/* ── Liquid Glass Card ── */
+	.link-card-container.reorder-mode:active {
+		cursor: grabbing;
+	}
+
 	.link-card {
 		flex: 1;
 		display: flex;
@@ -142,7 +203,6 @@
 		overflow: hidden;
 	}
 
-	/* Subtle specular highlight on top edge */
 	.link-card::before {
 		content: "";
 		position: absolute;
@@ -158,7 +218,10 @@
 		cursor: pointer;
 	}
 
-	/* Accessibility Texture: Favorite (On) - Only visible if assistivePatterns is ON */
+	.link-card-container.reorder-mode .link-card.clickable {
+		cursor: grab;
+	}
+
 	.a11y-patterns .link-card.clickable.is-favorite {
 		background: repeating-linear-gradient(
 			45deg,
@@ -171,7 +234,6 @@
 		box-shadow: 0 0 15px rgba(212, 68, 7, 0.2), var(--glass-shadow);
 	}
 
-	/* Accessibility Texture: Not Favorite (Off) - Only visible if assistivePatterns is ON */
 	.a11y-patterns .link-card.clickable:not(.is-favorite) {
 		background: repeating-linear-gradient(
 			-45deg,
@@ -220,6 +282,17 @@
 		filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
 	}
 
+	.drag-handle {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		min-height: 32px;
+		color: var(--text-color-secondary);
+		font-size: 1.25rem;
+		flex-shrink: 0;
+	}
+
 	.content {
 		flex: 1;
 		min-width: 0;
@@ -250,7 +323,6 @@
 		border: 1px solid rgba(212, 68, 7, 0.2);
 	}
 
-	/* Indicator inside the card */
 	.edit-indicator {
 		display: flex;
 		align-items: center;

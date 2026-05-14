@@ -1,6 +1,7 @@
 import { json } from "@sveltejs/kit";
 import { env } from "$env/dynamic/private";
 import { checkUrlSecurity } from "$lib/server/security";
+import { sendClubSuggestionReceiptEmail } from "$lib/server/email";
 
 export async function POST({ request, platform }) {
   try {
@@ -13,42 +14,52 @@ export async function POST({ request, platform }) {
       category,
       contactEmail,
       note,
+      logoDataUrl,
     } = data;
 
-    // 1. Validation
     if (!clubName || !handleOrUrl || !campusId) {
       return json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Initialize telegram Payload
+    if (logoDataUrl && (typeof logoDataUrl !== "string" || !logoDataUrl.startsWith("data:image/"))) {
+      return json({ error: "Invalid logo upload" }, { status: 400 });
+    }
+
+    if (logoDataUrl && logoDataUrl.length > 700_000) {
+      return json({ error: "Logo upload is too large" }, { status: 400 });
+    }
+
     const botToken = env.PRIVATE_TELEGRAM_BOT_TOKEN || platform?.env?.PRIVATE_TELEGRAM_BOT_TOKEN;
     const chatId = env.PRIVATE_TELEGRAM_CHAT_ID || platform?.env?.PRIVATE_TELEGRAM_CHAT_ID;
     const kv = platform?.env?.STORIES_KV;
 
     if (!botToken || !chatId) {
       console.error("Missing Telegram keys for club suggestion");
-      // Fail soft: tell user it's sent even if bot keys are missing (to avoid breaking UX in dev)
       return json({ success: true, warning: "Configuration missing on server" });
     }
 
-    // Generate unique ID for this suggestion
     const suggestionId = crypto.randomUUID();
 
-    // Store suggestion in KV for later approval
     if (kv) {
       await kv.put(`club_suggestion:${suggestionId}`, JSON.stringify({
-        ...data,
+        clubName,
+        platform: socialPlatform,
+        handleOrUrl,
+        campusId,
+        category,
+        contactEmail,
+        note,
+        logoDataUrl: logoDataUrl || "",
         id: suggestionId,
         submittedAt: new Date().toISOString()
       }), {
-        expirationTtl: 60 * 60 * 24 * 30 // 30 days
+        expirationTtl: 60 * 60 * 24 * 30
       });
     }
 
     const cleanClubName = clubName.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const cleanNote = note ? note.replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
     
-    // Security Scan
     const securityReport = await checkUrlSecurity(handleOrUrl, platform?.env);
     
     const caption = `
@@ -59,12 +70,12 @@ export async function POST({ request, platform }) {
 <b>Link/Handle:</b> ${handleOrUrl}
 <b>Campus:</b> ${campusId}
 <b>Category:</b> ${category || "None"}
+<b>Logo:</b> ${logoDataUrl ? "Included" : "None"}
 ${contactEmail ? `<b>Contact:</b> ${contactEmail}` : ""}
 
 ${cleanNote ? `<b>Note:</b>\n<i>${cleanNote}</i>` : ""}${securityReport}
     `.trim();
 
-    // Final payload for Telegram
     const keyboard = {
       inline_keyboard: [
         [
@@ -89,6 +100,12 @@ ${cleanNote ? `<b>Note:</b>\n<i>${cleanNote}</i>` : ""}${securityReport}
       const errData = await tgRes.text();
       console.error("Telegram API Error (Club):", errData);
       return json({ error: "Telegram failed to accept submission." }, { status: 500 });
+    }
+
+    if (contactEmail) {
+      sendClubSuggestionReceiptEmail(contactEmail, clubName, platform?.env).catch((err) => {
+        console.error("Club suggestion receipt email failed:", err);
+      });
     }
 
     return json({ success: true, id: suggestionId });

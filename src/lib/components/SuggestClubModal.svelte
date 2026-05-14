@@ -14,6 +14,8 @@
   let category = "";
   let contactEmail = "";
   let note = "";
+  let logoDataUrl = "";
+  let logoFileName = "";
 
   let submitting = false;
   let success = false;
@@ -32,10 +34,45 @@
       platform = "instagram";
       contactEmail = ""; 
       note = ""; 
+      logoDataUrl = "";
+      logoFileName = "";
       success = false; 
       errorMsg = "";
     }, 300);
     dispatch("close");
+  }
+
+  function handleLogoUpload(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    logoDataUrl = "";
+    logoFileName = "";
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      errorMsg = "Please upload an image file for the club logo.";
+      input.value = "";
+      return;
+    }
+
+    if (file.size > 512 * 1024) {
+      errorMsg = "Club logo must be smaller than 512 KB.";
+      input.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      logoDataUrl = typeof reader.result === "string" ? reader.result : "";
+      logoFileName = file.name;
+      errorMsg = "";
+    };
+    reader.onerror = () => {
+      errorMsg = "Could not read the logo file. Please try another image.";
+      input.value = "";
+    };
+    reader.readAsDataURL(file);
   }
 
   async function submitClub() {
@@ -59,7 +96,8 @@
           campusId,
           category,
           contactEmail,
-          note
+          note,
+          logoDataUrl
         })
       });
 
@@ -89,8 +127,25 @@
 </script>
 
 {#if isOpen}
-  <div class="modal-backdrop" use:portal on:click={close}>
-    <div class="modal-content" on:click|stopPropagation>
+  <div
+    class="modal-backdrop"
+    use:portal
+    role="button"
+    tabindex="0"
+    aria-label="Close club suggestion dialog"
+    on:click={close}
+    on:keydown={(event) => {
+      if (event.key === "Escape" || event.key === "Enter" || event.key === " ") close();
+    }}
+  >
+    <div
+      class="modal-content"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      on:click|stopPropagation
+      on:keydown|stopPropagation
+    >
       
       <div class="modal-header">
         <h2>{$t.feed.suggestClub}</h2>
@@ -159,6 +214,20 @@
           <div class="input-group">
             <label for="contactEmail">Contact Email (Optional)</label>
             <input type="email" id="contactEmail" bind:value={contactEmail} placeholder="your@email.com" disabled={submitting} />
+          </div>
+
+          <div class="input-group">
+            <label for="clubLogo">Club Logo / Icon (Optional)</label>
+            <input
+              type="file"
+              id="clubLogo"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              on:change={handleLogoUpload}
+              disabled={submitting}
+            />
+            {#if logoFileName}
+              <p class="file-hint">{logoFileName}</p>
+            {/if}
           </div>
 
           <div class="input-group">
@@ -275,6 +344,17 @@
   textarea {
     min-height: 80px;
     resize: vertical;
+  }
+
+  input[type="file"] {
+    padding: 10px 12px;
+    cursor: pointer;
+  }
+
+  .file-hint {
+    margin: 0;
+    color: var(--text-color-secondary);
+    font-size: 0.8rem;
   }
 
   .error-msg {

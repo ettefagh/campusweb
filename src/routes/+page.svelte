@@ -38,9 +38,10 @@
 	}
 
 	let isEditMode = false;
+	let isManagingFavorites = false;
 	let searchQuery = "";
+	let draggedFavoriteId = "";
 
-	// Reactive filtered links
 	let displayLinks: typeof allLinks = [];
 	$: displayLinks = isEditMode
 		? allLinks.filter((link) => {
@@ -62,8 +63,34 @@
 		searchQuery = "";
 	}
 
+	function startManagingFavorites() {
+		isManagingFavorites = true;
+		isEditMode = false;
+		searchQuery = "";
+	}
+
+	function finishManagingFavorites() {
+		isManagingFavorites = false;
+		isEditMode = false;
+		searchQuery = "";
+		draggedFavoriteId = "";
+	}
+
 	function handleToggleFavorite(event: CustomEvent<{ linkId: string }>) {
 		favorites.toggle(event.detail.linkId);
+	}
+
+	function handleReorderStart(event: CustomEvent<{ linkId: string }>) {
+		draggedFavoriteId = event.detail.linkId;
+	}
+
+	function handleReorderDrop(event: CustomEvent<{ linkId: string }>) {
+		if (!draggedFavoriteId || draggedFavoriteId === event.detail.linkId) return;
+
+		const fromIndex = $favorites.indexOf(draggedFavoriteId);
+		const toIndex = $favorites.indexOf(event.detail.linkId);
+		favorites.reorder(fromIndex, toIndex);
+		draggedFavoriteId = "";
 	}
 </script>
 
@@ -76,18 +103,6 @@
 </svelte:head>
 
 <div class="home-page">
-	{#if isEditMode}
-		<!-- Search Box in Edit Mode -->
-		<div class="search-container">
-			<input
-				type="text"
-				placeholder={$t.home.searchPlaceholder}
-				bind:value={searchQuery}
-				class="search-input"
-			/>
-		</div>
-	{/if}
-
 	{#each $settingsStore.homeSections as section, i (section.id)}
 		{#if section.enabled}
 			{#if section.id === "header"}
@@ -132,15 +147,56 @@
 							<p class="favorite-links-subtitle">Custom quick-access bookmarks</p>
 						</div>
 						<div class="favorite-links-actions">
-							<button 
-								class="favorite-action-btn"
-								class:active={isEditMode}
-								on:click={toggleEditMode}
-							>
-								{isEditMode ? 'Done' : 'Manage'}
-							</button>
+							{#if isManagingFavorites}
+								<button
+									class="favorite-icon-btn passive"
+									type="button"
+									aria-label="Drag favorite links to reorder"
+									title="Drag favorite links to reorder"
+								>
+									<i class="ph-bold ph-dots-six-vertical"></i>
+								</button>
+								<button
+									class="favorite-icon-btn"
+									class:active={isEditMode}
+									type="button"
+									on:click={toggleEditMode}
+									aria-label="Edit favorite links"
+									title="Edit favorite links"
+								>
+									<i class="ph-bold ph-pencil-simple"></i>
+									<span>Edit</span>
+								</button>
+								<button
+									class="favorite-icon-btn done"
+									type="button"
+									on:click={finishManagingFavorites}
+									aria-label="Done managing favorite links"
+									title="Done"
+								>
+									<i class="ph-bold ph-check"></i>
+								</button>
+							{:else}
+								<button 
+									class="favorite-action-btn"
+									type="button"
+									on:click={startManagingFavorites}
+								>
+									Manage
+								</button>
+							{/if}
 						</div>
 					</div>
+					{#if isEditMode}
+						<div class="search-container">
+							<input
+								type="text"
+								placeholder={$t.home.searchPlaceholder}
+								bind:value={searchQuery}
+								class="search-input"
+							/>
+						</div>
+					{/if}
 					{#if displayLinks.length === 0}
 						<div class="empty-state" style="grid-column: 1 / -1; width: 100%;">
 							<p>{$t.home.emptyState}</p>
@@ -151,8 +207,11 @@
 								{link}
 								isFavorite={$favorites.includes(link.id)}
 								editMode={isEditMode}
-								useViewer={!isEditMode}
+								reorderMode={isManagingFavorites && !isEditMode}
+								useViewer={!isEditMode && !isManagingFavorites}
 								on:toggleFavorite={handleToggleFavorite}
+								on:reorderStart={handleReorderStart}
+								on:reorderDrop={handleReorderDrop}
 							/>
 						{/each}
 					{/if}
@@ -185,7 +244,6 @@
 		{/if}
 	{/each}
 
-	<!-- Floating Action Buttons -->
 	<div class="fab-group">
 		{#if showGoToTop}
 			<button class="fab-btn go-to-top glass" on:click={goToTop} aria-label="Go to top">
@@ -228,7 +286,6 @@
 		padding: var(--spacing-sm) var(--spacing-md);
 		margin: var(--spacing-sm) var(--spacing-md);
 		gap: var(--spacing-md);
-		/* Respect Apple top notch and safe area */
 		padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
 	}
 
@@ -300,8 +357,11 @@
 	}
 
 	.search-container {
-		margin: 0 0 var(--spacing-md) 0;
+		grid-column: 1 / -1;
+		margin: calc(var(--spacing-xs) * -1) 0 var(--spacing-sm) 0;
 		padding: 0 var(--spacing-md);
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	.search-input {
@@ -329,7 +389,6 @@
 		margin-top: var(--spacing-lg);
 	}
 
-	/* Desktop: grid layout for link cards */
 	@media (min-width: 640px) {
 		.links-section {
 			display: grid;
@@ -405,6 +464,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		gap: var(--spacing-sm);
 		margin-bottom: var(--spacing-md);
 		padding: 0 var(--spacing-md);
 		width: 100%;
@@ -424,29 +484,103 @@
 		margin: 0;
 	}
 
-	.favorite-action-btn {
-		background: var(--glass-bg-light);
+	.favorite-links-actions {
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 6px;
+		flex-shrink: 0;
+		padding: 4px;
 		border: 1px solid var(--glass-border-subtle);
-		padding: 6px 14px;
-		border-radius: 20px;
+		border-radius: var(--radius-md);
+		background: var(--glass-bg-light);
+		backdrop-filter: var(--glass-blur);
+		-webkit-backdrop-filter: var(--glass-blur);
+	}
+
+	.favorite-icon-btn,
+	.favorite-action-btn {
+		min-height: var(--touch-target-min);
+		border: 1px solid transparent;
+		border-radius: calc(var(--radius-md) - 4px);
+		background: transparent;
 		font-size: 0.8rem;
 		font-weight: 700;
 		cursor: pointer;
 		color: var(--text-color);
 		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		-webkit-tap-highlight-color: transparent;
 	}
 
+	.favorite-action-btn {
+		padding: 0 16px;
+	}
+
+	.favorite-icon-btn {
+		min-width: var(--touch-target-min);
+		padding: 0 12px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 6px;
+	}
+
+	.favorite-icon-btn i {
+		font-size: 1rem;
+		line-height: 1;
+	}
+
+	.favorite-icon-btn.passive {
+		cursor: grab;
+		color: var(--text-color-secondary);
+		background: rgba(255, 255, 255, 0.32);
+	}
+
+	.favorite-icon-btn.done {
+		background: var(--primary-color);
+		color: white;
+		border-color: var(--primary-color);
+	}
+
+	.favorite-icon-btn:hover,
+	.favorite-icon-btn:focus-visible,
+	.favorite-action-btn:focus-visible,
 	.favorite-action-btn:hover {
-		background: rgba(212, 68, 7, 0.1);
+		background: rgba(212, 68, 7, 0.12);
 		color: var(--primary-color);
-		border-color: rgba(212, 68, 7, 0.2);
+		border-color: rgba(212, 68, 7, 0.22);
+		outline: none;
 	}
 
-	.favorite-action-btn.active {
+	.favorite-icon-btn.done:hover {
+		background: var(--primary-color);
+		color: white;
+		border-color: var(--primary-color);
+		filter: brightness(1.05);
+	}
+
+	.favorite-icon-btn.active {
 		background: var(--primary-color);
 		color: white;
 		border-color: var(--primary-color);
 		box-shadow: 0 2px 8px rgba(212, 68, 7, 0.3);
+	}
+
+	@media (max-width: 420px) {
+		.favorite-links-header {
+			align-items: flex-start;
+			flex-direction: column;
+		}
+
+		.favorite-links-actions {
+			align-self: stretch;
+			justify-content: space-between;
+		}
+
+		.favorite-action-btn,
+		.favorite-icon-btn {
+			flex: 1;
+		}
 	}
 
 	@keyframes reveal {
@@ -462,7 +596,7 @@
 
 	.fab-group {
 		position: fixed;
-		bottom: 120px; /* safe above bottom navigation bar */
+		bottom: 120px;
 		right: 20px;
 		display: flex;
 		flex-direction: column;
@@ -507,7 +641,7 @@
 
 	@media (min-width: 1024px) {
 		.fab-group {
-			bottom: 24px; /* clears tab bar which is sidebar on desktop */
+			bottom: 24px;
 			right: 24px;
 		}
 	}

@@ -16,14 +16,15 @@ binding = "IMAGES_BUCKET"
 bucket_name = "YOUR_BUCKET_NAME_HERE"
 
 # 📧 Email Binding (Workers Send Email)
-# Requires setup in Cloudflare Dashboard
-send_email = [
-  { name = "EMAIL" }
-]
+[[send_email]]
+name = "EMAIL"
+remote = true
 
 [vars]
 PRIVATE_TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN"
 PRIVATE_TELEGRAM_CHAT_ID = "YOUR_ADMIN_CHAT_ID"
 PRIVATE_SITE_URL = "https://campusweb.pages.dev"
-PRIVATE_EMAIL_SENDER = "campusweb@yourdomain.com"
+PRIVATE_EMAIL_SENDER = "hello@campusweb.zardaloo.eu.org"
 PRIVATE_VIRUSTOTAL_API_KEY = "YOUR_VT_API_KEY"
+
+PRIVATE_AUTH_SECRET = "replace-with-at-least-32-random-characters"

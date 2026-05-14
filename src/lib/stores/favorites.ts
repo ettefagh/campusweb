@@ -3,7 +3,6 @@ import { browser } from '$app/environment';
 
 const STORAGE_KEY = 'SRH_CAMPUS_FAVORITES';
 
-// Default favorites
 const DEFAULT_FAVORITES = [
 	'department-directory',
 	'schedule',
@@ -15,7 +14,6 @@ const DEFAULT_FAVORITES = [
 ];
 
 function createFavoritesStore() {
-	// Start with defaults, let it hydrate safely
 	let current = [...DEFAULT_FAVORITES];
 	
 	if (browser) {
@@ -47,6 +45,28 @@ function createFavoritesStore() {
 					localStorage.setItem(STORAGE_KEY, JSON.stringify(newFavs));
 				}
 				return newFavs;
+			});
+		},
+		reorder: (fromIndex: number, toIndex: number) => {
+			update(favs => {
+				if (
+					fromIndex === toIndex ||
+					fromIndex < 0 ||
+					toIndex < 0 ||
+					fromIndex >= favs.length ||
+					toIndex >= favs.length
+				) {
+					return favs;
+				}
+
+				const next = [...favs];
+				const [moved] = next.splice(fromIndex, 1);
+				next.splice(toIndex, 0, moved);
+
+				if (browser) {
+					localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+				}
+				return next;
 			});
 		},
 		reset: () => {

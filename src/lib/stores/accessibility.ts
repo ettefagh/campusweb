@@ -63,7 +63,7 @@ const DEFAULT_SETTINGS: AccessibilitySettings = {
   highContrast: false,
   largeText: false,
   focusVisible: false,
-  screenReaderHints: false,
+  screenReaderHints: true,
   assistivePatterns: false,
 };
 

@@ -46,6 +46,8 @@
   // Event data sources
   let staticEvents: CalendarEvent[] = [];
   let currentSubs: any[] = [];
+  let isLoadingProtectedCalendars = false;
+  let hasLoadedProtectedCalendars = false;
 
   // Event detail popup
   let popupEvent: any = null;
@@ -565,7 +567,7 @@
       await Promise.all([
         calendarStore.refreshAll(true),
         (async () => {
-          staticEvents = await loadCalendarEvents();
+          staticEvents = await loadCalendarEvents($settingsStore.emailVerified);
         })(),
       ]);
 
@@ -588,7 +590,7 @@
       try {
         calendarStore.refreshAll();
         // Load academic events asynchronously to avoid blocking first paint (LCP)
-        loadCalendarEvents().then((evts) => {
+        loadCalendarEvents($settingsStore.emailVerified).then((evts) => {
           if (isMounted) {
             staticEvents = evts;
             options = { ...options, events: getAllEvents() };
@@ -633,6 +635,25 @@
       clearInterval(interval);
     };
   });
+
+  $: if (isMounted && !$settingsStore.emailVerified && staticEvents.length > 0) {
+    staticEvents = [];
+    hasLoadedProtectedCalendars = false;
+    options = { ...options, events: getAllEvents() };
+  }
+
+  $: if (isMounted && $settingsStore.emailVerified && staticEvents.length === 0 && !isLoadingProtectedCalendars && !hasLoadedProtectedCalendars) {
+    isLoadingProtectedCalendars = true;
+    loadCalendarEvents(true).then((evts) => {
+      if (isMounted && $settingsStore.emailVerified) {
+        staticEvents = evts;
+        hasLoadedProtectedCalendars = true;
+        options = { ...options, events: getAllEvents() };
+      }
+    }).finally(() => {
+      isLoadingProtectedCalendars = false;
+    });
+  }
 </script>
 
 <svelte:head>
@@ -725,6 +746,19 @@
         </div>
       {/if}
 
+      <!-- Empty state banner — shown when no events match the current view -->
+      {#if !isLoading && currentEventsCount === 0}
+        <div class="suggestion-banner">
+          <div class="suggestion-icon">📭</div>
+          <div class="suggestion-content">
+            <p class="suggestion-title">No events to show</p>
+            <p class="suggestion-desc">
+              Try a different date range or add a calendar subscription.
+            </p>
+          </div>
+        </div>
+      {/if}
+
       <div
         class="calendar-container"
         class:loading={isLoading}
@@ -734,17 +768,6 @@
       >
         <div class="calendar-scroll-area">
           <Calendar bind:this={ecComponent} {plugins} {options} />
-
-          <!-- Empty state overlay — shown when no events match the current view -->
-          {#if !isLoading && currentEventsCount === 0}
-            <div class="empty-state">
-              <div class="empty-icon">📭</div>
-              <p class="empty-title">No events to show</p>
-              <p class="empty-subtitle">
-                Try a different date range or add a calendar subscription.
-              </p>
-            </div>
-          {/if}
         </div>
 
         <!-- Calendar Navigation Toolbar -->
@@ -801,62 +824,80 @@
 
       <!-- Calendar Source Legend — toggleable visibility filters -->
       <section class="calendar-legend-section">
+        {#if !$settingsStore.emailVerified}
+          <div class="suggestion-banner link-banner calendar-auth-banner">
+            <div class="suggestion-icon"><i class="ph-bold ph-lock-key"></i></div>
+            <div class="suggestion-content">
+              <p class="suggestion-title">University calendars are protected</p>
+              <p class="suggestion-desc">
+                Public holidays remain visible. Verify your SRH email to load lecture-free periods, exams, modules, welcome week and semester dates.
+              </p>
+            </div>
+            <div class="suggestion-actions">
+              <a href="/settings#directory-access" class="suggestion-btn suggestion-btn--primary">
+                Verify SRH Email
+              </a>
+            </div>
+          </div>
+        {/if}
         <div class="calendar-legend">
-          <button
-            class="legend-item"
-            class:legend-item--hidden={hiddenSources.has("lecture-free")}
-            on:click={() => toggleSource("lecture-free")}
-          >
-            <span
-              class="legend-color"
-              style="background-color: var(--event-lecture-free);"
-            ></span>
-            <span>{$t.calendar.lectureFree}</span>
-          </button>
-          <button
-            class="legend-item"
-            class:legend-item--hidden={hiddenSources.has("exams")}
-            on:click={() => toggleSource("exams")}
-          >
-            <span
-              class="legend-color"
-              style="background-color: var(--event-exams);"
-            ></span>
-            <span>{$t.calendar.exams}</span>
-          </button>
-          <button
-            class="legend-item"
-            class:legend-item--hidden={hiddenSources.has("modules")}
-            on:click={() => toggleSource("modules")}
-          >
-            <span
-              class="legend-color"
-              style="background-color: var(--event-orange);"
-            ></span>
-            <span>{$t.calendar.modules}</span>
-          </button>
-          <button
-            class="legend-item"
-            class:legend-item--hidden={hiddenSources.has("welcome-week")}
-            on:click={() => toggleSource("welcome-week")}
-          >
-            <span
-              class="legend-color"
-              style="background-color: var(--event-pink);"
-            ></span>
-            <span>{$t.calendar.welcomeWeek}</span>
-          </button>
-          <button
-            class="legend-item"
-            class:legend-item--hidden={hiddenSources.has("semester-dates")}
-            on:click={() => toggleSource("semester-dates")}
-          >
-            <span
-              class="legend-color"
-              style="background-color: var(--event-purple);"
-            ></span>
-            <span>{$t.calendar.semesterDates}</span>
-          </button>
+          {#if $settingsStore.emailVerified}
+            <button
+              class="legend-item"
+              class:legend-item--hidden={hiddenSources.has("lecture-free")}
+              on:click={() => toggleSource("lecture-free")}
+            >
+              <span
+                class="legend-color"
+                style="background-color: var(--event-lecture-free);"
+              ></span>
+              <span>{$t.calendar.lectureFree}</span>
+            </button>
+            <button
+              class="legend-item"
+              class:legend-item--hidden={hiddenSources.has("exams")}
+              on:click={() => toggleSource("exams")}
+            >
+              <span
+                class="legend-color"
+                style="background-color: var(--event-exams);"
+              ></span>
+              <span>{$t.calendar.exams}</span>
+            </button>
+            <button
+              class="legend-item"
+              class:legend-item--hidden={hiddenSources.has("modules")}
+              on:click={() => toggleSource("modules")}
+            >
+              <span
+                class="legend-color"
+                style="background-color: var(--event-orange);"
+              ></span>
+              <span>{$t.calendar.modules}</span>
+            </button>
+            <button
+              class="legend-item"
+              class:legend-item--hidden={hiddenSources.has("welcome-week")}
+              on:click={() => toggleSource("welcome-week")}
+            >
+              <span
+                class="legend-color"
+                style="background-color: var(--event-pink);"
+              ></span>
+              <span>{$t.calendar.welcomeWeek}</span>
+            </button>
+            <button
+              class="legend-item"
+              class:legend-item--hidden={hiddenSources.has("semester-dates")}
+              on:click={() => toggleSource("semester-dates")}
+            >
+              <span
+                class="legend-color"
+                style="background-color: var(--event-purple);"
+              ></span>
+              <span>{$t.calendar.semesterDates}</span>
+            </button>
+          {/if}
           <button
             class="legend-item"
             class:legend-item--hidden={hiddenSources.has("holidays")}
@@ -1363,53 +1404,6 @@
   .view-week :global(.ec-main),
   .view-week :global(.ec-body) {
     overflow: visible !important;
-  }
-
-  /* ─── Empty State Overlay ───────────────────────────────────────── */
-  .empty-state {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: var(--spacing-xl);
-    animation: emptyFadeIn 0.4s ease;
-    pointer-events: none;
-  }
-
-  .empty-icon {
-    font-size: 3rem;
-    margin-bottom: var(--spacing-sm);
-    animation: emptyBounce 2s ease infinite;
-  }
-
-  .empty-title {
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: var(--text-color);
-    margin-bottom: var(--spacing-xs);
-  }
-
-  .empty-subtitle {
-    font-size: 0.875rem;
-    color: var(--text-color-secondary, #888);
-    max-width: 280px;
-  }
-
-  @keyframes emptyFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
 
   @keyframes emptyBounce {

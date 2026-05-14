@@ -16,22 +16,28 @@
   <img src="https://img.shields.io/badge/SvelteKit-FF3E00?style=for-the-badge&logo=svelte&logoColor=white" alt="SvelteKit">
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=Cloudflare&logoColor=white" alt="Cloudflare">
+  <br>
+  <img src="https://img.shields.io/badge/AI%20Agent-Assisted-111827?style=for-the-badge&logo=openai&logoColor=white" alt="AI Agent Assisted">
+  <img src="https://img.shields.io/badge/Vibe%20Coded-CampusWeb-7C3AED?style=for-the-badge" alt="Vibe Coded">
+  <br>
+  <img src="https://img.shields.io/badge/Email%20Verification-Zero--Knowledge%20%26%20Secure-059669?style=for-the-badge" alt="Zero-Knowledge Secure Email Verification">
 </p>
 
 ---
 
-CampusWeb is a modern Progressive Web App (PWA) designed to provide SRH University students with instant access to essential resources. It combines a powerful calendar aggregator, campus news feed, and a curated resource database into a single, high-performance interface.
+CampusWeb is a modern Progressive Web App (PWA) for SRH University students. It combines a calendar workspace, campus stories, public and verified-only directories, curated links, and lightweight contribution workflows into a single mobile-first interface.
 
 ## 🚀 Key Features
 
 - 📱 **Mobile-First PWA** — Installable on iOS/Android with full offline support.
-- 📅 **Smart Calendar** — Aggregates university events and personal iCal feeds with auto-naming.
-- 📰 **Campus Hub** — Real-time news feed including Instagram embeds and university announcements.
-- 🔍 **Smart Directory** — A searchable university directory with regional role detection and smart phone origin tracking (verified students only).
-- ⭐ **Quick Access** — Pin your most-used resources and contacts to your personal dashboard.
-- 🌙 **Adaptive Design** — Seamless dark mode and high-contrast accessibility support.
-- ♿ **Inclusive** — WCAG 2.2 Level AA compliant with optimized touch targets.
-- 🔒 **Privacy-First** — Zero tracking, local persistence, and end-to-end encrypted calendar proxy.
+- 📅 **Smart Calendar** — Combines public holidays, personal iCal feeds, and verified-only SRH academic calendars.
+- 📰 **Campus Stories** — Student-submitted stories reviewed and published through Telegram moderation.
+- 🔍 **Directory Access** — Public contacts stay open, while university-only directories are protected by SRH email verification.
+- ⭐ **Favorite Links** — Pin, search, edit, and reorder your most-used resources locally on your device.
+- 🤝 **Club Suggestions** — Students can suggest clubs, upload custom logos, and receive email status updates.
+- 📊 **Anonymous Link Stats** — Aggregate link popularity is counted without fingerprints, profiles, or user-level logs.
+- 🌙 **Adaptive Design** — Dark mode, accessibility preferences, screen reader hints, and touch-friendly controls.
+- 🔒 **Privacy-First Auth** — Stateless PIN verification with anonymous sessions and no stored user profiles.
 
 ## 🛠️ Tech Stack
 
@@ -41,6 +47,9 @@ CampusWeb is a modern Progressive Web App (PWA) designed to provide SRH Universi
 | **State Management** | Svelte Stores (Persistent LocalStorage) |
 | **Styling** | Vanilla CSS (Modern CSS Variables & Grid) |
 | **Infrastructure** | [Cloudflare Pages](https://pages.cloudflare.com/) |
+| **Serverless Storage** | Cloudflare KV + R2 |
+| **Email** | Cloudflare Email Sending REST API |
+| **Moderation** | Telegram Bot API |
 | **Calendar Engine** | [@event-calendar](https://github.com/vkurko/calendar) |
 | **PWA Engine** | Custom Service Worker (Cache-first Strategy) |
 
@@ -52,6 +61,7 @@ campusweb/
 │   ├── routes/             # SvelteKit App Router (Calendar, Feed, Search)
 │   ├── lib/
 │   │   ├── components/     # UI Design System
+│   │   ├── server/         # Auth, email, stats, calendar helpers
 │   │   ├── stores/         # Persistent state management
 │   │   └── utils/          # iCal processing & link logic
 │   └── service-worker.ts   # PWA Offline logic
@@ -87,28 +97,38 @@ campusweb/
 
 ### Cloudflare Configuration
 
-To enable the Telegram Bot and Email notifications, you must set the following environment variables in the Cloudflare Pages Dashboard (or `wrangler.toml`):
+To enable authentication, moderation, email notifications, and storage, configure these variables in Cloudflare Pages:
 
 | Variable | Description |
 | :--- | :--- |
 | `PRIVATE_TELEGRAM_BOT_TOKEN` | Your Telegram Bot token from @BotFather. |
 | `PRIVATE_TELEGRAM_CHAT_ID` | Your personal or group Chat ID for admin notifications. |
 | `PRIVATE_SITE_URL` | The public URL of your deployment (default: `https://campusweb.pages.dev`). |
-| `PRIVATE_EMAIL_SENDER` | The verified sender email in Cloudflare Email Routing. |
+| `PRIVATE_AUTH_SECRET` | A strong random secret, at least 32 characters, for HMAC and anonymous sessions. |
+| `PRIVATE_EMAIL_SENDER` | The verified sender address for Cloudflare Email Sending. |
+| `PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN` | API token for Cloudflare Email Sending. |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID used by Email Sending. |
 | `PRIVATE_VIRUSTOTAL_API_KEY` | (Optional) VirusTotal API key for automated link security scanning. |
+| `PRIVATE_GOOGLE_SHEETS_URL` | (Optional) Google Sheets CSV source for external story content. |
 
 **Required Bindings:**
-- `STORIES_KV`: A KV namespace for caching and suggestions.
-- `IMAGES_BUCKET`: An R2 bucket for story image hosting.
-- `EMAIL`: A Workers Send Email binding.
+- `STORIES_KV`: KV namespace for stories, clubs, moderation state, and aggregate stats.
+- `IMAGES_BUCKET`: R2 bucket for uploaded story images.
+
+**Operational Security:**
+- Add a Cloudflare WAF/rate-limit rule for `POST /api/auth/verify-pin`, for example 5 attempts per 10 minutes per IP.
+- Allowed SRH email domains are centralized in `src/lib/config/auth.ts`.
 
 ## 🔒 Privacy & Security
 
 CampusWeb is built with a **Privacy-First** architecture:
 
-- 🛡️ **Zero Analytics**: No tracking, no cookies, no third-party telemetry.
+- 🛡️ **No User Tracking**: No fingerprints, user profiles, or third-party telemetry.
 - 📦 **Local Persistence**: All personal data (favorites, subscriptions) stays in your browser's `localStorage`.
-- ☁️ **Serverless Proxy**: Calendar URLs are processed via a zero-knowledge AES-GCM encrypted proxy.
+- 📊 **Aggregate-Only Stats**: Link popularity is stored as anonymous counters by link ID and date.
+- ✉️ **Stateless Email Auth**: PINs are verified with HMAC; the server does not store the PIN or email identity. `Zero-knowledge secure`
+- 🍪 **Anonymous Sessions**: Verified sessions use an HTTP-only cookie with no email address in the token payload.
+- ☁️ **Serverless Proxy**: Calendar URLs are processed through a privacy-aware serverless proxy.
 - 📜 See [SECURITY.md](SECURITY.md) for detailed privacy documentation.
 
 ## 🤝 Contributing
