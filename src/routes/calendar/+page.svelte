@@ -6,8 +6,12 @@
   import DayGrid from "@event-calendar/day-grid";
   import List from "@event-calendar/list";
   import "@event-calendar/core/index.css";
-  import { loadCalendarEvents } from "$lib/utils/icalParser";
   import type { CalendarEvent } from "$lib/utils/icalParser";
+  import {
+    getCalendarEvents,
+    hasCachedCalendarEvents,
+    shouldRefreshSubscriptionsThisSession,
+  } from "$lib/stores/calendarCache";
   import {
     calendarStore,
     activeClasses,
@@ -563,11 +567,10 @@
     if (isLoading) return;
     isLoading = true;
     try {
-      // Force-refresh all subscription feeds and reload static academic events in parallel
       await Promise.all([
         calendarStore.refreshAll(true),
         (async () => {
-          staticEvents = await loadCalendarEvents($settingsStore.emailVerified);
+          staticEvents = await getCalendarEvents($settingsStore.emailVerified, true);
         })(),
       ]);
 
@@ -588,9 +591,12 @@
 
     const init = async () => {
       try {
-        calendarStore.refreshAll();
-        // Load academic events asynchronously to avoid blocking first paint (LCP)
-        loadCalendarEvents($settingsStore.emailVerified).then((evts) => {
+        isLoading = !hasCachedCalendarEvents($settingsStore.emailVerified);
+        if (shouldRefreshSubscriptionsThisSession()) {
+          calendarStore.refreshAll();
+        }
+
+        getCalendarEvents($settingsStore.emailVerified).then((evts) => {
           if (isMounted) {
             staticEvents = evts;
             options = { ...options, events: getAllEvents() };
@@ -644,7 +650,7 @@
 
   $: if (isMounted && $settingsStore.emailVerified && staticEvents.length === 0 && !isLoadingProtectedCalendars && !hasLoadedProtectedCalendars) {
     isLoadingProtectedCalendars = true;
-    loadCalendarEvents(true).then((evts) => {
+    getCalendarEvents(true).then((evts) => {
       if (isMounted && $settingsStore.emailVerified) {
         staticEvents = evts;
         hasLoadedProtectedCalendars = true;

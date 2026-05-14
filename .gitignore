@@ -18,6 +18,7 @@ wrangler.toml.bak
 Documents/
 src/Documents/
 graphify-out/
+srh-auth-module/
 
 # Editor and OS
 .vscode/

@@ -5,11 +5,10 @@
 <h1 align="center">CampusWeb</h1>
 
 <p align="center">
-  <strong>An unofficial, premium university portal created by an SRH student.</strong>
+  <strong>An unofficial, privacy-focused university portal template.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/ettefagh/campusweb/stargazers"><img src="https://img.shields.io/github/stars/ettefagh/campusweb?style=for-the-badge&color=24292e" alt="GitHub Stars"></a>
   <img src="https://img.shields.io/badge/Status-Unofficial-red?style=for-the-badge" alt="Unofficial Project">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License"></a>
   <br>
@@ -25,14 +24,14 @@
 
 ---
 
-CampusWeb is a modern Progressive Web App (PWA) for SRH University students. It combines a calendar workspace, campus stories, public and verified-only directories, curated links, and lightweight contribution workflows into a single mobile-first interface.
+CampusWeb is a modern Progressive Web App (PWA) for university communities. It combines a calendar workspace, campus stories, public and verified-only directories, curated links, and lightweight contribution workflows into a single mobile-first interface.
 
 ## 🚀 Key Features
 
 - 📱 **Mobile-First PWA** — Installable on iOS/Android with full offline support.
-- 📅 **Smart Calendar** — Combines public holidays, personal iCal feeds, and verified-only SRH academic calendars.
+- 📅 **Smart Calendar** — Combines public holidays, personal iCal feeds, and verified-only academic calendars.
 - 📰 **Campus Stories** — Student-submitted stories reviewed and published through Telegram moderation.
-- 🔍 **Directory Access** — Public contacts stay open, while university-only directories are protected by SRH email verification.
+- 🔍 **Directory Access** — Public contacts stay open, while university-only directories are protected by institutional email verification.
 - ⭐ **Favorite Links** — Pin, search, edit, and reorder your most-used resources locally on your device.
 - 🤝 **Club Suggestions** — Students can suggest clubs, upload custom logos, and receive email status updates.
 - 📊 **Anonymous Link Stats** — Aggregate link popularity is counted without fingerprints, profiles, or user-level logs.
@@ -80,7 +79,7 @@ campusweb/
 
 1. **Clone and Install**
    ```bash
-   git clone https://github.com/ettefagh/campusweb.git
+   git clone <repository-url>
    cd campusweb
    npm install
    ```
@@ -101,9 +100,9 @@ To enable authentication, moderation, email notifications, and storage, configur
 
 | Variable | Description |
 | :--- | :--- |
-| `PRIVATE_TELEGRAM_BOT_TOKEN` | Your Telegram Bot token from @BotFather. |
+| `PRIVATE_TELEGRAM_BOT_TOKEN` | Your Telegram Bot token. |
 | `PRIVATE_TELEGRAM_CHAT_ID` | Your personal or group Chat ID for admin notifications. |
-| `PRIVATE_SITE_URL` | The public URL of your deployment (default: `https://campusweb.pages.dev`). |
+| `PRIVATE_SITE_URL` | The public URL of your deployment. |
 | `PRIVATE_AUTH_SECRET` | A strong random secret, at least 32 characters, for HMAC and anonymous sessions. |
 | `PRIVATE_EMAIL_SENDER` | The verified sender address for Cloudflare Email Sending. |
 | `PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN` | API token for Cloudflare Email Sending. |
@@ -117,7 +116,7 @@ To enable authentication, moderation, email notifications, and storage, configur
 
 **Operational Security:**
 - Add a Cloudflare WAF/rate-limit rule for `POST /api/auth/verify-pin`, for example 5 attempts per 10 minutes per IP.
-- Allowed SRH email domains are centralized in `src/lib/config/auth.ts`.
+- Allowed institutional email domains are centralized in `src/lib/config/auth.ts`.
 
 ## 🔒 Privacy & Security
 
@@ -133,7 +132,7 @@ CampusWeb is built with a **Privacy-First** architecture:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Whether it's adding new SRH resources or improving the UI, please see [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+Contributions are welcome. Whether it is adding new campus resources or improving the UI, please see [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 ## 📄 License
 
@@ -141,10 +140,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ⚠️ Disclaimer
 
-**CampusWeb is an independent, student-led project.** It is **not** an official application of SRH University, nor is it endorsed or maintained by the university administration. This tool was developed by an SRH student to improve the digital experience for the student community. All university directory data is provided as-is for convenience and is protected by email-verification guards. All trademarks and university resources belong to their respective owners.
+**CampusWeb is an independent project.** It is **not** an official application of any university unless explicitly deployed and approved by that institution. All directory data is provided as-is for convenience and should be protected by email-verification guards. All trademarks and university resources belong to their respective owners.
 
 ---
 
 <p align="center">
-  Built with ❤️ by an SRH University student.
+  Built for student communities.
 </p>

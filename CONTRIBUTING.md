@@ -1,6 +1,6 @@
 # Contributing to CampusWeb
 
-Thank you for your interest in contributing! This project serves SRH University students and we welcome improvements.
+Thank you for your interest in contributing. This project serves university communities and welcomes improvements.
 
 ## Getting Started
 

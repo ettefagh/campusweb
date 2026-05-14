@@ -10,11 +10,11 @@
   async function handleLogin() {
     loading = true;
     try {
-      const { account, accessToken, isValidDomain } = await loginAndVerifyDomain();
+      const { account, isValidDomain } = await loginAndVerifyDomain();
       authStore.setAuth(account, isValidDomain);
 
       if (isValidDomain) {
-        const submission = await checkFormSubmission(accessToken, account.localAccountId);
+        const submission = await checkFormSubmission(account);
         authStore.setFormSubmission(submission);
         
         if (submission.submitted) {
