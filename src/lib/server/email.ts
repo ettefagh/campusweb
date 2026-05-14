@@ -1,8 +1,10 @@
-export async function sendApprovalEmail(to: string, clubName: string, env: any) {
+import { env as svelteEnv } from "$env/dynamic/private";
+
+export async function sendApprovalEmail(to: string, clubName: string, platformEnv: any) {
   // Use Cloudflare's Workers Send Email feature
   // Requirement: The "EMAIL" binding must be added to wrangler.toml or dashboard
   // and the "from" address must be a verified domain in Cloudflare Email Routing.
-  const emailBinding = env.EMAIL;
+  const emailBinding = platformEnv?.EMAIL || (svelteEnv as any).EMAIL;
   
   if (!emailBinding) {
     console.warn("Cloudflare EMAIL binding not found. Skipping email notification.");
@@ -10,7 +12,9 @@ export async function sendApprovalEmail(to: string, clubName: string, env: any) 
   }
 
   try {
-    const sender = env.PRIVATE_EMAIL_SENDER || "noreply@yourdomain.com";
+    const sender = platformEnv?.PRIVATE_EMAIL_SENDER || (svelteEnv as any).PRIVATE_EMAIL_SENDER || "noreply@yourdomain.com";
+    
+    console.log(`Attempting to send email from ${sender} to ${to}...`);
     
     // Cloudflare Workers Send Email API
     await emailBinding.send({
@@ -33,8 +37,9 @@ export async function sendApprovalEmail(to: string, clubName: string, env: any) 
       ]
     });
 
-    console.log(`Email sent successfully via Cloudflare to ${to}`);
-  } catch (err) {
-    console.error("Error sending email via Cloudflare:", err);
+    console.log(`✅ Email sent successfully to ${to}`);
+  } catch (err: any) {
+    console.error("❌ Error sending email via Cloudflare:", err);
+    if (err.message) console.error("Error message:", err.message);
   }
 }

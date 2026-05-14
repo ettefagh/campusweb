@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import { env } from "$env/dynamic/private";
+import { checkUrlSecurity } from "$lib/server/security";
 
 export async function POST({ request, platform }) {
   try {
@@ -47,6 +48,9 @@ export async function POST({ request, platform }) {
     const cleanClubName = clubName.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const cleanNote = note ? note.replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
     
+    // Security Scan
+    const securityReport = await checkUrlSecurity(handleOrUrl, platform?.env);
+    
     const caption = `
 🤝 <b>New Club Suggestion</b>
 
@@ -57,7 +61,7 @@ export async function POST({ request, platform }) {
 <b>Category:</b> ${category || "None"}
 ${contactEmail ? `<b>Contact:</b> ${contactEmail}` : ""}
 
-${cleanNote ? `<b>Note:</b>\n<i>${cleanNote}</i>` : ""}
+${cleanNote ? `<b>Note:</b>\n<i>${cleanNote}</i>` : ""}${securityReport}
     `.trim();
 
     // Final payload for Telegram

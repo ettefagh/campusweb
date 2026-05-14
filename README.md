@@ -95,6 +95,7 @@ To enable the Telegram Bot and Email notifications, you must set the following e
 | `PRIVATE_TELEGRAM_CHAT_ID` | Your personal or group Chat ID for admin notifications. |
 | `PRIVATE_SITE_URL` | The public URL of your deployment (default: `https://campusweb.pages.dev`). |
 | `PRIVATE_EMAIL_SENDER` | The verified sender email in Cloudflare Email Routing. |
+| `PRIVATE_VIRUSTOTAL_API_KEY` | (Optional) VirusTotal API key for automated link security scanning. |
 
 **Required Bindings:**
 - `STORIES_KV`: A KV namespace for caching and suggestions.

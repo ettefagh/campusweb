@@ -1,5 +1,6 @@
 import { json } from "@sveltejs/kit";
 import { env } from "$env/dynamic/private";
+import { checkUrlSecurity } from "$lib/server/security";
 import { incrementStat } from "$lib/server/stats";
 
 export async function POST({ request, platform }) {
@@ -40,35 +41,8 @@ export async function POST({ request, platform }) {
       }
     }
 
-    let virusWarning = "";
-    const vtKey = env.PRIVATE_VIRUSTOTAL_API_KEY || platform?.env?.PRIVATE_VIRUSTOTAL_API_KEY;
-    
-    if (linkUrl && vtKey) {
-      try {
-        const base64url = btoa(unescape(encodeURIComponent(linkUrl))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-        const vtRes = await fetch(`https://www.virustotal.com/api/v3/urls/${base64url}`, {
-          headers: { 'x-apikey': vtKey },
-          signal: AbortSignal.timeout(3000)
-        });
-        if (vtRes.ok) {
-          const vtData = await vtRes.json();
-          const stats = vtData.data?.attributes?.last_analysis_stats;
-          if (stats) {
-            if (stats.malicious > 0) {
-              virusWarning = `\n\n🔴 <b>MALWARE WARNING:</b> ${stats.malicious} vendors flagged this link!`;
-            } else if (stats.suspicious > 0) {
-              virusWarning = `\n\n🟡 <b>SUSPICIOUS URL:</b> ${stats.suspicious} vendors flagged this link!`;
-            } else {
-              virusWarning = `\n\n✅ <b>Link Security:</b> Verified Safe by ${stats.harmless} vendors`;
-            }
-          }
-        } else if (vtRes.status === 404) {
-          virusWarning = `\n\n⚠️ <b>Link Security:</b> URL is new and not in VirusTotal database.`;
-        }
-      } catch (e) {
-        console.error("VT Error:", e);
-      }
-    }
+    // Security Scan
+    const virusWarning = await checkUrlSecurity(linkUrl, platform?.env);
 
     const caption = `
 🌟 <b>New Story Suggestion</b>
