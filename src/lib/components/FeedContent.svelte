@@ -13,7 +13,7 @@
   import OfficialAccountsSection from "$lib/components/OfficialAccountsSection.svelte";
   import ClubsSection from "$lib/components/ClubsSection.svelte";
   import NewsCardGrid from "$lib/components/NewsCardGrid.svelte";
-  import { cachedStories, getStories } from "$lib/stores/feedCache";
+  import { cachedStories, getStories, storiesLoading } from "$lib/stores/feedCache";
   import { socialAccounts } from "$lib/data/socialAccounts";
   import { promotions, isPromotionActive } from "$lib/data/promotions";
   import { getNormalizedFeed } from "$lib/data/feedItems";
@@ -23,6 +23,7 @@
 
   // ── Stories state automatically reacts to cached store changes ──
   $: stories = $cachedStories;
+  $: isStoriesLoading = $storiesLoading;
 
   let innerWidth = 0;
   let contactSheetOpen = false;
@@ -46,6 +47,13 @@
   $: instagramEmbeds = officialAccounts
     .filter(acc => acc.platform === "instagram")
     .slice(0, 2);
+
+  const tiktokFeed = {
+    title: "TikTok",
+    label: "srhuniversity",
+    cite: "https://www.tiktok.com/@srhuniversity",
+    uniqueId: "srhuniversity"
+  };
 
   let dismissedPromoIds: string[] = [];
   $: activePromotions = promotions.filter(promo => 
@@ -210,12 +218,12 @@
   </header>
 
   <!-- Stories bar -->
-  <StoriesSlider {stories} />
+  <StoriesSlider {stories} loading={isStoriesLoading} />
 
-  <!-- Official Instagram Embeds -->
-  {#if instagramEmbeds.length > 0}
-    <section class="embed-section">
-      <h2 class="section-title">{$t.feed.officialInstagram}</h2>
+  <!-- Social Media Embeds -->
+  {#if instagramEmbeds.length > 0 || tiktokFeed}
+    <section class="embed-section social-media-section">
+      <h2 class="section-title">Social Media</h2>
       <div class="embed-wrapper">
         {#each instagramEmbeds as acc}
           <div class="embed-card">
@@ -238,41 +246,40 @@
             </blockquote>
           </div>
         {/each}
+
+        <div class="embed-card tiktok-embed-card">
+          <div class="embed-label">#{tiktokFeed.label}</div>
+          <div class="tiktok-card">
+            <blockquote
+              class="tiktok-embed"
+              cite={tiktokFeed.cite}
+              data-unique-id={tiktokFeed.uniqueId}
+              data-embed-type="creator"
+              style="max-width: 780px; min-width: 288px;"
+            >
+              <div class="tiktok-placeholder">
+                <div class="tiktok-skeleton-header">
+                  <div class="tiktok-skeleton-avatar"></div>
+                  <div class="tiktok-skeleton-meta">
+                    <div class="tiktok-skeleton-text title"></div>
+                    <div class="tiktok-skeleton-text subtitle"></div>
+                  </div>
+                </div>
+                <div class="tiktok-skeleton-body">
+                  <div class="tiktok-skeleton-stats">
+                    <div class="tiktok-skeleton-stat"></div>
+                    <div class="tiktok-skeleton-stat"></div>
+                    <div class="tiktok-skeleton-stat"></div>
+                  </div>
+                  <div class="tiktok-spinner"></div>
+                </div>
+              </div>
+            </blockquote>
+          </div>
+        </div>
       </div>
     </section>
   {/if}
-
-  <!-- TikTok Feed -->
-  <section class="tiktok-section">
-    <h2 class="section-title">{$t.feed.tiktokFeed}</h2>
-    <div class="tiktok-card">
-      <blockquote
-        class="tiktok-embed"
-        cite="https://www.tiktok.com/@srhuniversity"
-        data-unique-id="srhuniversity"
-        data-embed-type="creator"
-        style="max-width: 780px; min-width: 288px;"
-      >
-        <div class="tiktok-placeholder">
-          <div class="tiktok-skeleton-header">
-            <div class="tiktok-skeleton-avatar"></div>
-            <div class="tiktok-skeleton-meta">
-              <div class="tiktok-skeleton-text title"></div>
-              <div class="tiktok-skeleton-text subtitle"></div>
-            </div>
-          </div>
-          <div class="tiktok-skeleton-body">
-            <div class="tiktok-skeleton-stats">
-              <div class="tiktok-skeleton-stat"></div>
-              <div class="tiktok-skeleton-stat"></div>
-              <div class="tiktok-skeleton-stat"></div>
-            </div>
-            <div class="tiktok-spinner"></div>
-          </div>
-        </div>
-      </blockquote>
-    </div>
-  </section>
 
   <!-- Official Pages Chips -->
   <OfficialAccountsSection accounts={officialAccounts} />
@@ -379,6 +386,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--spacing-md);
+    align-items: stretch;
   }
 
   .embed-card {
@@ -394,6 +402,11 @@
     .embed-card {
       flex: 1 1 calc(50% - var(--spacing-md));
     }
+  }
+
+  .social-media-section .embed-card {
+    display: flex;
+    flex-direction: column;
   }
 
   .insta-placeholder {
@@ -457,13 +470,14 @@
 
   /* TikTok */
   .tiktok-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
     overflow: hidden;
     padding: var(--spacing-md);
     display: flex;
     justify-content: center;
+    flex: 1;
   }
 
   .tiktok-placeholder {

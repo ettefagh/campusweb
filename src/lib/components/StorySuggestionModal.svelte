@@ -5,6 +5,11 @@
   export let isOpen = false;
 
   const dispatch = createEventDispatcher();
+  const MIN_SEQUENCE_SLIDES = 2;
+  const MAX_SEQUENCE_SLIDES = 6;
+  const STORY_TAG_OPTIONS = ["", "EVENT", "LIVE", "PROMO", "AD", "RENT", "LIVING"] as const;
+
+  type StoryMode = "single" | "sequence";
 
   let title = "";
   let subtitle = "";
@@ -12,41 +17,86 @@
   let linkUrl = "";
   let expiresAt = "";
   let contactEmail = "";
+  let storyMode: StoryMode = "single";
 
   // Image input management
   let inputMode: 'file' | 'url' = 'file'; // default to file for better mobile experience
   let imageUrl = "";
+  let imageUrlsText = "";
   let fileInput: HTMLInputElement;
-  let selectedFile: File | null = null;
-  let previewSrc = "";
+  let selectedFiles: File[] = [];
+  let previewSrcs: string[] = [];
 
   let submitting = false;
   let success = false;
   let errorMsg = "";
   let emailStatus: "sent" | "skipped" | "failed" = "skipped";
 
+  async function sanitizeImageFile(file: File): Promise<File> {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("Canvas not available");
+    }
+
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (result) resolve(result);
+        else reject(new Error("Failed to re-encode image"));
+      }, file.type === "image/png" ? "image/png" : "image/jpeg", file.type === "image/png" ? undefined : 0.92);
+    });
+
+    const extension = file.type === "image/png" ? "png" : "jpg";
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + `.${extension}`, {
+      type: blob.type || (file.type === "image/png" ? "image/png" : "image/jpeg"),
+      lastModified: file.lastModified
+    });
+  }
+
   function handleFileChange(e: Event) {
     const target = e.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
-      const file = target.files[0];
-      
-      if (!file.type.startsWith("image/")) {
+      const files = Array.from(target.files).slice(0, storyMode === "sequence" ? MAX_SEQUENCE_SLIDES : 1);
+
+      if (files.some((file) => !file.type.startsWith("image/"))) {
         errorMsg = "Please select an actual image file.";
-        selectedFile = null;
-        previewSrc = "";
+        selectedFiles = [];
+        previewSrcs = [];
         return;
       }
 
       errorMsg = "";
-      selectedFile = file;
-      // Create instant local preview
-      previewSrc = URL.createObjectURL(file);
+      selectedFiles = files;
+      previewSrcs.forEach((src) => URL.revokeObjectURL(src));
+      previewSrcs = files.map((file) => URL.createObjectURL(file));
     }
   }
 
   function switchMode(mode: 'file' | 'url') {
     inputMode = mode;
     errorMsg = "";
+  }
+
+  function switchStoryMode(mode: StoryMode) {
+    storyMode = mode;
+    errorMsg = "";
+    if (mode === "single") {
+      selectedFiles = selectedFiles.slice(0, 1);
+      previewSrcs = previewSrcs.slice(0, 1);
+      imageUrlsText = imageUrlsText
+        .split(/\r?\n/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .slice(0, 1)
+        .join("\n");
+    }
   }
 
   function addDays(days: number) {
@@ -60,7 +110,10 @@
     isOpen = false;
     setTimeout(() => {
       title = ""; subtitle = ""; linkUrl = ""; expiresAt = ""; contactEmail = "";
-      imageUrl = ""; selectedFile = null; previewSrc = "";
+      storyMode = "single";
+      imageUrl = ""; imageUrlsText = ""; selectedFiles = [];
+      previewSrcs.forEach((src) => URL.revokeObjectURL(src));
+      previewSrcs = [];
       success = false; errorMsg = ""; inputMode = "file"; emailStatus = "skipped";
     }, 300);
     dispatch("close");
@@ -74,34 +127,65 @@
       return;
     }
 
-    // Validate based on current mode
-    let imagePayload: any = null;
+    if (!subtitle.trim()) {
+      errorMsg = "A description is required.";
+      return;
+    }
+
+    let imagePayloads: Array<File | string> = [];
     if (inputMode === 'file') {
-      if (!selectedFile) {
+      if (selectedFiles.length === 0) {
         errorMsg = "Please select an image to upload.";
         return;
       }
-      imagePayload = selectedFile;
+      imagePayloads = selectedFiles;
     } else {
-      if (!imageUrl.trim()) {
+      const urls = storyMode === "sequence"
+        ? imageUrlsText.split(/\r?\n/).map((item) => item.trim()).filter(Boolean)
+        : [imageUrl.trim()].filter(Boolean);
+      if (urls.length === 0) {
         errorMsg = "Please provide an image URL.";
         return;
       }
-      imagePayload = imageUrl;
+      imagePayloads = urls;
+    }
+
+    if (storyMode === "sequence") {
+      if (imagePayloads.length < MIN_SEQUENCE_SLIDES) {
+        errorMsg = "A tale needs at least two images.";
+        return;
+      }
+      if (imagePayloads.length > MAX_SEQUENCE_SLIDES) {
+        errorMsg = `A tale can have up to ${MAX_SEQUENCE_SLIDES} images.`;
+        return;
+      }
+    } else if (imagePayloads.length !== 1) {
+      errorMsg = "A single story needs exactly one image.";
+      return;
     }
 
     submitting = true;
 
     try {
+      const sanitizedFiles =
+        inputMode === "file"
+          ? await Promise.all(selectedFiles.map((file) => sanitizeImageFile(file)))
+          : [];
+
       // Build form data payload
       const fd = new FormData();
       fd.append("title", title);
+      fd.append("storyMode", storyMode);
       fd.append("subtitle", subtitle);
       fd.append("tag", tag);
       fd.append("linkUrl", linkUrl);
       fd.append("expiresAt", expiresAt);
       fd.append("contactEmail", contactEmail);
-      fd.append("image", imagePayload); // Can append a File object or String seamlessly!
+      if (inputMode === "file") {
+        sanitizedFiles.forEach((file) => fd.append("image", file));
+      } else {
+        imagePayloads.forEach((value) => fd.append("image", value));
+      }
 
       const res = await fetch("/api/suggest-story", {
         method: "POST",
@@ -167,13 +251,32 @@
           </div>
 
           <div class="input-group">
-            <label for="subtitle">{$t.settings.storySubtitleLabel}</label>
-            <input type="text" id="subtitle" bind:value={subtitle} placeholder="Details, times, location..." disabled={submitting} />
+            <label>Story format</label>
+            <div class="tabs full-width">
+              <button class="tab {storyMode==='single'?'active':''}" on:click={() => switchStoryMode('single')} type="button">Single</button>
+              <button class="tab {storyMode==='sequence'?'active':''}" on:click={() => switchStoryMode('sequence')} type="button">Tale</button>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="subtitle">{storyMode === "sequence" ? "Shared description" : $t.settings.storySubtitleLabel}</label>
+            <textarea
+              id="subtitle"
+              bind:value={subtitle}
+              placeholder={storyMode === "sequence" ? "One description for the full image sequence..." : "Details, times, location..."}
+              rows="4"
+              disabled={submitting}
+            ></textarea>
           </div>
 
           <div class="input-group">
             <label for="tag">{$t.settings.storyTagLabel}</label>
-            <input type="text" id="tag" bind:value={tag} placeholder={$t.settings.storyTagPlaceholder} maxlength="10" disabled={submitting} />
+            <select id="tag" bind:value={tag} disabled={submitting}>
+              <option value="">No tag</option>
+              {#each STORY_TAG_OPTIONS.slice(1) as option}
+                <option value={option}>{option}</option>
+              {/each}
+            </select>
           </div>
 
           <!-- DYNAMIC IMAGE SELECTOR -->
@@ -187,21 +290,44 @@
             </div>
 
             {#if inputMode === 'file'}
-              <div class="file-upload-zone {selectedFile?'has-file':''}" on:click={() => fileInput.click()}>
-                <input type="file" bind:this={fileInput} on:change={handleFileChange} accept="image/*" style="display:none;" />
+              <div class="file-upload-zone {selectedFiles.length > 0 ? 'has-file' : ''}" on:click={() => fileInput.click()}>
+                <input
+                  type="file"
+                  bind:this={fileInput}
+                  on:change={handleFileChange}
+                  accept="image/*"
+                  multiple={storyMode === "sequence"}
+                  style="display:none;"
+                />
                 
-                {#if previewSrc}
-                  <img src={previewSrc} class="preview-thumb" alt="Preview" />
-                  <div class="upload-text overlay">Tap to Change Photo</div>
+                {#if previewSrcs.length > 0}
+                  <div class="preview-grid">
+                    {#each previewSrcs as previewSrc, idx}
+                      <img src={previewSrc} class="preview-thumb" alt="Preview {idx + 1}" />
+                    {/each}
+                  </div>
+                  <div class="upload-text overlay">
+                    {storyMode === "sequence" ? `${previewSrcs.length} images selected` : "Tap to Change Photo"}
+                  </div>
                 {:else}
                   <div class="upload-icon">📷</div>
-                  <div class="upload-text">Choose from Photo Library</div>
-                  <div class="sub-hint">Max size 10MB</div>
+                  <div class="upload-text">{storyMode === "sequence" ? "Choose up to 6 Photos" : "Choose from Photo Library"}</div>
+                  <div class="sub-hint">{storyMode === "sequence" ? "At least 2 images for a tale" : "Max size 10MB"}</div>
                 {/if}
               </div>
             {:else}
-              <input type="url" bind:value={imageUrl} placeholder="https://example.com/myimage.jpg" disabled={submitting} class="url-input" />
-              <span class="hint">Make sure it's a public direct link to an image.</span>
+              {#if storyMode === "sequence"}
+                <textarea
+                  bind:value={imageUrlsText}
+                  placeholder="One image URL per line"
+                  rows="4"
+                  disabled={submitting}
+                ></textarea>
+                <span class="hint">Add 2 to 6 public image URLs, one per line.</span>
+              {:else}
+                <input type="url" bind:value={imageUrl} placeholder="https://example.com/myimage.jpg" disabled={submitting} class="url-input" />
+                <span class="hint">Make sure it's a public direct link to an image.</span>
+              {/if}
             {/if}
           </div>
 
@@ -231,13 +357,13 @@
               </div>
             </div>
           </div>
-        </div>
 
         <div class="modal-footer">
           <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
           <button class="submit-btn" on:click={submitStory} disabled={submitting}>
             {submitting ? "Sending..." : "Submit for Review"}
           </button>
+        </div>
         </div>
       {/if}
     </div>
@@ -326,7 +452,8 @@
 
   .req { color: var(--primary-color, #e5201e); }
 
-  input {
+  input,
+  select {
     width: 100%;
     padding: 12px 14px;
     border: 1.5px solid var(--border-color, #ddd);
@@ -337,7 +464,29 @@
     transition: all 0.2s ease;
   }
 
-  input:focus {
+  input:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--primary-color, #e5201e);
+    background: var(--card-bg, white);
+    box-shadow: 0 0 0 3px rgba(229, 32, 30, 0.1);
+  }
+
+  textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border-color, #ddd);
+    border-radius: 10px;
+    font-size: 1rem;
+    background: var(--glass-bg-strong, #fafafa);
+    color: var(--text-color, #111);
+    transition: all 0.2s ease;
+    resize: vertical;
+    min-height: 110px;
+    font: inherit;
+  }
+
+  textarea:focus {
     outline: none;
     border-color: var(--primary-color, #e5201e);
     background: var(--card-bg, white);
@@ -388,6 +537,14 @@
     padding: 2px;
   }
 
+  .tabs.full-width {
+    width: 100%;
+  }
+
+  .tabs.full-width .tab {
+    flex: 1;
+  }
+
   .tab {
     background: none; border: none;
     font-size: 0.7rem; font-weight: 700;
@@ -419,6 +576,15 @@
     overflow: hidden;
   }
 
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+  }
+
   .file-upload-zone:hover {
     background: var(--glass-bg-strong, #f0f0f0);
     border-color: var(--primary-color, #e5201e);
@@ -429,9 +595,10 @@
   .sub-hint { font-size: 0.75rem; color: var(--text-muted, #888); }
 
   .preview-thumb {
-    width: 100%; height: 100%;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    position: absolute; inset: 0;
+    border-radius: 10px;
   }
 
   .upload-text.overlay {

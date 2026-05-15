@@ -28,7 +28,7 @@ const translations = {
     // ── Home page ──
     home: {
       pageTitle: 'Home',
-      title: 'SRH Campus',
+      title: 'CampusWeb',
       subtitle: 'Your university companion',
       universityLinks: 'Favorite Links',
       campusStories: 'Campus Stories',
@@ -310,7 +310,7 @@ const translations = {
     // ── Home page ──
     home: {
       pageTitle: 'Home',
-      title: 'SRH Campus',
+      title: 'CampusWeb',
       subtitle: 'Dein Campus-Begleiter',
       universityLinks: 'Favoriten',
       campusStories: 'Campus-Stories',

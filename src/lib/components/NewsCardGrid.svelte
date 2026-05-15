@@ -14,39 +14,41 @@
 <section class="news-cards">
   {#each cards as card}
     <a href={card.url} class="news-card" style="--card-accent: {card.color}">
-      <div class="news-card-header">
+      <div class="news-card-main">
         <span
           class="news-card-icon"
           style="background: color-mix(in srgb, {card.color} 12%, transparent); color: {card.color};"
         >
           {card.emoji}
         </span>
+        <div class="news-card-content">
+          <h3 class="news-card-title">{card.title}</h3>
+          <p class="news-card-desc">{card.desc}</p>
+        </div>
+      </div>
+      <div class="news-card-side">
         <span
           class="news-card-tag"
           style="background: color-mix(in srgb, {card.color} 15%, transparent); color: {card.color}; border: 1px solid color-mix(in srgb, {card.color} 25%, transparent);"
         >
           {card.tag}
         </span>
+        <span class="news-card-cta">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </span>
       </div>
-      <div class="news-card-content">
-        <h3 class="news-card-title">{card.title}</h3>
-        <p class="news-card-desc">{card.desc}</p>
-      </div>
-      <span class="news-card-cta">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-      </span>
     </a>
   {/each}
 </section>
@@ -54,14 +56,15 @@
 <style>
   .news-cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--spacing-md);
     margin: var(--spacing-sm) 0;
+    align-items: stretch;
   }
 
   @media (max-width: 1024px) {
     .news-cards {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -73,10 +76,11 @@
 
   .news-card {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: var(--spacing-lg);
-    padding-bottom: calc(var(--spacing-lg) + 24px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-xl);
@@ -112,20 +116,20 @@
     width: 6px;
   }
 
-  .news-card-header {
+  .news-card-main {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-md);
-    gap: var(--spacing-sm);
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    min-width: 0;
   }
 
   .news-card-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
     border-radius: var(--radius-lg);
     font-size: 1.25rem;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -135,22 +139,12 @@
     transform: scale(1.1) rotate(5deg);
   }
 
-  .news-card-tag {
-    padding: 4px 10px;
-    border-radius: 99px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
   .news-card-content {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
-    flex: 1;
-    padding-right: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
+    min-width: 0;
+    justify-content: center;
   }
 
   .news-card-title {
@@ -171,6 +165,7 @@
     color: var(--text-color-secondary);
     line-height: 1.5;
     margin: 0;
+    line-clamp: 3;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -178,10 +173,27 @@
     text-overflow: ellipsis;
   }
 
+  .news-card-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    min-width: 92px;
+  }
+
+  .news-card-tag {
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    white-space: nowrap;
+  }
+
   .news-card-cta {
-    position: absolute;
-    bottom: var(--spacing-lg);
-    right: var(--spacing-lg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -202,5 +214,19 @@
     transform: scale(1.1) translateX(2px);
     box-shadow: 0 4px 10px
       color-mix(in srgb, var(--card-accent) 30%, transparent);
+  }
+
+  @media (max-width: 640px) {
+    .news-card {
+      grid-template-columns: 1fr;
+    }
+
+    .news-card-side {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      min-width: 0;
+      padding-left: calc(42px + var(--spacing-md));
+    }
   }
 </style>

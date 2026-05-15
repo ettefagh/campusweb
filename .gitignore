@@ -21,6 +21,7 @@ graphify-out/
 srh-auth-module/
 
 # Editor and OS
+.codex/
 .vscode/
 .idea/
 .DS_Store

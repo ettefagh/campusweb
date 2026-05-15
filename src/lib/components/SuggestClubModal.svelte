@@ -15,6 +15,7 @@
   let contactEmail = "";
   let note = "";
   let logoDataUrl = "";
+  let logoUrl = "";
   let logoFileName = "";
 
   let submitting = false;
@@ -22,6 +23,36 @@
   let errorMsg = "";
 
   const categories = ["sports", "culture", "tech", "business", "arts", "community"];
+
+  async function sanitizeLogoFile(file: File): Promise<string> {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      throw new Error("Canvas not available");
+    }
+
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+
+    const mimeType = file.type === "image/png" ? "image/png" : "image/jpeg";
+    return await new Promise<string>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("Failed to re-encode image"));
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+        reader.onerror = () => reject(new Error("Failed to read re-encoded image"));
+        reader.readAsDataURL(blob);
+      }, mimeType, mimeType === "image/png" ? undefined : 0.92);
+    });
+  }
 
   function close() {
     if (submitting) return;
@@ -35,6 +66,7 @@
       contactEmail = ""; 
       note = ""; 
       logoDataUrl = "";
+      logoUrl = "";
       logoFileName = "";
       success = false; 
       errorMsg = "";
@@ -62,17 +94,16 @@
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      logoDataUrl = typeof reader.result === "string" ? reader.result : "";
-      logoFileName = file.name;
-      errorMsg = "";
-    };
-    reader.onerror = () => {
-      errorMsg = "Could not read the logo file. Please try another image.";
-      input.value = "";
-    };
-    reader.readAsDataURL(file);
+    sanitizeLogoFile(file)
+      .then((dataUrl) => {
+        logoDataUrl = dataUrl;
+        logoFileName = file.name;
+        errorMsg = "";
+      })
+      .catch(() => {
+        errorMsg = "Could not read the logo file. Please try another image.";
+        input.value = "";
+      });
   }
 
   async function submitClub() {
@@ -96,8 +127,9 @@
           campusId,
           category,
           contactEmail,
-          note,
-          logoDataUrl
+         note,
+          logoDataUrl,
+          logoUrl
         })
       });
 
@@ -228,6 +260,18 @@
             {#if logoFileName}
               <p class="file-hint">{logoFileName}</p>
             {/if}
+            <input
+              type="url"
+              id="clubLogoUrl"
+              bind:value={logoUrl}
+              placeholder="or paste a public logo URL"
+              disabled={submitting}
+            />
+            {#if logoDataUrl || logoUrl}
+              <div class="logo-preview-wrap">
+                <img src={logoDataUrl || logoUrl} alt="Club logo preview" class="logo-preview" />
+              </div>
+            {/if}
           </div>
 
           <div class="input-group">
@@ -355,6 +399,23 @@
     margin: 0;
     color: var(--text-color-secondary);
     font-size: 0.8rem;
+  }
+
+  .logo-preview-wrap {
+    margin-top: 4px;
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+  }
+
+  .logo-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .error-msg {

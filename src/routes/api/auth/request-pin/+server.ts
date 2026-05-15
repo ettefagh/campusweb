@@ -5,9 +5,6 @@ import { isAllowedEmailDomain, normalizeEmail } from '$lib/config/auth';
 import { sendLoginPinEmail } from '$lib/server/auth/email';
 import type { RequestHandler } from './$types';
 
-const TESTER_EMAIL = 'tester@srh.de';
-const TESTER_PIN = '123456';
-
 export const POST: RequestHandler = async ({ request, platform }) => {
   const { email } = await request.json().catch(() => ({ email: '' }));
   const normalizedEmail = normalizeEmail(String(email || ''));
@@ -16,12 +13,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     return json({ error: 'Only SRH email addresses are accepted.' }, { status: 400 });
   }
 
-  const pin = dev && normalizedEmail === TESTER_EMAIL ? TESTER_PIN : generatePin();
+  const pin = generatePin();
   const expiresAt = getPinExpiration();
   const hash = await createPinHash(normalizedEmail, pin, expiresAt, platform?.env);
 
-  if (dev && normalizedEmail === TESTER_EMAIL) {
-    console.info(`[auth] Development PIN for ${TESTER_EMAIL}: ${TESTER_PIN}`);
+  if (dev) {
+    console.info(`[auth] Development PIN: ${pin}`);
   } else {
     await sendLoginPinEmail(normalizedEmail, pin, platform?.env);
   }

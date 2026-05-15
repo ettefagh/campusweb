@@ -1,6 +1,6 @@
 <!--
   src/routes/admin/stories/+page.svelte
-  Admin page for managing SRH campus stories.
+  Admin page for managing CampusWeb stories.
   Access at /admin/stories
 -->
 <script lang="ts">
@@ -10,11 +10,16 @@
     id: string;
     title: string;
     subtitle: string;
+    tag?: string;
+    storyMode?: "single" | "sequence";
+    slides?: Array<{ imageUrl?: string; subtitle?: string }>;
     imageUrl: string;
     linkUrl: string;
     seen: boolean;
     createdAt: string;
     expiresAt?: string;
+    viewCount?: number;
+    viewsToday?: number;
   }
 
   let stories: Story[] = [];
@@ -222,10 +227,17 @@
             </div>
             <div class="story-info-col">
               <div class="story-row-title">{story.title}</div>
-              {#if story.subtitle}
+              {#if story.slides && story.slides.length > 1}
+                <div class="story-row-subtitle">{story.slides.length}-slide tale</div>
+              {:else if story.subtitle}
                 <div class="story-row-subtitle">{story.subtitle}</div>
               {/if}
               <div class="story-row-meta">
+                Views: {story.viewCount || 0}
+                {#if story.viewsToday}
+                  <span class="today-views">({story.viewsToday} today)</span>
+                {/if}
+                •
                 Added: {new Date(story.createdAt).toLocaleDateString()} •
                 {#if story.expiresAt}
                   <span class={new Date(story.expiresAt) < new Date() ? "expired-label" : ""}>
@@ -433,15 +445,18 @@
   .story-row-subtitle {
     font-size: 0.78rem;
     color: var(--text-color-secondary, #888);
-    white-space: nowrap;
+    white-space: pre-wrap;
     overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .story-row-meta {
     font-size: 0.72rem;
     color: var(--text-color-secondary, #aaa);
     margin-top: 3px;
+  }
+
+  .today-views {
+    color: var(--text-color-secondary, #888);
   }
 
   .story-row-meta a {

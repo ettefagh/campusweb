@@ -15,6 +15,7 @@ export async function POST({ request, platform }) {
       contactEmail,
       note,
       logoDataUrl,
+      logoUrl,
     } = data;
 
     if (!clubName || !handleOrUrl || !campusId) {
@@ -27,6 +28,10 @@ export async function POST({ request, platform }) {
 
     if (logoDataUrl && logoDataUrl.length > 700_000) {
       return json({ error: "Logo upload is too large" }, { status: 400 });
+    }
+
+    if (logoUrl && typeof logoUrl !== "string") {
+      return json({ error: "Invalid logo URL" }, { status: 400 });
     }
 
     const botToken = env.PRIVATE_TELEGRAM_BOT_TOKEN || platform?.env?.PRIVATE_TELEGRAM_BOT_TOKEN;
@@ -47,9 +52,11 @@ export async function POST({ request, platform }) {
         handleOrUrl,
         campusId,
         category,
+        clubRole: "student-run",
         contactEmail,
         note,
         logoDataUrl: logoDataUrl || "",
+        logoUrl: logoUrl || "",
         id: suggestionId,
         submittedAt: new Date().toISOString()
       }), {
@@ -70,7 +77,8 @@ export async function POST({ request, platform }) {
 <b>Link/Handle:</b> ${handleOrUrl}
 <b>Campus:</b> ${campusId}
 <b>Category:</b> ${category || "None"}
-<b>Logo:</b> ${logoDataUrl ? "Included" : "None"}
+<b>Club Type:</b> student-run
+<b>Logo:</b> ${logoDataUrl ? "Uploaded" : logoUrl ? "URL provided" : "None"}
 ${contactEmail ? `<b>Contact:</b> ${contactEmail}` : ""}
 
 ${cleanNote ? `<b>Note:</b>\n<i>${cleanNote}</i>` : ""}${securityReport}
@@ -78,6 +86,10 @@ ${cleanNote ? `<b>Note:</b>\n<i>${cleanNote}</i>` : ""}${securityReport}
 
     const keyboard = {
       inline_keyboard: [
+        [
+          { text: "🎓 Student-run", callback_data: `club_role_student-run_${suggestionId}` },
+          { text: "🏛 Official", callback_data: `club_role_official_${suggestionId}` }
+        ],
         [
           { text: "✅ Approve", callback_data: `club_approve_${suggestionId}` },
           { text: "❌ Reject", callback_data: `club_reject_${suggestionId}` }

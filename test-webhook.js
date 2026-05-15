@@ -15,7 +15,8 @@ async function testWebhook() {
   };
 
   try {
-    const res = await fetch("https://campusweb.pages.dev/api/telegram-webhook", {
+    const baseUrl = process.env.PRIVATE_SITE_URL || "http://localhost:5173";
+    const res = await fetch(`${baseUrl}/api/telegram-webhook`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)

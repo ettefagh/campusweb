@@ -5,16 +5,24 @@
   swipe gestures on mobile.
 -->
 <script module lang="ts">
+  export interface StorySlide {
+    imageUrl?: string;
+    subtitle?: string;
+    tag?: string;
+    linkUrl?: string;
+  }
+
   export interface Story {
     id: string;
     title: string;
     subtitle: string;
+    tag?: string;
     imageUrl: string;
     linkUrl: string;
     seen: boolean;
-    tag?: string;
     createdAt: string;
     expiresAt?: string;
+    slides?: StorySlide[];
   }
 </script>
 
@@ -24,6 +32,7 @@
 
   export let stories: Story[] = [];
   export let allowSuggestions: boolean = true;
+  export let loading: boolean = false;
   
   let isSuggestionModalOpen = false;
 
@@ -36,24 +45,96 @@
   // ── Viewer state ────────────────────────────────────────────────
   let viewerOpen = false;
   let activeIndex = 0;
+  let activeSlideIndex = 0;
   let progressPct = 0;
   let progressInterval: ReturnType<typeof setInterval> | null = null;
   let imageLoaded = false;
+  let currentStory: Story | undefined;
+  let currentSlides: StorySlide[] = [];
+  let currentSlide: StorySlide | undefined;
+  let currentSlideCount = 0;
+  let sessionViewedStoryIds = new Set<string>();
 
   const STORY_DURATION_MS = 6000;
   const TICK_MS = 50;
 
+  function clampStripeCount(count: number) {
+    return Math.max(2, Math.min(6, count));
+  }
+
+  function tagClass(tag?: string) {
+    if (!tag) return "";
+    return `tag-${tag.toLowerCase().replace(/\s+/g, "-")}`;
+  }
+
+  function getRenderableSlides(story?: Story) {
+    if (!story || !Array.isArray(story.slides)) return [];
+    return story.slides.filter((slide) => typeof slide.imageUrl === "string" && slide.imageUrl.trim().length > 0);
+  }
+
+  function getStorySlideCount(story?: Story) {
+    return getRenderableSlides(story).length;
+  }
+
+  function getStorySlides(story?: Story) {
+    if (!story) return [];
+    const renderableSlides = getRenderableSlides(story);
+    if (renderableSlides.length > 0) return renderableSlides;
+    return [{
+      imageUrl: story.imageUrl,
+      subtitle: story.subtitle || "",
+      tag: story.tag,
+      linkUrl: story.linkUrl
+    }];
+  }
+
+  function recordStoryView(storyId: string) {
+    if (!storyId || sessionViewedStoryIds.has(storyId)) return;
+
+    sessionViewedStoryIds.add(storyId);
+    const payload = JSON.stringify({ storyId });
+
+    try {
+      if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon("/api/stats/story-view", blob);
+        return;
+      }
+    } catch {}
+
+    if (typeof fetch !== "undefined") {
+      fetch("/api/stats/story-view", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true
+      }).catch(() => {});
+    }
+  }
+
+  $: currentStory = storiesToShow[activeIndex];
+  $: currentSlides = getStorySlides(currentStory);
+  $: currentSlide = currentSlides[activeSlideIndex] || currentSlides[0];
+  $: currentSlideCount = currentSlides.length;
+  $: loadingPlaceholderCount = loading ? (storiesToShow.length === 0 ? 6 : 3) : 0;
+
   // ── Open / close ─────────────────────────────────────────────────
   function openStory(index: number) {
+    sessionViewedStoryIds = new Set<string>();
     activeIndex = index;
+    activeSlideIndex = 0;
     imageLoaded = false;
     viewerOpen = true;
     markSeen(index);
+    if (storiesToShow[index]?.id) {
+      recordStoryView(storiesToShow[index].id);
+    }
     startProgress();
   }
 
   function closeViewer() {
     viewerOpen = false;
+    sessionViewedStoryIds = new Set<string>();
     stopProgress();
   }
 
@@ -109,21 +190,49 @@
     isPaused = false;
   }
 
-  function goNext() {
+  function goNextStory() {
     if (activeIndex < storiesToShow.length - 1) {
       activeIndex += 1;
+      activeSlideIndex = 0;
       imageLoaded = false;
       markSeen(activeIndex);
+      if (storiesToShow[activeIndex]?.id) {
+        recordStoryView(storiesToShow[activeIndex].id);
+      }
       startProgress();
     } else {
       closeViewer();
     }
   }
 
+  function goNext() {
+    if (activeSlideIndex < currentSlides.length - 1) {
+      activeSlideIndex += 1;
+      imageLoaded = false;
+      startProgress();
+      return;
+    }
+
+    goNextStory();
+  }
+
   function goPrev() {
+    if (activeSlideIndex > 0) {
+      activeSlideIndex -= 1;
+      imageLoaded = false;
+      startProgress();
+      return;
+    }
+
     if (activeIndex > 0) {
       activeIndex -= 1;
+      const previousSlides = getStorySlides(storiesToShow[activeIndex]);
+      activeSlideIndex = Math.max(previousSlides.length - 1, 0);
       imageLoaded = false;
+      markSeen(activeIndex);
+      if (storiesToShow[activeIndex]?.id) {
+        recordStoryView(storiesToShow[activeIndex].id);
+      }
       startProgress();
     }
   }
@@ -203,7 +312,7 @@
 <svelte:window on:keydown={onKeydown} />
 
 <!-- ── Stories bar ───────────────────────────────────────────────── -->
-<div class="stories-bar" role="list" aria-label="SRH Campus Stories">
+<div class="stories-bar" role="list" aria-label="Campusweb Stories">
   {#if allowSuggestions}
     <button
       class="story-bubble add-story-btn"
@@ -217,15 +326,34 @@
     </button>
   {/if}
 
+  {#if loadingPlaceholderCount > 0 && storiesToShow.length === 0}
+    {#each Array(loadingPlaceholderCount) as _, idx}
+      <div
+        class="story-bubble placeholder"
+        aria-hidden="true"
+      >
+        <div class="story-ring seen placeholder-ring">
+          <div class="story-avatar placeholder-avatar"></div>
+        </div>
+        <span class="story-label placeholder-label">Loading</span>
+      </div>
+    {/each}
+  {/if}
+
   {#each storiesToShow as story, idx}
     <button
       class="story-bubble"
       on:click={() => openStory(idx)}
       aria-label="Open story: {story.title}"
     >
-      <div class="story-ring {story.seen ? 'seen' : 'unseen'}" class:has-tag={!!story.tag}>
+      <div
+        class="story-ring {story.seen ? 'seen' : 'unseen'}"
+        class:has-tag={!!story.tag}
+        class:sequence={getStorySlideCount(story) > 1}
+        style:--story-stripes={getStorySlideCount(story) > 1 ? clampStripeCount(getStorySlideCount(story)) : 0}
+      >
         <img
-          src={story.imageUrl}
+          src={getStorySlides(story)[0]?.imageUrl || story.imageUrl}
           alt={story.title}
           class="story-avatar"
           loading={idx < 5 ? 'eager' : 'lazy'}
@@ -239,12 +367,26 @@
           }}
         />
         {#if story.tag}
-          <span class="story-tag" class:is-live={story.tag.toUpperCase() === 'LIVE'}>{story.tag}</span>
+          <span class="story-tag {tagClass(story.tag)}">{story.tag}</span>
         {/if}
       </div>
       <span class="story-label">{story.title}</span>
     </button>
   {/each}
+
+  {#if loadingPlaceholderCount > 0 && storiesToShow.length > 0}
+    {#each Array(loadingPlaceholderCount) as _, idx}
+      <div
+        class="story-bubble placeholder"
+        aria-hidden="true"
+      >
+        <div class="story-ring seen placeholder-ring">
+          <div class="story-avatar placeholder-avatar"></div>
+        </div>
+        <span class="story-label placeholder-label">Loading</span>
+      </div>
+    {/each}
+  {/if}
 </div>
 
 <!-- ── Fullscreen viewer overlay ─────────────────────────────────── -->
@@ -255,7 +397,7 @@
     role="dialog"
     aria-modal="true"
     tabindex="-1"
-    aria-label="Viewing story: {storiesToShow[activeIndex].title}"
+    aria-label="Viewing story: {currentStory.title}"
     on:pointerdown={onPointerDown}
     on:pointerup={onPointerUp}
     on:mouseleave={resumeStory}
@@ -284,9 +426,7 @@
         <div class="story-author-info">
           <div class="story-author-name">SRH University Berlin</div>
           <div class="story-author-time">
-            {new Date(
-              storiesToShow[activeIndex].createdAt,
-            ).toLocaleDateString()}
+            {new Date(currentStory.createdAt).toLocaleDateString()}
           </div>
         </div>
       </div>
@@ -317,7 +457,7 @@
 
       <!-- Blurred background for images smaller than viewport -->
       <img
-        src={storiesToShow[activeIndex].imageUrl}
+        src={currentSlide?.imageUrl || currentStory.imageUrl}
         alt=""
         class="story-blurred-bg {imageLoaded ? 'loaded' : ''}"
         aria-hidden="true"
@@ -329,8 +469,8 @@
       />
 
       <img
-        src={storiesToShow[activeIndex].imageUrl}
-        alt={storiesToShow[activeIndex].title}
+        src={currentSlide?.imageUrl || currentStory.imageUrl}
+        alt={currentStory.title}
         class="story-image {imageLoaded ? 'loaded' : ''}"
         draggable="false"
         on:contextmenu|preventDefault
@@ -347,12 +487,12 @@
     <!-- Footer -->
     <div class="story-footer">
       <div class="story-text">
-        <div class="story-title">{storiesToShow[activeIndex].title}</div>
-        <div class="story-subtitle">{storiesToShow[activeIndex].subtitle}</div>
+        <div class="story-title">{currentStory.title}</div>
+        <div class="story-subtitle">{currentStory.subtitle || currentSlide?.subtitle}</div>
       </div>
-      {#if storiesToShow[activeIndex].linkUrl}
+      {#if currentSlide?.linkUrl || currentStory.linkUrl}
         <a
-          href={storiesToShow[activeIndex].linkUrl}
+          href={currentSlide?.linkUrl || currentStory.linkUrl}
           target="_blank"
           rel="noopener noreferrer"
           class="story-cta"
@@ -450,27 +590,46 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     white-space: nowrap;
     line-height: 1;
+    overflow: visible;
   }
 
-  /* Specific 'LIVE' tag styling - more prominent and slightly different shape */
-  .story-tag.is-live {
-    background: linear-gradient(135deg, #FF0000 0%, #D6249F 50%, #285AEB 100%);
+  .story-tag {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  .story-tag.tag-live {
+    background: #dc2626;
+    color: #fff;
     padding: 3px 12px;
     border-radius: 4px;
     bottom: -5px;
-    box-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
-    animation: livePulse 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.28);
   }
 
-  @keyframes livePulse {
-    0%, 100% {
-      transform: translateX(-50%) scale(1);
-      box-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
-    }
-    50% {
-      transform: translateX(-50%) scale(1.05);
-      box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
-    }
+  .story-tag.tag-event {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .story-tag.tag-promo {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .story-tag.tag-ad {
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+
+  .story-tag.tag-rent {
+    background: #fae8ff;
+    color: #86198f;
+  }
+
+  .story-tag.tag-living {
+    background: #cffafe;
+    color: #155e75;
   }
 
   .story-bubble:hover .story-ring,
@@ -489,8 +648,24 @@
     );
   }
 
+  .story-ring.sequence.unseen::before {
+    background: repeating-conic-gradient(
+      from -90deg,
+      #e6683c 0 calc((360deg / var(--story-stripes)) * 0.58),
+      transparent calc((360deg / var(--story-stripes)) * 0.58) calc(360deg / var(--story-stripes))
+    );
+  }
+
   .story-ring.seen::before {
     background: var(--border-color, #ccc);
+  }
+
+  .story-ring.sequence.seen::before {
+    background: repeating-conic-gradient(
+      from -90deg,
+      #94a3b8 0 calc((360deg / var(--story-stripes)) * 0.58),
+      transparent calc((360deg / var(--story-stripes)) * 0.58) calc(360deg / var(--story-stripes))
+    );
   }
 
   .add-ring::before {
@@ -538,6 +713,39 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 72px;
+  }
+
+  .story-bubble.placeholder {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .story-ring.placeholder-ring::before {
+    background: #e7e5e4;
+    animation: storyPulse 1.3s ease-in-out infinite;
+  }
+
+  .story-avatar.placeholder-avatar {
+    border-color: transparent;
+    background: linear-gradient(180deg, #ffffff 0%, #f5f5f4 100%);
+  }
+
+  .story-label.placeholder-label {
+    width: 58px;
+    height: 10px;
+    border-radius: 999px;
+    background: #e7e5e4;
+    color: transparent;
+    animation: storyPulse 1.3s ease-in-out infinite;
+  }
+
+  @keyframes storyPulse {
+    0%, 100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 
   /* ── Fullscreen viewer ─────────────────────────────────────── */
@@ -738,6 +946,7 @@
     color: rgba(255, 255, 255, 0.85);
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
     line-height: 1.35;
+    white-space: pre-wrap;
   }
 
   .story-cta {

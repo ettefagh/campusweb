@@ -18,6 +18,10 @@ type BotStats = {
     allTime: Record<string, number>;
     daily: Record<string, Record<string, number>>;
   };
+  storyViews: {
+    allTime: Record<string, number>;
+    daily: Record<string, Record<string, number>>;
+  };
 };
 
 function createDefaultStats(): BotStats {
@@ -25,7 +29,8 @@ function createDefaultStats(): BotStats {
     suggestions: { allTime: 0, daily: {}, monthly: {} },
     fields: { hasExpiry: 0, hasUrl: 0 },
     actions: { approved: 0, declined: 0, edited: 0, directCreated: 0 },
-    links: { allTime: {}, daily: {} }
+    links: { allTime: {}, daily: {} },
+    storyViews: { allTime: {}, daily: {} }
   };
 }
 
@@ -44,6 +49,10 @@ async function readStats(kv: any): Promise<BotStats> {
       links: {
         allTime: { ...stats.links.allTime, ...parsed.links?.allTime },
         daily: { ...stats.links.daily, ...parsed.links?.daily }
+      },
+      storyViews: {
+        allTime: { ...stats.storyViews.allTime, ...parsed.storyViews?.allTime },
+        daily: { ...stats.storyViews.daily, ...parsed.storyViews?.daily }
       }
     };
   } catch (e) {
@@ -95,5 +104,22 @@ export async function incrementLinkClick(kv: any, linkId: string) {
     await kv.put("bot_stats", JSON.stringify(stats));
   } catch (err) {
     console.error("Failed to update link stats", err);
+  }
+}
+
+export async function incrementStoryView(kv: any, storyId: string) {
+  if (!kv || !storyId) return;
+
+  try {
+    const stats = await readStats(kv);
+    const today = new Date().toISOString().split("T")[0];
+
+    stats.storyViews.allTime[storyId] = (stats.storyViews.allTime[storyId] || 0) + 1;
+    stats.storyViews.daily[today] = stats.storyViews.daily[today] || {};
+    stats.storyViews.daily[today][storyId] = (stats.storyViews.daily[today][storyId] || 0) + 1;
+
+    await kv.put("bot_stats", JSON.stringify(stats));
+  } catch (err) {
+    console.error("Failed to update story stats", err);
   }
 }

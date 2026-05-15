@@ -30,7 +30,7 @@
 </script>
 
 <svelte:head>
-  <title>Admin Dashboard – SRH CampusWeb</title>
+  <title>Admin Dashboard – CampusWeb</title>
 </svelte:head>
 
 <div class="admin-layout">

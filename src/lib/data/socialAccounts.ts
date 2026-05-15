@@ -3,6 +3,7 @@ export type SocialAccountType = "official" | "club";
 export interface SocialAccount {
   id: string;
   type: SocialAccountType;
+  clubRole?: "official" | "student-run";
   name: string;
   handle: string;
   platform: "instagram" | "facebook" | "tiktok" | "youtube" | "linkedin" | "whatsapp";
@@ -83,6 +84,7 @@ export const socialAccounts: SocialAccount[] = [
     platform: "instagram",
     url: "https://www.instagram.com/srh.students/",
     campusIds: ["all"],
+    clubRole: "student-run",
     categories: ["community"],
     verified: true,
     priority: 50,
@@ -95,6 +97,7 @@ export const socialAccounts: SocialAccount[] = [
     platform: "instagram",
     url: "https://www.instagram.com/srh_mun/",
     campusIds: ["berlin"],
+    clubRole: "student-run",
     categories: ["culture", "politics"],
     verified: true,
     priority: 40,
@@ -107,6 +110,7 @@ export const socialAccounts: SocialAccount[] = [
     platform: "instagram",
     url: "https://www.instagram.com/gdcoc_srhberlin/",
     campusIds: ["berlin"],
+    clubRole: "student-run",
     categories: ["tech"],
     verified: true,
     priority: 30,

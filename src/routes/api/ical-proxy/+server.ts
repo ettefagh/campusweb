@@ -28,11 +28,17 @@ function isAllowedUrl(urlStr: string): boolean {
     try {
         const parsed = new URL(urlStr);
         if (parsed.protocol !== 'https:') return false;
+        const hostname = parsed.hostname.toLowerCase();
         // Check against allowlist
-        return ALLOWED_PATTERNS.some(pattern => parsed.hostname.endsWith(pattern));
+        return ALLOWED_PATTERNS.some(pattern => isAllowedHostname(hostname, pattern));
     } catch {
         return false;
     }
+}
+
+function isAllowedHostname(hostname: string, allowedDomain: string): boolean {
+    const normalizedDomain = allowedDomain.toLowerCase();
+    return hostname === normalizedDomain || hostname.endsWith(`.${normalizedDomain}`);
 }
 
 export const GET: RequestHandler = async ({ url, fetch }) => {

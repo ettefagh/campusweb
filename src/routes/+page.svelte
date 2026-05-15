@@ -2,7 +2,7 @@
 	import LinkCard from "$lib/components/LinkCard.svelte";
 	import IdSlider from "$lib/components/IdSlider.svelte";
 	import StoriesSlider from "$lib/components/StoriesSlider.svelte";
-	import { cachedStories } from "$lib/stores/feedCache";
+	import { cachedStories, getStories, storiesLoading } from "$lib/stores/feedCache";
 	import { favorites } from "$lib/stores/favorites";
 	import { allLinks } from "$lib/data/links";
 	import { t } from "$lib/i18n";
@@ -12,8 +12,10 @@
 
 	let showGoToTop = false;
 	let container: HTMLElement | null = null;
+	$: isStoriesLoading = $storiesLoading;
 
 	onMount(() => {
+		getStories();
 		if ($settingsStore.defaultPage === 'calendar') {
 			goto('/calendar', { replaceState: true });
 		}
@@ -137,7 +139,7 @@
 					<div class="modular-section-header" style="margin-bottom: 0;">
 						<h2>{$t.home.campusStories}</h2>
 					</div>
-					<StoriesSlider stories={$cachedStories} allowSuggestions={true} />
+					<StoriesSlider stories={$cachedStories} loading={isStoriesLoading} allowSuggestions={true} />
 				</section>
 			{:else if section.id === "favorites"}
 				<section class="links-section" style={i <= 1 ? "" : "animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;"}>

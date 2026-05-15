@@ -1,7 +1,7 @@
 import { json } from "@sveltejs/kit";
 import { env } from "$env/dynamic/private";
 import { incrementStat } from "$lib/server/stats";
-import { sendClubApprovalEmail, sendStoryApprovalEmail } from "$lib/server/email";
+import { sendClubApprovalEmail, sendStoryApprovalEmail, type EmailSendResult } from "$lib/server/email";
 import { allLinks } from "$lib/data/links";
 
 function parseExpiration(expiresParsed: string): string {
@@ -33,11 +33,374 @@ function extractEmailFromText(text: string): string {
   return emailMatch?.[0]?.trim() || "";
 }
 
+function extractBlockField(text: string, field: string): string {
+  const pattern = new RegExp(
+    `(?:^|\\n)${field}:\\s*([\\s\\S]*?)(?=\\n(?:Title|Subtitle|Tag|Link|Expires|Contact):|$)`,
+    "i"
+  );
+  const match = text.match(pattern);
+  return match?.[1]?.trim() || "";
+}
+
+function extractFirstMatchingBlockField(text: string, fields: string[]) {
+  for (const field of fields) {
+    const value = extractBlockField(text, field);
+    if (value) return value;
+  }
+  return "";
+}
+
 function escapeTelegramHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+function normalizeStoryText(value: string) {
+  return value
+    .replace(/\r\n/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function wrapStoryPreview(text: string, maxLines = 3, maxCharsPerLine = 56) {
+  const normalized = normalizeStoryText(text);
+  if (!normalized) return "";
+
+  const sourceLines = normalized
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const wrapped: string[] = [];
+
+  for (const line of sourceLines) {
+    const words = line.split(/\s+/).filter(Boolean);
+    let current = "";
+
+    for (const word of words) {
+      const next = current ? `${current} ${word}` : word;
+      if (next.length <= maxCharsPerLine) {
+        current = next;
+      } else {
+        if (current) wrapped.push(current);
+        current = word;
+      }
+
+      if (wrapped.length >= maxLines) break;
+    }
+
+    if (wrapped.length >= maxLines) break;
+    if (current) wrapped.push(current);
+    if (wrapped.length >= maxLines) break;
+  }
+
+  const truncated = wrapped.slice(0, maxLines);
+  const consumedText = truncated.join(" ");
+  const shouldEllipsize = normalized.length > consumedText.length;
+  if (shouldEllipsize && truncated.length > 0) {
+    truncated[truncated.length - 1] = `${truncated[truncated.length - 1].replace(/[.…. ]+$/g, "")} ...`;
+  }
+
+  return truncated.join("\n");
+}
+
+function storyViewsLabel(count: number) {
+  return `${count} ${count === 1 ? "view" : "views"}`;
+}
+
+function limitWords(text: string, maxWords = 15) {
+  const words = normalizeStoryText(text)
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .filter(Boolean);
+  if (words.length <= maxWords) return words.join(" ");
+  return `${words.slice(0, maxWords).join(" ")} ...`;
+}
+
+function hashStoryId(id: string) {
+  let hash = 0;
+  for (let index = 0; index < id.length; index += 1) {
+    hash = (hash * 31 + id.charCodeAt(index)) % 10000;
+  }
+  return hash;
+}
+
+function assignStoryShortIds<T extends { id: string }>(stories: T[]) {
+  const used = new Set<string>();
+  const byStoryId = new Map<string, string>();
+
+  for (const story of stories) {
+    let candidate = hashStoryId(story.id);
+    for (let attempts = 0; attempts < 10000; attempts += 1) {
+      const sid = String(candidate).padStart(4, "0");
+      if (!used.has(sid)) {
+        used.add(sid);
+        byStoryId.set(story.id, sid);
+        break;
+      }
+      candidate = (candidate + 1) % 10000;
+    }
+  }
+
+  return byStoryId;
+}
+
+function assignShortIds<T extends { id: string }>(items: T[]) {
+  return assignStoryShortIds(items);
+}
+
+function chunkButtons<T>(buttons: T[], size = 2) {
+  const rows: T[][] = [];
+  for (let index = 0; index < buttons.length; index += size) {
+    rows.push(buttons.slice(index, index + size));
+  }
+  return rows;
+}
+
+function formatStoryListTitle(title: string, sid: string) {
+  return `<b>${escapeTelegramHtml(title || "Untitled")}</b>\n/sid${sid}`;
+}
+
+function formatStoryListPreview(story: any) {
+  const preview = limitWords(story.subtitle || "", 15);
+  if (!preview) return "";
+  return `\n<blockquote>${escapeTelegramHtml(preview)}</blockquote>`;
+}
+
+function formatStoryListItem(story: any, index: number, sid: string) {
+  const titleBlock = formatStoryListTitle(story.title || "Untitled", sid);
+  const previewBlock = formatStoryListPreview(story);
+  const viewsBlock = `\n• ${storyViewsLabel(Number(story.viewCount) || 0)}`;
+  return `${index + 1}. ${titleBlock}${previewBlock}${viewsBlock}`;
+}
+
+function formatStoryDetailsText(story: any, sid: string) {
+  const parts = [
+    `📖 <b>${escapeTelegramHtml(story.title || "Untitled")}</b>`,
+    `/sid${sid}`
+  ];
+
+  if (story.subtitle) {
+    parts.push(`\n${escapeTelegramHtml(normalizeStoryText(story.subtitle))}`);
+  }
+
+  if (story.tag) {
+    parts.push(`\n🏷 ${escapeTelegramHtml(story.tag)}`);
+  }
+
+  if (story.linkUrl) {
+    parts.push(`\n🔗 ${escapeTelegramHtml(story.linkUrl)}`);
+  }
+
+  if (story.expiresAt) {
+    parts.push(`\n⏳ Expires: ${escapeTelegramHtml(new Date(story.expiresAt).toLocaleDateString())}`);
+  }
+
+  if (typeof story.viewCount !== "undefined") {
+    parts.push(`\n👁 ${storyViewsLabel(Number(story.viewCount) || 0)}`);
+  }
+
+  if (typeof story.viewsToday !== "undefined") {
+    parts.push(`\n📈 Today: ${storyViewsLabel(Number(story.viewsToday) || 0)}`);
+  }
+
+  return parts.join("\n");
+}
+
+function formatClubListItem(club: any, index: number, cid: string) {
+  const name = club.name || "Untitled";
+  const handle = club.handle ? `@${club.handle}` : "";
+  const description = limitWords(club.description || "", 15);
+  const role = clubRoleLabel(club.clubRole);
+  const parts = [
+    `${index + 1}. <b>${escapeTelegramHtml(name)}</b>`,
+    `/cid${cid}`
+  ];
+
+  if (handle) parts.push(escapeTelegramHtml(handle));
+  if (description) parts.push(`<blockquote>${escapeTelegramHtml(description)}</blockquote>`);
+  parts.push(`${escapeTelegramHtml(role)} • ${escapeTelegramHtml(club.platform || "platform")}`);
+  return parts.join("\n");
+}
+
+function formatClubDetailsText(club: any, cid: string) {
+  const parts = [
+    `🤝 <b>${escapeTelegramHtml(club.name || "Untitled")}</b>`,
+    `/cid${cid}`
+  ];
+
+  if (club.handle) parts.push(`\n@${escapeTelegramHtml(club.handle)}`);
+  if (club.description) {
+    parts.push(`\n<blockquote>${escapeTelegramHtml(normalizeStoryText(club.description))}</blockquote>`);
+  }
+  parts.push(`\n<b>Type:</b> ${escapeTelegramHtml(clubRoleLabel(club.clubRole))}`);
+  if (club.platform) parts.push(`\n<b>Platform:</b> ${escapeTelegramHtml(club.platform)}`);
+  if (Array.isArray(club.campusIds) && club.campusIds.length > 0) {
+    parts.push(`\n<b>Campus:</b> ${escapeTelegramHtml(club.campusIds.includes("all") ? "All" : club.campusIds.join(", "))}`);
+  }
+  if (Array.isArray(club.categories) && club.categories.length > 0) {
+    parts.push(`\n<b>Category:</b> ${escapeTelegramHtml(club.categories.join(", "))}`);
+  }
+  if (club.url) parts.push(`\n${escapeTelegramHtml(club.url)}`);
+
+  return parts.join("\n");
+}
+
+function buildApprovedClubKeyboard(clubId: string, clubRole: string | undefined) {
+  const role = normalizeClubRole(clubRole);
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: `${role === "student-run" ? "• " : ""}Student-run`,
+          callback_data: `club_set_role_student-run_${clubId}`
+        },
+        {
+          text: `${role === "official" ? "• " : ""}Official`,
+          callback_data: `club_set_role_official_${clubId}`
+        }
+      ],
+      [
+        { text: "Delete", callback_data: `action_delete_club_${clubId}` }
+      ]
+    ]
+  };
+}
+
+function getStoryImageUrls(story: any) {
+  const slideImages = Array.isArray(story.slides)
+    ? story.slides
+        .map((slide: any) => slide?.imageUrl)
+        .filter((value: unknown) => typeof value === "string" && value.trim().length > 0)
+    : [];
+
+  if (slideImages.length > 0) return slideImages;
+  return typeof story.imageUrl === "string" && story.imageUrl.trim().length > 0 ? [story.imageUrl] : [];
+}
+
+function getDirectCreateTemplate() {
+  return [
+    `📝 <b>Direct Story Format</b>`,
+    ``,
+    `Send a photo with this caption:`,
+    `<code>/create`,
+    `Title: Story title`,
+    `Subtitle:`,
+    `First line`,
+    `Second line`,
+    `Link: https://...`,
+    `Expires: +7d</code>`,
+    ``,
+    `Notes:`,
+    `- <b>Subtitle</b> can be multiline`,
+    `- <b>Expires</b> accepts <code>+3d</code>, <code>+1w</code>, or <code>DD/MM/YYYY</code>`,
+    `- Use <code>/stories</code> to browse stories`,
+    `- Use <code>/sid0000</code> style commands to open one story in full`
+  ].join("\n");
+}
+
+function normalizeInternalImageUrl(value: string | undefined) {
+  if (!value) return value;
+  const match = value.match(/^https?:\/\/[^/]+\/\/?api\/images\/(.+)$/i);
+  if (match?.[1]) {
+    return `/api/images/${match[1]}`;
+  }
+  return value;
+}
+
+async function sendApprovalEmailWithStatus(
+  sendFn: (...args: any[]) => Promise<EmailSendResult>,
+  ...args: any[]
+): Promise<{ status: "sent"; result: EmailSendResult } | { status: "failed"; reason: string }> {
+  try {
+    const result = await sendFn(...args);
+    return { status: "sent", result };
+  } catch (error) {
+    console.error("Approval email failed:", error);
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : typeof error === "string"
+          ? error
+          : "Unknown email error";
+    return { status: "failed", reason: message };
+  }
+}
+
+function formatEmailFailureReason(reason: string): string {
+  return escapeTelegramHtml(reason).slice(0, 180);
+}
+
+function formatEmailSendResult(result: EmailSendResult): string {
+  const parts = [
+    `delivered=${result.delivered.length}`,
+    `queued=${result.queued.length}`,
+    `bounced=${result.permanent_bounces.length}`
+  ];
+
+  if (result.permanent_bounces.length > 0) {
+    parts.push(`bounce: ${result.permanent_bounces.join(", ")}`);
+  } else if (result.queued.length > 0) {
+    parts.push(`queued: ${result.queued.join(", ")}`);
+  } else if (result.delivered.length > 0) {
+    parts.push(`delivered: ${result.delivered.join(", ")}`);
+  }
+
+  return escapeTelegramHtml(parts.join(" | ")).slice(0, 240);
+}
+
+function normalizeClubRole(value: string | undefined) {
+  return value === "official" ? "official" : "student-run";
+}
+
+function clubRoleLabel(value: string | undefined) {
+  return normalizeClubRole(value) === "official" ? "official" : "student-run";
+}
+
+function buildClubSuggestionKeyboard(suggestionId: string, clubRole: string | undefined) {
+  const role = normalizeClubRole(clubRole);
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: `${role === "student-run" ? "• " : ""}🎓 Student-run`,
+          callback_data: `club_role_student-run_${suggestionId}`
+        },
+        {
+          text: `${role === "official" ? "• " : ""}🏛 Official`,
+          callback_data: `club_role_official_${suggestionId}`
+        }
+      ],
+      [
+        { text: "✅ Approve", callback_data: `club_approve_${suggestionId}` },
+        { text: "❌ Reject", callback_data: `club_reject_${suggestionId}` }
+      ]
+    ]
+  };
+}
+
+function updateClubTypeLine(text: string, clubRole: string | undefined) {
+  const nextLine = `<b>Club Type:</b> ${clubRoleLabel(clubRole)}`;
+  if (/<b>Club Type:<\/b>.*$/m.test(text)) {
+    return text.replace(/<b>Club Type:<\/b>.*$/m, nextLine);
+  }
+  return text;
+}
+
+async function cleanupPendingStoryImages(suggestion: any, runtimeEnv: any) {
+  const pendingImageKeys = Array.isArray(suggestion?.pendingImageKeys)
+    ? suggestion.pendingImageKeys.filter((key: unknown) => typeof key === "string" && key.length > 0)
+    : [];
+
+  if (pendingImageKeys.length === 0 || !runtimeEnv?.IMAGES_BUCKET) return;
+
+  await Promise.all(
+    pendingImageKeys.map((key: string) => runtimeEnv.IMAGES_BUCKET.delete(key).catch(() => {}))
+  );
 }
 
 export async function POST({ request, platform }) {
@@ -46,7 +409,7 @@ export async function POST({ request, platform }) {
     const runtimeEnv = platform?.env;
     const botToken = (env as any).PRIVATE_TELEGRAM_BOT_TOKEN || (runtimeEnv as any)?.PRIVATE_TELEGRAM_BOT_TOKEN;
     const adminChatId = (env as any).PRIVATE_TELEGRAM_CHAT_ID || (runtimeEnv as any)?.PRIVATE_TELEGRAM_CHAT_ID;
-    const siteUrl = (env as any).PRIVATE_SITE_URL || (runtimeEnv as any)?.PRIVATE_SITE_URL || "https://campusweb.pages.dev";
+    const siteUrl = (env as any).PRIVATE_SITE_URL || (runtimeEnv as any)?.PRIVATE_SITE_URL || new URL(request.url).origin;
 
     if (!botToken) return json({ error: "No bot token" }, { status: 500 });
 
@@ -118,8 +481,11 @@ export async function POST({ request, platform }) {
       if (msgChatId === adminChatId) {
         const text = `🛠 <b>CampusWeb Bot Guide</b>\n\n` +
           `<b>Commands:</b>\n` +
-          `/list - Manage active Stories\n` +
+          `/stories - Manage active Stories\n` +
+          `/sid0000 - Open one story in full\n` +
           `/clubs - Manage approved Clubs\n` +
+          `/cid0000 - Open one club in full\n` +
+          `/create - Show direct story format\n` +
           `/alert [text] - Set global app alert\n` +
           `/alert clear - Remove global alert\n` +
           `/stats - View system statistics\n` +
@@ -129,10 +495,21 @@ export async function POST({ request, platform }) {
           `2. You receive a notification with <b>Approve/Reject</b> buttons.\n` +
           `3. Approving automatically publishes and notifies the student.\n\n` +
           `<b>Direct Entry:</b>\n` +
-          `Send a Photo with <code>/create</code> in the caption to bypass the form.`;
+          getDirectCreateTemplate();
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chat_id: msgChatId, text, parse_mode: "HTML" })
+        });
+      }
+      return json({ success: true });
+    }
+
+    if (body.message && body.message.text === "/create") {
+      const msgChatId = body.message.chat.id.toString();
+      if (msgChatId === adminChatId) {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: msgChatId, text: getDirectCreateTemplate(), parse_mode: "HTML" })
         });
       }
       return json({ success: true });
@@ -160,6 +537,8 @@ export async function POST({ request, platform }) {
         try { clubsCount = JSON.parse(dynamicClubsRaw || "[]").length; } catch(e) {}
         let storiesCount = 0;
         try { storiesCount = JSON.parse(storiesRaw || "[]").length; } catch(e) {}
+        let storyItems: any[] = [];
+        try { storyItems = JSON.parse(storiesRaw || "[]"); } catch(e) {}
         
         statsStr += `<b>Live Content:</b>\n`;
         statsStr += `- Active Stories: ${storiesCount}\n`;
@@ -172,6 +551,17 @@ export async function POST({ request, platform }) {
             statsStr += `- Suggestions (All Time): ${st.suggestions?.allTime || 0}\n`;
             const today = new Date().toISOString().split("T")[0];
             statsStr += `- Suggestions (Today): ${st.suggestions?.daily?.[today] || 0}\n\n`;
+
+            const storyViewTotals = Object.values(st.storyViews?.allTime || {}).reduce(
+              (sum: number, value: unknown) => sum + (Number(value) || 0),
+              0
+            );
+            const todayStoryViews = Object.values(st.storyViews?.daily?.[today] || {}).reduce(
+              (sum: number, value: unknown) => sum + (Number(value) || 0),
+              0
+            );
+            statsStr += `- Story Views (All Time): ${storyViewTotals}\n`;
+            statsStr += `- Story Views (Today): ${todayStoryViews}\n\n`;
             
             statsStr += `<b>Admin Performance:</b>\n`;
             statsStr += `- Approved: ${st.actions?.approved || 0}\n`;
@@ -200,6 +590,29 @@ export async function POST({ request, platform }) {
                 statsStr += `${index + 1}. ${escapeTelegramHtml(link.title)} - ${link.total} total, ${link.today} today\n`;
               });
             }
+
+            const storyViewMap = st.storyViews?.allTime || {};
+            const todayStoryViewMap = st.storyViews?.daily?.[today] || {};
+            const popularStories = Object.entries(storyViewMap)
+              .map(([storyId, total]) => {
+                const story = storyItems.find((item) => item.id === storyId);
+                return {
+                  storyId,
+                  title: story?.title || storyId,
+                  total: Number(total) || 0,
+                  today: Number(todayStoryViewMap[storyId]) || 0
+                };
+              })
+              .filter((item) => item.total > 0)
+              .sort((a, b) => b.total - a.total)
+              .slice(0, 5);
+
+            if (popularStories.length > 0) {
+              statsStr += `\n<b>Popular Stories:</b>\n`;
+              popularStories.forEach((story, index) => {
+                statsStr += `${index + 1}. ${escapeTelegramHtml(story.title)} - ${story.total} views, ${story.today} today\n`;
+              });
+            }
           } catch(e) {}
         }
         
@@ -211,7 +624,141 @@ export async function POST({ request, platform }) {
       return json({ success: true });
     }
 
-    if (body.message && (body.message.text === "/list" || body.message.text === "/clubs")) {
+    if (body.message && /^\/sid\d{4}$/i.test(body.message.text || "")) {
+      const msgChatId = body.message.chat.id.toString();
+      if (msgChatId === adminChatId) {
+        const kv = runtimeEnv?.STORIES_KV;
+        if (!kv) {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: msgChatId, text: "⚠️ Cloudflare KV not bound!" })
+          });
+          return json({ success: true });
+        }
+
+        let items: any[] = [];
+        const kvData = await kv.get("stories");
+        if (kvData) { try { items = JSON.parse(kvData); } catch(e) {} }
+        const botStatsRaw = await kv.get("bot_stats");
+        const botStats = botStatsRaw ? JSON.parse(botStatsRaw) : null;
+        const storyViews = botStats?.storyViews?.allTime || {};
+        const today = new Date().toISOString().split("T")[0];
+        const todayStoryViews = botStats?.storyViews?.daily?.[today] || {};
+
+        items = items.map((item) => ({
+          ...item,
+          viewCount: Number(storyViews[item.id]) || 0,
+          viewsToday: Number(todayStoryViews[item.id]) || 0
+        }));
+
+        const sid = (body.message.text || "").replace("/sid", "").trim();
+        const storySidMap = assignStoryShortIds(items);
+        const story = items.find((item) => storySidMap.get(item.id) === sid);
+
+        if (!story) {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: msgChatId, text: `⚠️ Story <code>/sid${escapeTelegramHtml(sid)}</code> not found.`, parse_mode: "HTML" })
+          });
+          return json({ success: true });
+        }
+
+        const imageUrls = getStoryImageUrls(story);
+        const detailsText = formatStoryDetailsText(story, sid);
+
+        if (imageUrls.length > 1) {
+          const media = imageUrls.slice(0, 10).map((imageUrl: string, index: number) => ({
+            type: "photo",
+            media: imageUrl,
+            caption: index === 0 ? `📖 ${story.title}` : undefined
+          }));
+
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMediaGroup`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: msgChatId, media })
+          });
+        } else if (imageUrls[0]) {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: msgChatId,
+              photo: imageUrls[0],
+              caption: `${story.title}\n/sid${sid}`
+            })
+          });
+        }
+
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: msgChatId, text: detailsText, parse_mode: "HTML" })
+        });
+      }
+      return json({ success: true });
+    }
+
+    if (body.message && /^\/cid\d{4}$/i.test(body.message.text || "")) {
+      const msgChatId = body.message.chat.id.toString();
+      if (msgChatId === adminChatId) {
+        const kv = runtimeEnv?.STORIES_KV;
+        if (!kv) {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: msgChatId, text: "Cloudflare KV not bound." })
+          });
+          return json({ success: true });
+        }
+
+        let clubs: any[] = [];
+        const kvData = await kv.get("dynamic_clubs");
+        if (kvData) { try { clubs = JSON.parse(kvData); } catch(e) {} }
+
+        const cid = (body.message.text || "").replace("/cid", "").trim();
+        const clubCidMap = assignShortIds(clubs);
+        const club = clubs.find((item) => clubCidMap.get(item.id) === cid);
+
+        if (!club) {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: msgChatId, text: `Club /cid${escapeTelegramHtml(cid)} not found.`, parse_mode: "HTML" })
+          });
+          return json({ success: true });
+        }
+
+        const text = formatClubDetailsText(club, cid);
+        const logoUrl = typeof club.logoUrl === "string" && club.logoUrl.trim() ? club.logoUrl : "";
+
+        if (logoUrl && /^https?:\/\//i.test(logoUrl)) {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: msgChatId,
+              photo: logoUrl,
+              caption: text,
+              parse_mode: "HTML",
+              reply_markup: buildApprovedClubKeyboard(club.id, club.clubRole)
+            })
+          });
+        } else {
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: msgChatId,
+              text,
+              parse_mode: "HTML",
+              reply_markup: buildApprovedClubKeyboard(club.id, club.clubRole)
+            })
+          });
+        }
+      }
+      return json({ success: true });
+    }
+
+    if (body.message && (body.message.text === "/stories" || body.message.text === "/list" || body.message.text === "/clubs")) {
       const msgChatId = body.message.chat.id.toString();
       if (msgChatId === adminChatId) {
         const kv = runtimeEnv?.STORIES_KV;
@@ -231,6 +778,20 @@ export async function POST({ request, platform }) {
         let items: any[] = [];
         const kvData = await kv.get(key);
         if (kvData) { try { items = JSON.parse(kvData); } catch(e) {} }
+        if (!isClubs) {
+          try {
+            const botStatsRaw = await kv.get("bot_stats");
+            const botStats = botStatsRaw ? JSON.parse(botStatsRaw) : null;
+            const storyViews = botStats?.storyViews?.allTime || {};
+            const today = new Date().toISOString().split("T")[0];
+            const todayStoryViews = botStats?.storyViews?.daily?.[today] || {};
+            items = items.map((item) => ({
+              ...item,
+              viewCount: Number(storyViews[item.id]) || 0,
+              viewsToday: Number(todayStoryViews[item.id]) || 0
+            }));
+          } catch (e) {}
+        }
         
         if (items.length === 0) {
           await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -241,20 +802,26 @@ export async function POST({ request, platform }) {
         }
         
         let text = `📚 <b>Dynamic ${label} Management</b>\n\n`;
-        const inline_keyboard: Array<Array<{ text: string; callback_data: string }>> = [];
+        const deleteButtons: Array<{ text: string; callback_data: string }> = [];
+        const storySidMap = !isClubs ? assignStoryShortIds(items) : new Map<string, string>();
+        const clubCidMap = isClubs ? assignShortIds(items) : new Map<string, string>();
         
         items.slice(0, 15).forEach((item, idx) => {
-          const name = item.name || item.title || "Untitled";
-          const sub = item.handle || item.subtitle || "";
-          text += `${idx + 1}. <b>${name}</b> ${sub ? `(@${sub})` : ""}\n`;
-          inline_keyboard.push([{ text: `🗑 Delete ${idx + 1}`, callback_data: `action_delete_${prefix}_${item.id}` }]);
+          if (isClubs) {
+            const cid = clubCidMap.get(item.id) || "0000";
+            text += `${formatClubListItem(item, idx, cid)}\n\n`;
+          } else {
+            const sid = storySidMap.get(item.id) || "0000";
+            text += `${formatStoryListItem(item, idx, sid)}\n\n`;
+          }
+          deleteButtons.push({ text: `Del ${idx + 1}`, callback_data: `action_delete_${prefix}_${item.id}` });
         });
         
         if (items.length > 15) text += `\n<i>(Showing first 15 of ${items.length})</i>`;
         
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: msgChatId, text, parse_mode: "HTML", reply_markup: { inline_keyboard } })
+          body: JSON.stringify({ chat_id: msgChatId, text, parse_mode: "HTML", reply_markup: { inline_keyboard: chunkButtons(deleteButtons, 3) } })
         });
       }
       return json({ success: true });
@@ -276,15 +843,10 @@ export async function POST({ request, platform }) {
           
           if (isCreate) {
             const caption = msg.caption || "";
-            const extract = (label: string) => {
-              const regex = new RegExp(`${label}:\\s*(.+)`, "i");
-              const match = caption.match(regex);
-              return match && match[1].trim() !== "None" ? match[1].trim() : "";
-            };
-            title = extract("Title") || "Direct Story";
-            subtitle = extract("Subtitle");
-            linkUrl = extract("Link");
-            expiresParsed = extract("Expires");
+            title = extractFirstMatchingBlockField(caption, ["Title"]) || "Direct Story";
+            subtitle = extractFirstMatchingBlockField(caption, ["Subtitle", "Description", "Desc"]);
+            linkUrl = extractFirstMatchingBlockField(caption, ["Link", "URL"]);
+            expiresParsed = extractFirstMatchingBlockField(caption, ["Expires", "Expiry"]);
             finalExpiresAt = parseExpiration(expiresParsed);
             
             if (msg.media_group_id) {
@@ -399,6 +961,60 @@ export async function POST({ request, platform }) {
       return json({ success: true });
     }
 
+    if (action.startsWith("club_set_role_")) {
+      const match = action.match(/^club_set_role_(student-run|official)_(.+)$/);
+      const nextRole = match?.[1];
+      const clubId = match?.[2];
+      const kv = runtimeEnv?.STORIES_KV;
+
+      if (!nextRole || !clubId || !kv) {
+        return json({ success: true });
+      }
+
+      const dynamicClubsRaw = await kv.get("dynamic_clubs");
+      let clubs: any[] = [];
+      if (dynamicClubsRaw) {
+        try { clubs = JSON.parse(dynamicClubsRaw); } catch(e) {}
+      }
+
+      const clubIndex = clubs.findIndex((club) => club.id === clubId);
+      if (clubIndex === -1) {
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: cb.id, text: "Club not found", show_alert: true })
+        }).catch(() => {});
+        return json({ success: true });
+      }
+
+      clubs[clubIndex] = {
+        ...clubs[clubIndex],
+        clubRole: normalizeClubRole(nextRole)
+      };
+      await kv.put("dynamic_clubs", JSON.stringify(clubs));
+
+      const clubCidMap = assignShortIds(clubs);
+      const cid = clubCidMap.get(clubId) || "0000";
+      const updatedText = formatClubDetailsText(clubs[clubIndex], cid);
+      const reply_markup = buildApprovedClubKeyboard(clubId, clubs[clubIndex].clubRole);
+      const endpoint = message.caption ? "editMessageCaption" : "editMessageText";
+      const bodyPayload = message.caption
+        ? { chat_id: chatId, message_id: messageId, caption: updatedText, parse_mode: "HTML", reply_markup }
+        : { chat_id: chatId, message_id: messageId, text: updatedText, parse_mode: "HTML", reply_markup };
+
+      await fetch(`https://api.telegram.org/bot${botToken}/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyPayload)
+      });
+
+      await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callback_query_id: cb.id, text: `Set as ${clubRoleLabel(nextRole)}` })
+      }).catch(() => {});
+
+      return json({ success: true });
+    }
+
     if (action.startsWith("action_delete_story_") || action.startsWith("action_delete_club_")) {
       const isClub = action.startsWith("action_delete_club_");
       const id = action.replace(isClub ? "action_delete_club_" : "action_delete_story_", "");
@@ -485,7 +1101,15 @@ export async function POST({ request, platform }) {
         if (suggestionId && kv) await kv.delete(`club_suggestion:${suggestionId}`);
       } else {
         await editMessage(newText);
-        if (isStory && suggestionId && kv) await kv.delete(`story_suggestion:${suggestionId}`);
+        if (isStory && suggestionId && kv) {
+          const suggestionRaw = await kv.get(`story_suggestion:${suggestionId}`);
+          if (suggestionRaw) {
+            try {
+              await cleanupPendingStoryImages(JSON.parse(suggestionRaw), runtimeEnv);
+            } catch {}
+          }
+          await kv.delete(`story_suggestion:${suggestionId}`);
+        }
       }
       
       return json({ success: true });
@@ -500,14 +1124,7 @@ export async function POST({ request, platform }) {
           ? action.replace("story_reset_", "")
           : null;
       
-      const keyboard = isClub ? {
-        inline_keyboard: [
-          [
-            { text: "✅ Approve", callback_data: `club_approve_${suggestionId}` },
-            { text: "❌ Reject", callback_data: `club_reject_${suggestionId}` }
-          ]
-        ]
-      } : {
+      let keyboard = isClub ? buildClubSuggestionKeyboard(suggestionId || "", "student-run") : {
         inline_keyboard: [
           [
             { text: "✅ Approve & Publish", callback_data: isStory ? `story_approve_${suggestionId}` : "action_approve" },
@@ -516,6 +1133,19 @@ export async function POST({ request, platform }) {
           ]
         ]
       };
+
+      if (isClub && suggestionId) {
+        const kv = runtimeEnv?.STORIES_KV;
+        if (kv) {
+          const suggestionRaw = await kv.get(`club_suggestion:${suggestionId}`);
+          if (suggestionRaw) {
+            try {
+              const suggestion = JSON.parse(suggestionRaw);
+              keyboard = buildClubSuggestionKeyboard(suggestionId, suggestion.clubRole);
+            } catch {}
+          }
+        }
+      }
 
       await fetch(`https://api.telegram.org/bot${botToken}/editMessageReplyMarkup`, {
         method: "POST",
@@ -526,6 +1156,58 @@ export async function POST({ request, platform }) {
           reply_markup: keyboard
         })
       });
+      return json({ success: true });
+    }
+
+    if (action.startsWith("club_role_")) {
+      const match = action.match(/^club_role_(student-run|official)_(.+)$/);
+      const nextRole = match?.[1];
+      const suggestionId = match?.[2];
+      const kv = runtimeEnv?.STORIES_KV;
+
+      if (!nextRole || !suggestionId || !kv) {
+        return json({ success: true });
+      }
+
+      const suggestionRaw = await kv.get(`club_suggestion:${suggestionId}`);
+      if (!suggestionRaw) {
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: cb.id, text: "Suggestion not found", show_alert: true })
+        }).catch(() => {});
+        return json({ success: true });
+      }
+
+      let suggestion: any;
+      try {
+        suggestion = JSON.parse(suggestionRaw);
+      } catch {
+        return json({ success: true });
+      }
+
+      suggestion.clubRole = normalizeClubRole(nextRole);
+      await kv.put(`club_suggestion:${suggestionId}`, JSON.stringify(suggestion), {
+        expirationTtl: 60 * 60 * 24 * 30
+      });
+
+      const updatedText = updateClubTypeLine(message.text || "", suggestion.clubRole);
+      await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          text: updatedText,
+          parse_mode: "HTML",
+          reply_markup: buildClubSuggestionKeyboard(suggestionId, suggestion.clubRole)
+        })
+      });
+
+      await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callback_query_id: cb.id, text: `Set as ${clubRoleLabel(suggestion.clubRole)}` })
+      }).catch(() => {});
+
       return json({ success: true });
     }
 
@@ -551,6 +1233,7 @@ export async function POST({ request, platform }) {
       }
 
       const suggestion = JSON.parse(suggestionRaw);
+      const clubRole = normalizeClubRole(suggestion.clubRole);
 
       const platform = suggestion.platform;
       let handle = suggestion.handleOrUrl;
@@ -564,13 +1247,14 @@ export async function POST({ request, platform }) {
       const newClub = {
         id: `club-${suggestionId.substring(0, 8)}`,
         type: "club",
+        clubRole,
         name: suggestion.clubName,
         handle: platform === "instagram" ? handle : "Join Group",
         platform: platform,
         url: url,
         campusIds: [suggestion.campusId],
         categories: suggestion.category ? [suggestion.category] : [],
-        logoUrl: suggestion.logoDataUrl || undefined,
+        logoUrl: suggestion.logoDataUrl || suggestion.logoUrl || undefined,
         description: suggestion.note ? suggestion.note.slice(0, 180) : undefined,
         verified: true,
         priority: 0
@@ -587,9 +1271,14 @@ export async function POST({ request, platform }) {
         await kv.put("dynamic_clubs", JSON.stringify(dynamicClubs));
       }
 
-      if (suggestion.contactEmail) {
-        sendClubApprovalEmail(suggestion.contactEmail, suggestion.clubName, runtimeEnv).catch(console.error);
-      }
+      const emailResult = suggestion.contactEmail
+        ? await sendApprovalEmailWithStatus(
+            sendClubApprovalEmail,
+            suggestion.contactEmail,
+            suggestion.clubName,
+            runtimeEnv
+          )
+        : null;
 
       const finalKeyboard = {
         inline_keyboard: [
@@ -600,13 +1289,20 @@ export async function POST({ request, platform }) {
       const originalText = (message.text || "").split("\n---")[0];
       const timeStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
+      const clubStatusLine =
+        emailResult?.status === "sent"
+          ? `\n📧 <b>Approval email sent</b>\n<code>${formatEmailSendResult(emailResult.result)}</code>`
+          : emailResult?.status === "failed"
+            ? `\n⚠️ <b>Approval email failed</b>\n<code>${formatEmailFailureReason(emailResult.reason)}</code>`
+            : "";
+
       await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chatId,
           message_id: messageId,
-          text: originalText + `\n\n---\n✅ <b>Published</b> by ${adminName} at ${timeStr}`,
+          text: originalText + `\n\n---\n✅ <b>Published</b> by ${adminName} at ${timeStr}${clubStatusLine}`,
           parse_mode: "HTML",
           reply_markup: finalKeyboard
         })
@@ -622,6 +1318,7 @@ export async function POST({ request, platform }) {
         ? action.replace("story_approve_", "")
         : null;
       let storedSuggestion: any = null;
+      let permanentImageUrl = "";
 
       await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
         method: "POST",
@@ -629,70 +1326,10 @@ export async function POST({ request, platform }) {
         body: JSON.stringify({ callback_query_id: cb.id, text: "Processing..." })
       }).catch(() => {});
 
-      if (!message.photo || message.photo.length === 0) {
-        await editMessage("⚠️ Error: No photo found in this message.");
-        return json({ error: "No photo" });
-      }
-
-      const photoId = message.photo[message.photo.length - 1].file_id;
-
-      const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${photoId}`);
-      const fileData = await fileRes.json();
-      
-      if (!fileData.ok) {
-        await editMessage("⚠️ Error: Failed to retrieve file path from Telegram.");
-        return json({ error: "Telegram file get failed" });
-      }
-
-      const filePath = fileData.result.file_path;
-      const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
-
-      const r2 = runtimeEnv?.IMAGES_BUCKET;
-      if (!r2) {
-        await editMessage("⚠️ Error: Cloudflare R2 (IMAGES_BUCKET) is not bound.");
-        return json({ error: "No R2 bound" });
-      }
-
-      let imgBlob;
-      try {
-        const imgRes = await fetch(fileUrl);
-        imgBlob = await imgRes.blob();
-      } catch (e: any) {
-        await editMessage(`⚠️ Error: Failed to download image from Telegram. ${e.message}`);
-        return json({ error: "Telegram download failed" });
-      }
-
-      const filename = `story-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.jpg`;
-
-      try {
-        await r2.put(filename, imgBlob, {
-          httpMetadata: { contentType: "image/jpeg" }
-        });
-      } catch (e: any) {
-        await editMessage(`⚠️ Error: R2 upload failed. ${e.message}`);
-        return json({ error: "R2 upload failed" });
-      }
-
-      const permanentImageUrl = `/api/images/${filename}`;
-
       const caption = message.caption || "";
-      
-      const extract = (label: string) => {
-        const regex = new RegExp(`${label}:\\s*(.+)`, "i");
-        const match = caption.match(regex);
-        return match && match[1].trim() !== "None" ? match[1].trim() : "";
-      };
-
-      const title = extract("Title") || "New Story";
-      const subtitle = extract("Subtitle");
-      const linkUrl = extract("Link");
-      const expiresParsed = extract("Expires");
-
-      const finalExpiresAt = parseExpiration(expiresParsed);
-
       const kv = runtimeEnv?.STORIES_KV;
       if (!kv) {
-        await editMessage("⚠️ Error: Cloudflare KV (STORIES_KV) is not bound. Image uploaded but story not saved.");
+        await editMessage("⚠️ Error: Cloudflare KV (STORIES_KV) is not bound.");
         return json({ error: "No KV bound" });
       }
 
@@ -705,12 +1342,92 @@ export async function POST({ request, platform }) {
         }
       }
 
+      const title = storedSuggestion?.title || extractBlockField(caption, "Title") || "New Story";
+      const subtitle = extractBlockField(caption, "Subtitle");
+      const tag = extractBlockField(caption, "Tag");
+      const linkUrl = extractBlockField(caption, "Link");
+      const expiresParsed = extractBlockField(caption, "Expires");
+      const finalExpiresAt = parseExpiration(storedSuggestion?.expiresAt || expiresParsed);
+
+      const storedSlides = Array.isArray(storedSuggestion?.slides)
+        ? storedSuggestion.slides
+            .map((slide: any) => ({
+              imageUrl: normalizeInternalImageUrl(typeof slide?.imageUrl === "string" ? slide.imageUrl : "") || "",
+              subtitle: typeof slide?.subtitle === "string" ? slide.subtitle : "",
+              tag: typeof slide?.tag === "string" ? slide.tag : undefined,
+              linkUrl: typeof slide?.linkUrl === "string" ? slide.linkUrl : undefined
+            }))
+            .filter((slide: { imageUrl: string }) => slide.imageUrl.trim().length > 0)
+        : [];
+
+      if (storedSlides.length > 0) {
+        permanentImageUrl = storedSlides[0].imageUrl;
+      } else {
+        if (!message.photo || message.photo.length === 0) {
+          await editMessage("⚠️ Error: No photo found in this message.");
+          return json({ error: "No photo" });
+        }
+
+        const photoId = message.photo[message.photo.length - 1].file_id;
+        const fileRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${photoId}`);
+        const fileData = await fileRes.json();
+
+        if (!fileData.ok) {
+          await editMessage("⚠️ Error: Failed to retrieve file path from Telegram.");
+          return json({ error: "Telegram file get failed" });
+        }
+
+        const r2 = runtimeEnv?.IMAGES_BUCKET;
+        if (!r2) {
+          await editMessage("⚠️ Error: Cloudflare R2 (IMAGES_BUCKET) is not bound.");
+          return json({ error: "No R2 bound" });
+        }
+
+        let imgBlob;
+        try {
+          const imgRes = await fetch(`https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`);
+          imgBlob = await imgRes.blob();
+        } catch (e: any) {
+          await editMessage(`⚠️ Error: Failed to download image from Telegram. ${e.message}`);
+          return json({ error: "Telegram download failed" });
+        }
+
+        const filename = `story-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.jpg`;
+        try {
+          await r2.put(filename, imgBlob, {
+            httpMetadata: { contentType: "image/jpeg" }
+          });
+        } catch (e: any) {
+          await editMessage(`⚠️ Error: R2 upload failed. ${e.message}`);
+          return json({ error: "R2 upload failed" });
+        }
+
+        permanentImageUrl = `/api/images/${filename}`;
+      }
+
+      const slides = storedSlides.length > 0
+        ? storedSlides
+        : [{
+            imageUrl: permanentImageUrl,
+            subtitle: "",
+            tag: storedSuggestion?.tag || tag || undefined,
+            linkUrl: storedSuggestion?.linkUrl || linkUrl || undefined
+          }];
+
+      const storySubtitle = storedSuggestion?.subtitle || subtitle || "";
+      const storyTag = storedSuggestion?.tag || tag || "";
+      const storyLinkUrl = storedSuggestion?.linkUrl || linkUrl || "";
+      const storyMode = storedSuggestion?.storyMode || (slides.length > 1 ? "sequence" : "single");
+
       const newStory = {
         id: `story-${Date.now()}`,
         title,
-        subtitle,
-        imageUrl: permanentImageUrl,
-        linkUrl,
+        subtitle: storySubtitle,
+        tag: storyTag,
+        storyMode,
+        slides,
+        imageUrl: normalizeInternalImageUrl(permanentImageUrl) || permanentImageUrl,
+        linkUrl: storyLinkUrl,
         seen: false,
         createdAt: new Date().toISOString(),
         expiresAt: finalExpiresAt
@@ -730,31 +1447,57 @@ export async function POST({ request, platform }) {
       incrementStat(kv, "actions", "approved").catch(() => {});
 
       const contactEmail = storedSuggestion?.contactEmail || extractEmailFromText(caption);
-      if (contactEmail) {
-        sendStoryApprovalEmail(contactEmail, title, runtimeEnv).catch(console.error);
-      }
+      const emailResult = contactEmail
+        ? await sendApprovalEmailWithStatus(
+            sendStoryApprovalEmail,
+            contactEmail,
+            {
+              title,
+              subtitle: storySubtitle,
+              tag: storyTag,
+              slides,
+              imageUrl: permanentImageUrl,
+              linkUrl: storyLinkUrl,
+              siteUrl
+            },
+            runtimeEnv
+          )
+        : null;
       if (suggestionId) {
         await kv.delete(`story_suggestion:${suggestionId}`);
       }
 
       const adminName = cb.from.first_name || "Admin";
       const timeStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-      const originalCaption = (message.caption || "").split("\n---")[0];
+      const isTextReview = !!message.text;
+      const originalReviewText = ((isTextReview ? message.text : message.caption) || "").split("\n---")[0];
 
-      await fetch(`https://api.telegram.org/bot${botToken}/editMessageCaption`, {
+      const storyStatusLine =
+        emailResult?.status === "sent"
+          ? `\n📧 <b>Approval email sent</b>\n<code>${formatEmailSendResult(emailResult.result)}</code>`
+          : emailResult?.status === "failed"
+            ? `\n⚠️ <b>Approval email failed</b>\n<code>${formatEmailFailureReason(emailResult.reason)}</code>`
+            : "";
+
+      const publishMarkup = {
+        inline_keyboard: [
+          [{ text: "🌐 View on Website", url: `${siteUrl}/feed` }]
+        ]
+      };
+      const publishBody = JSON.stringify({
+        chat_id: chatId,
+        message_id: messageId,
+        parse_mode: "HTML",
+        reply_markup: publishMarkup,
+        ...(isTextReview
+          ? { text: originalReviewText + `\n\n---\n✅ <b>Published</b> by ${adminName} at ${timeStr}${storyStatusLine}` }
+          : { caption: originalReviewText + `\n\n---\n✅ <b>Published</b> by ${adminName} at ${timeStr}${storyStatusLine}` })
+      });
+
+      await fetch(`https://api.telegram.org/bot${botToken}/${isTextReview ? "editMessageText" : "editMessageCaption"}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          message_id: messageId,
-          caption: originalCaption + `\n\n---\n✅ <b>Published</b> by ${adminName} at ${timeStr}`,
-          parse_mode: "HTML",
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: "🌐 View on Website", url: `${siteUrl}/feed` }]
-            ]
-          }
-        })
+        body: publishBody
       });
       
       return json({ success: true });

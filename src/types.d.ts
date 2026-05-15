@@ -52,6 +52,9 @@ declare global {
 				PRIVATE_EMAIL_SENDER?: string;
 				PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN?: string;
 				CLOUDFLARE_ACCOUNT_ID?: string;
+				EMAIL_WORKER?: {
+					fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+				};
 				STORIES_KV?: any;
 				IMAGES_BUCKET?: any;
 			};

@@ -23,8 +23,8 @@ remote = true
 [vars]
 PRIVATE_TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN"
 PRIVATE_TELEGRAM_CHAT_ID = "YOUR_ADMIN_CHAT_ID"
-PRIVATE_SITE_URL = "https://campusweb.pages.dev"
-PRIVATE_EMAIL_SENDER = "hello@campusweb.zardaloo.eu.org"
+PRIVATE_SITE_URL = "https://example.com"
+PRIVATE_EMAIL_SENDER = "noreply@example.com"
 PRIVATE_VIRUSTOTAL_API_KEY = "YOUR_VT_API_KEY"
 
 PRIVATE_AUTH_SECRET = "replace-with-at-least-32-random-characters"

@@ -312,10 +312,20 @@
   }
 
   function highlightMatch(text: string, query: string): string {
-    if (!query.trim()) return text;
+    const safeText = escapeHtml(String(text));
+    if (!query.trim()) return safeText;
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(`(${escapedQuery})`, "gi");
-    return text.replace(regex, "<mark>$1</mark>");
+    return safeText.replace(regex, "<mark>$1</mark>");
+  }
+
+  function escapeHtml(value: string): string {
+    return value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   function getTeamsChatUrl(email: string) {

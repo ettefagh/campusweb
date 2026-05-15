@@ -21,12 +21,91 @@ type StoryRecord = {
   id: string;
   title: string;
   subtitle: string;
+  tag?: string;
+  storyMode?: "single" | "sequence";
+  slides?: Array<{
+    imageUrl?: string;
+    subtitle?: string;
+    tag?: string;
+    linkUrl?: string;
+  }>;
   imageUrl: string;
   linkUrl: string;
   seen: boolean;
   createdAt: string;
   expiresAt?: string;
+  viewCount?: number;
+  viewsToday?: number;
 };
+
+function normalizeInternalImageUrl(value: string | undefined) {
+  if (!value) return value;
+  const match = value.match(/^https?:\/\/[^/]+\/\/?api\/images\/(.+)$/i);
+  if (match?.[1]) {
+    return `/api/images/${match[1]}`;
+  }
+  return value;
+}
+
+function normalizeStorySlides(story: StoryRecord) {
+  if (!Array.isArray(story.slides) || story.slides.length === 0) {
+    return story.slides;
+  }
+
+  const slides = story.slides
+    .map((slide) => ({
+      ...slide,
+      imageUrl: normalizeInternalImageUrl(slide.imageUrl)
+    }))
+    .filter((slide) => typeof slide.imageUrl === "string" && slide.imageUrl.trim().length > 0);
+
+  return slides.length > 0 ? slides : undefined;
+}
+
+function normalizeStoryRecord(story: StoryRecord) {
+  const slides = normalizeStorySlides(story);
+
+  return {
+    ...story,
+    imageUrl: normalizeInternalImageUrl(story.imageUrl) || story.imageUrl,
+    slides,
+    storyMode: Array.isArray(slides) && slides.length > 1 ? "sequence" : "single"
+  };
+}
+
+function readStoryViewCounts(rawStats: string | null) {
+  if (!rawStats) {
+    return {
+      allTime: {} as Record<string, number>,
+      today: {} as Record<string, number>
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(rawStats);
+    const today = new Date().toISOString().split("T")[0];
+    return {
+      allTime: parsed.storyViews?.allTime || {},
+      today: parsed.storyViews?.daily?.[today] || {}
+    };
+  } catch {
+    return {
+      allTime: {} as Record<string, number>,
+      today: {} as Record<string, number>
+    };
+  }
+}
+
+function withStoryViewCounts(
+  stories: StoryRecord[],
+  counts: { allTime: Record<string, number>; today: Record<string, number> }
+) {
+  return stories.map((story) => ({
+    ...story,
+    viewCount: Number(counts.allTime[story.id]) || 0,
+    viewsToday: Number(counts.today[story.id]) || 0
+  }));
+}
 
 function parseCSV(csvText: string) {
   const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== "");
@@ -58,6 +137,17 @@ function parseCSV(csvText: string) {
       id: row.id || `story-${Math.random().toString(36).substring(2, 11)}`,
       title: row.title || "",
       subtitle: row.subtitle || "",
+      tag: row.tag || "",
+      storyMode: row.storyMode === "sequence" ? "sequence" : "single",
+      slides: row.slides
+        ? (() => {
+            try {
+              return JSON.parse(row.slides);
+            } catch {
+              return undefined;
+            }
+          })()
+        : undefined,
       imageUrl: row.imageUrl || "",
       linkUrl: row.linkUrl || "",
       seen: false,
@@ -137,8 +227,13 @@ export const GET: RequestHandler = async ({ platform }) => {
 
   // 2. Fetch from Cloudflare KV if bound
   const kv = platform?.env?.STORIES_KV;
+  let storyViewCounts = {
+    allTime: {} as Record<string, number>,
+    today: {} as Record<string, number>
+  };
   if (kv) {
     try {
+      storyViewCounts = readStoryViewCounts(await kv.get("bot_stats"));
       const kvData = await kv.get("stories");
       if (kvData) {
         const kvStories = JSON.parse(kvData) as StoryRecord[];
@@ -152,7 +247,7 @@ export const GET: RequestHandler = async ({ platform }) => {
         }
         
         // Prepend KV stories (newer ones) to the Google Sheet ones
-        stories = [...validStories, ...stories];
+        stories = [...validStories.map(normalizeStoryRecord), ...stories];
       }
     } catch (err) {
       console.warn("Failed to fetch KV stories:", err);
@@ -161,10 +256,10 @@ export const GET: RequestHandler = async ({ platform }) => {
 
   // Fallback to local files only if neither KV nor Google Sheet worked AND we are in local dev
   if (stories.length === 0 && !kv && !googleSheetsUrl) {
-    stories = await readStories();
+    stories = (await readStories()).map(normalizeStoryRecord);
   }
 
-  return json(stories);
+  return json(withStoryViewCounts(stories, storyViewCounts));
 };
 
 /** POST /api/stories  –  body: { title, subtitle, imageUrl, linkUrl } */
@@ -177,16 +272,26 @@ export const POST: RequestHandler = async ({ request }) => {
   }
 
   const { title, subtitle, imageUrl, linkUrl, expiresAt } = body;
+  const tag = typeof body.tag === "string" ? body.tag : "";
+  const slides = Array.isArray(body.slides) ? body.slides : undefined;
   if (!title || !imageUrl) {
     return json({ error: "title and imageUrl are required" }, { status: 400 });
   }
 
   const stories = await readStories();
-  const newStory = {
+  const newStory: StoryRecord = {
     id: `story-${Date.now()}`,
     title,
     subtitle: subtitle ?? "",
-    imageUrl,
+    tag: tag.trim(),
+    storyMode: Array.isArray(slides) && slides.length > 1 ? "sequence" : "single",
+    slides: slides?.map((slide: any) => ({
+      imageUrl: normalizeInternalImageUrl(typeof slide?.imageUrl === "string" ? slide.imageUrl : undefined),
+      subtitle: typeof slide?.subtitle === "string" ? slide.subtitle : undefined,
+      tag: typeof slide?.tag === "string" ? slide.tag : undefined,
+      linkUrl: typeof slide?.linkUrl === "string" ? slide.linkUrl : undefined
+    })),
+    imageUrl: normalizeInternalImageUrl(imageUrl) || imageUrl,
     linkUrl: linkUrl ?? "",
     seen: false,
     createdAt: new Date().toISOString(),
@@ -196,7 +301,7 @@ export const POST: RequestHandler = async ({ request }) => {
   stories.unshift(newStory); // newest first
   await writeStories(stories);
 
-  return json(newStory, { status: 201 });
+  return json(normalizeStoryRecord(newStory), { status: 201 });
 };
 
 /** DELETE /api/stories?id=story-xxx */
