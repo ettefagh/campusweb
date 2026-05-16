@@ -8,7 +8,9 @@
   import { getEmailUrl } from "$lib/utils/emailHelper";
   import { getTeamsChatUrl } from "$lib/utils/phoneHelper";
   import StoriesSlider from "$lib/components/StoriesSlider.svelte";
+  import SectionHeader from "./SectionHeader.svelte";
   import SuggestClubModal from "$lib/components/SuggestClubModal.svelte";
+
   import PromotionCard from "$lib/components/PromotionCard.svelte";
   import OfficialAccountsSection from "$lib/components/OfficialAccountsSection.svelte";
   import ClubsSection from "$lib/components/ClubsSection.svelte";
@@ -190,7 +192,7 @@
 <svelte:window bind:innerWidth />
 
 <div class="feed-container" style:display={active ? 'flex' : 'none'}>
-  <header class="page-header">
+  <header class="page-header" class:narrow={$settingsStore.headerSize === 'small'}>
     <div class="logo-container">
       <img
         src="/icon-light.png"
@@ -217,13 +219,17 @@
     </div>
   </header>
 
+
+
+
+
   <!-- Stories bar -->
   <StoriesSlider {stories} loading={isStoriesLoading} />
 
   <!-- Social Media Embeds -->
   {#if instagramEmbeds.length > 0 || tiktokFeed}
-    <section class="embed-section social-media-section">
-      <h2 class="section-title">Social Media</h2>
+    <section class="embed-section social-media-section" id="social-media">
+      <SectionHeader title="Social Media" />
       <div class="embed-wrapper">
         {#each instagramEmbeds as acc}
           <div class="embed-card">
@@ -281,15 +287,21 @@
     </section>
   {/if}
 
+
   <!-- Official Pages Chips -->
-  <OfficialAccountsSection accounts={officialAccounts} />
+  <div id="official-pages">
+    <OfficialAccountsSection accounts={officialAccounts} />
+  </div>
 
   <!-- Student Clubs -->
-  <ClubsSection accounts={clubAccounts} onSuggest={() => (clubModalOpen = true)} />
+  <div id="clubs">
+    <ClubsSection accounts={clubAccounts} onSuggest={() => (clubModalOpen = true)} />
+  </div>
+
 
   <!-- Promotions Section -->
   {#if activePromotions.length > 0}
-    <section class="promotions-section">
+    <section class="promotions-section" id="promotions">
       <div class="promotions-grid">
         {#each activePromotions as promotion (promotion.id)}
           <PromotionCard {promotion} onDismiss={dismissPromotion} />
@@ -299,13 +311,15 @@
   {/if}
 
   <!-- Feature 1: News Preview Cards -->
-  <NewsCardGrid cards={newsCards} />
+  <div id="news">
+    <NewsCardGrid cards={newsCards} />
+  </div>
+
 
   <SuggestClubModal bind:isOpen={clubModalOpen} />
 </div>
 
 <style>
-  /* ─── Layout ──────────────────────────────────────────────────── */
   .feed-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -313,72 +327,12 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 16px;
+    gap: var(--spacing-xl);
     /* Use standard container padding to match layout */
     padding-left: var(--spacing-md);
     padding-right: var(--spacing-md);
   }
 
-  .feed-container > *:not(.page-header) {
-    animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
-  }
-
-  .page-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    text-align: left;
-    padding: var(--spacing-sm) 0;
-    margin: var(--spacing-sm) 0;
-    gap: var(--spacing-md);
-    /* Respect Apple top notch and safe area */
-    padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
-    display: flex;
-  }
-
-  .logo-container {
-    margin-bottom: 0;
-  }
-
-  .logo {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-  }
-
-  /* Dark mode support for logo */
-  :global([data-theme="dark"]) .light-mode {
-    display: none;
-  }
-  :global([data-theme="light"]) .dark-mode {
-    display: none;
-  }
-
-  .header-text {
-    display: flex;
-    flex-direction: column;
-  }
-
-  h1 {
-    font-size: 1.3rem;
-    line-height: 0.8rem;
-    font-weight: 700;
-    margin-bottom: 2px;
-    color: var(--text-color);
-  }
-
-  .subtitle {
-    font-size: 0.85rem;
-    margin-bottom: 0;
-    color: var(--text-color-secondary);
-  }
-
-  .section-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: var(--spacing-sm);
-    color: var(--text-color);
-  }
 
 
   /* ─── Embeds ──────────────────────────────────────────────────── */

@@ -63,26 +63,7 @@
 		}
 	}
 
-	function handleDragStart(event: DragEvent) {
-		if (!reorderMode) return;
-		event.dataTransfer?.setData("text/plain", link.id);
-		event.dataTransfer?.setDragImage?.(event.currentTarget as Element, 24, 24);
-		dispatch("reorderStart", { linkId: link.id });
-	}
 
-	function handleDragOver(event: DragEvent) {
-		if (!reorderMode) return;
-		event.preventDefault();
-		if (event.dataTransfer) {
-			event.dataTransfer.dropEffect = "move";
-		}
-	}
-
-	function handleDrop(event: DragEvent) {
-		if (!reorderMode) return;
-		event.preventDefault();
-		dispatch("reorderDrop", { linkId: link.id });
-	}
 
 	$: displayTitle = $t.linkTitle?.[link.id as keyof typeof $t.linkTitle] || link.title;
 	$: displayDesc = $t.linkDesc?.[link.id as keyof typeof $t.linkDesc] || link.description;
@@ -112,11 +93,8 @@
 	class:reorder-mode={reorderMode}
 	class:not-favorite={editMode && !isFavorite}
 	class:a11y-patterns={$accessibility.assistivePatterns}
-	draggable={reorderMode}
+	data-id={link.id}
 	role={reorderMode ? "listitem" : undefined}
-	on:dragstart={handleDragStart}
-	on:dragover={handleDragOver}
-	on:drop={handleDrop}
 >
 	<a
 		href={finalUrl}
@@ -131,11 +109,7 @@
 		aria-label={ariaLabel}
 		class:is-favorite={isFavorite}
 	>
-		{#if reorderMode}
-			<span class="drag-handle" aria-hidden="true">
-				<i class="ph-bold ph-dots-six-vertical"></i>
-			</span>
-		{/if}
+
 		<span class="icon" aria-hidden="true">{link.icon}</span>
 		<div class="content">
 			<h3 class="title">{displayTitle}</h3>
@@ -152,8 +126,6 @@
 			</div>
 		{/if}
 	</a>
-
-
 </div>
 
 <style>
@@ -282,16 +254,7 @@
 		filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
 	}
 
-	.drag-handle {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 28px;
-		min-height: 32px;
-		color: var(--text-color-secondary);
-		font-size: 1.25rem;
-		flex-shrink: 0;
-	}
+
 
 	.content {
 		flex: 1;

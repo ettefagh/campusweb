@@ -2,13 +2,15 @@
   import { t } from "$lib/i18n";
   import SocialAccountCard from "./SocialAccountCard.svelte";
   import type { SocialAccount } from "$lib/data/socialAccounts";
+  import SectionHeader from "./SectionHeader.svelte";
 
   export let accounts: SocialAccount[];
 </script>
 
 {#if accounts.length > 0}
   <section class="social-section">
-    <h2 class="section-title">{$t.feed.officialPages}</h2>
+
+    <SectionHeader title={$t.feed.officialPages} />
     <div class="social-scroll">
       {#each accounts as account}
         <SocialAccountCard {account} layout="chip" />
@@ -18,16 +20,6 @@
 {/if}
 
 <style>
-  .social-section {
-    margin-bottom: var(--spacing-sm);
-  }
-  
-  .section-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: var(--spacing-sm);
-    color: var(--text-color);
-  }
 
   .social-scroll {
     display: flex;

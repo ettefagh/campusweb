@@ -9,6 +9,41 @@
 	import { settingsStore } from "$lib/stores/settingsStore";
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
+	import SectionHeader from "$lib/components/SectionHeader.svelte";
+	import Sortable from 'sortablejs';
+
+	function sortableFavorites(node: HTMLElement, options: { enabled: boolean }) {
+		let sortable: Sortable | null = null;
+		function update(opts: { enabled: boolean }) {
+			if (opts.enabled) {
+				if (!sortable) {
+					sortable = new Sortable(node, {
+						animation: 150,
+						draggable: '.link-card-container',
+						onEnd: (evt) => {
+							if (evt.oldDraggableIndex !== undefined && evt.newDraggableIndex !== undefined && evt.oldDraggableIndex !== evt.newDraggableIndex) {
+								favorites.reorder(evt.oldDraggableIndex, evt.newDraggableIndex);
+							}
+						}
+					});
+				}
+			} else {
+				if (sortable) {
+					sortable.destroy();
+					sortable = null;
+				}
+			}
+		}
+		
+		update(options);
+		
+		return {
+			update,
+			destroy() {
+				if (sortable) sortable.destroy();
+			}
+		};
+	}
 
 	let showGoToTop = false;
 	let container: HTMLElement | null = null;
@@ -81,19 +116,6 @@
 	function handleToggleFavorite(event: CustomEvent<{ linkId: string }>) {
 		favorites.toggle(event.detail.linkId);
 	}
-
-	function handleReorderStart(event: CustomEvent<{ linkId: string }>) {
-		draggedFavoriteId = event.detail.linkId;
-	}
-
-	function handleReorderDrop(event: CustomEvent<{ linkId: string }>) {
-		if (!draggedFavoriteId || draggedFavoriteId === event.detail.linkId) return;
-
-		const fromIndex = $favorites.indexOf(draggedFavoriteId);
-		const toIndex = $favorites.indexOf(event.detail.linkId);
-		favorites.reorder(fromIndex, toIndex);
-		draggedFavoriteId = "";
-	}
 </script>
 
 <svelte:head>
@@ -108,7 +130,8 @@
 	{#each $settingsStore.homeSections as section, i (section.id)}
 		{#if section.enabled}
 			{#if section.id === "header"}
-				<header class="page-header narrow">
+				<header class="page-header" class:narrow={$settingsStore.headerSize === 'small'}>
+
 					<div class="logo-container">
 						<img
 							src="/icon-light.png"
@@ -135,19 +158,14 @@
 					</div>
 				</header>
 			{:else if section.id === "stories"}
-				<section class="stories-section" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
-					<div class="modular-section-header" style="margin-bottom: 0;">
-						<h2>{$t.home.campusStories}</h2>
-					</div>
+				<section class="stories-section" id="stories" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
+					<SectionHeader title={$t.home.campusStories} />
 					<StoriesSlider stories={$cachedStories} loading={isStoriesLoading} allowSuggestions={true} />
 				</section>
 			{:else if section.id === "favorites"}
-				<section class="links-section" style={i <= 1 ? "" : "animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;"}>
-					<div class="favorite-links-header">
-						<div class="favorite-links-title-group">
-							<h2>{$t.home.universityLinks || 'Favorite Links'}</h2>
-							<p class="favorite-links-subtitle">Custom quick-access bookmarks</p>
-						</div>
+				<section class="links-section" id="favorites" style={i <= 1 ? "" : "animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;"} use:sortableFavorites={{ enabled: isManagingFavorites && !isEditMode }}>
+					<SectionHeader title={$t.home.universityLinks || 'Favorite Links'} subtitle="Custom quick-access bookmarks">
+
 						<div class="favorite-links-actions">
 							{#if isManagingFavorites}
 								<button
@@ -180,7 +198,7 @@
 								</button>
 							{:else}
 								<button 
-									class="favorite-action-btn"
+									class="section-action-btn"
 									type="button"
 									on:click={startManagingFavorites}
 								>
@@ -188,7 +206,7 @@
 								</button>
 							{/if}
 						</div>
-					</div>
+					</SectionHeader>
 					{#if isEditMode}
 						<div class="search-container">
 							<input
@@ -212,32 +230,34 @@
 								reorderMode={isManagingFavorites && !isEditMode}
 								useViewer={!isEditMode && !isManagingFavorites}
 								on:toggleFavorite={handleToggleFavorite}
-								on:reorderStart={handleReorderStart}
-								on:reorderDrop={handleReorderDrop}
 							/>
 						{/each}
 					{/if}
 				</section>
 			{:else if section.id === "cards"}
-				<section class="links-section full-width-section" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
+				<section class="links-section full-width-section" id="wallet" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
 					<IdSlider />
 				</section>
 			{:else if section.id === "calendar"}
-				<section class="links-section full-width-section" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
-					<div class="modular-section-header">
-						<h2>{$t.calendar?.pageTitle || "Calendar Schedule"}</h2>
-						<a href="/calendar" class="view-all-link">{$t.home?.viewAll || "View Full Calendar"} →</a>
-					</div>
+				<section class="links-section full-width-section" id="calendar" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
+
+					<SectionHeader 
+						title={$t.calendar?.pageTitle || "Calendar Schedule"} 
+						href="/calendar"
+						hrefLabel="{$t.home?.viewAll || 'View Full Calendar'} →"
+					/>
 					<div class="modular-placeholder glass">
 						<p>Your calendar schedule is modularly prepared. Navigate to the calendar tab to view your active class timetable.</p>
 					</div>
 				</section>
 			{:else if section.id === "feed"}
-				<section class="links-section full-width-section" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
-					<div class="modular-section-header">
-						<h2>{$t.feed?.pageTitle || "Campus Feed"}</h2>
-						<a href="/feed" class="view-all-link">{$t.home?.viewAllNews || "View All News"} →</a>
-					</div>
+				<section class="links-section full-width-section" id="feed" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
+
+					<SectionHeader 
+						title={$t.feed?.pageTitle || "Campus Feed"} 
+						href="/feed"
+						hrefLabel="{$t.home?.viewAllNews || 'View All News'} →"
+					/>
 					<div class="modular-placeholder glass">
 						<p>Your campus news and events feed is modularly prepared. Navigate to the feed tab to browse global announcements.</p>
 					</div>
@@ -268,95 +288,18 @@
 		max-width: 1200px;
 		margin: 0 auto;
 		padding-bottom: calc(var(--spacing-xl) * 2.5);
-	}
-
-	.page-header {
-		text-align: center;
-		padding: var(--spacing-lg) 0;
-		margin: var(--spacing-md) var(--spacing-md) var(--spacing-lg) var(--spacing-md);
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.page-header.narrow {
-		flex-direction: row;
-		align-items: center;
-		justify-content: flex-start;
-		text-align: left;
-		padding: var(--spacing-sm) var(--spacing-md);
-		margin: var(--spacing-sm) var(--spacing-md);
-		gap: var(--spacing-md);
-		padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
-	}
-
-	.page-header.narrow .logo-container {
-		margin-bottom: 0;
-	}
-
-	.page-header.narrow .logo {
-		width: 36px;
-		height: 36px;
-	}
-
-	.page-header.narrow .header-text {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.page-header.narrow h1 {
-		font-size: 1.3rem;
-		line-height: 0.8rem;
-		margin-bottom: 2px;
-	}
-
-	.page-header.narrow .subtitle {
-		font-size: 0.85rem;
-		margin-bottom: 0;
-	}
-
-	.logo-container {
-		margin-bottom: var(--spacing-md);
-	}
-
-	.logo {
-		width: 48px;
-		height: 48px;
-		object-fit: contain;
-		border-radius: 8px;
-	}
-
-	.logo.dark-mode {
-		display: none;
-	}
-
-	@media (prefers-color-scheme: dark) {
-		.logo.light-mode {
-			display: none;
-		}
-		.logo.dark-mode {
-			display: inline-block;
-		}
+		gap: var(--spacing-xl);
+		padding-inline: var(--spacing-md);
 	}
 
 	h1 {
-		font-size: 1.3rem;
-		line-height: 0.8rem;
+		font-size: 1.5rem;
+		line-height: 1.1;
 		margin-bottom: var(--spacing-sm);
 	}
 
-	.subtitle {
-		color: #666;
-		font-size: 1rem;
-		margin-bottom: var(--spacing-md);
-	}
-
-	@media (prefers-color-scheme: dark) {
-		.subtitle {
-			color: #aaa;
-		}
-	}
 
 	.search-container {
 		grid-column: 1 / -1;
@@ -387,10 +330,6 @@
 		color: var(--text-color-secondary);
 	}
 
-	.links-section {
-		margin-top: var(--spacing-lg);
-	}
-
 	@media (min-width: 640px) {
 		.links-section {
 			display: grid;
@@ -408,39 +347,6 @@
 	.full-width-section, .stories-section {
 		display: block !important;
 		grid-column: 1 / -1;
-		margin-top: var(--spacing-xl);
-	}
-
-	.stories-section {
-		margin-top: var(--spacing-md);
-		margin-bottom: var(--spacing-sm);
-	}
-
-	.modular-section-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: var(--spacing-md);
-		padding: 0 var(--spacing-md);
-	}
-
-	.modular-section-header h2 {
-		font-size: 1.25rem;
-		font-weight: 700;
-		color: var(--text-color);
-		margin: 0;
-	}
-
-	.view-all-link {
-		font-size: 0.9rem;
-		color: var(--primary-color);
-		font-weight: 600;
-		text-decoration: none;
-		transition: opacity 0.2s;
-	}
-
-	.view-all-link:hover {
-		opacity: 0.8;
 	}
 
 	.modular-placeholder {
@@ -461,30 +367,7 @@
 		line-height: 1.5;
 	}
 
-	.favorite-links-header {
-		grid-column: 1 / -1;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: var(--spacing-sm);
-		margin-bottom: var(--spacing-md);
-		padding: 0 var(--spacing-md);
-		width: 100%;
-		box-sizing: border-box;
-	}
 
-	.favorite-links-title-group h2 {
-		font-size: 1.25rem;
-		font-weight: 700;
-		color: var(--text-color);
-		margin: 0 0 2px 0;
-	}
-
-	.favorite-links-subtitle {
-		font-size: 0.8rem;
-		color: var(--text-color-secondary);
-		margin: 0;
-	}
 
 	.favorite-links-actions {
 		display: flex;

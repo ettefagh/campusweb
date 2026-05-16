@@ -23,6 +23,38 @@
   import { page } from "$app/stores";
   import EmailGate from "$lib/components/EmailGate.svelte";
   import SecureCalendarInput from "$lib/components/SecureCalendarInput.svelte";
+  import Sortable from 'sortablejs';
+
+  function sortableSections(node: HTMLElement) {
+    const sortable = new Sortable(node, {
+      animation: 150,
+      filter: '.is-header',
+      preventOnFilter: false,
+      onMove: (evt) => {
+        if (evt.related.classList.contains('is-header')) {
+          return false;
+        }
+      },
+      onEnd: (evt) => {
+        if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
+          const updated = [...visibleSections];
+          const [moved] = updated.splice(evt.oldIndex, 1);
+          updated.splice(evt.newIndex, 0, moved);
+          
+          const feedSection = $settingsStore.homeSections.find((s: any) => s.id === "feed");
+          const finalSections = feedSection ? [...updated, feedSection] : updated;
+          
+          settingsStore.patch({ homeSections: finalSections });
+        }
+      }
+    });
+
+    return {
+      destroy() {
+        sortable.destroy();
+      }
+    };
+  }
 
   $: visibleSections = $settingsStore.homeSections.filter(
     (s: any) => s.id !== "feed",
@@ -56,19 +88,7 @@
     settingsStore.patch({ homeSections: updated });
   }
 
-  function moveSection(index: number, direction: -1 | 1) {
-    const targetIndex = index + direction;
-    if (index === 0 || targetIndex === 0) return;
-    if (targetIndex < 1 || targetIndex >= $settingsStore.homeSections.length)
-      return;
 
-    const updated = [...$settingsStore.homeSections];
-    const temp = updated[index];
-    updated[index] = updated[targetIndex];
-    updated[targetIndex] = temp;
-
-    settingsStore.patch({ homeSections: updated });
-  }
 
   const languageOptions = [
     { value: "en", native: "English", flag: "🇬🇧" },
@@ -149,27 +169,38 @@
   }
 
   onMount(() => {
-    if ($page.url.hash === "#accessibility") {
-      a11yOpen = true;
-    }
-    if ($page.url.hash === "#directory-access") {
-      directoryOpen = true;
+    const hash = $page.url.hash;
+    if (hash === "#accessibility") a11yOpen = true;
+    if (hash === "#directory-access") directoryOpen = true;
+    if (hash === "#appearance") appearanceOpen = true;
+    if (hash === "#language") languageOpen = true;
+    if (hash === "#calendar-settings") calendarSettingsOpen = true;
+    if (hash === "#danger-zone") dangerOpen = true;
+
+    if (hash && hash !== "") {
       setTimeout(() => {
-        document.getElementById("directory-access")?.scrollIntoView({ behavior: "smooth" });
+        document.getElementById(hash.substring(1))?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     }
   });
 
   // Reactively handle hash changes while on the same page
-  $: if ($page.url.hash === "#accessibility") {
-    a11yOpen = true;
+  $: {
+    const hash = $page.url.hash;
+    if (hash === "#accessibility") a11yOpen = true;
+    if (hash === "#directory-access") directoryOpen = true;
+    if (hash === "#appearance") appearanceOpen = true;
+    if (hash === "#language") languageOpen = true;
+    if (hash === "#calendar-settings") calendarSettingsOpen = true;
+    if (hash === "#danger-zone") dangerOpen = true;
+
+    if (hash && hash !== "") {
+      setTimeout(() => {
+        document.getElementById(hash.substring(1))?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    }
   }
-  $: if ($page.url.hash === "#directory-access") {
-    directoryOpen = true;
-    setTimeout(() => {
-      document.getElementById("directory-access")?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  }
+
 </script>
 
 <svelte:head>
@@ -177,7 +208,8 @@
 </svelte:head>
 
 <div class="settings-page">
-  <header class="page-header">
+  <header class="page-header" class:narrow={$settingsStore.headerSize === 'small'}>
+
     <div class="logo-container">
       <img
         src="/icon-light.png"
@@ -316,7 +348,8 @@
   </section>
 
   <!-- ── Language ──────────────────────────── -->
-  <section class="settings-section">
+  <section id="language" class="settings-section">
+
     <details bind:open={languageOpen}>
       <summary class="section-header section-header--collapsible">
         <span class="section-icon"><i class="ph-bold ph-globe"></i></span>
@@ -350,7 +383,8 @@
   </section>
 
   <!-- ── Appearance ────────────────────────── -->
-  <section class="settings-section">
+  <section id="appearance" class="settings-section">
+
     <details bind:open={appearanceOpen}>
       <summary class="section-header section-header--collapsible">
         <span class="section-icon"><i class="ph-bold ph-palette"></i></span>
@@ -407,9 +441,9 @@
             Choose which sections appear on your homepage and change their
             order.
           </p>
-          <div class="sections-list">
+          <div class="sections-list" use:sortableSections>
             {#each visibleSections as sec, i (sec.id)}
-              <div class="setting-row section-item">
+              <div class="setting-row section-item" class:is-header={sec.id === "header"} style={sec.id !== "header" ? "cursor: grab;" : ""}>
                 <div class="section-info">
                   <span class="setting-label">
                     {#if sec.id === "favorites"}<i class="ph-bold ph-star" style="margin-right: 8px; color: var(--primary-color);"></i>
@@ -450,36 +484,6 @@
                       {$settingsStore.headerSize === "small"
                         ? "Compact 📱"
                         : "Prominent ✨"}
-                    </button>
-                  {:else}
-                    <!-- Reordering buttons -->
-                    <button
-                      class="btn-reorder"
-                      disabled={i === 1}
-                      on:click={() =>
-                        moveSection(
-                          $settingsStore.homeSections.findIndex(
-                            (s) => s.id === sec.id,
-                          ),
-                          -1,
-                        )}
-                      aria-label="Move Up"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      class="btn-reorder"
-                      disabled={i === visibleSections.length - 1}
-                      on:click={() =>
-                        moveSection(
-                          $settingsStore.homeSections.findIndex(
-                            (s) => s.id === sec.id,
-                          ),
-                          1,
-                        )}
-                      aria-label="Move Down"
-                    >
-                      ▼
                     </button>
                   {/if}
 
@@ -544,7 +548,8 @@
   </section>
   
   <!-- ── Feed ──────────────────────────────── -->
-  <section class="settings-section">
+  <section id="feed-settings" class="settings-section">
+
     <details>
       <summary class="section-header section-header--collapsible">
         <span class="section-icon"><i class="ph-bold ph-rss"></i></span>
@@ -596,7 +601,8 @@
   </section>
 
   <!-- ── Calendar Settings (Collapsible) ────────────── -->
-  <section class="settings-section a11y-section">
+  <section id="calendar-settings" class="settings-section a11y-section">
+
     <details bind:open={calendarSettingsOpen}>
       <summary class="section-header section-header--collapsible">
         <span class="section-icon"><i class="ph-bold ph-calendar"></i></span>
@@ -907,56 +913,7 @@
     animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
-  /* ── Header ── */
-  .page-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    text-align: left;
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin: var(--spacing-sm) var(--spacing-md);
-    gap: var(--spacing-md);
-    /* Respect Apple top notch and safe area */
-    padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
-    display: flex;
-  }
 
-  .logo-container {
-    margin-bottom: 0;
-  }
-
-  .logo {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-  }
-
-  /* Dark mode support for logo */
-  :global([data-theme="dark"]) .light-mode {
-    display: none;
-  }
-  :global([data-theme="light"]) .dark-mode {
-    display: none;
-  }
-
-  .header-text {
-    display: flex;
-    flex-direction: column;
-  }
-
-  h1 {
-    font-size: 1.3rem;
-    line-height: 0.8rem;
-    font-weight: 700;
-    margin: 0 0 2px;
-    color: var(--text-color);
-  }
-
-  .subtitle {
-    color: var(--text-color-secondary);
-    font-size: 0.85rem;
-    margin-bottom: 0;
-  }
 
   /* ── Sections ── */
   .settings-section {
@@ -1737,29 +1694,21 @@
     gap: var(--spacing-sm);
   }
 
-  .btn-reorder {
+  .chip-toggle-btn {
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     color: var(--text-color);
-    border-radius: var(--radius-sm);
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
     font-size: 0.8rem;
-    transition: all 0.2s;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
 
-  .btn-reorder:hover:not(:disabled) {
+  .chip-toggle-btn:hover {
     border-color: var(--primary-color);
     color: var(--primary-color);
-  }
-
-  .btn-reorder:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
+    background: rgba(212, 68, 7, 0.05);
   }
 
   @keyframes reveal {

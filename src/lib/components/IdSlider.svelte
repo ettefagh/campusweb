@@ -2,6 +2,7 @@
   import { idCardsStore } from "$lib/stores/idStore";
   import IdCard from "./IdCard.svelte";
   import IdModal from "./IdModal.svelte";
+  import SectionHeader from "./SectionHeader.svelte";
 
   let isEditMode = false;
   let activeIndex = 0;
@@ -53,22 +54,16 @@
 </script>
 
 <div class="id-slider-section">
-  <div class="slider-header">
-    <div class="slider-title-group">
-      <h2>Digital ID Wallet</h2>
-      <p class="slider-subtitle">Tap cards to flip & scan barcode</p>
-    </div>
 
-    <div class="slider-actions">
-      <button
-        class="slider-action-btn"
-        class:active={isEditMode}
-        on:click={toggleEditMode}
-      >
-        {isEditMode ? "Done" : "Manage"}
-      </button>
-    </div>
-  </div>
+  <SectionHeader title="Digital ID Wallet" subtitle="Tap cards to flip & scan barcode">
+    <button
+      class="section-action-btn"
+      class:active={isEditMode}
+      on:click={toggleEditMode}
+    >
+      {isEditMode ? "Done" : "Manage"}
+    </button>
+  </SectionHeader>
 
   <!-- Cards Slider Container -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -120,55 +115,8 @@
 
 <style>
   .id-slider-section {
-    margin: var(--spacing-lg) var(--spacing-md);
     display: flex;
     flex-direction: column;
-  }
-
-  .slider-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-md);
-    padding: 0 var(--spacing-xs);
-  }
-
-  .slider-title-group h2 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-color);
-    margin: 0 0 2px 0;
-  }
-
-  .slider-subtitle {
-    font-size: 0.8rem;
-    color: var(--text-color-secondary);
-    margin: 0;
-  }
-
-  .slider-action-btn {
-    background: var(--glass-bg-light);
-    border: 1px solid var(--glass-border-subtle);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    color: var(--text-color);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .slider-action-btn:hover {
-    background: rgba(212, 68, 7, 0.1);
-    color: var(--primary-color);
-    border-color: rgba(212, 68, 7, 0.2);
-  }
-
-  .slider-action-btn.active {
-    background: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-    box-shadow: 0 2px 8px rgba(212, 68, 7, 0.3);
   }
 
   .slider-outer {

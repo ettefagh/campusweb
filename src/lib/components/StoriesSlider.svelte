@@ -511,7 +511,8 @@
     display: flex;
     gap: 12px;
     overflow-x: auto;
-    padding: 8px 16px 12px;
+    padding: 8px 0 12px;
+
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }

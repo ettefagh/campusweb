@@ -2,6 +2,7 @@
   import { t } from "$lib/i18n";
   import SocialAccountCard from "./SocialAccountCard.svelte";
   import type { SocialAccount } from "$lib/data/socialAccounts";
+  import SectionHeader from "./SectionHeader.svelte";
 
   export let accounts: SocialAccount[];
   export let onSuggest: () => void;
@@ -15,12 +16,12 @@
 
 {#if accounts.length > 0}
   <section class="clubs-section">
-    <div class="section-header">
-      <h2 class="section-title">{$t.feed.studentClubs}</h2>
-      <button class="suggest-btn" on:click={onSuggest}>
+
+    <SectionHeader title={$t.feed.studentClubs}>
+      <button class="section-action-btn" on:click={onSuggest}>
         {$t.feed.suggestClub}
       </button>
-    </div>
+    </SectionHeader>
 
     <!-- Category Filter Bar -->
     <div class="category-filter-scroll">
@@ -44,40 +45,6 @@
 {/if}
 
 <style>
-  .clubs-section {
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .section-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text-color);
-  }
-
-  .suggest-btn {
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 6px 12px;
-    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
-    color: var(--primary-color);
-    border: 1px solid color-mix(in srgb, var(--primary-color) 20%, transparent);
-    border-radius: 99px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .suggest-btn:hover {
-    background: var(--primary-color);
-    color: white;
-  }
 
   .category-filter-scroll {
     display: flex;

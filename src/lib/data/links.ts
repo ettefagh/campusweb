@@ -500,7 +500,26 @@ export const internalAppLinks: AppLink[] = [
     category_name: "App Sections",
     iframeable: false,
   },
+  {
+    id: "social-medias",
+    title: "Social Media",
+    url: "/feed#social-media",
+    icon: "📱",
+    description: "Browse university news and posts",
+    category_name: "App Sections",
+    iframeable: false,
+  },
+  {
+    id: "student-clubs",
+    title: "Student Clubs",
+    url: "/feed#clubs",
+    icon: "🤝",
+    description: "Explore student organizations and clubs",
+    category_name: "App Sections",
+    iframeable: false,
+  },
 ];
+
 
 // Combined list for all sections
 export const allLinks = [
