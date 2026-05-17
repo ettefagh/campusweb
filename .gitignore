@@ -20,6 +20,10 @@ src/Documents/
 graphify-out/
 srh-auth-module/
 
+# Private security operations docs
+docs/private/
+docs/*.local.md
+
 # Editor and OS
 .codex/
 .vscode/
@@ -46,4 +50,3 @@ vite.config.ts.timestamp-*
 # Private Contacts Data (Cloudflare-only, do not commit to GitHub)
 src/lib/data/contacts.ts
 static/data/contacts.json
-
