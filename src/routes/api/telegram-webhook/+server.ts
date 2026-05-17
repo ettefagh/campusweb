@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit";
 import { env } from "$env/dynamic/private";
-import { incrementStat } from "$lib/server/stats";
+import { getPopularLinkStats, incrementStat } from "$lib/server/stats";
 import { sendClubApprovalEmail, sendStoryApprovalEmail, type EmailSendResult } from "$lib/server/email";
 import { allLinks } from "$lib/data/links";
 
@@ -568,21 +568,17 @@ export async function POST({ request, platform }) {
             statsStr += `- Declined: ${st.actions?.declined || 0}\n`;
             statsStr += `- Direct Created: ${st.actions?.directCreated || 0}\n`;
 
-            const linkTotals = st.links?.allTime || {};
-            const todayLinks = st.links?.daily?.[today] || {};
-            const popularLinks = Object.entries(linkTotals)
-              .map(([linkId, total]) => {
+            const popularLinks = (await getPopularLinkStats(kv, 5))
+              .map((linkStats) => {
+                const linkId = linkStats.linkId;
                 const link = allLinks.find((item) => item.id === linkId);
                 return {
                   linkId,
                   title: link?.title || linkId,
-                  total: Number(total) || 0,
-                  today: Number(todayLinks[linkId]) || 0
+                  total: linkStats.total,
+                  today: linkStats.today
                 };
-              })
-              .filter((item) => item.total > 0)
-              .sort((a, b) => b.total - a.total)
-              .slice(0, 5);
+              });
 
             if (popularLinks.length > 0) {
               statsStr += `\n<b>Popular Links:</b>\n`;

@@ -1,6 +1,6 @@
 {
   "name": "campusweb-pages",
-  "version": "1.5.28",
+  "version": "1.5.33",
   "private": true,
   "type": "module",
   "scripts": {
@@ -26,7 +26,7 @@
     "tslib": "^2.6.0",
     "typescript": "^5.0.0",
     "vite": "^8.0.10",
-    "wrangler": "^4.90.0"
+    "wrangler": "^4.92.0"
   },
   "dependencies": {
     "@event-calendar/core": "^3.12.0",

@@ -54,15 +54,18 @@
 
   let searchQuery = $state("");
   let isSearchActive = $state(false);
+  let expandedContactEmail = $state<string | null>(null);
   let libraryUrl = $state(
     "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB",
   );
 
   let showGoToTop = $state(false);
+  let popularLinkIds = $state<string[]>([]);
   let container: HTMLElement | null = null;
 
   onMount(() => {
     loadPublicContacts();
+    loadPopularLinks();
     // Dynamic library URL based on campus if needed
     if ($settingsStore.campusId === "berlin") {
       libraryUrl = "https://login.srh-berlin.idm.oclc.org/menu";
@@ -119,6 +122,30 @@
 
   function handleToggleFavorite(event: CustomEvent<{ linkId: string }>) {
     favorites.toggle(event.detail.linkId);
+  }
+
+  function toggleContactDetails(email: string) {
+    expandedContactEmail = expandedContactEmail === email ? null : email;
+  }
+
+  function handleContactCardKeydown(event: KeyboardEvent, email: string) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleContactDetails(email);
+    }
+  }
+
+  async function loadPopularLinks() {
+    try {
+      const res = await fetch("/api/stats/link-click");
+      if (!res.ok) return;
+      const data = await res.json();
+      popularLinkIds = Array.isArray(data.popularLinks)
+        ? data.popularLinks.map((item: any) => item.linkId).filter(Boolean)
+        : [];
+    } catch (err) {
+      popularLinkIds = [];
+    }
   }
 
   // ─── Search Logic ──────────────────────────────────────────
@@ -239,6 +266,35 @@
       }
     });
 
+    const normalizedProgramName = programName ? normalizeProgram(programName) : "";
+    const matchesProgram = (c: any) => {
+      if (!normalizedProgramName) return false;
+      const values = [
+        ...(c.programs || []),
+        c.program,
+        c.cluster,
+        ...(c.tags || []),
+      ].filter(Boolean);
+
+      return values.some((value: string) => {
+        const normalized = normalizeProgram(value);
+        return (
+          normalized.length > 0 &&
+          (normalized.includes(normalizedProgramName) ||
+            normalizedProgramName.includes(normalized))
+        );
+      });
+    };
+
+    const matchesSchool = (c: any) => Boolean(schoolId && c.school === schoolId);
+    const contactPriority = (c: any) => {
+      if (matchesProgram(c)) return 0;
+      if (matchesSchool(c)) return 1;
+      if (!c.school) return 2;
+      if (c.isPublic) return 3;
+      return 4;
+    };
+
     return Array.from(merged.values()).filter((c) => {
       if (c.isPublic && !query) return true;
 
@@ -264,21 +320,20 @@
       const isGeneralLayer = !c.school;
 
       // Layer 2: School Contacts (Requires school selection)
-      const isSchoolLayer = schoolId && c.school === schoolId;
+      const isSchoolLayer = matchesSchool(c);
 
       // Layer 3: Program Contacts (Requires program selection)
-      const isProgramLayer =
-        programName &&
-        c.programs.some((p: string) => {
-          const normUser = normalizeProgram(programName);
-          const normContact = normalizeProgram(p);
-          return (
-            normContact.includes(normUser) || normUser.includes(normContact)
-          );
-        });
+      const isProgramLayer = matchesProgram(c);
 
       return isGeneralLayer || isSchoolLayer || isProgramLayer;
-    });
+    }).sort((a, b) => contactPriority(a) - contactPriority(b));
+  });
+
+  let visibleContacts = $derived.by(() => {
+    if (searchQuery.trim() || $settingsStore.programName) {
+      return filteredContacts;
+    }
+    return filteredContacts.slice(0, 15);
   });
 
   // 3. External Search Sources
@@ -336,13 +391,28 @@
     return linkCategory?.[category] || category;
   }
 
-  let displayCategories = $derived.by(() => {
-    if (!searchQuery.trim()) {
-      return categoryOrder.filter((cat) => filteredLinks.some((l) => l.category_name === cat));
-    }
-    return categoryOrder.filter((cat) =>
-      filteredLinks.some((l) => l.category_name === cat),
+  const TOP_LINKS_LIMIT = 10;
+  let topLinks = $derived.by(() => {
+    if (searchQuery.trim()) return [];
+    const byId = new Map(filteredLinks.map((link) => [link.id, link]));
+    const popularLinks = popularLinkIds
+      .map((linkId) => byId.get(linkId))
+      .filter((link): link is AppLink => Boolean(link));
+    const fallbackLinks = filteredLinks.filter(
+      (link) => !popularLinks.some((popular) => popular.id === link.id),
     );
+    return [...popularLinks, ...fallbackLinks].slice(0, TOP_LINKS_LIMIT);
+  });
+
+  let remainingLinks = $derived.by(() => {
+    if (searchQuery.trim()) return filteredLinks;
+    const topIds = new Set(topLinks.map((link) => link.id));
+    return filteredLinks.filter((link) => !topIds.has(link.id));
+  });
+
+  let displayCategories = $derived.by(() => {
+    const source = searchQuery.trim() ? filteredLinks : remainingLinks;
+    return categoryOrder.filter((cat) => source.some((link) => link.category_name === cat));
   });
 
   const DIRECTORY_ID = "srh-contact-list";
@@ -353,7 +423,7 @@
 </svelte:head>
 
 <div class="explore-page" class:is-searching={searchQuery.trim() !== ""}>
-  <header class="page-header" class:collapsed={searchQuery.trim() !== ""}>
+  <header class="page-header" class:narrow={$settingsStore.headerSize === 'small'} class:collapsed={searchQuery.trim() !== ""}>
     <div class="logo-container">
       <img
         src="/icon-light.png"
@@ -426,17 +496,12 @@
   </div>
 
   <div class="explore-content">
-    <!-- 1. Link Categories -->
-    {#each displayCategories as category}
-      <section
-        class="category-section"
-        id="category-{category.replace(/\s+/g, '-')}"
-      >
-        <h2 class="category-title">
-          {getCategoryName(category, $t.linkCategory)}
-        </h2>
-        <div class="links-grid">
-          {#each filteredLinks.filter((link) => link.category_name === category) as link (link.id)}
+    <!-- 1. Top Links -->
+    {#if !searchQuery.trim() && topLinks.length > 0}
+      <section class="category-section link-list-panel top-links-section" id="top-links">
+        <h2 class="category-title">Most visited links</h2>
+        <div class="links-grid top-links-grid">
+          {#each topLinks as link (link.id)}
             <LinkCard
               {link}
               isFavorite={$favorites.includes(link.id)}
@@ -450,7 +515,42 @@
           {/each}
         </div>
       </section>
-    {/each}
+    {/if}
+
+    <!-- 2. Link Categories (Scrollable) -->
+    {#if displayCategories.length > 0}
+      <div class="link-list-panel remaining-links-panel">
+        <h2 class="category-title">All links</h2>
+        <div class="links-scroll-area" class:is-enabled={!searchQuery.trim()}>
+          <div class="links-scroll-content">
+            {#each displayCategories as category}
+              <section
+                class="category-section list-category-section"
+                id="category-{category.replace(/\s+/g, '-')}"
+              >
+                <h3 class="category-title list-category-title">
+                  {getCategoryName(category, $t.linkCategory)}
+                </h3>
+                <div class="links-grid">
+                  {#each (searchQuery.trim() ? filteredLinks : remainingLinks).filter((link) => link.category_name === category) as link (link.id)}
+                    <LinkCard
+                      {link}
+                      isFavorite={$favorites.includes(link.id)}
+                      customUrl={link.id === "library-catalogue"
+                        ? libraryUrl
+                        : undefined}
+                      showTag={false}
+                      useViewer={true}
+                      on:toggleFavorite={handleToggleFavorite}
+                    />
+                  {/each}
+                </div>
+              </section>
+            {/each}
+          </div>
+        </div>
+      </div>
+    {/if}
 
     {#if searchQuery.trim() && displayCategories.length === 0 && filteredContacts.length === 0}
       <div class="no-results glass">
@@ -459,7 +559,7 @@
       </div>
     {/if}
 
-    <!-- 2. SRH Contact List (Moved before external) -->
+    <!-- 3. SRH Contact List (Moved before external) -->
     <section class="category-section directory-results" id={DIRECTORY_ID}>
       <h2 class="category-title">Contact List</h2>
       {#if $activeCampus || $activeDepartment || $settingsStore.programName}
@@ -502,8 +602,17 @@
           </div>
         {:else}
           <div class="contact-results-list">
-            {#each searchQuery.trim() ? filteredContacts : filteredContacts.slice(0, 15) as contact}
-              <div class="search-contact-card glass">
+            {#each visibleContacts as contact}
+              <div
+                class="search-contact-card glass"
+                class:is-expanded={expandedContactEmail === contact.email}
+                role="button"
+                tabindex="0"
+                aria-expanded={expandedContactEmail === contact.email}
+                aria-label={`Show contact details for ${contact.person}`}
+                onclick={() => toggleContactDetails(contact.email)}
+                onkeydown={(event) => handleContactCardKeydown(event, contact.email)}
+              >
                   <div class="search-contact-info">
                     <div class="search-contact-meta">
                       {#if contact.programs && contact.programs.length > 0}
@@ -558,17 +667,39 @@
                           {/if}
                         {/each}
                       </div>
+                      <div class="contact-direct-details">
+                        <a
+                          class="contact-direct-link"
+                          href="mailto:{contact.email}"
+                          onclick={(event) => event.stopPropagation()}
+                        >
+                          <i class="ph-bold ph-envelope"></i>
+                          <span>{@html highlightMatch(contact.email, searchQuery)}</span>
+                        </a>
+                        {#if contact.phone}
+                          <a
+                            class="contact-direct-link"
+                            href="tel:{contact.phone.replace(/[\s-]/g, '')}"
+                            onclick={(event) => event.stopPropagation()}
+                          >
+                            <i class="ph-bold ph-phone"></i>
+                            <span>{contact.phone}</span>
+                          </a>
+                        {/if}
+                      </div>
                     </div>
                   </div>
                   <div class="search-contact-actions">
                     <a
                       href="mailto:{contact.email}"
                       class="search-contact-btn mail"
+                      onclick={(event) => event.stopPropagation()}
                       title="Email"><i class="ph-bold ph-envelope"></i></a
                     >
                     <a
                       href={getTeamsChatUrl(contact.email)}
                       class="search-contact-btn chat"
+                      onclick={(event) => event.stopPropagation()}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Chat on Teams"
@@ -578,13 +709,14 @@
                       <a
                         href="tel:{contact.phone.replace(/[\s-]/g, '')}"
                         class="search-contact-btn call"
+                        onclick={(event) => event.stopPropagation()}
                         title="Call"><i class="ph-bold ph-phone"></i></a
                       >
                     {/if}
                   </div>
               </div>
             {/each}
-            {#if !searchQuery.trim()}
+            {#if !searchQuery.trim() && !$settingsStore.programName && filteredContacts.length > visibleContacts.length}
               <p class="view-more-hint">Search to see more contacts...</p>
             {/if}
           </div>
@@ -612,7 +744,7 @@
       {/if}
     </section>
 
-    <!-- 3. External Portals (Only when searching) -->
+    <!-- 4. External Portals (Only when searching) -->
     {#if searchQuery.trim()}
       <section class="category-section external-search-section">
         <h2 class="category-title">
@@ -708,17 +840,7 @@
   }
 
   /* ── Header ── */
-  .page-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    text-align: left;
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin: var(--spacing-sm) var(--spacing-md);
-    gap: var(--spacing-md);
-    /* Respect Apple top notch and safe area */
-    padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
-    display: flex;
+  .explore-page .page-header {
     transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
     opacity: 1;
   }
@@ -733,42 +855,7 @@
     pointer-events: none;
   }
 
-  .logo-container {
-    margin-bottom: 0;
-  }
-
-  .logo {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-  }
-
-  /* Dark mode support for logo */
-  :global([data-theme="dark"]) .light-mode {
-    display: none;
-  }
-  :global([data-theme="light"]) .dark-mode {
-    display: none;
-  }
-
-  .header-text {
-    display: flex;
-    flex-direction: column;
-  }
-
-  h1 {
-    font-size: 1.3rem;
-    line-height: 0.8rem;
-    font-weight: 700;
-    margin-bottom: 2px;
-    color: var(--text-color);
-  }
-
-  .subtitle {
-    font-size: 0.85rem;
-    margin-bottom: 0;
-    color: var(--text-color-secondary);
-  }
+  /* Shared header styles live in src/app.css */
 
   /* ── Sticky Search Wrapper ── */
   .search-sticky-wrapper {
@@ -842,6 +929,25 @@
     animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
+  .link-list-panel {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    border: 1px solid var(--glass-border-subtle);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--glass-bg-light) 74%, transparent);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow: 0 12px 30px -28px rgba(0, 0, 0, 0.45);
+  }
+
+  .link-list-panel .category-title {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .top-links-section {
+    margin-bottom: var(--spacing-xl);
+  }
+
   @keyframes reveal {
     from {
       opacity: 0;
@@ -864,6 +970,21 @@
     gap: 12px;
   }
 
+  .list-category-section {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .list-category-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .list-category-title {
+    font-size: 1.05rem;
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-color-secondary);
+  }
+
   .category-subtitle {
     font-size: 0.9rem;
     color: var(--text-color-secondary);
@@ -875,14 +996,42 @@
 
   .links-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: 1fr;
     gap: 0;
   }
 
-  @media (min-width: 540px) {
+  @media (min-width: 640px) {
     .links-grid {
+      grid-template-columns: repeat(2, 1fr);
       gap: var(--spacing-md);
     }
+  }
+
+  @media (min-width: 1024px) {
+    .links-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .links-scroll-area {
+    position: relative;
+  }
+
+  .links-scroll-area.is-enabled {
+    max-height: min(62vh, 720px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to bottom, #000 88%, transparent 100%);
+  }
+
+  .links-scroll-area.is-enabled::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .links-scroll-content {
+    padding-bottom: var(--spacing-lg);
   }
 
   /* ── Directory & Contacts ── */
@@ -900,19 +1049,25 @@
 
   .search-contact-card {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: var(--spacing-md);
     padding: var(--spacing-lg);
     border-radius: var(--radius-xl);
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    outline: none;
     transition:
       transform 0.2s,
-      border-color 0.2s;
+      border-color 0.2s,
+      box-shadow 0.2s;
   }
 
-  .search-contact-card:hover {
+  .search-contact-card:hover,
+  .search-contact-card:focus-visible,
+  .search-contact-card.is-expanded {
     transform: translateY(-2px);
     border-color: var(--primary-color);
     box-shadow: var(--shadow-md);
@@ -943,6 +1098,49 @@
     margin-top: 10px;
   }
 
+  .contact-direct-details {
+    display: grid;
+    gap: 6px;
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      max-height 0.2s ease,
+      margin-top 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  .search-contact-card:hover .contact-direct-details,
+  .search-contact-card:focus-within .contact-direct-details,
+  .search-contact-card.is-expanded .contact-direct-details {
+    max-height: 96px;
+    margin-top: 12px;
+    opacity: 1;
+  }
+
+  .contact-direct-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    max-width: 100%;
+    color: var(--text-color);
+    font-size: 0.86rem;
+    font-weight: 650;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .contact-direct-link i {
+    color: var(--primary-color);
+    flex: 0 0 auto;
+  }
+
+  .contact-direct-link:hover {
+    color: var(--primary-color);
+  }
+
   .contact-tag {
     font-size: 0.75rem;
     padding: 4px 10px;
@@ -955,6 +1153,7 @@
 
   .search-contact-actions {
     display: flex;
+    align-items: center;
     gap: 10px;
   }
   .search-contact-btn {

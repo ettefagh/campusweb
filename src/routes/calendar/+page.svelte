@@ -1083,8 +1083,6 @@
 
 <style>
   .calendar-page {
-    max-width: 1200px;
-    margin: 0 auto;
     padding-bottom: calc(var(--spacing-xl) * 2.5);
     min-height: 100vh;
   }

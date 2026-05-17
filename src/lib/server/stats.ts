@@ -107,6 +107,29 @@ export async function incrementLinkClick(kv: any, linkId: string) {
   }
 }
 
+export async function getPopularLinkStats(kv: any, limit = 10, knownLinkIds?: Set<string>) {
+  if (!kv) return [];
+
+  try {
+    const stats = await readStats(kv);
+    const today = new Date().toISOString().split("T")[0];
+    const todayLinks = stats.links.daily[today] || {};
+
+    return Object.entries(stats.links.allTime)
+      .map(([linkId, total]) => ({
+        linkId,
+        total: Number(total) || 0,
+        today: Number(todayLinks[linkId]) || 0
+      }))
+      .filter((item) => (!knownLinkIds || knownLinkIds.has(item.linkId)) && item.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, limit);
+  } catch (err) {
+    console.error("Failed to read popular link stats", err);
+    return [];
+  }
+}
+
 export async function incrementStoryView(kv: any, storyId: string) {
   if (!kv || !storyId) return;
 

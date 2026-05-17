@@ -1,8 +1,21 @@
 import { json } from "@sveltejs/kit";
 import { allLinks } from "$lib/data/links";
-import { incrementLinkClick } from "$lib/server/stats";
+import { getPopularLinkStats, incrementLinkClick } from "$lib/server/stats";
 
 const knownLinkIds = new Set(allLinks.map((link) => link.id));
+
+export async function GET({ platform }) {
+	try {
+		const kv = platform?.env?.STORIES_KV;
+		if (!kv) return json({ popularLinks: [] });
+
+		const popularLinks = await getPopularLinkStats(kv, 10, knownLinkIds);
+
+		return json({ popularLinks });
+	} catch (err) {
+		return json({ popularLinks: [] });
+	}
+}
 
 export async function POST({ request, platform }) {
 	try {
