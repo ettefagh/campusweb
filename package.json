@@ -9,6 +9,10 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "test:security": "npm exec --min-release-age=0 --yes --package vitest -- vitest run Tests/security/input-security.test.ts",
+    "security:audit": "npm audit --audit-level=moderate",
+    "security:signatures": "npm audit signatures",
+    "security:weekly": "npm run check && npm run build && npm run security:audit && npm run test:security",
     "deploy": "npm run build && wrangler pages deploy .svelte-kit/cloudflare"
   },
   "devDependencies": {

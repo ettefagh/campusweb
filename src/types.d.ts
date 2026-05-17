@@ -56,6 +56,7 @@ declare global {
 					fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 				};
 				STORIES_KV?: any;
+				AUTH_SECURITY_KV?: any;
 				IMAGES_BUCKET?: any;
 			};
 		}

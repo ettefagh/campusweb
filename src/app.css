@@ -497,10 +497,10 @@ button:disabled {
 }
 
 /* Explicit theme overrides (SvelteKit data-theme attribute on <html>) */
-:global([data-theme="dark"]) .page-header .light-mode { display: none !important; }
-:global([data-theme="dark"]) .page-header .dark-mode { display: block !important; }
-:global([data-theme="light"]) .page-header .dark-mode { display: none !important; }
-:global([data-theme="light"]) .page-header .light-mode { display: block !important; }
+html[data-theme="dark"] .page-header .light-mode { display: none !important; }
+html[data-theme="dark"] .page-header .dark-mode { display: block !important; }
+html[data-theme="light"] .page-header .dark-mode { display: none !important; }
+html[data-theme="light"] .page-header .light-mode { display: block !important; }
 
 
 

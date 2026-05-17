@@ -383,8 +383,7 @@
 		-webkit-backdrop-filter: var(--glass-blur);
 	}
 
-	.favorite-icon-btn,
-	.favorite-action-btn {
+	.favorite-icon-btn {
 		min-height: var(--touch-target-min);
 		border: 1px solid transparent;
 		border-radius: calc(var(--radius-md) - 4px);
@@ -395,10 +394,6 @@
 		color: var(--text-color);
 		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		-webkit-tap-highlight-color: transparent;
-	}
-
-	.favorite-action-btn {
-		padding: 0 16px;
 	}
 
 	.favorite-icon-btn {
@@ -428,9 +423,7 @@
 	}
 
 	.favorite-icon-btn:hover,
-	.favorite-icon-btn:focus-visible,
-	.favorite-action-btn:focus-visible,
-	.favorite-action-btn:hover {
+	.favorite-icon-btn:focus-visible {
 		background: rgba(212, 68, 7, 0.12);
 		color: var(--primary-color);
 		border-color: rgba(212, 68, 7, 0.22);
@@ -452,17 +445,11 @@
 	}
 
 	@media (max-width: 420px) {
-		.favorite-links-header {
-			align-items: flex-start;
-			flex-direction: column;
-		}
-
 		.favorite-links-actions {
 			align-self: stretch;
 			justify-content: space-between;
 		}
 
-		.favorite-action-btn,
 		.favorite-icon-btn {
 			flex: 1;
 		}

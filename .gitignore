@@ -34,7 +34,7 @@ pnpm-debug.log*
 .pnpm-debug.log*
 
 # Tests and Scripts
-Tests/
+tests/
 test_*
 check_*
 scripts/

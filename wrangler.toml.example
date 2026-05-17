@@ -10,6 +10,12 @@ pages_build_output_dir = ".svelte-kit/cloudflare"
 binding = "STORIES_KV"
 id = "YOUR_KV_NAMESPACE_ID_HERE"
 
+# Optional dedicated KV for auth abuse controls (lockout/replay).
+# If omitted, the app falls back to STORIES_KV.
+[[kv_namespaces]]
+binding = "AUTH_SECURITY_KV"
+id = "YOUR_AUTH_SECURITY_KV_NAMESPACE_ID_HERE"
+
 # 🖼️ R2 Bucket for Image Hosting
 [[r2_buckets]]
 binding = "IMAGES_BUCKET"

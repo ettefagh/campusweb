@@ -119,6 +119,18 @@
     dispatch("close");
   }
 
+  function handleBackdropClick(event: MouseEvent) {
+    if (event.target === event.currentTarget) close();
+  }
+
+  function handleBackdropKeydown(event: KeyboardEvent) {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      close();
+    }
+  }
+
   async function submitStory() {
     errorMsg = "";
 
@@ -220,11 +232,19 @@
 </script>
 
 {#if isOpen}
-  <div class="modal-backdrop" use:portal on:click={close}>
-    <div class="modal-content" on:click|stopPropagation>
+  <div
+    class="modal-backdrop"
+    use:portal
+    role="button"
+    tabindex="0"
+    aria-label="Close story suggestion modal"
+    on:click={handleBackdropClick}
+    on:keydown={handleBackdropKeydown}
+  >
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="story-suggestion-title">
       
       <div class="modal-header">
-        <h2>{$t.settings.suggestStoryTitle}</h2>
+        <h2 id="story-suggestion-title">{$t.settings.suggestStoryTitle}</h2>
         <button class="close-btn" on:click={close}>✕</button>
       </div>
 
@@ -251,7 +271,7 @@
           </div>
 
           <div class="input-group">
-            <label>Story format</label>
+            <span class="field-label">Story format</span>
             <div class="tabs full-width">
               <button class="tab {storyMode==='single'?'active':''}" on:click={() => switchStoryMode('single')} type="button">Single</button>
               <button class="tab {storyMode==='sequence'?'active':''}" on:click={() => switchStoryMode('sequence')} type="button">Tale</button>
@@ -282,7 +302,7 @@
           <!-- DYNAMIC IMAGE SELECTOR -->
           <div class="input-group mt-lg">
             <div class="tab-header">
-              <label>Image <span class="req">*</span></label>
+              <span class="field-label">Image <span class="req">*</span></span>
               <div class="tabs">
                 <button class="tab {inputMode==='file'?'active':''}" on:click={() => switchMode('file')} type="button">Upload</button>
                 <button class="tab {inputMode==='url'?'active':''}" on:click={() => switchMode('url')} type="button">Paste URL</button>
@@ -290,7 +310,7 @@
             </div>
 
             {#if inputMode === 'file'}
-              <div class="file-upload-zone {selectedFiles.length > 0 ? 'has-file' : ''}" on:click={() => fileInput.click()}>
+              <label class="file-upload-zone {selectedFiles.length > 0 ? 'has-file' : ''}">
                 <input
                   type="file"
                   bind:this={fileInput}
@@ -314,7 +334,7 @@
                   <div class="upload-text">{storyMode === "sequence" ? "Choose up to 6 Photos" : "Choose from Photo Library"}</div>
                   <div class="sub-hint">{storyMode === "sequence" ? "At least 2 images for a tale" : "Max size 10MB"}</div>
                 {/if}
-              </div>
+              </label>
             {:else}
               {#if storyMode === "sequence"}
                 <textarea
@@ -442,7 +462,8 @@
     gap: 5px;
   }
 
-  .input-group label {
+  .input-group label,
+  .field-label {
     font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
