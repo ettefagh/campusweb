@@ -18,6 +18,7 @@
   } from "$lib/stores/calendarStore";
   import { classColors } from "$lib/stores/classColors";
   import { t } from "$lib/i18n";
+  import IosAccessibilityIcon from "$lib/components/IosAccessibilityIcon.svelte";
   import { version } from "$app/environment";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
@@ -159,6 +160,30 @@
   let dangerOpen = false;
   let activeColorChooser: string | null = null;
 
+  function focusCalendarUrlInputIfRequested() {
+    if ($page.url.searchParams.get("focus") !== "calendar-url") return;
+
+    setTimeout(() => {
+      const input = document.getElementById("cal-url") as HTMLInputElement | null;
+      if (input) {
+        input.focus();
+        input.select();
+        return;
+      }
+
+      const addBtn = document.querySelector(
+        ".calendar-subscription .add-btn",
+      ) as HTMLButtonElement | null;
+      addBtn?.click();
+
+      setTimeout(() => {
+        const delayedInput = document.getElementById("cal-url") as HTMLInputElement | null;
+        delayedInput?.focus();
+        delayedInput?.select();
+      }, 120);
+    }, 120);
+  }
+
   function toggleColorChooser(id: string) {
     activeColorChooser = activeColorChooser === id ? null : id;
   }
@@ -182,6 +207,8 @@
         document.getElementById(hash.substring(1))?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     }
+
+    focusCalendarUrlInputIfRequested();
   });
 
   // Reactively handle hash changes while on the same page
@@ -199,6 +226,8 @@
         document.getElementById(hash.substring(1))?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     }
+
+    focusCalendarUrlInputIfRequested();
   }
 
 </script>
@@ -728,7 +757,7 @@
   <section id="accessibility" class="settings-section a11y-section">
     <details bind:open={a11yOpen}>
       <summary class="section-header section-header--collapsible">
-        <span class="section-icon"><i class="ph-bold ph-accessibility"></i></span>
+        <span class="section-icon section-icon--accessibility"><IosAccessibilityIcon /></span>
         <div>
           <h2>{$t.settings.a11yTitle}</h2>
           <p class="section-desc">{$t.settings.a11yDesc}</p>
@@ -938,6 +967,9 @@
     line-height: 1;
     flex-shrink: 0;
     margin-top: 2px;
+  }
+  .section-icon--accessibility {
+    color: #2FA4D7;
   }
   h2 {
     font-size: 1.1rem;

@@ -86,11 +86,17 @@
 
 	/* Semantic Colors */
 	--primary-color: var(--srh-orange);
+	--primary-color-rgb: 212, 68, 7;
 	--bg-color: #ffffff;
-	--text-color: #1a1a1a;
-	--text-color-secondary: #5a5a6a;
+	--text-color: #07132f;
+	--text-color-secondary: #626a82;
 	--border-color: rgba(0, 0, 0, 0.12);
 	--card-bg: rgba(255, 255, 255, 0.72);
+	--surface-solid: #ffffff;
+	--surface-soft: rgba(255, 255, 255, 0.86);
+	--surface-border: rgba(7, 19, 47, 0.08);
+	--campus-shadow: 0 18px 45px rgba(15, 23, 42, 0.08), 0 3px 10px rgba(15, 23, 42, 0.06);
+	--campus-shadow-soft: 0 10px 28px rgba(15, 23, 42, 0.07), 0 1px 5px rgba(15, 23, 42, 0.05);
 
 	/* ── Liquid Glass Variables ── */
 	--glass-bg-light: rgba(255, 255, 255, 0.62);
@@ -104,13 +110,10 @@
 	--glass-shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(212, 68, 7, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 
 	/* Body gradient — light mode */
-	--body-gradient: linear-gradient(135deg,
-		#fff7f2 0%,
-		#fce8d5 25%,
-		#f0e8f8 55%,
-		#e8f0fc 80%,
-		#f5f0ff 100%
-	);
+	--body-gradient:
+		radial-gradient(circle at 12% -10%, rgba(255, 116, 36, 0.12), transparent 32%),
+		radial-gradient(circle at 88% 8%, rgba(132, 92, 255, 0.10), transparent 30%),
+		linear-gradient(180deg, #fbfcff 0%, #f7f9fd 50%, #ffffff 100%);
 
 	/* Dark Mode tokens (applied in media query below) */
 	--dark-bg: #0d0d14;
@@ -159,6 +162,11 @@
 		--text-color-secondary: rgba(240, 240, 248, 0.55);
 		--card-bg: var(--dark-card-bg);
 		--border-color: var(--dark-border);
+		--surface-solid: rgba(20, 20, 30, 0.96);
+		--surface-soft: rgba(24, 24, 36, 0.88);
+		--surface-border: rgba(255, 255, 255, 0.11);
+		--campus-shadow: 0 18px 45px rgba(0, 0, 0, 0.42), 0 3px 10px rgba(0, 0, 0, 0.28);
+		--campus-shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.34), 0 1px 5px rgba(0, 0, 0, 0.22);
 
 		--glass-bg-light: rgba(255, 255, 255, 0.07);
 		--glass-bg-strong: rgba(255, 255, 255, 0.11);
@@ -200,6 +208,11 @@
 		--text-color-secondary: rgba(240, 240, 248, 0.55);
 		--card-bg: var(--dark-card-bg);
 		--border-color: var(--dark-border);
+		--surface-solid: rgba(20, 20, 30, 0.96);
+		--surface-soft: rgba(24, 24, 36, 0.88);
+		--surface-border: rgba(255, 255, 255, 0.11);
+		--campus-shadow: 0 18px 45px rgba(0, 0, 0, 0.42), 0 3px 10px rgba(0, 0, 0, 0.28);
+		--campus-shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.34), 0 1px 5px rgba(0, 0, 0, 0.22);
 
 		--glass-bg-light: rgba(255, 255, 255, 0.07);
 		--glass-bg-strong: rgba(255, 255, 255, 0.11);
@@ -292,13 +305,15 @@ body {
 /* ── Main Layout ──────────────────────────────────────────────────── */
 .app-container {
 	min-height: 100vh;
+	overflow-x: hidden;
 	padding-bottom: calc(var(--touch-target-min) + var(--spacing-lg) + var(--spacing-lg));
 }
 
 .content-area {
-	max-width: 800px;
+	max-width: 840px;
 	margin: 0 auto;
 	padding: var(--spacing-md);
+	overflow-x: hidden;
 }
 
 /* ── Glass Utility ────────────────────────────────────────────────── */
@@ -343,7 +358,7 @@ h1, h2, h3, h4, h5, h6 {
 
 h1 {
 	font-size: 2rem;
-	color: var(--primary-color);
+	color: var(--text-color);
 	font-weight: 700;
 }
 
@@ -382,14 +397,14 @@ button:disabled {
 }
 
 .section-action-btn {
-	background: var(--glass-bg-light);
-	border: 1px solid var(--glass-border-subtle);
-	padding: 6px 14px;
-	border-radius: 20px;
-	font-size: 0.8rem;
+	background: transparent;
+	border: 1px solid transparent;
+	padding: 6px 0;
+	border-radius: 10px;
+	font-size: 0.94rem;
 	font-weight: 700;
 	cursor: pointer;
-	color: var(--text-color);
+	color: var(--primary-color);
 	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 	backdrop-filter: var(--glass-blur);
 	-webkit-backdrop-filter: var(--glass-blur);
@@ -403,6 +418,7 @@ button:disabled {
 	background: rgba(212, 68, 7, 0.1);
 	color: var(--primary-color);
 	border-color: rgba(212, 68, 7, 0.2);
+	padding-inline: 10px;
 }
 
 .section-action-btn.active {
@@ -462,14 +478,14 @@ button:disabled {
 
 .page-header h1 {
 	font-size: 1.3rem;
-	line-height: 0.8rem;
+	line-height: 1.05;
 	margin-bottom: var(--spacing-sm);
 	color: var(--text-color);
 }
 
 .page-header.narrow h1 {
 	font-size: 1.3rem;
-	line-height: 0.8rem;
+	line-height: 1.05;
 	margin-bottom: 2px;
 }
 

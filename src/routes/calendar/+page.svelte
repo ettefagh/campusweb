@@ -79,6 +79,9 @@
 
   // ─── Department Calendar Import Suggestion ────────────────────────
   let dismissedSuggestion = false;
+  let dismissedSetupNotice = false;
+  let dismissedEmptyNotice = false;
+  let dismissedProtectedNotice = false;
 
   function handleImportSuggestion() {
     if ($activeDepartment?.icalUrl) {
@@ -669,54 +672,35 @@
 <svelte:window bind:innerWidth on:click={handleWindowClick} />
 
 <div class="calendar-page">
-  <header class="page-header">
-    <div class="header-left">
-      <div class="logo-container">
-        <img
-          src="/icon-light.png"
-          alt="SRH University Logo"
-          class="logo light-mode"
-          width="36"
-          height="36"
-          loading="eager"
-          fetchpriority="high"
-        />
-        <img
-          src="/icon-dark.png"
-          alt="SRH University Logo"
-          class="logo dark-mode"
-          width="36"
-          height="36"
-          loading="eager"
-          fetchpriority="high"
-        />
-      </div>
-      <div class="header-text">
-        <h1>{$t.calendar.title || "Calendar"}</h1>
-        <p class="subtitle">
-          {$t.calendar.subtitle || "University events and your schedule"}
-        </p>
-      </div>
-    </div>
-
-    <button
-      class="refresh-btn"
-      on:click={handleRefresh}
-      aria-label={$t.calendar.refresh}
-      title={$t.calendar.refresh}
-    >
-      <i class="ph-bold ph-arrows-counter-clockwise" class:spinning={isLoading}
-      ></i>
-    </button>
-  </header>
-
   <div class="calendar-page-layout">
     <div class="calendar-main">
-      <div class="toolbar-center">
-        <span class="toolbar-title">{currentTitleText}</span>
+      <header class="calendar-header">
+        <div class="calendar-title-block">
+          <span class="calendar-eyebrow">Plan ahead</span>
+          <h1>{$t.calendar.title || "Calendar"}</h1>
+          <p class="calendar-subtitle">
+            {$t.calendar.subtitle || "University events and your schedule"}
+          </p>
+        </div>
+        <button
+          class="refresh-btn"
+          on:click={handleRefresh}
+          aria-label={$t.calendar.refresh}
+          title={$t.calendar.refresh}
+        >
+          <i class="ph-bold ph-arrows-counter-clockwise" class:spinning={isLoading}
+          ></i>
+        </button>
+      </header>
+
+      <div class="calendar-period-card" aria-live="polite">
+        <span class="period-label">Showing</span>
+        <strong class="toolbar-title">
+          {currentTitleText || ($t.calendar.title || "Calendar")}
+        </strong>
       </div>
 
-      {#if !isMounted || currentSubs.length === 0}
+      {#if (!isMounted || currentSubs.length === 0) && !dismissedSetupNotice}
         <div class="suggestion-banner link-banner">
           <div class="suggestion-icon"><i class="ph-bold ph-calendar"></i></div>
           <div class="suggestion-content">
@@ -741,6 +725,12 @@
                 Import Department Calendar
               </button>
             {/if}
+            <button
+              class="suggestion-btn suggestion-btn--secondary"
+              on:click={() => (dismissedSetupNotice = true)}
+            >
+              Later
+            </button>
           </div>
         </div>
       {/if}
@@ -753,14 +743,22 @@
       {/if}
 
       <!-- Empty state banner — shown when no events match the current view -->
-      {#if !isLoading && currentEventsCount === 0}
+      {#if !isLoading && currentEventsCount === 0 && !dismissedEmptyNotice}
         <div class="suggestion-banner">
-          <div class="suggestion-icon">📭</div>
+          <div class="suggestion-icon"><i class="ph-bold ph-tray"></i></div>
           <div class="suggestion-content">
             <p class="suggestion-title">No events to show</p>
             <p class="suggestion-desc">
               Try a different date range or add a calendar subscription.
             </p>
+          </div>
+          <div class="suggestion-actions">
+            <button
+              class="suggestion-btn suggestion-btn--secondary"
+              on:click={() => (dismissedEmptyNotice = true)}
+            >
+              Understood
+            </button>
           </div>
         </div>
       {/if}
@@ -808,8 +806,10 @@
             <button
               class="toolbar-btn"
               on:click={goToPrev}
-              aria-label="Previous">←</button
+              aria-label="Previous"
             >
+              <i class="ph-bold ph-caret-left" aria-hidden="true"></i>
+            </button>
             <button
               class="toolbar-btn today-btn"
               on:click={goToToday}
@@ -821,16 +821,16 @@
                 {$t.calendar.today} {todayDirection === "right" ? "→" : ""}
               {/if}
             </button>
-            <button class="toolbar-btn" on:click={goToNext} aria-label="Next"
-              >→</button
-            >
+            <button class="toolbar-btn" on:click={goToNext} aria-label="Next">
+              <i class="ph-bold ph-caret-right" aria-hidden="true"></i>
+            </button>
           </div>
         </div>
       </div>
 
       <!-- Calendar Source Legend — toggleable visibility filters -->
       <section class="calendar-legend-section">
-        {#if !$settingsStore.emailVerified}
+        {#if !$settingsStore.emailVerified && !dismissedProtectedNotice}
           <div class="suggestion-banner link-banner calendar-auth-banner">
             <div class="suggestion-icon"><i class="ph-bold ph-lock-key"></i></div>
             <div class="suggestion-content">
@@ -843,6 +843,12 @@
               <a href="/settings#directory-access" class="suggestion-btn suggestion-btn--primary">
                 Verify SRH Email
               </a>
+              <button
+                class="suggestion-btn suggestion-btn--secondary"
+                on:click={() => (dismissedProtectedNotice = true)}
+              >
+                Later
+              </button>
             </div>
           </div>
         {/if}
@@ -934,7 +940,7 @@
 
       <!-- Quick Links — external university resources -->
       <section class="quick-links-section">
-        <h2 class="section-title">🔗 Quick Links</h2>
+        <h2 class="section-title">Campus shortcuts</h2>
         <div class="quick-links-grid">
           <a
             href="https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php"
@@ -942,7 +948,9 @@
             rel="noopener noreferrer"
             class="quick-link-card"
           >
-            <span class="ql-icon">🗓️</span>
+            <span class="ql-icon ql-icon--blue">
+              <i class="ph-fill ph-calendar-dots" aria-hidden="true"></i>
+            </span>
             <span class="ql-title">My Schedule</span>
             <span class="ql-desc">View class timetable</span>
           </a>
@@ -952,7 +960,9 @@
             rel="noopener noreferrer"
             class="quick-link-card"
           >
-            <span class="ql-icon">🎓</span>
+            <span class="ql-icon ql-icon--yellow">
+              <i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
+            </span>
             <span class="ql-title">Exam Registration</span>
             <span class="ql-desc">Register for exams</span>
           </a>
@@ -962,7 +972,9 @@
             rel="noopener noreferrer"
             class="quick-link-card"
           >
-            <span class="ql-icon">🎪</span>
+            <span class="ql-icon ql-icon--violet">
+              <i class="ph-fill ph-confetti" aria-hidden="true"></i>
+            </span>
             <span class="ql-title">University Events</span>
             <span class="ql-desc">Workshops, fairs & more</span>
           </a>
@@ -972,7 +984,9 @@
             rel="noopener noreferrer"
             class="quick-link-card"
           >
-            <span class="ql-icon">🪄</span>
+            <span class="ql-icon ql-icon--orange">
+              <i class="ph-fill ph-magic-wand" aria-hidden="true"></i>
+            </span>
             <span class="ql-title">Calendar Enhancer</span>
             <span class="ql-desc">Optimize your iCal feed</span>
           </a>
@@ -1083,31 +1097,99 @@
 
 <style>
   .calendar-page {
-    padding-bottom: calc(var(--spacing-xl) * 2.5);
+    padding: calc(env(safe-area-inset-top) + var(--spacing-sm)) 0
+      calc(var(--spacing-xl) * 2.5);
     min-height: 100vh;
   }
 
-  .calendar-page > *:not(.page-header) {
+  .calendar-page > * {
     animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   }
 
   .calendar-page-layout {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     border-radius: var(--radius-lg);
+  }
+
+  .calendar-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .calendar-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-xs) 0;
+  }
+
+  .calendar-title-block {
+    min-width: 0;
+  }
+
+  .calendar-eyebrow {
+    display: block;
+    color: var(--primary-color);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
+
+  h1 {
+    color: var(--text-color);
+    font-size: clamp(1.9rem, 5vw, 2.4rem);
+    line-height: 1;
+    margin: 0;
+    letter-spacing: 0;
+  }
+
+  .calendar-subtitle {
+    color: var(--text-color-secondary);
+    font-size: 0.95rem;
+    line-height: 1.35;
+    margin: 8px 0 0;
+  }
+
+  .calendar-period-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    padding: 14px var(--spacing-md);
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    border-radius: 18px;
+    box-shadow: var(--campus-shadow-soft);
+  }
+
+  .period-label {
+    color: var(--text-color-secondary);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  :global([data-theme="dark"]) .calendar-period-card,
+  :global([data-theme="dark"]) .suggestion-banner,
+  :global([data-theme="dark"]) .calendar-legend,
+  :global([data-theme="dark"]) .quick-link-card,
+  :global([data-theme="dark"]) .calendar-container {
+    border-color: rgba(255, 255, 255, 0.11);
   }
 
   /* ─── Suggestion Banner ─────────────────────────────────────────── */
   .suggestion-banner {
-    background: var(--card-bg);
-    border: 1px solid var(--primary-color);
-    border-radius: var(--radius-md);
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    border-radius: 18px;
     padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--campus-shadow-soft);
     animation: slideDown 0.3s ease-out;
   }
 
@@ -1123,7 +1205,17 @@
   }
 
   .suggestion-icon {
-    font-size: 1.5rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    background: #f35b04;
+    color: #ffffff;
+    font-size: 1.35rem;
+    box-shadow: 0 8px 18px rgba(243, 91, 4, 0.22);
   }
 
   .suggestion-content {
@@ -1133,23 +1225,27 @@
   .suggestion-title {
     font-weight: 700;
     margin: 0;
-    color: var(--primary-color);
+    color: var(--text-color);
   }
 
   .suggestion-desc {
     font-size: 0.85rem;
     margin: 2px 0 0;
-    opacity: 0.8;
+    color: var(--text-color-secondary);
+    line-height: 1.35;
   }
 
   .suggestion-actions {
     display: flex;
     gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .suggestion-btn {
-    padding: 6px 12px;
-    border-radius: 8px;
+    min-height: 38px;
+    padding: 7px 14px;
+    border-radius: 12px;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
@@ -1163,7 +1259,7 @@
   .suggestion-btn--primary {
     background: var(--primary-color);
     color: white;
-    border: none;
+    border: 1px solid var(--primary-color);
   }
 
   .suggestion-btn--primary:hover {
@@ -1172,13 +1268,30 @@
   }
 
   .suggestion-btn--secondary {
-    background: transparent;
+    background: #ffffff;
     color: var(--text-color);
-    border: 1px solid var(--border-color);
+    border: 1px solid #e5e5e5;
   }
 
   .suggestion-btn--secondary:hover {
-    background: var(--border-color);
+    background: #f5f0e6;
+  }
+
+  :global([data-theme="dark"]) .suggestion-btn--secondary,
+  :global([data-theme="dark"]) .legend-item,
+  :global([data-theme="dark"]) .toolbar-btn:hover,
+  :global([data-theme="dark"]) .today-btn {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  :global([data-theme="dark"]) .suggestion-btn--secondary,
+  :global([data-theme="dark"]) .legend-item {
+    border-color: rgba(255, 255, 255, 0.11);
+  }
+
+  :global([data-theme="dark"]) .suggestion-btn--secondary:hover,
+  :global([data-theme="dark"]) .legend-item:hover {
+    background: rgba(255, 255, 255, 0.13);
   }
 
   @media (max-width: 600px) {
@@ -1193,60 +1306,12 @@
     }
   }
 
-  .page-header {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--spacing-sm) var(--spacing-md);
-    margin: var(--spacing-sm) var(--spacing-md);
-    /* Accommodate iOS safe area inset (notch/Dynamic Island) */
-    padding-top: calc(env(safe-area-inset-top) + var(--spacing-sm));
-  }
-
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-  }
-
-  .logo-container {
-    margin-bottom: 0;
-  }
-
-  .logo {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-  }
-
-  /* Theme-aware logo visibility */
-  :global([data-theme="dark"]) .light-mode {
-    display: none;
-  }
-  :global([data-theme="light"]) .dark-mode {
-    display: none;
-  }
-
-  .header-text {
-    display: flex;
-    flex-direction: column;
-  }
-
-  h1 {
-    font-size: 1.3rem;
-    line-height: 0.8rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--text-color);
-  }
-
   .refresh-btn {
-    background: var(--bg-color-secondary);
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-    width: 40px;
-    height: 40px;
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    color: #626a82;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1255,11 +1320,19 @@
     transition: all 0.2s ease;
     font-size: 1.25rem;
     padding: 0;
+    box-shadow: var(--campus-shadow-soft);
+    flex: 0 0 auto;
   }
 
   .refresh-btn:hover {
-    background: var(--border-color);
+    color: var(--primary-color);
+    border-color: rgba(212, 68, 7, 0.22);
     transform: scale(1.05);
+  }
+
+  :global([data-theme="dark"]) .refresh-btn {
+    border-color: rgba(255, 255, 255, 0.11);
+    color: var(--text-color-secondary);
   }
 
   .refresh-btn:active {
@@ -1280,18 +1353,23 @@
     }
   }
 
-  .subtitle {
-    color: var(--text-color-secondary);
-    font-size: 0.85rem;
+  /* ─── Calendar Source Legend ────────────────────────────────────── */
+  .calendar-legend-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
   }
 
-  /* ─── Calendar Source Legend ────────────────────────────────────── */
   .calendar-legend {
     display: flex;
     justify-content: flex-start;
     gap: var(--spacing-sm);
-    padding: var(--spacing-xs) 0;
+    padding: var(--spacing-sm);
     flex-wrap: wrap;
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    border-radius: 18px;
+    box-shadow: var(--campus-shadow-soft);
   }
 
   .legend-item {
@@ -1299,18 +1377,19 @@
     align-items: center;
     gap: var(--spacing-xs);
     font-size: 0.875rem;
+    font-weight: 700;
     color: var(--text-color);
     cursor: pointer;
-    padding: 4px 10px;
-    border-radius: var(--radius-sm);
-    border: 1px solid transparent;
-    background: none;
+    padding: 7px 11px;
+    border-radius: 999px;
+    border: 1px solid #e5e5e5;
+    background: #ffffff;
     transition: all 0.2s ease;
   }
 
   .legend-item:hover {
-    background: rgba(212, 68, 7, 0.06);
-    border-color: var(--border-color);
+    background: #f5f0e6;
+    border-color: rgba(212, 68, 7, 0.22);
   }
 
   .legend-item--hidden {
@@ -1322,9 +1401,9 @@
   }
 
   .legend-color {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
+    width: 11px;
+    height: 11px;
+    border-radius: 999px;
     display: inline-block;
     flex-shrink: 0;
   }
@@ -1365,23 +1444,20 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    margin: 0 var(--spacing-sm);
-    /* Light mode: translucent white base for glass effect */
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-lg);
+    margin: 0;
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    border-radius: 22px;
     overflow: hidden;
-    box-shadow: var(--glass-shadow-lg);
-    height: calc(100vh - 280px);
-    min-height: 400px;
+    box-shadow: var(--campus-shadow);
+    height: clamp(440px, calc(100svh - 330px), 720px);
+    min-height: 440px;
     padding-bottom: 67px; /* Reserve space for the absolutely-positioned navigation toolbar */
     transition: opacity 0.3s ease;
   }
 
   :global([data-theme="dark"]) .calendar-container {
-    background: rgba(18, 18, 24, 0.65);
+    background: var(--surface-solid);
   }
 
   .calendar-scroll-area {
@@ -1434,11 +1510,17 @@
     gap: var(--spacing-sm);
     padding: var(--spacing-sm) var(--spacing-md);
     margin: 0;
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border-top: 1px solid rgb(255 255 255 / 20%);
-    box-shadow: var(--glass-shadow);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border-top: 1px solid #e5e5e5;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.06);
     transition: all 0.3s ease;
+  }
+
+  :global([data-theme="dark"]) .calendar-toolbar {
+    background: rgba(20, 20, 30, 0.94) !important;
+    border-top-color: rgba(255, 255, 255, 0.11);
   }
 
   /* Landscape mobile: toolbar repositions to a vertical sidebar on the right */
@@ -1446,7 +1528,8 @@
     flex-direction: row;
     padding-bottom: 0;
     padding-right: 68px;
-    height: 44px;
+    height: clamp(430px, calc(100svh - 220px), 680px);
+    min-height: 430px;
   }
 
   .calendar-container.is-landscape .calendar-toolbar {
@@ -1461,9 +1544,14 @@
     justify-content: center;
     padding: var(--spacing-sm) 0;
     border-top: none;
-    border-left: 1px solid var(--glass-border);
+    border-left: 1px solid #e5e5e5;
     gap: var(--spacing-md);
-    background: var(--glass-bg-strong);
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  :global([data-theme="dark"]) .calendar-container.is-landscape .calendar-toolbar {
+    background: rgba(20, 20, 30, 0.96);
+    border-left-color: rgba(255, 255, 255, 0.11);
   }
 
   .calendar-container.is-landscape .toolbar-views,
@@ -1513,28 +1601,24 @@
     transform: none;
   }
 
-  .toolbar-center {
-    text-align: center;
-    margin-bottom: var(--spacing-xs);
-  }
-
   .toolbar-group {
     display: flex;
-    gap: 0px;
-    background: rgba(0, 0, 0, 0.04);
+    gap: 4px;
+    background: #f5f0e6;
     padding: 3px;
-    border-radius: 12px;
-    border: 1px solid var(--glass-border-subtle);
+    border-radius: 14px;
+    border: 1px solid #e5e5e5;
   }
 
   :global([data-theme="dark"]) .toolbar-group {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   .toolbar-title {
-    font-weight: 600;
+    font-weight: 800;
     font-size: 1rem;
     color: var(--text-color);
+    text-align: right;
   }
 
   .toolbar-btn {
@@ -1544,7 +1628,7 @@
     color: var(--text-color);
     font-size: 0.8rem;
     font-weight: 700;
-    border-radius: 9px;
+    border-radius: 11px;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
@@ -1554,7 +1638,7 @@
   }
 
   .toolbar-btn:hover {
-    background: rgba(212, 68, 7, 0.1);
+    background: #ffffff;
   }
 
   .toolbar-btn.active {
@@ -1564,7 +1648,7 @@
   }
 
   .today-btn {
-    background: rgba(212, 68, 7, 0.1);
+    background: #ffffff;
     color: var(--primary-color);
     display: flex;
     align-items: center;
@@ -1583,16 +1667,18 @@
   .event-popup {
     position: fixed;
     z-index: 1000;
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--glass-blur-strong);
-    -webkit-backdrop-filter: var(--glass-blur-strong);
-    border: 1px solid var(--glass-border);
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
     border-radius: var(--radius-lg);
     padding: var(--spacing-md);
-    box-shadow: var(--glass-shadow-lg);
+    box-shadow: var(--campus-shadow);
     min-width: 240px;
     max-width: 320px;
     animation: popupFadeIn 0.15s ease-out;
+  }
+
+  :global([data-theme="dark"]) .event-popup {
+    border-color: rgba(255, 255, 255, 0.11);
   }
 
   @keyframes popupFadeIn {
@@ -1743,15 +1829,25 @@
   :global(.ec) {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
       Ubuntu, Cantarell, sans-serif !important;
-    --ec-border-color: var(--border-color) !important;
-    --ec-today-bg-color: rgba(212, 68, 7, 0.04) !important;
-    --ec-highlight-color: rgba(212, 68, 7, 0.08) !important;
+    --ec-bg-color: transparent !important;
+    --ec-border-color: #e5e5e5 !important;
+    --ec-text-color: var(--text-color) !important;
+    --ec-today-bg-color: #fff6dc !important;
+    --ec-highlight-color: #f5f0e6 !important;
     --ec-now-indicator-color: var(--primary-color) !important;
-    --ec-button-bg-color: var(--card-bg) !important;
-    --ec-button-border-color: var(--border-color) !important;
+    --ec-button-bg-color: #ffffff !important;
+    --ec-button-border-color: #e5e5e5 !important;
     --ec-button-active-bg-color: var(--primary-color) !important;
     --ec-button-active-border-color: var(--primary-color) !important;
     height: 100% !important;
+  }
+
+  :global([data-theme="dark"] .ec) {
+    --ec-border-color: rgba(255, 255, 255, 0.11) !important;
+    --ec-button-bg-color: rgba(255, 255, 255, 0.08) !important;
+    --ec-button-border-color: rgba(255, 255, 255, 0.11) !important;
+    --ec-today-bg-color: rgba(212, 68, 7, 0.16) !important;
+    --ec-highlight-color: rgba(255, 255, 255, 0.08) !important;
   }
 
   /* ─── Sticky Fixed Rails (Chrome Layer): Sidebar, Header, and Toolbar ─── */
@@ -1760,9 +1856,9 @@
   :global(.ec-sidebar),
   :global(.ec-header),
   .calendar-toolbar {
-    background-color: rgba(255, 255, 255, 0.85) !important;
-    backdrop-filter: blur(20px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    background-color: rgba(255, 255, 255, 0.94) !important;
+    backdrop-filter: blur(18px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
     transition: background-color 0.3s ease !important;
   }
 
@@ -1770,7 +1866,7 @@
     position: sticky !important;
     left: 0 !important;
     z-index: 10 !important;
-    border-right: 1px solid var(--border-color) !important;
+    border-right: 1px solid #e5e5e5 !important;
     box-shadow: 4px 0 16px rgba(0, 0, 0, 0.04) !important;
   }
 
@@ -1778,7 +1874,7 @@
     position: sticky !important;
     top: 0 !important;
     z-index: 10 !important;
-    border-bottom: 1px solid var(--border-color) !important;
+    border-bottom: 1px solid #e5e5e5 !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
   }
 
@@ -1788,7 +1884,7 @@
     top: 0 !important;
     left: 0 !important;
     z-index: 15 !important;
-    background-color: rgba(255, 255, 255, 0.92) !important;
+    background-color: #ffffff !important;
   }
 
   /* Dark mode theme adjustments for the chrome layers */
@@ -1797,6 +1893,7 @@
   :global([data-theme="dark"]) .calendar-toolbar {
     background-color: rgba(18, 18, 26, 0.88) !important;
     box-shadow: 4px 0 16px rgba(0, 0, 0, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.11) !important;
   }
 
   :global(html[data-theme="dark"] .ec-header .ec-sidebar) {
@@ -1832,7 +1929,7 @@
 
   /* ─── Event Card Styling — Semantic Colors & Textures ──────────── */
   :global(.ec-event) {
-    border-radius: 6px !important;
+    border-radius: 9px !important;
     font-size: 0.8rem !important;
     background-color: transparent !important;
     border: none !important;
@@ -1851,13 +1948,12 @@
     height: 100%;
     width: 100%; /* Ensures all-day events span their full allocated width */
     overflow: hidden;
-    padding: 6px 6px !important;
-    border-radius: 6px !important;
-    /* Translucent white base inspired by Apple Calendar event cards */
-    background-color: #ffffff70 !important;
-    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+    padding: 6px 7px !important;
+    border-radius: 9px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #e5e5e5 !important;
     border-left: 3px solid var(--event-color, var(--primary-color)) !important;
-    color: black !important;
+    color: #000000 !important;
     position: relative;
     z-index: 1;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1873,9 +1969,9 @@
     position: absolute;
     inset: 0;
     background-color: var(--event-color, var(--primary-color));
-    opacity: 0.15;
+    opacity: 0.12;
     z-index: -2;
-    border-radius: 6px;
+    border-radius: 9px;
   }
 
   /* Dark mode: translucent dark base with a subtle color wash */
@@ -1891,6 +1987,7 @@
 
   :global(.ec-event:hover .ec-event-inner) {
     transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
   }
 
   :global(.ec-event:hover .ec-event-inner::before) {
@@ -1902,12 +1999,12 @@
   }
 
   :global(.ec-event-title-text) {
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.85rem;
     line-height: 1.3;
     white-space: normal;
     word-break: break-word;
-    color: black !important;
+    color: #000000 !important;
     text-shadow: none !important;
   }
 
@@ -1917,9 +2014,9 @@
 
   :global(.ec-event-loc),
   :global(.ec-event-time-custom) {
-    color: black !important;
+    color: #3e2c23 !important;
     font-weight: 500;
-    opacity: 0.55;
+    opacity: 0.7;
   }
 
   :global(html[data-theme="dark"] .ec-event-loc),
@@ -2140,9 +2237,9 @@
     }
 
     .calendar-container {
-      height: calc(100vh - 320px);
-      margin: 0 var(--spacing-xs);
-      min-height: 350px;
+      height: clamp(420px, calc(100svh - 320px), 620px);
+      margin: 0;
+      min-height: 420px;
     }
 
     .calendar-toolbar {
@@ -2154,14 +2251,33 @@
       font-size: 0.9rem;
     }
 
-    h1 {
-      font-size: 1.5rem;
-    }
-
     .toolbar-btn {
       font-size: 0.8rem;
       padding: var(--spacing-xs);
       min-width: 40px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .calendar-container {
+      padding-bottom: 112px;
+    }
+
+    .calendar-toolbar {
+      justify-content: center;
+    }
+
+    .toolbar-group {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .toolbar-views .toolbar-btn {
+      flex: 1 1 0;
+    }
+
+    .toolbar-nav .today-btn {
+      flex: 1 1 auto;
     }
   }
 
@@ -2175,7 +2291,7 @@
     .calendar-main {
       display: flex;
       flex-direction: column;
-      gap: var(--spacing-sm);
+      gap: var(--spacing-md);
     }
 
     .toolbar-views {
@@ -2187,25 +2303,23 @@
     }
 
     .calendar-container {
-      height: calc(
-        100vh - 180px
-      ); /* Utilize additional vertical space on desktop */
+      height: clamp(600px, calc(100vh - 220px), 780px);
     }
 
-    .quick-links-section {
-      margin: var(--spacing-md) var(--spacing-sm) 0;
+    .quick-links-grid {
+      grid-template-columns: repeat(4, 1fr);
     }
   }
 
   /* ─── Quick Links Section ──────────────────────────────────────── */
   .quick-links-section {
-    margin: var(--spacing-lg) var(--spacing-sm) 0;
+    margin: 0;
   }
 
   .section-title {
     font-size: 1.1rem;
     font-weight: 700;
-    margin-bottom: var(--spacing-md);
+    margin: 0 0 var(--spacing-sm);
     color: var(--text-color);
   }
 
@@ -2226,45 +2340,49 @@
     display: flex;
     flex-direction: column;
     padding: var(--spacing-md);
-    background: var(--glass-bg-light);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    border-radius: 18px;
     text-decoration: none;
     color: var(--text-color);
     transition: all 0.22s ease;
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--campus-shadow-soft);
     position: relative;
     overflow: hidden;
-  }
-
-  .quick-link-card::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 10%;
-    right: 10%;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.65),
-      transparent
-    );
-    pointer-events: none;
   }
 
   .quick-link-card:hover {
     border-color: rgba(212, 68, 7, 0.35);
     transform: translateY(-3px);
-    box-shadow: var(--glass-shadow-hover);
-    background: var(--glass-bg-strong);
+    box-shadow: var(--campus-shadow);
   }
 
   .ql-icon {
-    font-size: 1.6rem;
-    margin-bottom: var(--spacing-xs);
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 1.45rem;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .ql-icon--blue {
+    background: #2fa4d7;
+  }
+
+  .ql-icon--yellow {
+    background: #f7b801;
+  }
+
+  .ql-icon--violet {
+    background: #3d348b;
+  }
+
+  .ql-icon--orange {
+    background: #f35b04;
   }
 
   .ql-title {
@@ -2282,7 +2400,7 @@
 
   @media (max-width: 768px) {
     .quick-links-section {
-      margin: var(--spacing-md) var(--spacing-xs) 0;
+      margin: 0;
     }
   }
 

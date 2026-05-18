@@ -54,8 +54,10 @@
 </script>
 
 <div class="id-slider-section">
-
-  <SectionHeader title="Digital ID Wallet" subtitle="Tap cards to flip & scan barcode">
+  <SectionHeader
+    title="Digital ID Wallet"
+    subtitle="Tap cards to flip & scan barcode"
+  >
     <button
       class="section-action-btn"
       class:active={isEditMode}
@@ -152,8 +154,8 @@
   }
 
   .add-card-placeholder {
-    width: 361px;
-    height: 224px;
+    width: 336px;
+    height: 212px;
     border-radius: 20px;
     display: flex;
     align-items: center;

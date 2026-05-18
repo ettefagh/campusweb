@@ -97,6 +97,21 @@ function normalizeTitle(summary: string): string {
     return [...new Set(words)].join(' ');
 }
 
+function escapeIcalText(value: string): string {
+    return value
+        .replace(/\\/g, '\\\\')
+        .replace(/\r\n|\r|\n/g, '\\n')
+        .replace(/,/g, '\\,')
+        .replace(/;/g, '\\;');
+}
+
+function escapeIcalParamQuoted(value: string): string {
+    return value
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\r\n|\r|\n/g, ' ');
+}
+
 function resolveLocation(rawLoc: string) {
     if (!rawLoc || rawLoc.toLowerCase() === 'online' || /^(https?:\/\/[^\s]+)/i.test(rawLoc.trim())) {
         return { key: 'Online', name: 'Online', address: 'Online', coords: '0,0', plusCode: '', notes: '', room: '' };
@@ -158,7 +173,7 @@ function enhanceEvent(lines: string[]): string[] {
 
     const enhancedLoc = resolveLocation(locationRaw);
     const event = ['BEGIN:VEVENT'];
-    event.push(`SUMMARY:${summary}`);
+    event.push(`SUMMARY:${escapeIcalText(summary)}`);
 
     let uiLabel = `${enhancedLoc.room || locationRaw} - ${enhancedLoc.name}`;
     if (enhancedLoc.key === 'CUBE') {
@@ -178,24 +193,26 @@ function enhanceEvent(lines: string[]): string[] {
     }
 
     if (enhancedLoc.key === 'Unrecognized') {
-        event.push(`LOCATION:${locationRaw}`);
+        event.push(`LOCATION:${escapeIcalText(locationRaw)}`);
     } else if (enhancedLoc.key === 'Online') {
         event.push('LOCATION:Online');
         event.push('X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS="Online";X-APPLE-RADIUS=50;X-TITLE="Online";X-APPLE-REFERENCEFRAME=1:geo:0,0');
     } else {
         const rawAddress = enhancedLoc.address || '';
-        const escapedAddress = rawAddress.replace(/,/g, '\\,').replace(/;/g, '\\;');
-        const escapedLabel = uiLabel.replace(/,/g, '\\,').replace(/;/g, '\\;');
+        const escapedAddress = escapeIcalText(rawAddress);
+        const escapedLabel = escapeIcalText(uiLabel);
+        const escapedParamAddress = escapeIcalParamQuoted(rawAddress);
+        const escapedParamLabel = escapeIcalParamQuoted(uiLabel);
         const locString = `${escapedLabel}\\, ${escapedAddress}`;
         event.push(`LOCATION:${locString}`);
-        event.push(`X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS="${rawAddress}";X-APPLE-RADIUS=50;X-TITLE="${uiLabel}";X-APPLE-REFERENCEFRAME=1:geo:${enhancedLoc.coords}`);
+        event.push(`X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS="${escapedParamAddress}";X-APPLE-RADIUS=50;X-TITLE="${escapedParamLabel}";X-APPLE-REFERENCEFRAME=1:geo:${enhancedLoc.coords}`);
     }
 
     const descParts = [];
     descParts.push(`Course ID: ${courseId}`);
     if (enhancedLoc.notes) descParts.push(enhancedLoc.notes);
     descParts.push(`Original Location: ${locationRaw}`);
-    event.push(`DESCRIPTION:${descParts.join('\\n')}`);
+    event.push(`DESCRIPTION:${escapeIcalText(descParts.join('\n'))}`);
 
     for (const line of safeLines) {
         event.push(line);

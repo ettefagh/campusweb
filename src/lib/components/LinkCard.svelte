@@ -2,6 +2,8 @@
 	import { createEventDispatcher } from "svelte";
 	import { accessibility } from "$lib/stores/accessibility";
 	import { t } from "$lib/i18n";
+	import IosAccessibilityIcon from "$lib/components/IosAccessibilityIcon.svelte";
+	import { getLinkIconClass, getLinkIconTheme } from "$lib/utils/linkIcons";
 
 	export let link: {
 		id: string;
@@ -18,6 +20,7 @@
 	export let reorderMode: boolean = false;
 	export let customUrl: string | undefined = undefined;
 	export let showTag: boolean = false;
+	export let variant: "glass" | "compact-list" = "glass";
 
 	const dispatch = createEventDispatcher();
 
@@ -34,6 +37,16 @@
 		}
 
 		recordLinkClick();
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (!editMode && !reorderMode) return;
+		if (e.key !== " " && e.key !== "Enter") return;
+
+		e.preventDefault();
+		if (editMode) {
+			dispatch("toggleFavorite", { linkId: link.id });
+		}
 	}
 
 	function toggleFavorite(e: MouseEvent) {
@@ -81,10 +94,25 @@
 		}
 		if ($accessibility.screenReaderHints) {
 			const dest = displayDesc ? `${displayDesc}. ` : '';
-			return `${displayTitle}. ${dest}Opens ${link.url} in a new tab.`;
+			const destination = isInternalLink
+				? "Opens in CampusWeb."
+				: useViewer && link.iframeable === true
+					? "Opens in the CampusWeb viewer."
+					: "Opens in a new tab.";
+			return `${displayTitle}. ${dest}${destination}`;
 		}
 		return undefined;
 	})();
+
+	$: linkIconClass = getLinkIconClass(link);
+	$: linkIconTheme = getLinkIconTheme(link);
+	$: linkIconStyle = [
+		`--link-icon-bg: ${linkIconTheme.background}`,
+		`--link-icon-border: ${linkIconTheme.border}`,
+		`--link-icon-shadow: ${linkIconTheme.shadow}`,
+		`--link-hover-bg: ${linkIconTheme.hoverBackground}`,
+		`--link-accent: ${linkIconTheme.accent}`
+	].join("; ");
 </script>
 
 <div
@@ -93,8 +121,10 @@
 	class:reorder-mode={reorderMode}
 	class:not-favorite={editMode && !isFavorite}
 	class:a11y-patterns={$accessibility.assistivePatterns}
+	class:compact-list={variant === "compact-list"}
 	data-id={link.id}
 	role={reorderMode ? "listitem" : undefined}
+	style={linkIconStyle}
 >
 	<a
 		href={finalUrl}
@@ -103,14 +133,22 @@
 		target={editMode || reorderMode || link.url.startsWith('/') ? undefined : "_blank"}
 		rel={editMode || reorderMode || link.url.startsWith('/') ? undefined : "noopener noreferrer"}
 		on:click={handleClick}
+		on:keydown={handleKeydown}
 		role={editMode || reorderMode ? "button" : undefined}
 		tabindex={editMode || reorderMode ? 0 : undefined}
 		aria-pressed={editMode ? isFavorite : undefined}
 		aria-label={ariaLabel}
 		class:is-favorite={isFavorite}
+		class:compact-list={variant === "compact-list"}
 	>
 
-		<span class="icon" aria-hidden="true">{link.icon}</span>
+		<span class="icon" aria-hidden="true">
+			{#if linkIconClass === "ios-accessibility"}
+				<IosAccessibilityIcon />
+			{:else}
+				<i class={linkIconClass}></i>
+			{/if}
+		</span>
 		<div class="content">
 			<h3 class="title">{displayTitle}</h3>
 			{#if displayDesc}
@@ -124,6 +162,10 @@
 			<div class="edit-indicator" class:is-favorite={isFavorite} aria-hidden="true">
 				<span class="indicator-icon">{isFavorite ? "⭐" : "☆"}</span>
 			</div>
+		{:else if variant === "compact-list"}
+			<span class="compact-chevron" aria-hidden="true">
+				<i class="ph-bold ph-caret-right"></i>
+			</span>
 		{/if}
 	</a>
 </div>
@@ -135,6 +177,11 @@
 		gap: var(--spacing-sm);
 		transition: opacity 0.2s;
 		margin-top: 15px;
+	}
+
+	.link-card-container.compact-list {
+		margin-top: 0;
+		width: 100%;
 	}
 
 	@media (min-width: 768px) {
@@ -173,6 +220,31 @@
 		box-shadow: var(--glass-shadow);
 		position: relative;
 		overflow: hidden;
+	}
+
+	.link-card.compact-list {
+		align-items: center;
+		gap: 14px;
+		min-height: 82px;
+		padding: 14px 16px;
+		background: transparent;
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
+		border: none;
+		border-radius: 0;
+		box-shadow: none;
+	}
+
+	.link-card.compact-list:hover,
+	.link-card.compact-list:focus-visible {
+		transform: none;
+		background: var(--link-hover-bg, rgba(212, 68, 7, 0.06));
+		box-shadow: none;
+		border-color: transparent;
+	}
+
+	.link-card.compact-list::before {
+		display: none;
 	}
 
 	.link-card::before {
@@ -234,7 +306,7 @@
 	.link-card:focus-visible {
 		transform: translateY(-3px);
 		box-shadow: var(--glass-shadow-hover);
-		border-color: rgba(212, 68, 7, 0.35);
+		border-color: var(--link-icon-border, rgba(212, 68, 7, 0.35));
 		background: var(--glass-bg-strong);
 	}
 
@@ -248,13 +320,41 @@
 	}
 
 	.icon {
-		font-size: 32px;
-		line-height: 1;
+		width: 38px;
+		height: 38px;
+		display: grid;
+		place-items: center;
+		border-radius: 12px;
+		background: var(--link-icon-bg, linear-gradient(135deg, #f7b801, #f18701));
+		border: 1px solid var(--link-icon-border, #ffe1a1);
 		flex-shrink: 0;
-		filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+		filter: drop-shadow(0 1px 2px var(--link-icon-shadow, rgba(241, 135, 1, 0.24)));
 	}
 
+	.icon i,
+	.icon :global(.ios-accessibility-icon) {
+		display: block;
+		color: #ffffff;
+		font-size: 27px;
+		line-height: 1;
+	}
 
+	.link-card.compact-list .icon {
+		width: 52px;
+		height: 52px;
+		display: grid;
+		place-items: center;
+		border-radius: 13px;
+		background: var(--link-icon-bg, linear-gradient(135deg, #f7b801, #f18701));
+		border: 1px solid var(--link-icon-border, #ffe1a1);
+		filter: none;
+		box-shadow: 0 9px 18px var(--link-icon-shadow, rgba(241, 135, 1, 0.24));
+	}
+
+	.link-card.compact-list .icon i,
+	.link-card.compact-list .icon :global(.ios-accessibility-icon) {
+		font-size: 33px;
+	}
 
 	.content {
 		flex: 1;
@@ -268,6 +368,13 @@
 		color: var(--text-color);
 	}
 
+	.link-card.compact-list .title {
+		font-size: 1.02rem;
+		line-height: 1.18;
+		margin-bottom: 3px;
+		color: var(--text-color);
+	}
+
 	.description {
 		font-size: 0.875rem;
 		color: var(--text-color-secondary);
@@ -275,15 +382,32 @@
 		line-height: 1.4;
 	}
 
+	.link-card.compact-list .description {
+		font-size: 0.91rem;
+		line-height: 1.22;
+		color: var(--text-color-secondary);
+		margin: 0;
+		max-width: 27ch;
+	}
+
+	.compact-chevron {
+		display: inline-grid;
+		place-items: center;
+		margin-left: auto;
+		color: var(--text-color-secondary);
+		font-size: 1.2rem;
+		opacity: 0.82;
+	}
+
 	.category {
 		display: inline-block;
 		font-size: 0.75rem;
 		padding: 2px 8px;
-		background: rgba(212, 68, 7, 0.12);
-		color: var(--primary-color);
+		background: var(--link-hover-bg, rgba(212, 68, 7, 0.08));
+		color: var(--link-accent, var(--primary-color));
 		border-radius: 6px;
 		font-weight: 500;
-		border: 1px solid rgba(212, 68, 7, 0.2);
+		border: 1px solid var(--link-icon-border, rgba(212, 68, 7, 0.2));
 	}
 
 	.edit-indicator {

@@ -139,17 +139,17 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: calc(var(--touch-target-min) + var(--spacing-md) * 4);
-    background: var(--glass-bg-strong);
+    height: calc(74px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.92);
     backdrop-filter: var(--glass-blur-strong);
     -webkit-backdrop-filter: var(--glass-blur-strong);
-    border-top: 1px solid var(--glass-border);
+    border-top: 1px solid rgba(7, 19, 47, 0.08);
     display: flex;
     justify-content: space-around;
     align-items: center;
     z-index: 100;
-    padding: var(--spacing-md) var(--spacing-sm);
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.1), 0 -1px 0 var(--glass-border-subtle);
+    padding: 8px max(10px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-right));
+    box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.07), 0 -1px 0 rgba(255, 255, 255, 0.8);
   }
 
   :global([data-theme="dark"]) .bottom-nav {
@@ -162,13 +162,13 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--spacing-xs);
+    gap: 5px;
     min-width: var(--touch-target-min);
-    min-height: var(--touch-target-min);
-    padding: var(--spacing-sm);
-    color: var(--text-color);
+    min-height: 54px;
+    padding: 5px 6px;
+    color: var(--text-color-secondary);
     text-decoration: none;
-    border-radius: var(--radius-md);
+    border-radius: 14px;
     transition: all 0.2s ease;
     position: relative;
   }
@@ -180,37 +180,28 @@
 
   .nav-item.active {
     color: var(--primary-color);
-    background: rgba(212, 68, 7, 0.12);
+    background: transparent;
   }
 
   .nav-item.active::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 32px;
-    height: 3px;
-    background: var(--primary-color);
-    border-radius: 0 0 3px 3px;
-    box-shadow: 0 0 8px rgba(212, 68, 7, 0.5);
+    content: none;
   }
 
   .bottom-nav .icon {
-    font-size: 24px;
+    font-size: 25px;
     line-height: 1;
   }
 
   .bottom-nav .label {
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 800;
     line-height: 1;
   }
 
   /* Safe area for notched devices */
   @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .bottom-nav {
-      padding-bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom));
+      padding-bottom: calc(8px + env(safe-area-inset-bottom));
     }
   }
 

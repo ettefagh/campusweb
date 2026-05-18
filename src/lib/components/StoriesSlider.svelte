@@ -27,13 +27,14 @@
 </script>
 
 <script lang="ts">
-  import { onDestroy } from "svelte";
+  import { onDestroy, tick } from "svelte";
   import StorySuggestionModal from "./StorySuggestionModal.svelte";
 
   export let stories: Story[] = [];
   export let allowSuggestions: boolean = true;
   export let loading: boolean = false;
-  
+  export let variant: "bubble" | "rectangular" = "bubble";
+
   let isSuggestionModalOpen = false;
 
   // Reactive filtering of expired stories
@@ -54,6 +55,8 @@
   let currentSlide: StorySlide | undefined;
   let currentSlideCount = 0;
   let sessionViewedStoryIds = new Set<string>();
+  let storyCloseButton: HTMLButtonElement | undefined;
+  let storyOpener: HTMLElement | undefined;
 
   const STORY_DURATION_MS = 6000;
   const TICK_MS = 50;
@@ -69,7 +72,10 @@
 
   function getRenderableSlides(story?: Story) {
     if (!story || !Array.isArray(story.slides)) return [];
-    return story.slides.filter((slide) => typeof slide.imageUrl === "string" && slide.imageUrl.trim().length > 0);
+    return story.slides.filter(
+      (slide) =>
+        typeof slide.imageUrl === "string" && slide.imageUrl.trim().length > 0,
+    );
   }
 
   function getStorySlideCount(story?: Story) {
@@ -80,12 +86,14 @@
     if (!story) return [];
     const renderableSlides = getRenderableSlides(story);
     if (renderableSlides.length > 0) return renderableSlides;
-    return [{
-      imageUrl: story.imageUrl,
-      subtitle: story.subtitle || "",
-      tag: story.tag,
-      linkUrl: story.linkUrl
-    }];
+    return [
+      {
+        imageUrl: story.imageUrl,
+        subtitle: story.subtitle || "",
+        tag: story.tag,
+        linkUrl: story.linkUrl,
+      },
+    ];
   }
 
   function recordStoryView(storyId: string) {
@@ -107,7 +115,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: payload,
-        keepalive: true
+        keepalive: true,
       }).catch(() => {});
     }
   }
@@ -116,10 +124,15 @@
   $: currentSlides = getStorySlides(currentStory);
   $: currentSlide = currentSlides[activeSlideIndex] || currentSlides[0];
   $: currentSlideCount = currentSlides.length;
-  $: loadingPlaceholderCount = loading ? (storiesToShow.length === 0 ? 6 : 3) : 0;
+  $: loadingPlaceholderCount = loading
+    ? storiesToShow.length === 0
+      ? 6
+      : 3
+    : 0;
 
   // ── Open / close ─────────────────────────────────────────────────
-  function openStory(index: number) {
+  async function openStory(index: number, opener?: HTMLElement) {
+    storyOpener = opener;
     sessionViewedStoryIds = new Set<string>();
     activeIndex = index;
     activeSlideIndex = 0;
@@ -130,12 +143,16 @@
       recordStoryView(storiesToShow[index].id);
     }
     startProgress();
+    await tick();
+    storyCloseButton?.focus();
   }
 
   function closeViewer() {
     viewerOpen = false;
     sessionViewedStoryIds = new Set<string>();
     stopProgress();
+    storyOpener?.focus();
+    storyOpener = undefined;
   }
 
   function markSeen(index: number) {
@@ -164,7 +181,7 @@
     if (reset) progressPct = 0;
     isPaused = false;
     stopProgress();
-    
+
     progressInterval = setInterval(() => {
       if (isPaused) return;
       progressPct += (TICK_MS / STORY_DURATION_MS) * 100;
@@ -274,23 +291,32 @@
   // ── Restore seen state and sort ──────────────────────────────────
   let initialSortDone = false;
 
-  $: if (typeof window !== "undefined" && stories.length > 0 && !initialSortDone) {
+  $: if (
+    typeof window !== "undefined" &&
+    stories.length > 0 &&
+    !initialSortDone
+  ) {
     try {
       const seenIds = JSON.parse(
         localStorage.getItem("srh-stories-seen") || "[]",
       ) as string[];
-      
+
       // Update seen status based on localStorage
-      let updatedStories = stories.map((s) => ({ ...s, seen: seenIds.includes(s.id) }));
-      
+      let updatedStories = stories.map((s) => ({
+        ...s,
+        seen: seenIds.includes(s.id),
+      }));
+
       // Sort unseen stories first, then sort by newest
       updatedStories.sort((a, b) => {
         if (a.seen === b.seen) {
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         }
         return a.seen ? 1 : -1;
       });
-      
+
       stories = updatedStories;
       initialSortDone = true;
     } catch {}
@@ -304,7 +330,7 @@
     return {
       destroy() {
         if (node.parentNode) node.parentNode.removeChild(node);
-      }
+      },
     };
   }
 </script>
@@ -312,17 +338,31 @@
 <svelte:window on:keydown={onKeydown} />
 
 <!-- ── Stories bar ───────────────────────────────────────────────── -->
-<div class="stories-bar" role="list" aria-label="Campusweb Stories">
+<div
+  class="stories-bar"
+  class:rectangular={variant === "rectangular"}
+  role="region"
+  aria-label="Campusweb Stories"
+>
   {#if allowSuggestions}
     <button
       class="story-bubble add-story-btn"
+      class:rectangular={variant === "rectangular"}
       on:click={() => (isSuggestionModalOpen = true)}
       aria-label="Suggest a Story"
     >
-      <div class="story-ring add-ring">
-        <div class="add-icon">+</div>
-      </div>
-      <span class="story-label">Add Story</span>
+      {#if variant === "rectangular"}
+        <div class="story-card add-card">
+          <div class="add-card-icon"><i class="ph-bold ph-plus"></i></div>
+          <span>Suggest</span>
+          <strong>Campus Story</strong>
+        </div>
+      {:else}
+        <div class="story-ring add-ring">
+          <div class="add-icon">+</div>
+        </div>
+        <span class="story-label">Add Story</span>
+      {/if}
     </button>
   {/if}
 
@@ -330,12 +370,17 @@
     {#each Array(loadingPlaceholderCount) as _, idx}
       <div
         class="story-bubble placeholder"
+        class:rectangular={variant === "rectangular"}
         aria-hidden="true"
       >
-        <div class="story-ring seen placeholder-ring">
-          <div class="story-avatar placeholder-avatar"></div>
-        </div>
-        <span class="story-label placeholder-label">Loading</span>
+        {#if variant === "rectangular"}
+          <div class="story-card placeholder-card"></div>
+        {:else}
+          <div class="story-ring seen placeholder-ring">
+            <div class="story-avatar placeholder-avatar"></div>
+          </div>
+          <span class="story-label placeholder-label">Loading</span>
+        {/if}
       </div>
     {/each}
   {/if}
@@ -343,34 +388,62 @@
   {#each storiesToShow as story, idx}
     <button
       class="story-bubble"
-      on:click={() => openStory(idx)}
-      aria-label="Open story: {story.title}"
+      class:rectangular={variant === "rectangular"}
+      on:click={(event) => openStory(idx, event.currentTarget as HTMLElement)}
+      aria-label="{story.seen ? 'Replay' : 'Open'} story: {story.title}"
     >
-      <div
-        class="story-ring {story.seen ? 'seen' : 'unseen'}"
-        class:has-tag={!!story.tag}
-        class:sequence={getStorySlideCount(story) > 1}
-        style:--story-stripes={getStorySlideCount(story) > 1 ? clampStripeCount(getStorySlideCount(story)) : 0}
-      >
-        <img
-          src={getStorySlides(story)[0]?.imageUrl || story.imageUrl}
-          alt={story.title}
-          class="story-avatar"
-          loading={idx < 5 ? 'eager' : 'lazy'}
-          fetchpriority={idx < 3 ? 'high' : 'auto'}
-          draggable="false"
-          on:contextmenu|preventDefault
-          on:error={(e) => {
-            // Fallback to SRH logo on broken image
-            const img = e.currentTarget as HTMLImageElement;
-            img.src = "/icon-light.png";
-          }}
-        />
-        {#if story.tag}
-          <span class="story-tag {tagClass(story.tag)}">{story.tag}</span>
-        {/if}
-      </div>
-      <span class="story-label">{story.title}</span>
+      {#if variant === "rectangular"}
+        <article class="story-card" class:seen={story.seen}>
+          <div class="story-card-media">
+            <img
+              src={getStorySlides(story)[0]?.imageUrl || story.imageUrl}
+              alt=""
+              loading={idx < 5 ? "eager" : "lazy"}
+              fetchpriority={idx < 3 ? "high" : "auto"}
+              draggable="false"
+              on:contextmenu|preventDefault
+              on:error={(e) => {
+                const img = e.currentTarget as HTMLImageElement;
+                img.src = "/icon-light.png";
+              }}
+            />
+            {#if story.tag}
+              <span class="story-tag {tagClass(story.tag)}">{story.tag}</span>
+            {/if}
+          </div>
+          <div class="story-card-body">
+            <strong>{story.title}</strong>
+            <span>{story.subtitle}</span>
+          </div>
+        </article>
+      {:else}
+        <div
+          class="story-ring {story.seen ? 'seen' : 'unseen'}"
+          class:has-tag={!!story.tag}
+          class:sequence={getStorySlideCount(story) > 1}
+          style:--story-stripes={getStorySlideCount(story) > 1
+            ? clampStripeCount(getStorySlideCount(story))
+            : 0}
+        >
+          <img
+            src={getStorySlides(story)[0]?.imageUrl || story.imageUrl}
+            alt=""
+            class="story-avatar"
+            loading={idx < 5 ? "eager" : "lazy"}
+            fetchpriority={idx < 3 ? "high" : "auto"}
+            draggable="false"
+            on:contextmenu|preventDefault
+            on:error={(e) => {
+              const img = e.currentTarget as HTMLImageElement;
+              img.src = "/icon-light.png";
+            }}
+          />
+          {#if story.tag}
+            <span class="story-tag {tagClass(story.tag)}">{story.tag}</span>
+          {/if}
+        </div>
+        <span class="story-label">{story.title}</span>
+      {/if}
     </button>
   {/each}
 
@@ -378,12 +451,17 @@
     {#each Array(loadingPlaceholderCount) as _, idx}
       <div
         class="story-bubble placeholder"
+        class:rectangular={variant === "rectangular"}
         aria-hidden="true"
       >
-        <div class="story-ring seen placeholder-ring">
-          <div class="story-avatar placeholder-avatar"></div>
-        </div>
-        <span class="story-label placeholder-label">Loading</span>
+        {#if variant === "rectangular"}
+          <div class="story-card placeholder-card"></div>
+        {:else}
+          <div class="story-ring seen placeholder-ring">
+            <div class="story-avatar placeholder-avatar"></div>
+          </div>
+          <span class="story-label placeholder-label">Loading</span>
+        {/if}
       </div>
     {/each}
   {/if}
@@ -397,14 +475,15 @@
     role="dialog"
     aria-modal="true"
     tabindex="-1"
-    aria-label="Viewing story: {currentStory.title}"
+    aria-labelledby="story-viewer-title"
+    aria-describedby="story-viewer-subtitle"
     on:pointerdown={onPointerDown}
     on:pointerup={onPointerUp}
     on:mouseleave={resumeStory}
     on:contextmenu|preventDefault
   >
     <!-- Progress bars -->
-    <div class="story-progress-bars">
+    <div class="story-progress-bars" aria-hidden="true">
       {#each storiesToShow as _, i}
         <div class="story-progress-track">
           <div
@@ -431,6 +510,7 @@
         </div>
       </div>
       <button
+        bind:this={storyCloseButton}
         class="story-close"
         on:click={closeViewer}
         aria-label="Close stories">✕</button
@@ -487,8 +567,12 @@
     <!-- Footer -->
     <div class="story-footer">
       <div class="story-text">
-        <div class="story-title">{currentStory.title}</div>
-        <div class="story-subtitle">{currentStory.subtitle || currentSlide?.subtitle}</div>
+        <div id="story-viewer-title" class="story-title">
+          {currentStory.title}
+        </div>
+        <div id="story-viewer-subtitle" class="story-subtitle">
+          {currentStory.subtitle || currentSlide?.subtitle}
+        </div>
       </div>
       {#if currentSlide?.linkUrl || currentStory.linkUrl}
         <a
@@ -505,16 +589,25 @@
   </div>
 {/if}
 
+<StorySuggestionModal bind:isOpen={isSuggestionModalOpen} />
+
 <style>
   /* ── Stories bar ────────────────────────────────────────────── */
   .stories-bar {
     display: flex;
-    gap: 12px;
+    gap: 11px;
     overflow-x: auto;
     padding: 8px 0 12px;
 
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .stories-bar.rectangular {
+    gap: 14px;
+    padding: 8px 2px 16px;
+    margin-inline: -2px;
+    scroll-snap-type: x proximity;
   }
   .stories-bar::-webkit-scrollbar {
     display: none;
@@ -535,6 +628,121 @@
     color: inherit;
   }
 
+  .story-bubble.rectangular {
+    width: 133px;
+    display: block;
+    text-align: left;
+    scroll-snap-align: start;
+  }
+
+  .story-card {
+    width: 124px;
+    min-height: 184px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--surface-solid, #fff);
+    border: 1px solid var(--surface-border, rgba(7, 19, 47, 0.08));
+    box-shadow: var(--campus-shadow-soft, 0 10px 28px rgba(15, 23, 42, 0.07));
+    color: var(--text-color);
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .story-bubble.rectangular:hover .story-card,
+  .story-bubble.rectangular:focus-visible .story-card {
+    transform: translateY(-3px);
+    box-shadow: var(--campus-shadow, 0 18px 45px rgba(15, 23, 42, 0.08));
+  }
+
+  .story-card.seen {
+    opacity: 0.86;
+  }
+
+  .story-card-media {
+    position: relative;
+    height: 96px;
+    overflow: hidden;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 116, 36, 0.12),
+      rgba(132, 92, 255, 0.11)
+    );
+  }
+
+  .story-card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .story-card-body {
+    padding: 14px 12px 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .story-card-body strong {
+    font-size: 0.98rem;
+    line-height: 1.12;
+    font-weight: 900;
+    color: var(--text-color);
+  }
+
+  .story-card-body span {
+    font-size: 0.86rem;
+    line-height: 1.2;
+    font-weight: 650;
+    color: var(--text-color-secondary);
+  }
+
+  .add-card {
+    display: flex;
+    min-height: 184px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 4px;
+    padding: 14px;
+  }
+
+  .add-card-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary-color), #ff7a2f);
+    margin-bottom: auto;
+    box-shadow: 0 10px 22px rgba(var(--primary-color-rgb, 212, 68, 7), 0.22);
+  }
+
+  .add-card span {
+    font-size: 0.82rem;
+    font-weight: 750;
+    color: var(--text-color-secondary);
+  }
+
+  .add-card strong {
+    font-size: 1rem;
+    line-height: 1.12;
+  }
+
+  .placeholder-card {
+    min-height: 184px;
+    background: linear-gradient(
+      90deg,
+      rgba(148, 163, 184, 0.1),
+      rgba(255, 255, 255, 0.46),
+      rgba(148, 163, 184, 0.1)
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
   .story-ring {
     width: 68px;
     height: 68px;
@@ -548,7 +756,7 @@
   }
 
   .story-ring::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -563,11 +771,17 @@
 
   .story-ring.has-tag::before {
     /* Intersection cropping: creates a "notch" for the tag AND keeps the inner hole */
-    mask-image: 
-      radial-gradient(circle at 50% 100%, transparent 22px, black 22.5px),
+    mask-image: radial-gradient(
+        circle at 50% 100%,
+        transparent 22px,
+        black 22.5px
+      ),
       radial-gradient(circle, transparent 30px, black 30.5px);
-    -webkit-mask-image: 
-      radial-gradient(circle at 50% 100%, transparent 22px, black 22.5px),
+    -webkit-mask-image: radial-gradient(
+        circle at 50% 100%,
+        transparent 22px,
+        black 22.5px
+      ),
       radial-gradient(circle, transparent 30px, black 30.5px);
     mask-composite: intersect;
     -webkit-mask-composite: source-in;
@@ -588,10 +802,22 @@
     letter-spacing: 0.04em;
     border: 2px solid var(--card-bg, #fff);
     z-index: 5;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     white-space: nowrap;
     line-height: 1;
     overflow: visible;
+  }
+
+  .story-card .story-tag {
+    left: 10px;
+    bottom: 8px;
+    transform: none;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.64rem;
+    letter-spacing: 0;
+    box-shadow: 0 5px 12px rgba(15, 23, 42, 0.16);
   }
 
   .story-tag {
@@ -609,13 +835,13 @@
   }
 
   .story-tag.tag-event {
-    background: #dcfce7;
-    color: #166534;
+    background: #22c55e;
+    color: #fff;
   }
 
   .story-tag.tag-promo {
-    background: #fef3c7;
-    color: #92400e;
+    background: #3b82f6;
+    color: #fff;
   }
 
   .story-tag.tag-ad {
@@ -653,7 +879,8 @@
     background: repeating-conic-gradient(
       from -90deg,
       #e6683c 0 calc((360deg / var(--story-stripes)) * 0.58),
-      transparent calc((360deg / var(--story-stripes)) * 0.58) calc(360deg / var(--story-stripes))
+      transparent calc((360deg / var(--story-stripes)) * 0.58)
+        calc(360deg / var(--story-stripes))
     );
   }
 
@@ -665,7 +892,8 @@
     background: repeating-conic-gradient(
       from -90deg,
       #94a3b8 0 calc((360deg / var(--story-stripes)) * 0.58),
-      transparent calc((360deg / var(--story-stripes)) * 0.58) calc(360deg / var(--story-stripes))
+      transparent calc((360deg / var(--story-stripes)) * 0.58)
+        calc(360deg / var(--story-stripes))
     );
   }
 
@@ -741,7 +969,8 @@
   }
 
   @keyframes storyPulse {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 0.55;
     }
     50% {
@@ -994,5 +1223,3 @@
     }
   }
 </style>
-
-<StorySuggestionModal bind:isOpen={isSuggestionModalOpen} />

@@ -3,12 +3,40 @@
   import BottomNav from "$lib/components/BottomNav.svelte";
   import UpdatePrompt from "$lib/components/UpdatePrompt.svelte";
   import GlobalAlert from "$lib/components/GlobalAlert.svelte";
+  import WelcomeOnboarding from "$lib/components/WelcomeOnboarding.svelte";
   import { browser } from "$app/environment";
+  import { onMount } from "svelte";
   import { afterNavigate } from "$app/navigation";
   import { activeA11yClasses, A11Y_CLASS_MAP } from "$lib/stores/accessibility";
   import { settingsStore } from "$lib/stores/settingsStore";
   import { page } from "$app/stores";
   import FeedContent from "$lib/components/FeedContent.svelte";
+
+  const WELCOME_STORAGE_KEY = "campusweb_installed_welcome_seen";
+  let showWelcomeOnboarding = false;
+
+  function isInstalledAppLaunch() {
+    const nav = navigator as Navigator & { standalone?: boolean };
+    return (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.matchMedia("(display-mode: fullscreen)").matches ||
+      window.matchMedia("(display-mode: minimal-ui)").matches ||
+      nav.standalone === true ||
+      document.referrer.startsWith("android-app://")
+    );
+  }
+
+  function closeWelcomeOnboarding() {
+    showWelcomeOnboarding = false;
+    if (browser) {
+      localStorage.setItem(WELCOME_STORAGE_KEY, "true");
+    }
+  }
+
+  onMount(() => {
+    showWelcomeOnboarding =
+      isInstalledAppLaunch() && !localStorage.getItem(WELCOME_STORAGE_KEY);
+  });
 
   // Bridge: sync accessibility store → <html> class list.
   if (browser) {
@@ -77,6 +105,9 @@
 
 <BottomNav />
 <UpdatePrompt />
+{#if showWelcomeOnboarding}
+  <WelcomeOnboarding on:close={closeWelcomeOnboarding} />
+{/if}
 
 <style>
   .page-slot.hidden {

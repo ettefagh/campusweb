@@ -23,17 +23,24 @@ export interface CalendarEvent {
 }
 
 function getFriendlyUrlLabel(url: string): string {
-	const lowercase = url.toLowerCase();
-	if (lowercase.includes('teams.microsoft.com') || lowercase.includes('teams.live.com')) {
+	const host = (() => {
+		try {
+			return new URL(url).hostname.toLowerCase();
+		} catch {
+			return '';
+		}
+	})();
+
+	if (host === 'teams.microsoft.com' || host === 'teams.live.com') {
 		return 'Teams Meeting';
 	}
-	if (lowercase.includes('zoom.us')) {
+	if (host === 'zoom.us' || host.endsWith('.zoom.us')) {
 		return 'Zoom Meeting';
 	}
-	if (lowercase.includes('meet.google.com')) {
+	if (host === 'meet.google.com') {
 		return 'Google Meet';
 	}
-	if (lowercase.includes('webex.com')) {
+	if (host === 'webex.com' || host.endsWith('.webex.com')) {
 		return 'Webex Meeting';
 	}
 	return 'Online Link';
@@ -86,7 +93,7 @@ export function parseICalEvents(
 				if (match) {
 					locationUrl = match[0];
 				}
-				shortLocation = getFriendlyUrlLabel(fullLocation);
+					shortLocation = locationUrl ? getFriendlyUrlLabel(locationUrl) : 'Online Link';
 			} else {
 				shortLocation = fullLocation.includes(',')
 					? fullLocation.split(',')[0].trim()

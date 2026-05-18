@@ -573,7 +573,8 @@
       {/if}
 
       {#if !$settingsStore.campusId && filteredContacts.length === 0}
-        <div class="verification-hint glass">
+        <div class="contact-results-list">
+          <div class="verification-hint glass missing-content contact-card-like">
           <div class="hint-icon">📍</div>
           <div class="hint-text">
             <h3>Campus Not Selected</h3>
@@ -593,6 +594,7 @@
               Go to Settings
             </button>
           </div>
+        </div>
         </div>
       {:else if !searchQuery.trim() || filteredContacts.length > 0}
         {#if isContactsLoading}
@@ -719,22 +721,22 @@
             {#if !searchQuery.trim() && !$settingsStore.programName && filteredContacts.length > visibleContacts.length}
               <p class="view-more-hint">Search to see more contacts...</p>
             {/if}
-          </div>
-        {/if}
-        {#if !$settingsStore.emailVerified}
-          <div class="verification-hint glass">
-            <div class="hint-icon">🔒</div>
-            <div class="hint-text">
-              <h3>More contacts available</h3>
-              <p>Public contacts are shown. Verify your SRH email to unlock the full internal directory.</p>
-              <button
-                class="hint-btn primary"
-                onclick={() =>
-                  (window.location.href = "/settings#directory-access")}
-              >
-                Verify SRH Email
-              </button>
+            {#if !$settingsStore.emailVerified}
+            <div class="verification-hint glass contact-card-like">
+              <div class="hint-icon">🔒</div>
+              <div class="hint-text">
+                <h3>More contacts available</h3>
+                <p>Public contacts are shown. Verify your SRH email to unlock the full internal directory.</p>
+                <button
+                  class="hint-btn primary"
+                  onclick={() =>
+                    (window.location.href = "/settings#directory-access")}
+                >
+                  Verify SRH Email
+                </button>
+              </div>
             </div>
+            {/if}
           </div>
         {/if}
       {:else}
@@ -1289,6 +1291,28 @@
     background: var(--card-bg);
     border: 1px dashed var(--border-color);
     text-align: center;
+  }
+
+  .verification-hint.contact-card-like {
+    border-style: solid;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl) var(--spacing-lg);
+    margin: 0;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .verification-hint.missing-content {
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        rgba(var(--primary-color-rgb, 212, 68, 7), 0.035) 0px,
+        rgba(var(--primary-color-rgb, 212, 68, 7), 0.035) 12px,
+        transparent 12px,
+        transparent 24px
+      ),
+      var(--card-bg);
+    border-color: rgba(var(--primary-color-rgb, 212, 68, 7), 0.28);
   }
 
   .hint-icon {
