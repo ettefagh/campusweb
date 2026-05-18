@@ -413,7 +413,7 @@
           </div>
           <div class="story-card-body">
             <strong>{story.title}</strong>
-            <span>{story.subtitle}</span>
+            <!-- <span>{story.subtitle}</span> -->
           </div>
         </article>
       {:else}
@@ -629,14 +629,14 @@
   }
 
   .story-bubble.rectangular {
-    width: 133px;
+    width: 104px;
     display: block;
     text-align: left;
     scroll-snap-align: start;
   }
 
   .story-card {
-    width: 124px;
+    width: 106px;
     min-height: 184px;
     overflow: hidden;
     border-radius: 12px;
@@ -678,7 +678,7 @@
   }
 
   .story-card-body {
-    padding: 14px 12px 13px;
+    padding: 8px 6px 7px;
     display: flex;
     flex-direction: column;
     gap: 5px;
