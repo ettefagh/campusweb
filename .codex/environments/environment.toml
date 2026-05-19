@@ -12,3 +12,8 @@ command = '''
 npm run build
 npm run preview
 '''
+
+[[actions]]
+name = "Deploy"
+icon = "tool"
+command = "npm run deploy"

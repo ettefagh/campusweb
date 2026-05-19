@@ -1877,6 +1877,25 @@
     padding-bottom: 0;
   }
 
+  @media (max-width: 767px) {
+    .links-scroll-area.is-enabled {
+      max-height: min(72dvh, calc((10 * 82px) + (9 * 12px) + 128px));
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      mask-image: linear-gradient(to bottom, #000 88%, transparent 100%);
+    }
+
+    .links-scroll-area.is-enabled::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    .links-scroll-content {
+      padding-bottom: var(--spacing-lg);
+    }
+  }
+
   .list-category-section {
     margin: 0;
     padding: 0 0 8px;
