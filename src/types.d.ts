@@ -58,6 +58,13 @@ declare global {
 				STORIES_KV?: any;
 				AUTH_SECURITY_KV?: any;
 				IMAGES_BUCKET?: any;
+				CAMPUS_ANALYTICS?: {
+					writeDataPoint: (data: {
+						blobs?: string[];
+						doubles?: number[];
+						indexes?: string[];
+					}) => void | Promise<void>;
+				};
 			};
 		}
 

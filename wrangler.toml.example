@@ -16,6 +16,10 @@ id = "YOUR_KV_NAMESPACE_ID_HERE"
 binding = "AUTH_SECURITY_KV"
 id = "YOUR_AUTH_SECURITY_KV_NAMESPACE_ID_HERE"
 
+[[analytics_engine_datasets]]
+binding = "CAMPUS_ANALYTICS"
+dataset = "campusweb_usage_events"
+
 # 🖼️ R2 Bucket for Image Hosting
 [[r2_buckets]]
 binding = "IMAGES_BUCKET"
@@ -32,5 +36,7 @@ PRIVATE_TELEGRAM_CHAT_ID = "YOUR_ADMIN_CHAT_ID"
 PRIVATE_SITE_URL = "https://example.com"
 PRIVATE_EMAIL_SENDER = "noreply@example.com"
 PRIVATE_VIRUSTOTAL_API_KEY = "YOUR_VT_API_KEY"
+PRIVATE_CLOUDFLARE_ANALYTICS_API_TOKEN = "YOUR_ANALYTICS_READ_TOKEN"
+PRIVATE_CLOUDFLARE_ANALYTICS_DATASET = "campusweb_usage_events"
 
 PRIVATE_AUTH_SECRET = "replace-with-at-least-32-random-characters"

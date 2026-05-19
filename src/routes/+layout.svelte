@@ -11,9 +11,45 @@
   import { settingsStore } from "$lib/stores/settingsStore";
   import { page } from "$app/stores";
   import FeedContent from "$lib/components/FeedContent.svelte";
+  import { version } from "$app/environment";
 
   const WELCOME_STORAGE_KEY = "campusweb_installed_welcome_seen";
   let showWelcomeOnboarding = false;
+  let hasTrackedOpen = false;
+  let hasTrackedInstall = false;
+
+  function getDisplayMode() {
+    if (window.matchMedia("(display-mode: standalone)").matches) return "standalone";
+    if (window.matchMedia("(display-mode: fullscreen)").matches) return "fullscreen";
+    if (window.matchMedia("(display-mode: minimal-ui)").matches) return "minimal-ui";
+    return "browser";
+  }
+
+  function trackUsageEvent(
+    eventType: "app_open" | "standalone_launch" | "pwa_installed" | "share_link_visit"
+  ) {
+    const payload = JSON.stringify({
+      eventType,
+      surface: "layout",
+      displayMode: getDisplayMode(),
+      appVersion: version
+    });
+
+    try {
+      if ("sendBeacon" in navigator) {
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon("/api/analytics/event", blob);
+        return;
+      }
+    } catch {}
+
+    fetch("/api/analytics/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+      keepalive: true
+    }).catch(() => {});
+  }
 
   function isInstalledAppLaunch() {
     const nav = navigator as Navigator & { standalone?: boolean };
@@ -36,6 +72,31 @@
   onMount(() => {
     showWelcomeOnboarding =
       isInstalledAppLaunch() && !localStorage.getItem(WELCOME_STORAGE_KEY);
+
+    if (!hasTrackedOpen) {
+      hasTrackedOpen = true;
+      trackUsageEvent("app_open");
+      if (isInstalledAppLaunch()) {
+        trackUsageEvent("standalone_launch");
+      }
+    }
+
+    const shareRef = new URL(window.location.href).searchParams.get("ref");
+    if (shareRef === "share" && !sessionStorage.getItem("campusweb_share_visit_tracked")) {
+      sessionStorage.setItem("campusweb_share_visit_tracked", "true");
+      trackUsageEvent("share_link_visit");
+    }
+
+    const onAppInstalled = () => {
+      if (hasTrackedInstall) return;
+      hasTrackedInstall = true;
+      trackUsageEvent("pwa_installed");
+    };
+
+    window.addEventListener("appinstalled", onAppInstalled);
+    return () => {
+      window.removeEventListener("appinstalled", onAppInstalled);
+    };
   });
 
   // Bridge: sync accessibility store → <html> class list.

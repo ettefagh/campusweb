@@ -1,130 +1,300 @@
-import { CAMPUSES } from "$lib/stores/settingsStore";
-import type { WeatherAlert, WeatherAlertResponse } from "$lib/types/weather";
+import { CAMPUS_COORDS } from "$lib/data/campusCoords";
+import { CAMPUSES, type Campus } from "$lib/stores/settingsStore";
+import type {
+  WeatherAlert,
+  WeatherAlertResponse,
+  WeatherCampusAlert,
+  WeatherStory
+} from "$lib/types/weather";
 
-type OpenWeatherGeoResult = {
-  name: string;
-  country: string;
-  state?: string;
-  lat: number;
-  lon: number;
-};
-
-type OpenWeatherAlert = {
-  sender_name?: string;
-  event?: string;
-  start?: number;
-  end?: number;
+type OpenWeatherIndustry = {
+  industry_name?: string;
   description?: string;
-  tags?: string[];
+  severity?: string;
 };
 
-type OpenWeatherOneCallResponse = {
-  alerts?: OpenWeatherAlert[];
-};
-
-function getCampusContext(campusId: string) {
-  const campus = CAMPUSES.find((entry) => entry.id === campusId) ?? null;
-  if (!campus) return null;
-
-  return {
-    campus,
-    query: campus.weatherLocation || [campus.city, campus.country].filter(Boolean).join(",")
+type OpenWeatherAlertItem = {
+  alert_ID?: string;
+  source?: string;
+  title?: string;
+  tag?: string | string[];
+  certainty?: string;
+  urgency?: string;
+  location?: {
+    type?: string;
+    coordinates?: number[][] | number[][][];
   };
+  date?: string;
+  hour?: number;
+  description?: string;
+  industry?: OpenWeatherIndustry[];
+};
+
+type OpenWeatherAlertsResponse = {
+  count?: number;
+  items?: Array<{
+    date?: string;
+    hour?: number;
+    alerts?: OpenWeatherAlertItem[];
+  }>;
+  alerts?: OpenWeatherAlertItem[];
+};
+
+type AlertEnvelope = OpenWeatherAlertItem & {
+  fallbackDate?: string;
+  fallbackHour?: number;
+};
+
+const ALERTS_ENDPOINT = "https://api.openweathermap.org/alerts/1.0";
+
+function resolveCampusCoordinates(campus: Campus) {
+  if (typeof campus.lat === "number" && typeof campus.lon === "number") {
+    return { lat: campus.lat, lon: campus.lon };
+  }
+
+  const fallback = CAMPUS_COORDS[campus.id];
+  if (fallback) return fallback;
+
+  return null;
 }
 
-async function fetchJson<T>(url: string): Promise<T | null> {
-  const response = await fetch(url, {
+function buildLocationParam(lat: number, lon: number) {
+  return encodeURIComponent(
+    JSON.stringify({
+      type: "Point",
+      coordinates: [lon, lat]
+    })
+  );
+}
+
+function fetchJson<T>(url: string): Promise<T | null> {
+  return fetch(url, {
     headers: {
       accept: "application/json"
     }
+  })
+    .then((response) => {
+      if (!response.ok) return null;
+      return response.json() as Promise<T>;
+    })
+    .catch(() => null);
+}
+
+function parseStartTime(item: AlertEnvelope) {
+  if (item.date || item.fallbackDate) {
+    const parsed = new Date(item.date || item.fallbackDate || "");
+    if (!Number.isNaN(parsed.getTime())) {
+      return Math.floor(parsed.getTime() / 1000);
+    }
+  }
+
+  if (typeof item.fallbackHour === "number" && Number.isFinite(item.fallbackHour)) {
+    const date = new Date();
+    date.setMinutes(0, 0, 0);
+    date.setHours(item.fallbackHour);
+    return Math.floor(date.getTime() / 1000);
+  }
+
+  return 0;
+}
+
+function normalizeAlertTags(tag: string | string[] | undefined, severity?: string) {
+  const tags = Array.isArray(tag) ? tag : typeof tag === "string" && tag.trim() ? [tag.trim()] : [];
+
+  if (severity && !tags.includes(severity)) {
+    tags.push(severity);
+  }
+
+  return tags;
+}
+
+function normalizeAlertDescription(alert: OpenWeatherAlertItem) {
+  const industryDescription = alert.industry
+    ?.map((item) => item.description?.trim())
+    .filter((value): value is string => Boolean(value));
+
+  if (alert.description?.trim()) {
+    return alert.description.trim();
+  }
+
+  if (industryDescription?.length) {
+    return industryDescription.join("\n\n");
+  }
+
+  const meta: string[] = [];
+  if (alert.certainty) meta.push(`Certainty: ${alert.certainty}`);
+  if (alert.urgency) meta.push(`Urgency: ${alert.urgency}`);
+  if (alert.tag) {
+    const tagLabel = Array.isArray(alert.tag) ? alert.tag.join(", ") : alert.tag;
+    meta.push(`Tag: ${tagLabel}`);
+  }
+
+  return meta.join(" · ");
+}
+
+function dedupeAlerts(alerts: WeatherAlert[]) {
+  const seen = new Set<string>();
+
+  return alerts.filter((alert) => {
+    const key = [
+      alert.alertId || "",
+      alert.event,
+      alert.start,
+      alert.end,
+      alert.senderName
+    ].join("|");
+
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function normalizeAlerts(response: OpenWeatherAlertsResponse | null): WeatherAlert[] {
+  const items = response?.items ?? [];
+  const rawAlerts: AlertEnvelope[] = [
+    ...(Array.isArray(response?.alerts) ? response?.alerts : []).map((alert) => ({ ...alert })),
+    ...items.flatMap((item) =>
+      (Array.isArray(item.alerts) ? item.alerts : []).map((alert) => ({
+        ...alert,
+        fallbackDate: item.date,
+        fallbackHour: item.hour
+      }))
+    )
+  ];
+
+  const alerts = rawAlerts.map((alert) => {
+    const industry = Array.isArray(alert.industry) ? alert.industry : [];
+    const severity = industry.find((item) => item.severity)?.severity?.trim();
+    const certainty = alert.certainty?.trim();
+    const urgency = alert.urgency?.trim();
+    const event = alert.title?.trim() || alert.alert_ID?.trim() || "Weather alert";
+    const start = parseStartTime(alert);
+
+    return {
+      senderName: alert.source?.trim() || "OpenWeather",
+      event,
+      start,
+      end: 0,
+      description: normalizeAlertDescription(alert),
+      tags: normalizeAlertTags(alert.tag, severity),
+      source: alert.source?.trim(),
+      severity,
+      certainty,
+      urgency,
+      alertId: alert.alert_ID?.trim()
+    };
   });
 
-  if (!response.ok) return null;
-  return (await response.json()) as T;
+  return dedupeAlerts(alerts).filter((alert) => alert.event.length > 0);
 }
 
-function normalizeAlerts(alerts: OpenWeatherAlert[] = []): WeatherAlert[] {
-  return alerts
-    .map((alert) => ({
-      senderName: alert.sender_name?.trim() || "OpenWeather",
-      event: alert.event?.trim() || "Weather alert",
-      start: Number(alert.start) || 0,
-      end: Number(alert.end) || 0,
-      description: alert.description?.trim() || "",
-      tags: Array.isArray(alert.tags) ? alert.tags : []
-    }))
-    .filter((alert) => alert.event.length > 0);
+function chooseRefreshWindow(campuses: WeatherCampusAlert[]): number {
+  return campuses.some((campus) => campus.alertCount > 0) ? 180 : 900;
 }
 
-function chooseRefreshWindow(alerts: WeatherAlert[]): number {
-  return alerts.length > 0 ? 180 : 900;
+function buildStory(campuses: WeatherCampusAlert[], fetchedAt: string): WeatherStory {
+  const activeCampuses = campuses.filter((campus) => campus.alertCount > 0);
+  const totalAlertCount = campuses.reduce((sum, campus) => sum + campus.alertCount, 0);
+  const topCampuses = [...activeCampuses]
+    .sort((left, right) => right.alertCount - left.alertCount || left.campusName.localeCompare(right.campusName))
+    .slice(0, 3)
+    .map((campus) => ({
+      campusId: campus.campusId,
+      campusName: campus.campusName,
+      alertCount: campus.alertCount
+    }));
+
+  const summary = activeCampuses.length
+    ? `${activeCampuses.length} campus${activeCampuses.length === 1 ? "" : "es"} currently ha${activeCampuses.length === 1 ? "s" : "ve"} ${totalAlertCount} active weather alert${totalAlertCount === 1 ? "" : "s"}.`
+    : "No active weather alerts across the campus network right now.";
+
+  return {
+    title: "Campus weather story",
+    summary,
+    generatedAt: fetchedAt,
+    activeCampusCount: activeCampuses.length,
+    totalAlertCount,
+    topCampuses
+  };
+}
+
+async function fetchCampusAlerts(campus: Campus, apiKey: string): Promise<WeatherCampusAlert> {
+  const coordinates = resolveCampusCoordinates(campus);
+  const fetchedAt = new Date().toISOString();
+
+  if (!coordinates) {
+    return {
+      campusId: campus.id,
+      campusName: campus.name,
+      city: campus.city,
+      country: campus.country,
+      latitude: 0,
+      longitude: 0,
+      fetchedAt,
+      alerts: [],
+      alertCount: 0,
+      source: "openweather"
+    };
+  }
+
+  const url =
+    `${ALERTS_ENDPOINT}?location=${buildLocationParam(coordinates.lat, coordinates.lon)}` +
+    `&appid=${encodeURIComponent(apiKey)}`;
+
+  const response = await fetchJson<OpenWeatherAlertsResponse>(url);
+  const alerts = normalizeAlerts(response);
+
+  return {
+    campusId: campus.id,
+    campusName: campus.name,
+    city: campus.city,
+    country: campus.country,
+    latitude: coordinates.lat,
+    longitude: coordinates.lon,
+    fetchedAt,
+    alerts,
+    alertCount: alerts.length,
+    source: "openweather"
+  };
+}
+
+function getCampusContext(campusId: string) {
+  const campus = CAMPUSES.find((entry) => entry.id === campusId) ?? null;
+  return campus;
 }
 
 export async function getWeatherAlertPayload(
   campusId: string,
   apiKey: string
 ): Promise<WeatherAlertResponse | null> {
-  const context = getCampusContext(campusId);
-  if (!context) return null;
+  const selectedCampus = getCampusContext(campusId);
+  if (!selectedCampus) return null;
 
-  try {
-    const geocodeUrl =
-      `https://api.openweathermap.org/geo/1.0/direct?q=` +
-      `${encodeURIComponent(context.query)}&limit=1&appid=${encodeURIComponent(apiKey)}`;
+  const campuses = await Promise.all(CAMPUSES.map((campus) => fetchCampusAlerts(campus, apiKey)));
+  const selectedCampusResult =
+    campuses.find((entry) => entry.campusId === selectedCampus.id) ?? campuses[0];
 
-    const geoResults = await fetchJson<OpenWeatherGeoResult[]>(geocodeUrl);
-    const location = geoResults?.[0];
+  const selectedAlerts = selectedCampusResult?.alerts ?? [];
+  const fetchedAt = new Date().toISOString();
+  const story = buildStory(campuses, fetchedAt);
 
-    if (!location) {
-      return {
-        campusId,
-        campusName: context.campus.name,
-        city: context.campus.city,
-        country: context.campus.country,
-        lastRefreshedAt: new Date().toISOString(),
-        fetchedAt: new Date().toISOString(),
-        refreshedInSeconds: 900,
-        alerts: [],
-        source: "openweather"
-      };
-    }
-
-    const oneCallUrl =
-      `https://api.openweathermap.org/data/3.0/onecall?lat=${location.lat}&lon=${location.lon}` +
-      `&exclude=current,minutely,hourly,daily&units=metric&appid=${encodeURIComponent(apiKey)}`;
-
-    const weather = await fetchJson<OpenWeatherOneCallResponse>(oneCallUrl);
-    const alerts = normalizeAlerts(weather?.alerts);
-
-    return {
-      campusId,
-      campusName: context.campus.name,
-      city: context.campus.city,
-      country: context.campus.country,
-      lastRefreshedAt: new Date().toISOString(),
-      resolvedLocation: {
-        name: location.name,
-        country: location.country,
-        state: location.state,
-        lat: location.lat,
-        lon: location.lon
-      },
-      fetchedAt: new Date().toISOString(),
-      refreshedInSeconds: chooseRefreshWindow(alerts),
-      alerts,
-      source: "openweather"
-    };
-  } catch {
-    return {
-      campusId,
-      campusName: context.campus.name,
-      city: context.campus.city,
-      country: context.campus.country,
-      lastRefreshedAt: new Date().toISOString(),
-      fetchedAt: new Date().toISOString(),
-      refreshedInSeconds: 900,
-      alerts: [],
-      source: "openweather"
-    };
-  }
+  return {
+    selectedCampusId: selectedCampus.id,
+    campusId: selectedCampus.id,
+    campusName: selectedCampus.name,
+    city: selectedCampus.city,
+    country: selectedCampus.country,
+    latitude: selectedCampusResult?.latitude ?? selectedCampus.lat,
+    longitude: selectedCampusResult?.longitude ?? selectedCampus.lon,
+    lastRefreshedAt: fetchedAt,
+    fetchedAt,
+    refreshedInSeconds: chooseRefreshWindow(campuses),
+    alerts: selectedAlerts,
+    campuses,
+    activeCampusCount: story.activeCampusCount,
+    totalAlertCount: story.totalAlertCount,
+    story,
+    source: "openweather"
+  };
 }

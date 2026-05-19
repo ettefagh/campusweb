@@ -300,7 +300,6 @@
 							alt=""
 							class="home-context-logo light-mode"
 							width="32"
-							height="32"
 							loading="eager"
 							fetchpriority="high"
 						/>
@@ -309,7 +308,6 @@
 							alt=""
 							class="home-context-logo dark-mode"
 							width="32"
-							height="32"
 							loading="eager"
 							fetchpriority="high"
 						/>
@@ -650,7 +648,7 @@
 
 	.home-context-logo {
 		width: 30px;
-		height: 30px;
+		height: auto;
 		border-radius: 8px;
 	}
 

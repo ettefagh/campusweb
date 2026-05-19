@@ -33,6 +33,8 @@ export interface Campus {
   name: string;
   city: string;
   country: string;
+  lat?: number;
+  lon?: number;
   stateCode?: string; // e.g., 'BE', 'BW', 'BY'
   libraryUrl?: string;
   /** Base URL for campus-specific iCal feeds if available */
@@ -78,26 +80,26 @@ export interface AppSettings {
 // ── Static Data: Campuses ─────────────────────────────────────────────────────
 
 export const CAMPUSES: Campus[] = [
-  { id: 'bamberg', university: 'SRH', name: 'Bamberg', city: 'Bamberg', country: 'DE', stateCode: 'BY' },
-  { id: 'berlin', university: 'SRH', name: 'Berlin', city: 'Berlin', country: 'DE', stateCode: 'BE', libraryUrl: 'https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB', weatherLocation: 'Neukölln 12059 Berlin' },
-  { id: 'bonn', university: 'SRH', name: 'Bonn', city: 'Bonn', country: 'DE', stateCode: 'NW' },
-  { id: 'bremen', university: 'SRH', name: 'Bremen', city: 'Bremen', country: 'DE', stateCode: 'HB', libraryUrl: 'https://katalog.hamm.de/' },
-  { id: 'dresden', university: 'SRH', name: 'Dresden', city: 'Dresden', country: 'DE', stateCode: 'SN' },
-  { id: 'duesseldorf', university: 'SRH', name: 'Düsseldorf', city: 'Düsseldorf', country: 'DE', stateCode: 'NW' },
-  { id: 'fuerth', university: 'SRH', name: 'Fürth', city: 'Fürth', country: 'DE', stateCode: 'BY', libraryUrl: 'https://www.eopac.net/wlh/' },
-  { id: 'gera', university: 'SRH', name: 'Gera', city: 'Gera', country: 'DE', stateCode: 'TH' },
-  { id: 'hamburg', university: 'SRH', name: 'Hamburg', city: 'Hamburg', country: 'DE', stateCode: 'HH' },
-  { id: 'hamm', university: 'SRH', name: 'Hamm', city: 'Hamm', country: 'DE', stateCode: 'NW', libraryUrl: 'https://katalog.hamm.de/' },
-  { id: 'heide', university: 'SRH', name: 'Heide', city: 'Heide', country: 'DE', stateCode: 'SH' },
-  { id: 'heidelberg', university: 'SRH', name: 'Heidelberg', city: 'Heidelberg', country: 'DE', stateCode: 'BW', libraryUrl: 'https://1he.edu.srh.b13.live/' },
-  { id: 'karlsruhe', university: 'SRH', name: 'Karlsruhe', city: 'Karlsruhe', country: 'DE', stateCode: 'BW' },
-  { id: 'cologne', university: 'SRH', name: 'Köln', city: 'Köln', country: 'DE', stateCode: 'NW', libraryUrl: 'https://katalog.hamm.de/' },
-  { id: 'leipzig', university: 'SRH', name: 'Leipzig', city: 'Leipzig', country: 'DE', stateCode: 'SN' },
-  { id: 'leverkusen', university: 'SRH', name: 'Leverkusen', city: 'Leverkusen', country: 'DE', stateCode: 'NW' },
-  { id: 'munich', university: 'SRH', name: 'München', city: 'München', country: 'DE', stateCode: 'BY' },
-  { id: 'munster', university: 'SRH', name: 'Münster', city: 'Münster', country: 'DE', stateCode: 'NW' },
-  { id: 'stuttgart', university: 'SRH', name: 'Stuttgart', city: 'Stuttgart', country: 'DE', stateCode: 'BW' },
-  { id: 'tuebingen', university: 'SRH', name: 'Tübingen', city: 'Tübingen', country: 'DE', stateCode: 'BW' },
+  { id: 'bamberg', university: 'SRH', name: 'Bamberg', city: 'Bamberg', country: 'DE', lat: 49.8917, lon: 10.8919, stateCode: 'BY' },
+  { id: 'berlin', university: 'SRH', name: 'Berlin', city: 'Berlin', country: 'DE', lat: 52.4758038, lon: 13.4549394, stateCode: 'BE', libraryUrl: 'https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB', weatherLocation: 'Neukölln 12059 Berlin' },
+  { id: 'bonn', university: 'SRH', name: 'Bonn', city: 'Bonn', country: 'DE', lat: 50.7374, lon: 7.0982, stateCode: 'NW' },
+  { id: 'bremen', university: 'SRH', name: 'Bremen', city: 'Bremen', country: 'DE', lat: 53.0793, lon: 8.8017, stateCode: 'HB', libraryUrl: 'https://katalog.hamm.de/' },
+  { id: 'dresden', university: 'SRH', name: 'Dresden', city: 'Dresden', country: 'DE', lat: 51.0504, lon: 13.7373, stateCode: 'SN' },
+  { id: 'duesseldorf', university: 'SRH', name: 'Düsseldorf', city: 'Düsseldorf', country: 'DE', lat: 51.2277, lon: 6.7735, stateCode: 'NW' },
+  { id: 'fuerth', university: 'SRH', name: 'Fürth', city: 'Fürth', country: 'DE', lat: 49.4771, lon: 10.9887, stateCode: 'BY', libraryUrl: 'https://www.eopac.net/wlh/' },
+  { id: 'gera', university: 'SRH', name: 'Gera', city: 'Gera', country: 'DE', lat: 50.8777, lon: 12.0807, stateCode: 'TH' },
+  { id: 'hamburg', university: 'SRH', name: 'Hamburg', city: 'Hamburg', country: 'DE', lat: 53.5511, lon: 9.9937, stateCode: 'HH' },
+  { id: 'hamm', university: 'SRH', name: 'Hamm', city: 'Hamm', country: 'DE', lat: 51.6739, lon: 7.815, stateCode: 'NW', libraryUrl: 'https://katalog.hamm.de/' },
+  { id: 'heide', university: 'SRH', name: 'Heide', city: 'Heide', country: 'DE', lat: 54.1958, lon: 9.0959, stateCode: 'SH' },
+  { id: 'heidelberg', university: 'SRH', name: 'Heidelberg', city: 'Heidelberg', country: 'DE', lat: 49.3988, lon: 8.6724, stateCode: 'BW', libraryUrl: 'https://1he.edu.srh.b13.live/' },
+  { id: 'karlsruhe', university: 'SRH', name: 'Karlsruhe', city: 'Karlsruhe', country: 'DE', lat: 49.0069, lon: 8.4037, stateCode: 'BW' },
+  { id: 'cologne', university: 'SRH', name: 'Köln', city: 'Köln', country: 'DE', lat: 50.9375, lon: 6.9603, stateCode: 'NW', libraryUrl: 'https://katalog.hamm.de/' },
+  { id: 'leipzig', university: 'SRH', name: 'Leipzig', city: 'Leipzig', country: 'DE', lat: 51.3397, lon: 12.3731, stateCode: 'SN' },
+  { id: 'leverkusen', university: 'SRH', name: 'Leverkusen', city: 'Leverkusen', country: 'DE', lat: 51.0459, lon: 7.0192, stateCode: 'NW' },
+  { id: 'munich', university: 'SRH', name: 'München', city: 'München', country: 'DE', lat: 48.1351, lon: 11.582, stateCode: 'BY' },
+  { id: 'munster', university: 'SRH', name: 'Münster', city: 'Münster', country: 'DE', lat: 51.9607, lon: 7.6261, stateCode: 'NW' },
+  { id: 'stuttgart', university: 'SRH', name: 'Stuttgart', city: 'Stuttgart', country: 'DE', lat: 48.7758, lon: 9.1829, stateCode: 'BW' },
+  { id: 'tuebingen', university: 'SRH', name: 'Tübingen', city: 'Tübingen', country: 'DE', lat: 48.5226, lon: 9.0522, stateCode: 'BW' },
 ];
 
 // ── Static Data: Schools (Departments) ────────────────────────────────────────

@@ -69,14 +69,12 @@
       alt="Campusweb"
       class="sidebar-logo light-mode"
       width="32"
-      height="32"
     />
     <img
       src="/icon-dark.png"
       alt="Campusweb"
       class="sidebar-logo dark-mode"
       width="32"
-      height="32"
     />
     <span class="sidebar-title">Campusweb</span>
   </div>
@@ -289,7 +287,7 @@
 
     .sidebar-logo {
       width: 32px;
-      height: 32px;
+      height: auto;
       border-radius: var(--radius-sm);
       object-fit: contain;
     }

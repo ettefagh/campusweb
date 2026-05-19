@@ -1,6 +1,7 @@
 import { json } from "@sveltejs/kit";
 import { env } from "$env/dynamic/private";
 import { getPopularLinkStats, incrementStat } from "$lib/server/stats";
+import { queryUsageSummary } from "$lib/server/analytics";
 import { sendClubApprovalEmail, sendStoryApprovalEmail, type EmailSendResult } from "$lib/server/email";
 import { allLinks } from "$lib/data/links";
 
@@ -391,6 +392,216 @@ function updateClubTypeLine(text: string, clubRole: string | undefined) {
   return text;
 }
 
+type StatsSection = "overview" | "engagement" | "links" | "stories" | "usage";
+
+function getRecentDayKeys(days: number) {
+  const keys: string[] = [];
+  const today = new Date();
+  for (let index = 0; index < days; index += 1) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - index);
+    keys.push(d.toISOString().split("T")[0]);
+  }
+  return keys;
+}
+
+function sumDailyCounters(daily: Record<string, number> | undefined, dayKeys: string[]) {
+  if (!daily) return 0;
+  return dayKeys.reduce((sum, key) => sum + (Number(daily[key]) || 0), 0);
+}
+
+function sumNestedDailyCounters(
+  daily: Record<string, Record<string, number>> | undefined,
+  dayKeys: string[]
+) {
+  if (!daily) return 0;
+  return dayKeys.reduce((sum, key) => {
+    const dayMap = daily[key] || {};
+    return sum + Object.values(dayMap).reduce((inner, value) => inner + (Number(value) || 0), 0);
+  }, 0);
+}
+
+function buildStatsKeyboard(section: StatsSection, days: number, limit: number) {
+  const sectionButtons = [
+    [
+      { text: `${section === "overview" ? "• " : ""}Overview`, callback_data: `stats:overview:${days}:${limit}` },
+      { text: `${section === "engagement" ? "• " : ""}Engagement`, callback_data: `stats:engagement:${days}:${limit}` }
+    ],
+    [
+      { text: `${section === "links" ? "• " : ""}Top Links`, callback_data: `stats:links:${days}:${limit}` },
+      { text: `${section === "stories" ? "• " : ""}Top Stories`, callback_data: `stats:stories:${days}:${limit}` }
+    ],
+    [{ text: `${section === "usage" ? "• " : ""}Usage Events`, callback_data: `stats:usage:${days}:${limit}` }]
+  ];
+
+  const windows = [1, 7, 30] as const;
+  const windowButtons = windows.map((windowDays) => ({
+    text: `${days === windowDays ? "• " : ""}${windowDays}d`,
+    callback_data: `stats:${section}:${windowDays}:${limit}`
+  }));
+
+  const inlineKeyboard: Array<Array<{ text: string; callback_data: string }>> = [...sectionButtons, windowButtons];
+
+  if (section === "links" || section === "stories") {
+    const sizes = [5, 10, 15] as const;
+    inlineKeyboard.push(
+      sizes.map((size) => ({
+        text: `${limit === size ? "• " : ""}Top ${size}`,
+        callback_data: `stats:${section}:${days}:${size}`
+      }))
+    );
+  }
+
+  inlineKeyboard.push([{ text: "Refresh", callback_data: `stats:${section}:${days}:${limit}` }]);
+  return { inline_keyboard: inlineKeyboard };
+}
+
+function topCountsFromDaily(
+  daily: Record<string, Record<string, number>> | undefined,
+  dayKeys: string[],
+  limit = 5
+) {
+  const totals = new Map<string, number>();
+  for (const day of dayKeys) {
+    const dayMap = daily?.[day] || {};
+    for (const [id, count] of Object.entries(dayMap)) {
+      totals.set(id, (totals.get(id) || 0) + (Number(count) || 0));
+    }
+  }
+  return [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+}
+
+async function buildStatsView(params: {
+  runtimeEnv: any;
+  days: number;
+  section: StatsSection;
+  limit: number;
+}) {
+  const kv = params.runtimeEnv?.STORIES_KV;
+  if (!kv) return { text: "⚠️ Cloudflare KV not bound!", keyboard: null };
+
+  const [raw, dynamicClubsRaw, storiesRaw] = await Promise.all([
+    kv.get("bot_stats"),
+    kv.get("dynamic_clubs"),
+    kv.get("stories")
+  ]);
+
+  let clubsCount = 0;
+  let storiesCount = 0;
+  let storyItems: any[] = [];
+  let stats: any = null;
+
+  try {
+    clubsCount = JSON.parse(dynamicClubsRaw || "[]").length;
+  } catch {}
+  try {
+    storyItems = JSON.parse(storiesRaw || "[]");
+    storiesCount = storyItems.length;
+  } catch {}
+  try {
+    stats = raw ? JSON.parse(raw) : null;
+  } catch {}
+
+  const dayKeys = getRecentDayKeys(params.days);
+  const today = dayKeys[0];
+  const normalizedLimit = [5, 10, 15].includes(params.limit) ? params.limit : 5;
+  const keyboard = buildStatsKeyboard(params.section, params.days, normalizedLimit);
+
+  let text = `📊 <b>System Statistics</b>\n`;
+  text += `Window: last <b>${params.days} day(s)</b>\n\n`;
+  text += `<b>Live Content:</b>\n`;
+  text += `- Active Stories: ${storiesCount}\n`;
+  text += `- Approved Clubs: ${clubsCount}\n\n`;
+
+  if (!stats) {
+    text += `No engagement stats stored yet.`;
+    return { text, keyboard };
+  }
+
+  const windowSuggestions = sumDailyCounters(stats.suggestions?.daily, dayKeys);
+  const todaySuggestions = Number(stats.suggestions?.daily?.[today] || 0);
+  const windowStoryViews = sumNestedDailyCounters(stats.storyViews?.daily, dayKeys);
+  const todayStoryViews = sumNestedDailyCounters(stats.storyViews?.daily, [today]);
+
+  if (params.section === "overview") {
+    text += `<b>Overview:</b>\n`;
+    text += `- Suggestions (All Time): ${stats.suggestions?.allTime || 0}\n`;
+    text += `- Suggestions (${params.days}d): ${windowSuggestions}\n`;
+    text += `- Suggestions (Today): ${todaySuggestions}\n`;
+    text += `- Story Views (${params.days}d): ${windowStoryViews}\n`;
+    text += `- Story Views (Today): ${todayStoryViews}\n`;
+  }
+
+  if (params.section === "engagement") {
+    text += `<b>Engagement:</b>\n`;
+    text += `- Suggestions (All Time): ${stats.suggestions?.allTime || 0}\n`;
+    text += `- Suggestions (${params.days}d): ${windowSuggestions}\n`;
+    text += `- Suggestions (Today): ${todaySuggestions}\n\n`;
+    text += `<b>Admin Performance:</b>\n`;
+    text += `- Approved: ${stats.actions?.approved || 0}\n`;
+    text += `- Declined: ${stats.actions?.declined || 0}\n`;
+    text += `- Direct Created: ${stats.actions?.directCreated || 0}\n`;
+  }
+
+  if (params.section === "links") {
+    const topLinks = topCountsFromDaily(stats.links?.daily, dayKeys, normalizedLimit);
+    text += `<b>Top Links (${params.days}d, top ${normalizedLimit}):</b>\n`;
+    if (topLinks.length === 0) {
+      text += `No link clicks in this window.\n`;
+    } else {
+      topLinks.forEach(([linkId, count], index) => {
+        const link = allLinks.find((item) => item.id === linkId);
+        text += `${index + 1}. ${escapeTelegramHtml(link?.title || linkId)} - ${count}\n`;
+      });
+    }
+
+    const popularAllTime = await getPopularLinkStats(kv, Math.min(normalizedLimit, 10));
+    if (popularAllTime.length > 0) {
+      text += `\n<b>All-Time Leaders:</b>\n`;
+      popularAllTime.forEach((item, index) => {
+        const link = allLinks.find((entry) => entry.id === item.linkId);
+        text += `${index + 1}. ${escapeTelegramHtml(link?.title || item.linkId)} - ${item.total}\n`;
+      });
+    }
+  }
+
+  if (params.section === "stories") {
+    const topStories = topCountsFromDaily(stats.storyViews?.daily, dayKeys, normalizedLimit);
+    text += `<b>Top Stories (${params.days}d, top ${normalizedLimit}):</b>\n`;
+    if (topStories.length === 0) {
+      text += `No story views in this window.\n`;
+    } else {
+      topStories.forEach(([storyId, count], index) => {
+        const story = storyItems.find((item) => item.id === storyId);
+        text += `${index + 1}. ${escapeTelegramHtml(story?.title || storyId)} - ${count}\n`;
+      });
+    }
+  }
+
+  if (params.section === "usage") {
+    const rows = await queryUsageSummary({
+      accountId: params.runtimeEnv?.CLOUDFLARE_ACCOUNT_ID,
+      apiToken: params.runtimeEnv?.PRIVATE_CLOUDFLARE_ANALYTICS_API_TOKEN,
+      dataset: params.runtimeEnv?.PRIVATE_CLOUDFLARE_ANALYTICS_DATASET,
+      days: params.days
+    });
+
+    text += `<b>Privacy-Preserving Usage Events (${params.days}d):</b>\n`;
+    if (!rows) {
+      text += `Analytics Engine query not configured.\n`;
+      text += `Set CLOUDFLARE_ACCOUNT_ID + PRIVATE_CLOUDFLARE_ANALYTICS_API_TOKEN.\n`;
+    } else if (rows.length === 0) {
+      text += `No usage events returned in this window.\n`;
+    } else {
+      rows.forEach((row: { eventType: string; count: number }, index: number) => {
+        text += `${index + 1}. ${escapeTelegramHtml(row.eventType)} - ${Math.round(row.count)}\n`;
+      });
+    }
+  }
+
+  return { text, keyboard };
+}
+
 async function cleanupPendingStoryImages(suggestion: any, runtimeEnv: any) {
   const pendingImageKeys = Array.isArray(suggestion?.pendingImageKeys)
     ? suggestion.pendingImageKeys.filter((key: unknown) => typeof key === "string" && key.length > 0)
@@ -488,12 +699,17 @@ export async function POST({ request, platform }) {
           `/create - Show direct story format\n` +
           `/alert [text] - Set global app alert\n` +
           `/alert clear - Remove global alert\n` +
-          `/stats - View system statistics\n` +
+          `/stats - Interactive system statistics\n` +
+          `/usage - Open the privacy usage panel directly\n` +
           `/help - Show this guide\n\n` +
           `<b>Workflow:</b>\n` +
           `1. Student submits suggestion via Web App.\n` +
           `2. You receive a notification with <b>Approve/Reject</b> buttons.\n` +
           `3. Approving automatically publishes and notifies the student.\n\n` +
+          `<b>Stats Flow:</b>\n` +
+          `1. Use /stats to choose a section and time window.\n` +
+          `2. Use Top Links / Top Stories to adjust the result size.\n` +
+          `3. Use /usage to jump straight to analytics events.\n\n` +
           `<b>Direct Entry:</b>\n` +
           getDirectCreateTemplate();
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -518,103 +734,44 @@ export async function POST({ request, platform }) {
     if (body.message && body.message.text === "/stats") {
       const msgChatId = body.message.chat.id.toString();
       if (msgChatId === adminChatId) {
-        const kv = runtimeEnv?.STORIES_KV;
-        if (!kv) {
-          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: msgChatId, text: "⚠️ Cloudflare KV not bound!" })
-          });
-          return json({ success: true });
-        }
-        
-        const raw = await kv.get("bot_stats");
-        const dynamicClubsRaw = await kv.get("dynamic_clubs");
-        const storiesRaw = await kv.get("stories");
-        
-        let statsStr = `📊 <b>System Statistics</b>\n\n`;
-        
-        let clubsCount = 0;
-        try { clubsCount = JSON.parse(dynamicClubsRaw || "[]").length; } catch(e) {}
-        let storiesCount = 0;
-        try { storiesCount = JSON.parse(storiesRaw || "[]").length; } catch(e) {}
-        let storyItems: any[] = [];
-        try { storyItems = JSON.parse(storiesRaw || "[]"); } catch(e) {}
-        
-        statsStr += `<b>Live Content:</b>\n`;
-        statsStr += `- Active Stories: ${storiesCount}\n`;
-        statsStr += `- Approved Clubs: ${clubsCount}\n\n`;
+        const { text: statsStr, keyboard } = await buildStatsView({
+          runtimeEnv,
+          days: 7,
+          section: "overview",
+          limit: 5
+        });
 
-        if (raw) {
-          try {
-            const st = JSON.parse(raw);
-            statsStr += `<b>Engagement:</b>\n`;
-            statsStr += `- Suggestions (All Time): ${st.suggestions?.allTime || 0}\n`;
-            const today = new Date().toISOString().split("T")[0];
-            statsStr += `- Suggestions (Today): ${st.suggestions?.daily?.[today] || 0}\n\n`;
-
-            const storyViewTotals = Object.values(st.storyViews?.allTime || {}).reduce(
-              (sum: number, value: unknown) => sum + (Number(value) || 0),
-              0
-            );
-            const todayStoryViews = Object.values(st.storyViews?.daily?.[today] || {}).reduce(
-              (sum: number, value: unknown) => sum + (Number(value) || 0),
-              0
-            );
-            statsStr += `- Story Views (All Time): ${storyViewTotals}\n`;
-            statsStr += `- Story Views (Today): ${todayStoryViews}\n\n`;
-            
-            statsStr += `<b>Admin Performance:</b>\n`;
-            statsStr += `- Approved: ${st.actions?.approved || 0}\n`;
-            statsStr += `- Declined: ${st.actions?.declined || 0}\n`;
-            statsStr += `- Direct Created: ${st.actions?.directCreated || 0}\n`;
-
-            const popularLinks = (await getPopularLinkStats(kv, 5))
-              .map((linkStats) => {
-                const linkId = linkStats.linkId;
-                const link = allLinks.find((item) => item.id === linkId);
-                return {
-                  linkId,
-                  title: link?.title || linkId,
-                  total: linkStats.total,
-                  today: linkStats.today
-                };
-              });
-
-            if (popularLinks.length > 0) {
-              statsStr += `\n<b>Popular Links:</b>\n`;
-              popularLinks.forEach((link, index) => {
-                statsStr += `${index + 1}. ${escapeTelegramHtml(link.title)} - ${link.total} total, ${link.today} today\n`;
-              });
-            }
-
-            const storyViewMap = st.storyViews?.allTime || {};
-            const todayStoryViewMap = st.storyViews?.daily?.[today] || {};
-            const popularStories = Object.entries(storyViewMap)
-              .map(([storyId, total]) => {
-                const story = storyItems.find((item) => item.id === storyId);
-                return {
-                  storyId,
-                  title: story?.title || storyId,
-                  total: Number(total) || 0,
-                  today: Number(todayStoryViewMap[storyId]) || 0
-                };
-              })
-              .filter((item) => item.total > 0)
-              .sort((a, b) => b.total - a.total)
-              .slice(0, 5);
-
-            if (popularStories.length > 0) {
-              statsStr += `\n<b>Popular Stories:</b>\n`;
-              popularStories.forEach((story, index) => {
-                statsStr += `${index + 1}. ${escapeTelegramHtml(story.title)} - ${story.total} views, ${story.today} today\n`;
-              });
-            }
-          } catch(e) {}
-        }
-        
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: msgChatId, text: statsStr, parse_mode: "HTML" })
+          body: JSON.stringify({
+            chat_id: msgChatId,
+            text: statsStr,
+            parse_mode: "HTML",
+            reply_markup: keyboard || undefined
+          })
+        });
+      }
+      return json({ success: true });
+    }
+
+    if (body.message && body.message.text === "/usage") {
+      const msgChatId = body.message.chat.id.toString();
+      if (msgChatId === adminChatId) {
+        const { text: usageText, keyboard } = await buildStatsView({
+          runtimeEnv,
+          days: 7,
+          section: "usage",
+          limit: 5
+        });
+
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: msgChatId,
+            text: usageText,
+            parse_mode: "HTML",
+            reply_markup: keyboard || undefined
+          })
         });
       }
       return json({ success: true });
@@ -954,6 +1111,58 @@ export async function POST({ request, platform }) {
           show_alert: true 
         })
       }).catch(() => {});
+      return json({ success: true });
+    }
+
+    if (action.startsWith("stats:")) {
+      const parts = action.split(":");
+      const section = (parts[1] || "overview") as StatsSection;
+      const parsedDays = Number(parts[2] || "7");
+      const parsedLimit = Number(parts[3] || "5");
+      const days = parsedDays === 1 || parsedDays === 7 || parsedDays === 30 ? parsedDays : 7;
+      const limit = parsedLimit === 5 || parsedLimit === 10 || parsedLimit === 15 ? parsedLimit : 5;
+      const msgChatId = cb.message?.chat?.id?.toString();
+
+      if (msgChatId !== adminChatId) {
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ callback_query_id: cb.id, text: "Admin only", show_alert: true })
+        }).catch(() => {});
+        return json({ success: true });
+      }
+
+      const selectedSection: StatsSection = ["overview", "engagement", "links", "stories", "usage"].includes(
+        section
+      )
+        ? section
+        : "overview";
+
+      const view = await buildStatsView({
+        runtimeEnv,
+        days,
+        section: selectedSection,
+        limit
+      });
+
+      await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          text: view.text,
+          parse_mode: "HTML",
+          reply_markup: view.keyboard || undefined
+        })
+      });
+
+      await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callback_query_id: cb.id })
+      }).catch(() => {});
+
       return json({ success: true });
     }
 

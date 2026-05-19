@@ -18,8 +18,10 @@
   let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   $: campus = campusId ? CAMPUSES.find((entry) => entry.id === campusId) ?? null : null;
-  $: alertCount = payload?.alerts?.length ?? 0;
-  $: hasAlert = alertCount > 0;
+  $: hasAlert = (payload?.totalAlertCount ?? 0) > 0;
+  $: activeCampusCount = payload?.activeCampusCount ?? 0;
+  $: story = payload?.story ?? null;
+  $: activeCampuses = (payload?.campuses ?? []).filter((entry) => entry.alertCount > 0);
 
   function clearTimer() {
     if (refreshTimer) {
@@ -171,7 +173,31 @@
         <p class="panel-state error">{errorMessage}</p>
       {:else if !campus}
         <p class="panel-state">{$t.home.selectCampusForWeather}</p>
-      {:else if payload?.alerts?.length}
+      {:else if payload?.alerts?.length || story}
+        {#if story}
+          <section class="story-card">
+            <div class="story-header">
+              <span>Server story</span>
+              <strong>{activeCampusCount} active campus{activeCampusCount === 1 ? "" : "es"}</strong>
+            </div>
+            <p>{story.summary}</p>
+            {#if story.topCampuses?.length}
+              <div class="story-tags">
+                {#each story.topCampuses as campusStory (campusStory.campusId)}
+                  <span>{campusStory.campusName}: {campusStory.alertCount}</span>
+                {/each}
+              </div>
+            {/if}
+          </section>
+        {/if}
+
+        {#if activeCampuses.length}
+          <p class="panel-state compact">
+            Alerts are active for {activeCampuses.length} campus{activeCampuses.length === 1 ? "" : "es"}.
+          </p>
+        {/if}
+
+        {#if payload?.alerts?.length}
         <div class="alert-list">
           {#each payload.alerts as alert, index (alert.event + alert.start + index)}
             <article class="alert-card">
@@ -185,6 +211,19 @@
                   <span>to {formatDateTime(alert.end)}</span>
                 {/if}
               </div>
+              {#if alert.urgency || alert.certainty || alert.severity}
+                <div class="alert-flags">
+                  {#if alert.urgency}
+                    <span>{alert.urgency}</span>
+                  {/if}
+                  {#if alert.certainty}
+                    <span>{alert.certainty}</span>
+                  {/if}
+                  {#if alert.severity}
+                    <span>{alert.severity}</span>
+                  {/if}
+                </div>
+              {/if}
               {#if alert.tags?.length}
                 <div class="alert-tags">
                   {#each alert.tags as tag}
@@ -198,6 +237,12 @@
             </article>
           {/each}
         </div>
+        {:else if story}
+          <div class="panel-empty">
+            <p>{$t.home.noWeatherAlerts} for {payload?.campusName || campus.name}.</p>
+            <span>Last checked {payload ? formatUpdatedAt(payload.fetchedAt) : "just now"}.</span>
+          </div>
+        {/if}
       {:else}
         <div class="panel-empty">
           <p>{$t.home.noWeatherAlerts} for {payload?.campusName || campus.name}.</p>
@@ -314,6 +359,73 @@
     color: #ef4444;
   }
 
+  .panel-state.compact {
+    font-size: 0.82rem;
+    margin-top: 8px;
+    margin-bottom: 10px;
+  }
+
+  .story-card {
+    border-radius: 16px;
+    border: 1px solid rgba(99, 102, 241, 0.16);
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.08), rgba(99, 102, 241, 0.03));
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  :global([data-theme="dark"]) .story-card {
+    border-color: rgba(99, 102, 241, 0.24);
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.14), rgba(15, 23, 42, 0.05));
+  }
+
+  .story-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .story-header span {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-color-secondary);
+  }
+
+  .story-header strong {
+    font-size: 0.82rem;
+    color: var(--text-color);
+  }
+
+  .story-card p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: var(--text-color);
+  }
+
+  .story-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .story-tags span,
+  .alert-flags span {
+    font-size: 0.72rem;
+    border-radius: 999px;
+    padding: 4px 8px;
+    background: rgba(15, 23, 42, 0.08);
+    color: var(--text-color);
+  }
+
+  :global([data-theme="dark"]) .story-tags span,
+  :global([data-theme="dark"]) .alert-flags span {
+    background: rgba(148, 163, 184, 0.14);
+  }
+
   .alert-list {
     display: grid;
     gap: 10px;
@@ -354,6 +466,13 @@
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .alert-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
     margin-bottom: 8px;
   }
 

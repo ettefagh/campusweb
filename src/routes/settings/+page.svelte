@@ -100,6 +100,7 @@
   ];
 
   let showResetConfirm = false;
+  let campusOpen = true;
 
   function handleReset() {
     settingsStore.reset();
@@ -160,8 +161,92 @@
   let directoryOpen = false;
   let languageOpen = false;
   let appearanceOpen = false;
+  let sharingOpen = false;
   let dangerOpen = false;
   let activeColorChooser: string | null = null;
+  let shareStatus: "idle" | "shared" | "copied" | "error" = "idle";
+  let showQr = false;
+
+  function getShareUrl() {
+    if (typeof window === "undefined") return "https://campusweb.pages.dev/?ref=share";
+    const url = new URL("/", window.location.origin);
+    url.searchParams.set("ref", "share");
+    return url.toString();
+  }
+
+  $: shareUrl = getShareUrl();
+  $: qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(shareUrl)}`;
+
+  function detectShareDisplayMode() {
+    if (typeof window === "undefined") return "unknown";
+    if (window.matchMedia("(display-mode: standalone)").matches) return "standalone";
+    if (window.matchMedia("(display-mode: fullscreen)").matches) return "fullscreen";
+    if (window.matchMedia("(display-mode: minimal-ui)").matches) return "minimal-ui";
+    return "browser";
+  }
+
+  function trackShareEvent(eventType: "share_open" | "share_native" | "share_copy" | "share_qr_view") {
+    const payload = JSON.stringify({
+      eventType,
+      surface: "settings_share",
+      displayMode: detectShareDisplayMode(),
+      appVersion: APP_VERSION
+    });
+
+    try {
+      if ("sendBeacon" in navigator) {
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon("/api/analytics/event", blob);
+        return;
+      }
+    } catch {}
+
+    fetch("/api/analytics/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+      keepalive: true
+    }).catch(() => {});
+  }
+
+  async function handleNativeShare() {
+    shareStatus = "idle";
+    trackShareEvent("share_open");
+
+    if (!navigator.share) {
+      await copyShareLink();
+      return;
+    }
+
+    try {
+      await navigator.share({
+        title: "CampusWeb",
+        text: "CampusWeb for SRH students",
+        url: shareUrl
+      });
+      shareStatus = "shared";
+      trackShareEvent("share_native");
+    } catch {
+      shareStatus = "error";
+    }
+  }
+
+  async function copyShareLink() {
+    shareStatus = "idle";
+    trackShareEvent("share_open");
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      shareStatus = "copied";
+      trackShareEvent("share_copy");
+    } catch {
+      shareStatus = "error";
+    }
+  }
+
+  function toggleQr() {
+    showQr = !showQr;
+    if (showQr) trackShareEvent("share_qr_view");
+  }
 
   function focusCalendarUrlInputIfRequested() {
     if ($page.url.searchParams.get("focus") !== "calendar-url") return;
@@ -199,10 +284,12 @@
   onMount(() => {
     const hash = $page.url.hash;
     if (hash === "#accessibility") a11yOpen = true;
+    if (hash === "#campus-profile") campusOpen = true;
     if (hash === "#directory-access") directoryOpen = true;
     if (hash === "#appearance") appearanceOpen = true;
     if (hash === "#language") languageOpen = true;
     if (hash === "#calendar-settings") calendarSettingsOpen = true;
+    if (hash === "#sharing") sharingOpen = true;
     if (hash === "#danger-zone") dangerOpen = true;
 
     if (hash && hash !== "") {
@@ -218,10 +305,12 @@
   $: {
     const hash = $page.url.hash;
     if (hash === "#accessibility") a11yOpen = true;
+    if (hash === "#campus-profile") campusOpen = true;
     if (hash === "#directory-access") directoryOpen = true;
     if (hash === "#appearance") appearanceOpen = true;
     if (hash === "#language") languageOpen = true;
     if (hash === "#calendar-settings") calendarSettingsOpen = true;
+    if (hash === "#sharing") sharingOpen = true;
     if (hash === "#danger-zone") dangerOpen = true;
 
     if (hash && hash !== "") {
@@ -300,93 +389,105 @@
   </nav>
 
   <div class="settings-content">
+    <!-- ── Campus & Programme ────────────────── -->
+    <section id="campus-profile" class="settings-section">
+      <details bind:open={campusOpen}>
+        <summary class="section-header section-header--collapsible">
+          <span class="section-icon"><i class="ph-bold ph-graduation-cap"></i></span>
+          <div>
+            <h2>{$t.settings.campusTitle}</h2>
+            <p class="section-desc">{$t.settings.campusDesc}</p>
+          </div>
+          <span class="chevron" aria-hidden="true">›</span>
+        </summary>
 
-  <!-- ── Campus & Programme ────────────────── -->
-  <section id="campus-profile" class="settings-section">
-    <div class="section-header">
-      <span class="section-icon"><i class="ph-bold ph-graduation-cap"></i></span>
-      <div>
-        <h2>{$t.settings.campusTitle}</h2>
-        <p class="section-desc">{$t.settings.campusDesc}</p>
-      </div>
-    </div>
+        <div class="a11y-body">
+          <div class="setting-row">
+            <label class="setting-label" for="campus-select"
+              >{$t.settings.campusLabel}</label
+            >
+            <select
+              id="campus-select"
+              class="setting-select"
+              value={$settingsStore.campusId ?? ""}
+              on:change={(e) => handleCampusChange(e.currentTarget.value)}
+            >
+              <option value="" disabled>{$t.settings.campusPlaceholder}</option>
+              {#each CAMPUSES as campus}
+                <option value={campus.id}>{campus.name}</option>
+              {/each}
+            </select>
+          </div>
 
-    <div class="setting-row">
-      <label class="setting-label" for="campus-select"
-        >{$t.settings.campusLabel}</label
-      >
-      <select
-        id="campus-select"
-        class="setting-select"
-        value={$settingsStore.campusId ?? ""}
-        on:change={(e) => handleCampusChange(e.currentTarget.value)}
-      >
-        <option value="" disabled>{$t.settings.campusPlaceholder}</option>
-        {#each CAMPUSES as campus}
-          <option value={campus.id}>{campus.name}</option>
-        {/each}
-      </select>
-    </div>
+          {#if $settingsStore.campusId}
+            <div class="setting-row">
+              <label class="setting-label" for="dept-select"
+                >{$t.settings.deptLabel}</label
+              >
+              <select
+                id="dept-select"
+                class="setting-select"
+                value={$settingsStore.departmentId ?? ""}
+                on:change={(e) => handleDepartmentChange(e.currentTarget.value)}
+              >
+                <option value="" disabled>{$t.settings.deptPlaceholder}</option>
+                {#each $campusDepartments as dept}
+                  <option value={dept.id}>{dept.shortName} — {dept.name}</option>
+                {/each}
+              </select>
+            </div>
 
-    {#if $settingsStore.campusId}
-      <div class="setting-row">
-        <label class="setting-label" for="dept-select"
-          >{$t.settings.deptLabel}</label
-        >
-        <select
-          id="dept-select"
-          class="setting-select"
-          value={$settingsStore.departmentId ?? ""}
-          on:change={(e) => handleDepartmentChange(e.currentTarget.value)}
-        >
-          <option value="" disabled>{$t.settings.deptPlaceholder}</option>
-          {#each $campusDepartments as dept}
-            <option value={dept.id}>{dept.shortName} — {dept.name}</option>
-          {/each}
-        </select>
-      </div>
-
-      {#if $settingsStore.departmentId}
-        <div class="setting-row">
-          <label class="setting-label" for="program-select"
-            >{$t.settings.programLabel}</label
-          >
-          <select
-            id="program-select"
-            class="setting-select"
-            value={$settingsStore.programName ?? ""}
-            on:change={(e) => handleProgramChange(e.currentTarget.value)}
-          >
-            <option value="">{$t.settings.programPlaceholder}</option>
-            {#each $campusPrograms as program}
-              <option value={program}>{program}</option>
-            {/each}
-          </select>
+            {#if $settingsStore.departmentId}
+              <div class="setting-row">
+                <label class="setting-label" for="program-select"
+                  >{$t.settings.programLabel}</label
+                >
+                <select
+                  id="program-select"
+                  class="setting-select"
+                  value={$settingsStore.programName ?? ""}
+                  on:change={(e) => handleProgramChange(e.currentTarget.value)}
+                >
+                  <option value="">{$t.settings.programPlaceholder}</option>
+                  {#each $campusPrograms as program}
+                    <option value={program}>{program}</option>
+                  {/each}
+                </select>
+              </div>
+            {/if}
+          {/if}
         </div>
-      {/if}
-    {/if}
-  </section>
+      </details>
+    </section>
 
   <section id="directory-access" class="settings-section">
       <details bind:open={directoryOpen}>
         <summary class="section-header section-header--collapsible">
+          <span class="section-icon section-icon--directory">
+            <i
+              class="ph-bold ph-lock-keyhole"
+              class:is-active={!$settingsStore.emailVerified}
+              aria-hidden="true"
+            ></i>
+            <i
+              class="ph-bold ph-shield-check"
+              class:is-active={$settingsStore.emailVerified}
+              aria-hidden="true"
+            ></i>
+          </span>
           {#if !$settingsStore.emailVerified}
-            <span class="section-icon"><i class="ph-bold ph-lock-keyhole"></i></span>
             <div>
               <div class="section-title-row">
                 <h2>{$t.settings.directoryAccess}</h2>
-                <span class="privacy-badge">{$t.settings.zeroKnowledge}</span>
               </div>
               <p class="section-desc">
                 {$t.settings.verifyEmailDesc}
               </p>
             </div>
           {:else}
-            <span class="section-icon"><i class="ph-bold ph-shield-check"></i></span>
             <div>
               <div class="section-title-row">
                 <h2>{$t.settings.directoryAccess}</h2>
-                <span class="privacy-badge active">{$t.settings.secureAccessActive}</span>
               </div>
               <p class="section-desc">
                 {$t.settings.directoryActiveDesc}
@@ -681,6 +782,54 @@
     </details>
   </section>
 
+  <!-- ── Share with Friends ───────────────── -->
+  <section id="sharing" class="settings-section">
+    <details bind:open={sharingOpen}>
+      <summary class="section-header section-header--collapsible">
+        <span class="section-icon"><i class="ph-bold ph-share-network"></i></span>
+        <div>
+          <h2>{$t.settings.shareTitle}</h2>
+          <p class="section-desc">{$t.settings.shareDesc}</p>
+        </div>
+        <span class="chevron" aria-hidden="true">›</span>
+      </summary>
+
+      <div class="a11y-body" style="padding-top: var(--spacing-md);">
+        <p class="section-desc section-desc--spaced">{$t.settings.sharePrivacyNote}</p>
+
+        <div class="segment-control segment-control--equal" role="group" aria-label={$t.settings.shareActions}>
+          <button class="segment-btn" on:click={handleNativeShare}>
+            <i class="ph-bold ph-share-fat" aria-hidden="true"></i>
+            <span>{$t.settings.shareNative}</span>
+          </button>
+          <button class="segment-btn" on:click={copyShareLink}>
+            <i class="ph-bold ph-copy" aria-hidden="true"></i>
+            <span>{$t.settings.shareCopy}</span>
+          </button>
+          <button class="segment-btn" on:click={toggleQr} aria-expanded={showQr}>
+            <i class="ph-bold ph-qr-code" aria-hidden="true"></i>
+            <span>{showQr ? $t.settings.shareHideQr : $t.settings.shareShowQr}</span>
+          </button>
+        </div>
+
+        {#if shareStatus === "shared"}
+          <p class="section-desc">{$t.settings.shareSharedOk}</p>
+        {:else if shareStatus === "copied"}
+          <p class="section-desc">{$t.settings.shareCopiedOk}</p>
+        {:else if shareStatus === "error"}
+          <p class="section-desc">{$t.settings.shareError}</p>
+        {/if}
+
+        {#if showQr}
+          <div class="qr-panel">
+            <img src={qrImageUrl} alt={$t.settings.shareQrAlt} loading="lazy" />
+            <p class="section-desc">{$t.settings.shareScanHint}</p>
+          </div>
+        {/if}
+      </div>
+    </details>
+  </section>
+
   <!-- ── Calendar Settings (Collapsible) ────────────── -->
   <section id="calendar-settings" class="settings-section a11y-section">
 
@@ -946,6 +1095,8 @@
     </details>
   </section>
 
+  </div>
+
   <div class="update-card">
     <div class="update-info">
       <span class="update-version">v{APP_VERSION}</span>
@@ -974,7 +1125,6 @@
       rel="noopener noreferrer">GitHub</a
     >
   </footer>
-  </div>
 </div>
 
 <style>
@@ -987,6 +1137,14 @@
   .settings-content {
     max-width: 680px;
     margin: 0 auto;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
   .settings-page > *:not(.page-header) {
@@ -996,22 +1154,44 @@
 
 
   /* ── Sections ── */
-  .settings-section {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
-    padding: var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    box-shadow: var(--shadow-sm);
+  .settings-section,
+  .update-card {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .section-header {
     display: flex;
     align-items: flex-start;
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
+    padding: 18px 20px 8px;
+    margin-bottom: 0;
+  }
+
+  .qr-panel {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .qr-panel img {
+    width: min(220px, 100%);
+    height: auto;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    padding: 8px;
   }
   .section-icon {
     font-size: 1.6rem;
@@ -1038,31 +1218,15 @@
   .section-title-row h2 {
     margin: 0;
   }
-  .privacy-badge {
-    display: inline-flex;
-    align-items: center;
-    min-height: 24px;
-    padding: 3px 8px;
-    border: 1px solid rgba(22, 163, 74, 0.22);
-    border-radius: 999px;
-    background: rgba(22, 163, 74, 0.08);
-    color: #15803d;
-    font-size: 0.68rem;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: 0.01em;
-    text-transform: uppercase;
-  }
-  .privacy-badge.active {
-    border-color: rgba(212, 68, 7, 0.22);
-    background: rgba(212, 68, 7, 0.1);
-    color: var(--primary-color);
-  }
   .section-desc {
     font-size: 0.82rem;
     color: var(--text-color-secondary);
     margin: 0;
     line-height: 1.4;
+  }
+
+  .settings-content > .settings-section + .settings-section {
+    border-top: 1px solid var(--border-color);
   }
 
   /* ── Setting rows ── */
@@ -1401,15 +1565,17 @@
 
   /* ── Update Card ── */
   .update-card {
+    max-width: 680px;
+    margin: 18px auto 0;
+    padding: 16px 18px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--spacing-md);
-    margin-top: var(--spacing-xl);
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
   }
 
   .update-info {
@@ -1717,6 +1883,7 @@
     align-items: flex-start;
     gap: var(--spacing-md);
     margin-bottom: 0;
+    padding: 18px 20px 8px;
     user-select: none;
   }
 
@@ -2073,17 +2240,22 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 0;
+    background: var(--settings-surface);
+    border: 1px solid var(--settings-border);
+    border-radius: 16px;
+    box-shadow: var(--settings-shadow);
+    overflow: hidden;
   }
 
   .settings-section,
   .update-card {
     margin: 0;
     padding: 0;
-    background: var(--settings-surface);
-    border: 1px solid var(--settings-border);
-    border-radius: 16px;
-    box-shadow: var(--settings-shadow);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     overflow: visible;
@@ -2091,6 +2263,10 @@
 
   .settings-section {
     scroll-margin-top: 88px;
+  }
+
+  .settings-content > .settings-section + .settings-section {
+    border-top: 1px solid rgba(7, 19, 47, 0.08);
   }
 
   .danger-section {
@@ -2103,7 +2279,7 @@
     align-items: center;
     gap: 14px;
     margin: 0;
-    padding: 18px 20px;
+    padding: 18px 20px 8px;
     user-select: none;
   }
 
@@ -2175,6 +2351,23 @@
     color: #ffffff;
   }
 
+  .section-icon--directory {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .section-icon--directory i {
+    font-size: 0.92rem;
+    opacity: 0.45;
+    transition: opacity 0.2s ease;
+  }
+
+  .section-icon--directory i.is-active {
+    opacity: 1;
+  }
+
   h2 {
     margin: 0 0 4px;
     color: var(--text-color);
@@ -2195,21 +2388,6 @@
     gap: 8px;
   }
 
-  .privacy-badge {
-    min-height: 22px;
-    padding: 3px 8px;
-    color: #15803d;
-    background: #ecfdf3;
-    border-color: #bbf7d0;
-    font-size: 0.64rem;
-    letter-spacing: 0;
-  }
-
-  .privacy-badge.active {
-    color: var(--settings-orange);
-    background: #fff8ec;
-    border-color: #f4dfc3;
-  }
 
   .chevron {
     width: 28px;
@@ -2240,7 +2418,6 @@
     border-top: 1px solid rgba(7, 19, 47, 0.08);
   }
 
-  .section-header + .setting-row,
   .a11y-body > .setting-row:first-child {
     border-top: none;
   }
@@ -2504,7 +2681,13 @@
   }
 
   .update-card {
+    max-width: none;
+    margin: 18px 0 0;
     padding: 16px 18px;
+    background: var(--settings-surface);
+    border: 1px solid var(--settings-border);
+    border-radius: 16px;
+    box-shadow: var(--settings-shadow);
   }
 
   .update-version {
@@ -2554,7 +2737,8 @@
   }
 
   .mobile-footer {
-    margin: 6px 0 0;
+    max-width: 680px;
+    margin: 6px auto 0;
     padding: 22px 18px calc(var(--bottom-nav-height) + 14px);
     color: var(--text-color-secondary);
     border-top: 0;
@@ -2645,13 +2829,6 @@
       background: transparent;
     }
 
-    .settings-content {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 22px;
-      align-items: start;
-    }
-
   }
 
   :global([data-theme="dark"]) .settings-page {
@@ -2700,6 +2877,7 @@
   }
 
   :global([data-theme="dark"]) details[open] .section-header--collapsible,
+  :global([data-theme="dark"]) .settings-content > .settings-section + .settings-section,
   :global([data-theme="dark"]) .setting-row,
   :global([data-theme="dark"]) .setting-group,
   :global([data-theme="dark"]) .section-item + .section-item {
@@ -2753,6 +2931,7 @@
     }
 
     :global(html:not([data-theme="light"])) details[open] .section-header--collapsible,
+    :global(html:not([data-theme="light"])) .settings-content > .settings-section + .settings-section,
     :global(html:not([data-theme="light"])) .setting-row,
     :global(html:not([data-theme="light"])) .setting-group,
     :global(html:not([data-theme="light"])) .section-item + .section-item {

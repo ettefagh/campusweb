@@ -349,7 +349,6 @@
       class="story-bubble add-story-btn"
       class:rectangular={variant === "rectangular"}
       on:click={() => (isSuggestionModalOpen = true)}
-      aria-label="Suggest a Story"
     >
       {#if variant === "rectangular"}
         <div class="story-card add-card">
@@ -390,7 +389,6 @@
       class="story-bubble"
       class:rectangular={variant === "rectangular"}
       on:click={(event) => openStory(idx, event.currentTarget as HTMLElement)}
-      aria-label="{story.seen ? 'Replay' : 'Open'} story: {story.title}"
     >
       {#if variant === "rectangular"}
         <article class="story-card" class:seen={story.seen}>
@@ -834,7 +832,7 @@
   }
 
   .story-tag.tag-promo {
-    background: #3b82f6;
+    background: #1d4ed8;
     color: #fff;
   }
 

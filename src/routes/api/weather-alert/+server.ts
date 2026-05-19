@@ -3,8 +3,6 @@ import type { RequestHandler } from "./$types";
 import { getWeatherAlertPayload } from "$lib/server/weather";
 import type { WeatherAlertResponse } from "$lib/types/weather";
 
-const CACHE_PREFIX = "weather-alert:";
-
 function withRefreshStamp(value: WeatherAlertResponse): WeatherAlertResponse {
   return {
     ...value,
@@ -12,31 +10,24 @@ function withRefreshStamp(value: WeatherAlertResponse): WeatherAlertResponse {
   };
 }
 
-async function readCachedWeatherAlert(kv: any, key: string) {
-  if (!kv) return null;
+async function persistWeatherStory(kv: any, payload: WeatherAlertResponse) {
+  if (!kv?.put || !payload.story) return;
 
   try {
-    const raw = await kv.get(key);
-    if (!raw) return null;
-    return withRefreshStamp(JSON.parse(raw) as WeatherAlertResponse);
+    await kv.put(
+      "weather-story:latest",
+      JSON.stringify({
+        campusId: payload.selectedCampusId,
+        fetchedAt: payload.fetchedAt,
+        refreshedAt: payload.lastRefreshedAt || payload.fetchedAt,
+        story: payload.story
+      }),
+      {
+        expirationTtl: payload.refreshedInSeconds
+      }
+    );
   } catch {
-    return null;
-  }
-}
-
-async function writeCachedWeatherAlert(
-  kv: any,
-  key: string,
-  value: WeatherAlertResponse
-) {
-  if (!kv) return;
-
-  try {
-    await kv.put(key, JSON.stringify(value), {
-      expirationTtl: value.refreshedInSeconds
-    });
-  } catch {
-    // Ignore cache write failures and serve the fresh response instead.
+    // Story persistence is best-effort only.
   }
 }
 
@@ -51,28 +42,17 @@ export const GET: RequestHandler = async ({ platform, url }) => {
     throw error(500, "OpenWeather API key is not configured");
   }
 
-  const kv = platform?.env?.STORIES_KV;
-  const cacheKey = `${CACHE_PREFIX}${campusId}`;
-  const cached = await readCachedWeatherAlert(kv, cacheKey);
-  if (cached) {
-    return json(cached, {
-      headers: {
-        "Cache-Control": "public, max-age=120, stale-while-revalidate=600"
-      }
-    });
-  }
-
   const payload = await getWeatherAlertPayload(campusId, apiKey);
   if (!payload) {
     throw error(404, "Unknown campus");
   }
 
   const stamped = withRefreshStamp(payload);
-  await writeCachedWeatherAlert(kv, cacheKey, stamped);
+  await persistWeatherStory(platform?.env?.STORIES_KV, stamped);
 
   return json(stamped, {
     headers: {
-      "Cache-Control": "public, max-age=120, stale-while-revalidate=600"
+      "Cache-Control": "no-store"
     }
   });
 };
