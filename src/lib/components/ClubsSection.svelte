@@ -61,9 +61,9 @@
   }
 
   .filter-chip {
-    padding: 6px 14px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    padding: 7px 14px;
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
     border-radius: 99px;
     font-size: 0.8rem;
     font-weight: 600;
@@ -77,13 +77,13 @@
     background: var(--primary-color);
     border-color: var(--primary-color);
     color: white;
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-color) 30%, transparent);
+    box-shadow: 0 8px 18px rgba(212, 68, 7, 0.18);
   }
 
   .filter-chip:hover:not(.active) {
     border-color: var(--primary-color);
     color: var(--primary-color);
-    background: color-mix(in srgb, var(--primary-color) 5%, transparent);
+    background: #fff6dc;
   }
 
   .clubs-grid {
@@ -102,5 +102,9 @@
     .clubs-grid {
       grid-template-columns: 1fr;
     }
+  }
+
+  :global([data-theme="dark"]) .filter-chip {
+    border-color: rgba(255, 255, 255, 0.11);
   }
 </style>

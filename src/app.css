@@ -124,6 +124,7 @@
 	/* Layout */
 	--sidebar-width: 220px;
 	--bottom-nav-height: 112px;
+	--bottom-nav-clearance: calc(74px + env(safe-area-inset-bottom, 0px) + var(--spacing-xl));
 
 	/* Thumb Zone Measurements */
 	--thumb-zone-easy: 40vh;
@@ -150,6 +151,43 @@
 	--shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255,255,255,0.6);
 	--shadow-md: 0 4px 166px rgba(0, 0, 0, 0.1), 0 1px 4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.55);
 	--shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.14), 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+/* Shared clearance for route-level footers so they don't hide behind the fixed bottom nav. */
+.page-footer-safe {
+	margin-bottom: var(--bottom-nav-clearance);
+}
+
+.popup-footer-safe {
+	margin-bottom: var(--bottom-nav-clearance);
+}
+
+.popup-backdrop-safe {
+	padding-bottom: var(--bottom-nav-clearance);
+}
+
+.popup-panel-safe {
+	max-height: calc(100dvh - var(--bottom-nav-clearance) - 24px);
+	overflow: auto;
+}
+
+@media (min-width: 1024px) {
+	.page-footer-safe {
+		margin-bottom: 0;
+	}
+
+	.popup-footer-safe {
+		margin-bottom: 0;
+	}
+
+	.popup-backdrop-safe {
+		padding-bottom: 18px;
+	}
+
+	.popup-panel-safe {
+		max-height: none;
+		overflow: visible;
+	}
 }
 
 /* ── Dark Mode ──────────────────────────────────────────────────────── */
@@ -306,13 +344,13 @@ body {
 .app-container {
 	min-height: 100vh;
 	overflow-x: hidden;
-	padding-bottom: calc(var(--touch-target-min) + var(--spacing-lg) + var(--spacing-lg));
 }
 
 .content-area {
 	max-width: 840px;
 	margin: 0 auto;
 	padding: var(--spacing-md);
+	padding-bottom: var(--bottom-nav-clearance);
 	overflow-x: hidden;
 }
 
@@ -326,20 +364,13 @@ body {
 }
 
 /* ── Large Phone Adjustments ──────────────────────────────────────── */
-@media (min-height: 800px) {
-	.app-container {
-		padding-bottom: 120px;
-	}
-}
+/* Large phone — no extra rule needed; --bottom-nav-clearance already accounts for safe-area */
 
 /* ── Desktop ──────────────────────────────────────────────────────── */
 @media (min-width: 1244px) {
 	.content-area {
 		max-width: 1200px;
 		padding: var(--spacing-lg) var(--spacing-xl);
-	}
-
-	.app-container {
 		padding-bottom: 0;
 	}
 

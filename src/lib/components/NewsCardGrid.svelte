@@ -4,6 +4,7 @@
   export let cards: Array<{
     tag: string;
     emoji: string;
+    iconClass?: string;
     title: string;
     desc: string;
     url: string;
@@ -15,11 +16,12 @@
   {#each cards as card}
     <a href={card.url} class="news-card" style="--card-accent: {card.color}">
       <div class="news-card-main">
-        <span
-          class="news-card-icon"
-          style="background: color-mix(in srgb, {card.color} 12%, transparent); color: {card.color};"
-        >
-          {card.emoji}
+        <span class="news-card-icon" style="background: {card.color};">
+          {#if card.iconClass}
+            <i class="ph-fill {card.iconClass}" aria-hidden="true"></i>
+          {:else}
+            {card.emoji}
+          {/if}
         </span>
         <div class="news-card-content">
           <h3 class="news-card-title">{card.title}</h3>
@@ -27,10 +29,7 @@
         </div>
       </div>
       <div class="news-card-side">
-        <span
-          class="news-card-tag"
-          style="background: color-mix(in srgb, {card.color} 15%, transparent); color: {card.color}; border: 1px solid color-mix(in srgb, {card.color} 25%, transparent);"
-        >
+        <span class="news-card-tag">
           {card.tag}
         </span>
         <span class="news-card-cta">
@@ -81,14 +80,14 @@
     align-items: stretch;
     gap: var(--spacing-md);
     padding: var(--spacing-md) var(--spacing-lg);
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    border-radius: 18px;
     text-decoration: none;
     color: var(--text-color);
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     overflow: hidden;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--campus-shadow-soft);
     height: 100%;
     box-sizing: border-box;
   }
@@ -108,8 +107,8 @@
   .news-card:hover {
     transform: translateY(-5px);
     border-color: var(--card-accent);
-    box-shadow: 0 12px 24px -10px color-mix(in srgb, var(--card-accent) 25%, transparent);
-    background: color-mix(in srgb, var(--card-accent) 2%, var(--card-bg));
+    box-shadow: var(--campus-shadow);
+    background: #ffffff;
   }
 
   .news-card:hover::before {
@@ -131,7 +130,8 @@
     height: 42px;
     flex-shrink: 0;
     border-radius: var(--radius-lg);
-    font-size: 1.25rem;
+    font-size: 1.35rem;
+    color: #ffffff;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
@@ -157,7 +157,7 @@
   }
 
   .news-card:hover .news-card-title {
-    color: var(--card-accent);
+    color: var(--primary-color);
   }
 
   .news-card-desc {
@@ -183,6 +183,9 @@
   }
 
   .news-card-tag {
+    background: #fff6dc;
+    border: 1px solid #f7b801;
+    color: var(--primary-color);
     padding: 4px 10px;
     border-radius: 99px;
     font-size: 0.72rem;
@@ -200,9 +203,8 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: color-mix(in srgb, var(--card-accent) 8%, var(--card-bg));
-    border: 1px solid
-      color-mix(in srgb, var(--card-accent) 15%, var(--border-color));
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
     color: var(--card-accent);
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   }
@@ -212,8 +214,12 @@
     color: #fff;
     border-color: var(--card-accent);
     transform: scale(1.1) translateX(2px);
-    box-shadow: 0 4px 10px
-      color-mix(in srgb, var(--card-accent) 30%, transparent);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  }
+
+  :global([data-theme="dark"]) .news-card,
+  :global([data-theme="dark"]) .news-card-cta {
+    border-color: rgba(255, 255, 255, 0.11);
   }
 
   @media (max-width: 640px) {

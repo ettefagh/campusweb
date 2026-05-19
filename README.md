@@ -106,6 +106,7 @@ To enable authentication, moderation, email notifications, and storage, configur
 | `PRIVATE_AUTH_SECRET` | A strong random secret, at least 32 characters, for HMAC and anonymous sessions. |
 | `PRIVATE_EMAIL_SENDER` | The verified sender address for Cloudflare Email Sending. |
 | `PRIVATE_CLOUDFLARE_EMAIL_API_TOKEN` | API token for Cloudflare Email Sending. |
+| `PRIVATE_OPENWEATHER_API_KEY` | API key used to fetch weather alerts for the home notifications bell. |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID used by Email Sending. |
 | `PRIVATE_VIRUSTOTAL_API_KEY` | (Optional) VirusTotal API key for automated link security scanning. |
 | `PRIVATE_GOOGLE_SHEETS_URL` | (Optional) Google Sheets CSV source for external story content. |

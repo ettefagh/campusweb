@@ -2,11 +2,18 @@
 	import LinkCard from "$lib/components/LinkCard.svelte";
 	import IdSlider from "$lib/components/IdSlider.svelte";
 	import StoriesSlider from "$lib/components/StoriesSlider.svelte";
+	import StorySuggestionModal from "$lib/components/StorySuggestionModal.svelte";
+	import WeatherNotifications from "$lib/components/WeatherNotifications.svelte";
 	import { cachedStories, getStories, storiesLoading } from "$lib/stores/feedCache";
 	import { favorites } from "$lib/stores/favorites";
 	import { allLinks } from "$lib/data/links";
 	import { t } from "$lib/i18n";
 	import { settingsStore } from "$lib/stores/settingsStore";
+	import { getCalendarEvents } from "$lib/stores/calendarCache";
+	import { activeClasses, calendarStore, holidayEvents, type CalendarSubscription } from "$lib/stores/calendarStore";
+	import { classColors } from "$lib/stores/classColors";
+	import type { CalendarEvent } from "$lib/utils/icalParser";
+	import { focusTrap } from "$lib/utils/focusTrap";
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
 	import SectionHeader from "$lib/components/SectionHeader.svelte";
@@ -48,6 +55,13 @@
 	let showGoToTop = false;
 	let container: HTMLElement | null = null;
 	$: isStoriesLoading = $storiesLoading;
+	let upcomingEvents: CalendarEvent[] = [];
+	let staticCalendarEvents: CalendarEvent[] = [];
+	let calendarSubscriptions: CalendarSubscription[] = [];
+	let isLoadingCalendarPreview = false;
+	let selectedCalendarEvent: CalendarEvent | null = null;
+	let returnFocusElement: HTMLElement | null = null;
+	let loadedCalendarAuthState: boolean | null = null;
 
 	onMount(() => {
 		getStories();
@@ -61,10 +75,146 @@
 			}
 		};
 		container?.addEventListener("scroll", handleScroll);
+		const unsubscribeCalendar = calendarStore.subscribe((subscriptions) => {
+			calendarSubscriptions = subscriptions;
+			updateUpcomingEvents();
+		});
+		const unsubscribeSettings = settingsStore.subscribe((settings) => {
+			loadCalendarPreview(settings.emailVerified);
+		});
+		loadCalendarPreview($settingsStore.emailVerified);
 		return () => {
 			container?.removeEventListener("scroll", handleScroll);
+			unsubscribeCalendar();
+			unsubscribeSettings();
 		};
 	});
+
+	$: {
+		$holidayEvents;
+		updateUpcomingEvents();
+	}
+
+	async function loadCalendarPreview(isVerified: boolean) {
+		if (loadedCalendarAuthState === isVerified) return;
+		loadedCalendarAuthState = isVerified;
+		isLoadingCalendarPreview = true;
+		try {
+			staticCalendarEvents = await getCalendarEvents(isVerified);
+		} catch {
+			staticCalendarEvents = [];
+		} finally {
+			isLoadingCalendarPreview = false;
+			updateUpcomingEvents();
+		}
+	}
+
+	function updateUpcomingEvents() {
+		const now = Date.now();
+		const previewLimit = 4;
+		const subscriptionEvents = calendarSubscriptions.flatMap((subscription) => subscription.cachedEvents);
+		const allEvents = [...staticCalendarEvents, ...subscriptionEvents, ...$holidayEvents];
+		const mode = $settingsStore.calendarWidgetMode || "today";
+		const today = new Date();
+		const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+		const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+		const filteredEvents = (mode === "today"
+			? allEvents.filter((event) => {
+					const start = event.start.getTime();
+					return start >= dayStart && start < dayEnd;
+				})
+			: allEvents.filter((event) => event.end.getTime() >= now)
+		).sort((a, b) => a.start.getTime() - b.start.getTime());
+		const timedEvents = filteredEvents.filter((event) => !event.allDay).slice(0, previewLimit);
+		if (timedEvents.length >= previewLimit) {
+			upcomingEvents = timedEvents;
+			return;
+		}
+		const allDayEvents = filteredEvents
+			.filter((event) => event.allDay)
+			.slice(0, previewLimit - timedEvents.length);
+		upcomingEvents = [...timedEvents, ...allDayEvents].sort(
+			(a, b) => a.start.getTime() - b.start.getTime()
+		);
+	}
+
+	function formatEventTime(event: CalendarEvent) {
+		if (event.allDay) return $t.calendar.allDay || "All day";
+		const start = event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+		const end = event.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+		return `${start} - ${end}`;
+	}
+
+	function formatEventDate(event: CalendarEvent) {
+		return event.start.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+	}
+
+	function formatEventStartTime(event: CalendarEvent) {
+		if (event.allDay) return $t.calendar.allDay || "All day";
+		return event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+	}
+
+	function formatEventEndTime(event: CalendarEvent) {
+		if (event.allDay) return "";
+		return event.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+	}
+
+	function formatEventFullDate(event: CalendarEvent) {
+		return event.start.toLocaleDateString([], {
+			weekday: "long",
+			year: "numeric",
+			month: "long",
+			day: "numeric"
+		});
+	}
+
+	function getEventAriaLabel(event: CalendarEvent) {
+		return `${event.title}, ${formatEventDate(event)}, ${formatEventTime(event)}. ${$t.home.openCalendarEventDetails}`;
+	}
+
+	function openCalendarEvent(event: CalendarEvent, trigger: Event) {
+		returnFocusElement = trigger.currentTarget as HTMLElement;
+		selectedCalendarEvent = event;
+	}
+
+	function closeCalendarEvent() {
+		selectedCalendarEvent = null;
+		setTimeout(() => returnFocusElement?.focus(), 0);
+	}
+
+	function getLocationHref(event: CalendarEvent) {
+		const locationUrl = event.extendedProps?.locationUrl;
+		if (locationUrl) return locationUrl;
+		const location = event.extendedProps?.location;
+		if (!location) return "";
+		const trimmed = location.trim();
+		if (!trimmed || trimmed.toLowerCase() === "online" || /^https?:\/\//i.test(trimmed)) return "";
+		return `https://maps.google.com/?q=${encodeURIComponent(location)}`;
+	}
+
+	function resolveEventDotColor(event: CalendarEvent) {
+		const classGroupId = event.extendedProps?.classGroupId;
+		if (classGroupId) {
+			const customColor = $classColors[classGroupId];
+			if (customColor) return customColor;
+			const classDef = $activeClasses.find((cls) => cls.id === classGroupId);
+			if (classDef?.defaultColor) return classDef.defaultColor;
+		}
+		return event.backgroundColor || "var(--primary-color)";
+	}
+
+	function getCalendarWidgetTitle() {
+		if (($settingsStore.calendarWidgetMode || "today") === "next") return $t.home.nextEvents;
+		const now = new Date();
+		const weekday = now.toLocaleDateString([], { weekday: "long" });
+		return `${weekday} ${now.getDate()}`;
+	}
+
+	function getCalendarWidgetEmptyText() {
+		return ($settingsStore.calendarWidgetMode || "today") === "next"
+			? $t.home.calendarPreparedNext
+			: $t.home.calendarPreparedToday;
+	}
 
 	function goToTop() {
 		container?.scrollTo({ top: 0, behavior: "smooth" });
@@ -76,6 +226,7 @@
 
 	let isEditMode = false;
 	let isManagingFavorites = false;
+	let isStorySuggestionOpen = false;
 	let searchQuery = "";
 	let draggedFavoriteId = "";
 
@@ -133,17 +284,14 @@
 				<header class="home-hero" class:compact={$settingsStore.headerSize === 'small'}>
 					<div class="home-hero-top">
 						<div class="home-greeting">
-							<span>Hello!</span>
-							<h1>Welcome back</h1>
+							<span>{$t.home.greeting}</span>
+							<h1>{$t.home.welcomeBack}</h1>
 						</div>
-						<button class="home-notification" type="button" aria-label="Notifications">
-							<i class="ph ph-bell"></i>
-							<span aria-hidden="true"></span>
-						</button>
+						<WeatherNotifications campusId={$settingsStore.campusId} />
 					</div>
-					<button class="home-search" type="button" on:click={triggerExploreSearch} aria-label="Search CampusWeb">
+					<button class="home-search" type="button" on:click={triggerExploreSearch} aria-label={$t.home.searchCampusWeb}>
 						<i class="ph ph-magnifying-glass" aria-hidden="true"></i>
-						<span>Search CampusWeb</span>
+						<span>{$t.home.searchCampusWeb}</span>
 						<i class="ph ph-corners-out" aria-hidden="true"></i>
 					</button>
 					<div class="home-context">
@@ -170,20 +318,28 @@
 				</header>
 			{:else if section.id === "stories"}
 				<section class="stories-section" id="stories" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
-					<SectionHeader title={$t.home.campusStories} href="/feed" hrefLabel="See all" />
+					<SectionHeader title={$t.home.campusStories}>
+						<button
+							class="section-action-btn stories-suggest-btn"
+							type="button"
+							on:click={() => (isStorySuggestionOpen = true)}
+						>
+							{$t.home.suggestStory || $t.settings.suggestStoryTitle}
+						</button>
+					</SectionHeader>
 					<StoriesSlider stories={$cachedStories} loading={isStoriesLoading} allowSuggestions={true} variant="rectangular" />
 				</section>
 			{:else if section.id === "favorites"}
 				<section class="links-section" id="favorites" style={i <= 1 ? "" : "animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;"} use:sortableFavorites={{ enabled: isManagingFavorites && !isEditMode }}>
-					<SectionHeader title={$t.home.universityLinks || 'Favorite Links'} subtitle="Custom quick-access bookmarks">
+					<SectionHeader title={$t.home.universityLinks || $t.settings.favoriteLinks} subtitle={$t.home.customBookmarks}>
 
 						<div class="favorite-links-actions">
 							{#if isManagingFavorites}
 								<button
 									class="favorite-icon-btn passive"
 									type="button"
-									aria-label="Drag favorite links to reorder"
-									title="Drag favorite links to reorder"
+									aria-label={$t.home.dragReorder}
+									title={$t.home.dragReorder}
 								>
 									<i class="ph-bold ph-dots-six-vertical"></i>
 								</button>
@@ -192,18 +348,18 @@
 									class:active={isEditMode}
 									type="button"
 									on:click={toggleEditMode}
-									aria-label="Edit favorite links"
-									title="Edit favorite links"
+									aria-label={$t.home.editFavorites}
+									title={$t.home.editFavorites}
 								>
 									<i class="ph-bold ph-pencil-simple"></i>
-									<span>Edit</span>
+									<span>{$t.home.edit}</span>
 								</button>
 								<button
 									class="favorite-icon-btn done"
 									type="button"
 									on:click={finishManagingFavorites}
-									aria-label="Done managing favorite links"
-									title="Done"
+									aria-label={$t.home.doneManaging}
+									title={$t.home.done}
 								>
 									<i class="ph-bold ph-check"></i>
 								</button>
@@ -253,25 +409,65 @@
 			{:else if section.id === "calendar"}
 				<section class="links-section full-width-section" id="calendar" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
 
-					<SectionHeader 
-						title={$t.calendar?.pageTitle || "Calendar Schedule"} 
-						href="/calendar"
-						hrefLabel="{$t.home?.viewAll || 'View Full Calendar'} →"
-					/>
-					<div class="modular-placeholder glass">
-						<p>Your calendar schedule is modularly prepared. Navigate to the calendar tab to view your active class timetable.</p>
+						<SectionHeader 
+							title={getCalendarWidgetTitle()} 
+							href="/calendar"
+							hrefLabel="{$t.home?.viewAll || 'View Full Calendar'} →"
+						/>
+						<div class="calendar-preview">
+							{#if isLoadingCalendarPreview}
+								<p class="calendar-preview-empty">{$t.calendar.loading || "Loading calendar..."}</p>
+							{:else if upcomingEvents.length === 0}
+								<p class="calendar-preview-empty">{getCalendarWidgetEmptyText()}</p>
+							{:else}
+								<ul class="calendar-preview-list">
+									{#each upcomingEvents as event (event.id)}
+										<li class="calendar-preview-item">
+										<button
+											class="calendar-preview-button"
+											type="button"
+												aria-label={getEventAriaLabel(event)}
+												on:click={(clickEvent) => openCalendarEvent(event, clickEvent)}
+											>
+												<div class="calendar-preview-dot" style={`background:${resolveEventDotColor(event)}`}></div>
+												{#if ($settingsStore.calendarWidgetMode || "today") === "today"}
+													<div class="calendar-preview-content calendar-preview-content-today">
+														<div class="calendar-preview-main">
+															<p class="calendar-preview-title">{event.title}</p>
+															<p class="calendar-preview-meta">{formatEventStartTime(event)}</p>
+														</div>
+														<div class="calendar-preview-aside">
+															<p class="calendar-preview-meta">{event.extendedProps?.shortLocation || event.extendedProps?.location || ""}</p>
+															{#if !event.allDay}
+																<p class="calendar-preview-meta">{formatEventEndTime(event)}</p>
+															{/if}
+														</div>
+													</div>
+												{:else}
+													<div class="calendar-preview-content">
+														<p class="calendar-preview-title">{event.title}</p>
+														<p class="calendar-preview-meta">
+															<span>{formatEventDate(event)} · {formatEventTime(event)}</span>
+														</p>
+													</div>
+												{/if}
+											</button>
+										</li>
+									{/each}
+							</ul>
+						{/if}
 					</div>
 				</section>
 			{:else if section.id === "feed"}
 				<section class="links-section full-width-section" id="feed" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
 
 					<SectionHeader 
-						title={$t.feed?.pageTitle || "Campus Feed"} 
+						title={$t.home.campusFeed} 
 						href="/feed"
 						hrefLabel="{$t.home?.viewAllNews || 'View All News'} →"
 					/>
 					<div class="modular-placeholder glass">
-						<p>Your campus news and events feed is modularly prepared. Navigate to the feed tab to browse global announcements.</p>
+						<p>{$t.home.feedPrepared}</p>
 					</div>
 				</section>
 			{/if}
@@ -280,13 +476,13 @@
 
 	<div class="fab-group">
 		{#if showGoToTop}
-			<button class="fab-btn go-to-top glass" on:click={goToTop} aria-label="Go to top">
+			<button class="fab-btn go-to-top glass" on:click={goToTop} aria-label={$t.home.goToTop}>
 				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 					<polyline points="18 15 12 9 6 15"></polyline>
 				</svg>
 			</button>
 		{/if}
-		<button class="fab-btn search-fab" on:click={triggerExploreSearch} aria-label="Search Explore">
+		<button class="fab-btn search-fab" on:click={triggerExploreSearch} aria-label={$t.home.searchExplore}>
 			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 				<circle cx="11" cy="11" r="8"></circle>
 				<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -294,6 +490,65 @@
 		</button>
 	</div>
 </div>
+
+<StorySuggestionModal bind:isOpen={isStorySuggestionOpen} />
+
+{#if selectedCalendarEvent}
+	<div
+		class="home-event-modal-backdrop popup-backdrop-safe"
+		role="presentation"
+		on:click={closeCalendarEvent}
+		on:keydown={(event) => event.key === "Escape" && closeCalendarEvent()}
+	>
+		<div
+			class="home-event-modal popup-panel-safe"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="home-event-modal-title"
+			tabindex="-1"
+			use:focusTrap
+			on:click|stopPropagation
+			on:keydown|stopPropagation
+		>
+			<button
+				class="popup-close home-event-modal-close"
+				type="button"
+				on:click={closeCalendarEvent}
+				aria-label={$t.home.closeCalendarEventDetails}
+			>
+				<i class="ph-bold ph-x" aria-hidden="true"></i>
+			</button>
+			<div class="home-event-modal-head">
+				<h3 id="home-event-modal-title">{selectedCalendarEvent.title}</h3>
+			</div>
+			<div class="home-event-detail-list">
+				<p>
+					<span>{$t.calendar.time}</span>
+					<strong>{formatEventFullDate(selectedCalendarEvent)} · {formatEventTime(selectedCalendarEvent)}</strong>
+				</p>
+					{#if selectedCalendarEvent.extendedProps?.location || selectedCalendarEvent.extendedProps?.shortLocation || selectedCalendarEvent.extendedProps?.locationUrl}
+						<p>
+							<span>{$t.calendar.location}</span>
+							{#if selectedCalendarEvent.extendedProps?.locationUrl}
+								<a href={selectedCalendarEvent.extendedProps.locationUrl} target="_blank" rel="noopener noreferrer">
+									{selectedCalendarEvent.extendedProps?.shortLocation || selectedCalendarEvent.extendedProps?.location || $t.calendar.online}
+								</a>
+							{:else if getLocationHref(selectedCalendarEvent)}
+								<a href={getLocationHref(selectedCalendarEvent)} target="_blank" rel="noopener noreferrer">
+									{selectedCalendarEvent.extendedProps?.shortLocation || selectedCalendarEvent.extendedProps?.location}
+								</a>
+							{:else}
+								<strong>{selectedCalendarEvent.extendedProps?.shortLocation || selectedCalendarEvent.extendedProps?.location || $t.calendar.online}</strong>
+							{/if}
+						</p>
+					{/if}
+			</div>
+			{#if selectedCalendarEvent.extendedProps?.description}
+				<p class="home-event-description">{selectedCalendarEvent.extendedProps.description}</p>
+			{/if}
+		</div>
+	</div>
+{/if}
 
 <style>
 	.home-page {
@@ -348,35 +603,6 @@
 		margin: 0;
 		color: var(--text-color);
 		letter-spacing: 0;
-	}
-
-	.home-notification {
-		position: fixed;
-		top: max(28px, calc(env(safe-area-inset-top) + 18px));
-		right: 24px;
-		z-index: 3;
-		width: 42px;
-		height: 42px;
-		display: grid;
-		place-items: center;
-		border-radius: 50%;
-		color: #fff;
-		background: linear-gradient(135deg, var(--primary-color), #ff7a2f);
-		border: 1px solid rgba(255, 255, 255, 0.68);
-		box-shadow: 0 12px 24px rgba(var(--primary-color-rgb), 0.22);
-		font-size: 1.35rem;
-		flex: 0 0 auto;
-	}
-
-	.home-notification span {
-		position: absolute;
-		top: 9px;
-		right: 9px;
-		width: 10px;
-		height: 10px;
-		border-radius: 50%;
-		background: var(--primary-color);
-		border: 2px solid var(--surface-solid);
 	}
 
 	.home-search {
@@ -509,6 +735,13 @@
 		margin-bottom: 6px;
 	}
 
+	.stories-suggest-btn {
+		min-height: 36px;
+		padding: 0 14px;
+		font-size: 0.84rem;
+		font-weight: 800;
+	}
+
 	.links-section :global(.link-card-container:not(:last-child) .link-card.compact-list) {
 		border-bottom: 1px solid rgba(7, 19, 47, 0.08);
 	}
@@ -568,6 +801,225 @@
 		margin: 0;
 		font-size: 0.9rem;
 		line-height: 1.5;
+	}
+
+	.calendar-preview {
+		padding: 8px 16px 16px;
+	}
+
+	.calendar-preview-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+
+	.calendar-preview-item {
+		display: block;
+	}
+
+	.calendar-preview-button {
+		width: 100%;
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		padding: 10px 12px;
+		border: 1px solid var(--surface-border);
+		border-radius: 10px;
+		background: var(--surface-soft);
+		color: inherit;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+
+	.calendar-preview-button:hover,
+	.calendar-preview-button:focus-visible {
+		border-color: rgba(var(--primary-color-rgb), 0.34);
+		box-shadow: 0 8px 18px rgba(7, 19, 47, 0.08);
+	}
+
+	.calendar-preview-dot {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+		margin-top: 7px;
+		flex: 0 0 auto;
+	}
+
+		.calendar-preview-content {
+			min-width: 0;
+		}
+
+		.calendar-preview-content-today {
+			width: 100%;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 8px;
+			align-items: start;
+		}
+
+		.calendar-preview-main,
+		.calendar-preview-aside {
+			min-width: 0;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		.calendar-preview-aside {
+			align-items: flex-end;
+			text-align: right;
+		}
+
+	.calendar-preview-title {
+		margin: 0;
+		font-size: 0.92rem;
+		font-weight: 700;
+		line-height: 1.3;
+		color: var(--text-color);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.calendar-preview-meta {
+		margin: 5px 0 0;
+		font-size: 0.8rem;
+		color: var(--text-color-secondary);
+		line-height: 1.3;
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	.calendar-preview-empty {
+		margin: 0;
+		padding: 12px;
+		border: 1px dashed var(--border-color);
+		border-radius: 10px;
+		color: var(--text-color-secondary);
+		font-size: 0.88rem;
+		text-align: center;
+	}
+
+	.home-event-modal-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 60;
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+		padding: 18px 18px calc(18px + var(--bottom-nav-clearance));
+		background: rgba(7, 19, 47, 0.42);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+	}
+
+	.home-event-modal {
+		position: relative;
+		width: min(100%, 430px);
+		max-height: min(82vh, 620px);
+		overflow: auto;
+		border: 1px solid var(--surface-border);
+		border-radius: 18px 18px 14px 14px;
+		background: var(--surface-solid);
+		box-shadow: var(--campus-shadow);
+		padding: 20px;
+		color: var(--text-color);
+	}
+
+	.home-event-modal-close {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		width: 38px;
+		height: 38px;
+		display: grid;
+		place-items: center;
+		border: 1px solid var(--surface-border);
+		border-radius: 50%;
+		background: var(--surface-soft);
+		color: var(--text-color);
+		cursor: pointer;
+	}
+
+	.home-event-modal-head {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+		padding-right: 44px;
+	}
+
+	.home-event-modal-head h3 {
+		margin: 0;
+		font-size: 1.18rem;
+		line-height: 1.16;
+		letter-spacing: 0;
+	}
+
+	.home-event-detail-list {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		margin-top: 18px;
+	}
+
+	.home-event-detail-list p,
+	.home-event-description {
+		margin: 0;
+	}
+
+	.home-event-detail-list p {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 11px 12px;
+		border: 1px solid var(--surface-border);
+		border-radius: 10px;
+		background: var(--surface-soft);
+	}
+
+	.home-event-detail-list span {
+		color: var(--text-color-secondary);
+		font-size: 0.78rem;
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	.home-event-detail-list strong,
+	.home-event-detail-list a {
+		color: var(--text-color);
+		font-size: 0.96rem;
+		line-height: 1.35;
+	}
+
+	.home-event-description {
+		margin-top: 14px;
+		padding: 12px;
+		border-radius: 10px;
+		background: color-mix(in srgb, var(--primary-color), transparent 91%);
+		color: var(--text-color-secondary);
+		font-size: 0.9rem;
+		line-height: 1.5;
+		white-space: pre-wrap;
+	}
+
+	:global(html.a11y-high-contrast) .calendar-preview-button,
+	:global(html.a11y-high-contrast) .home-event-modal,
+	:global(html.a11y-high-contrast) .home-event-detail-list p {
+		border-color: var(--border-color);
+	}
+
+	@media (min-width: 700px) {
+		.home-event-modal-backdrop {
+			align-items: center;
+		}
 	}
 
 
@@ -741,12 +1193,6 @@
 			align-items: center;
 		}
 
-		.home-notification {
-			position: absolute;
-			top: 4px;
-			right: 454px;
-		}
-
 		.home-context {
 			display: flex;
 			grid-column: 1;
@@ -763,7 +1209,7 @@
 		}
 
 		.full-width-section {
-			grid-column: 2;
+			grid-column: auto;
 		}
 
 		.fab-group {

@@ -378,7 +378,7 @@
             </div>
           </div>
 
-        <div class="modal-footer">
+        <div class="modal-footer popup-footer-safe">
           <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
           <button class="submit-btn" on:click={submitStory} disabled={submitting}>
             {submitting ? "Sending..." : "Submit for Review"}

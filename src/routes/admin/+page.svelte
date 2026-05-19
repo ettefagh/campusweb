@@ -53,7 +53,7 @@
       {/each}
     </nav>
 
-    <div class="sidebar-footer">
+    <div class="sidebar-footer page-footer-safe">
       <a href="/feed" class="exit-btn">Exit to Feed</a>
     </div>
   </aside>

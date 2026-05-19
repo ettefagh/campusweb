@@ -56,6 +56,9 @@
   // Event detail popup
   let popupEvent: any = null;
   let popupPosition = { x: 0, y: 0 };
+  const POPUP_BOTTOM_CLEARANCE_PX = 112;
+  const POPUP_HEIGHT_ESTIMATE_PX = 240;
+  const POPUP_EDGE_PADDING_PX = 16;
 
   // ─── Interactive Legend Filter ────────────────────────────────────
   // Calendar sources hidden by default to reduce visual clutter on first load
@@ -229,7 +232,7 @@
         let rightPart = "";
 
         if (isAllDay) {
-          leftPart = `<span class="ec-event-title-text">${title}</span><span class="ec-event-time-sub">All-day</span>`;
+          leftPart = `<span class="ec-event-title-text">${title}</span><span class="ec-event-time-sub">${esc($t.calendar.allDay)}</span>`;
           rightPart = `${locHtml}`;
         } else if (info.event.start) {
           const startStr = formatTime(info.event.start);
@@ -258,8 +261,17 @@
       jsEvent.stopPropagation(); // Prevent immediate dismiss by the window click handler
       popupEvent = info.event;
       popupPosition = {
-        x: Math.min(jsEvent.clientX, innerWidth - 280),
-        y: Math.min(jsEvent.clientY, window.innerHeight - 200),
+        x: Math.max(
+          POPUP_EDGE_PADDING_PX,
+          Math.min(jsEvent.clientX, innerWidth - 320 - POPUP_EDGE_PADDING_PX),
+        ),
+        y: Math.max(
+          POPUP_EDGE_PADDING_PX,
+          Math.min(
+            jsEvent.clientY,
+            window.innerHeight - POPUP_BOTTOM_CLEARANCE_PX - POPUP_HEIGHT_ESTIMATE_PX,
+          ),
+        ),
       };
     },
     viewDidMount: () => {
@@ -510,6 +522,27 @@
     popupEvent = null;
   }
 
+  function hasOnlineUrl(event: any): boolean {
+    return !!event?.extendedProps?.locationUrl;
+  }
+
+  function isOnlineOnlyLocation(event: any): boolean {
+    const shortLocation = (event?.extendedProps?.shortLocation || "").trim().toLowerCase();
+    const location = (event?.extendedProps?.location || "").trim().toLowerCase();
+    const combined = `${shortLocation} ${location}`;
+    if (!combined.trim()) return false;
+    if (/^https?:\/\//i.test(location)) return true;
+    return combined.includes("online") || combined.includes("teams") || combined.includes("zoom") || combined.includes("meet");
+  }
+
+  function getPhysicalMapsHref(event: any): string {
+    const location = (event?.extendedProps?.location || "").trim();
+    if (!location) return "";
+    if (/^https?:\/\//i.test(location)) return "";
+    if (isOnlineOnlyLocation(event)) return "";
+    return `https://maps.google.com/?q=${encodeURIComponent(location)}`;
+  }
+
   // ─── Responsive View Switching ────────────────────────────────────
   let prevBreakpoint = "";
   $: currentBreakpoint = isDesktop
@@ -666,7 +699,7 @@
 </script>
 
 <svelte:head>
-  <title>Calendar - Campusweb Pages</title>
+  <title>{$t.calendar.pageTitle}</title>
 </svelte:head>
 
 <svelte:window bind:innerWidth on:click={handleWindowClick} />
@@ -676,10 +709,10 @@
     <div class="calendar-main">
       <header class="calendar-header">
         <div class="calendar-title-block">
-          <span class="calendar-eyebrow">Plan ahead</span>
-          <h1>{$t.calendar.title || "Calendar"}</h1>
+          <span class="calendar-eyebrow">{$t.calendar.planAhead}</span>
+          <h1>{$t.calendar.title}</h1>
           <p class="calendar-subtitle">
-            {$t.calendar.subtitle || "University events and your schedule"}
+            {$t.calendar.subtitle}
           </p>
         </div>
         <button
@@ -694,9 +727,9 @@
       </header>
 
       <div class="calendar-period-card" aria-live="polite">
-        <span class="period-label">Showing</span>
+        <span class="period-label">{$t.calendar.showing}</span>
         <strong class="toolbar-title">
-          {currentTitleText || ($t.calendar.title || "Calendar")}
+          {currentTitleText || $t.calendar.title}
         </strong>
       </div>
 
@@ -704,32 +737,32 @@
         <div class="suggestion-banner link-banner">
           <div class="suggestion-icon"><i class="ph-bold ph-calendar"></i></div>
           <div class="suggestion-content">
-            <p class="suggestion-title">See your university schedule here</p>
+            <p class="suggestion-title">{$t.calendar.setupTitle}</p>
             <p class="suggestion-desc">
-              Link your <strong>iCal-Export</strong> feed from the student portal
-              to see your classes, exams and deadlines directly in this webapp.
+              {$t.calendar.setupDesc}
             </p>
           </div>
           <div class="suggestion-actions">
-            <a
-              href="/settings#calendar-subscriptions"
-              class="suggestion-btn suggestion-btn--primary"
-            >
-              <i class="ph-bold ph-gear" style="margin-right: 6px;"></i> Get Started
+	            <a
+	              href="/settings?focus=calendar-url#calendar-settings"
+	              class="suggestion-btn suggestion-btn--primary"
+	            >
+              <i class="ph-bold ph-gear" style="margin-right: 6px;"></i>
+              {$t.calendar.getStarted}
             </a>
             {#if $activeDepartment?.icalUrl && !dismissedSuggestion}
               <button
                 class="suggestion-btn suggestion-btn--secondary"
                 on:click={handleImportSuggestion}
               >
-                Import Department Calendar
+                {$t.calendar.importDepartmentCalendar}
               </button>
             {/if}
             <button
               class="suggestion-btn suggestion-btn--secondary"
               on:click={() => (dismissedSetupNotice = true)}
             >
-              Later
+              {$t.calendar.later}
             </button>
           </div>
         </div>
@@ -738,7 +771,7 @@
       {#if isLoading}
         <div class="loading-state" aria-live="polite" aria-busy="true">
           <div class="loading-spinner"></div>
-          <p>Loading calendar events...</p>
+          <p>{$t.calendar.loading}</p>
         </div>
       {/if}
 
@@ -747,9 +780,9 @@
         <div class="suggestion-banner">
           <div class="suggestion-icon"><i class="ph-bold ph-tray"></i></div>
           <div class="suggestion-content">
-            <p class="suggestion-title">No events to show</p>
+            <p class="suggestion-title">{$t.calendar.noEventsTitle}</p>
             <p class="suggestion-desc">
-              Try a different date range or add a calendar subscription.
+              {$t.calendar.noEventsDesc}
             </p>
           </div>
           <div class="suggestion-actions">
@@ -757,7 +790,7 @@
               class="suggestion-btn suggestion-btn--secondary"
               on:click={() => (dismissedEmptyNotice = true)}
             >
-              Understood
+              {$t.calendar.understood}
             </button>
           </div>
         </div>
@@ -806,14 +839,14 @@
             <button
               class="toolbar-btn"
               on:click={goToPrev}
-              aria-label="Previous"
+              aria-label={$t.calendar.previous}
             >
               <i class="ph-bold ph-caret-left" aria-hidden="true"></i>
             </button>
             <button
               class="toolbar-btn today-btn"
               on:click={goToToday}
-              aria-label="Go to Today"
+              aria-label={$t.calendar.goToToday}
             >
               {#if todayDirection === "left"}
                 ← {$t.calendar.today}
@@ -821,7 +854,7 @@
                 {$t.calendar.today} {todayDirection === "right" ? "→" : ""}
               {/if}
             </button>
-            <button class="toolbar-btn" on:click={goToNext} aria-label="Next">
+            <button class="toolbar-btn" on:click={goToNext} aria-label={$t.calendar.nextLabel}>
               <i class="ph-bold ph-caret-right" aria-hidden="true"></i>
             </button>
           </div>
@@ -834,20 +867,20 @@
           <div class="suggestion-banner link-banner calendar-auth-banner">
             <div class="suggestion-icon"><i class="ph-bold ph-lock-key"></i></div>
             <div class="suggestion-content">
-              <p class="suggestion-title">University calendars are protected</p>
+              <p class="suggestion-title">{$t.calendar.protectedTitle}</p>
               <p class="suggestion-desc">
-                Public holidays remain visible. Verify your SRH email to load lecture-free periods, exams, modules, welcome week and semester dates.
+                {$t.calendar.protectedDesc}
               </p>
             </div>
             <div class="suggestion-actions">
               <a href="/settings#directory-access" class="suggestion-btn suggestion-btn--primary">
-                Verify SRH Email
+                {$t.calendar.verifyEmail}
               </a>
               <button
                 class="suggestion-btn suggestion-btn--secondary"
                 on:click={() => (dismissedProtectedNotice = true)}
               >
-                Later
+                {$t.calendar.later}
               </button>
             </div>
           </div>
@@ -920,7 +953,7 @@
               style="background-color: var(--event-purple);"
             ></span>
             <span>
-              {$settingsStore.language === "de" ? "Feiertage" : "Holidays"}
+              {$t.calendar.holidays}
               {$activeCampus?.stateCode ? `(${$activeCampus.stateCode})` : ""}
             </span>
           </button>
@@ -940,7 +973,7 @@
 
       <!-- Quick Links — external university resources -->
       <section class="quick-links-section">
-        <h2 class="section-title">Campus shortcuts</h2>
+        <h2 class="section-title">{$t.calendar.campusShortcuts}</h2>
         <div class="quick-links-grid">
           <a
             href="https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php"
@@ -951,8 +984,8 @@
             <span class="ql-icon ql-icon--blue">
               <i class="ph-fill ph-calendar-dots" aria-hidden="true"></i>
             </span>
-            <span class="ql-title">My Schedule</span>
-            <span class="ql-desc">View class timetable</span>
+            <span class="ql-title">{$t.calendar.mySchedule}</span>
+            <span class="ql-desc">{$t.calendar.viewClassTimetable}</span>
           </a>
           <a
             href="https://srh-community.campusweb.cloud/en/mein-studium/meine-pruefungsanmeldung.php"
@@ -963,8 +996,8 @@
             <span class="ql-icon ql-icon--yellow">
               <i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
             </span>
-            <span class="ql-title">Exam Registration</span>
-            <span class="ql-desc">Register for exams</span>
+            <span class="ql-title">{$t.calendar.examRegistration}</span>
+            <span class="ql-desc">{$t.calendar.registerForExams}</span>
           </a>
           <a
             href="https://www.srh-university.de/en/events/"
@@ -975,8 +1008,8 @@
             <span class="ql-icon ql-icon--violet">
               <i class="ph-fill ph-confetti" aria-hidden="true"></i>
             </span>
-            <span class="ql-title">University Events</span>
-            <span class="ql-desc">Workshops, fairs & more</span>
+            <span class="ql-title">{$t.calendar.universityEvents}</span>
+            <span class="ql-desc">{$t.calendar.workshopsFairsMore}</span>
           </a>
           <a
             href="https://calendarsub.padarhava.workers.dev/"
@@ -987,8 +1020,8 @@
             <span class="ql-icon ql-icon--orange">
               <i class="ph-fill ph-magic-wand" aria-hidden="true"></i>
             </span>
-            <span class="ql-title">Calendar Enhancer</span>
-            <span class="ql-desc">Optimize your iCal feed</span>
+            <span class="ql-title">{$t.calendar.calendarEnhancer}</span>
+            <span class="ql-desc">{$t.calendar.optimizeIcal}</span>
           </a>
         </div>
       </section>
@@ -996,9 +1029,9 @@
   </div>
 </div>
 
-{#if popupEvent}
+  {#if popupEvent}
   <div
-    class="event-popup"
+    class="event-popup popup-panel-safe"
     role="dialog"
     aria-modal="true"
     aria-labelledby="popup-title"
@@ -1009,7 +1042,7 @@
     <button
       class="popup-close"
       on:click={closePopup}
-      aria-label="Close event details">✖</button
+      aria-label={$t.calendar.closeEventDetails}>✖</button
     >
     <h3 id="popup-title" class="popup-title">{popupEvent.title}</h3>
 
@@ -1035,7 +1068,7 @@
         })}
       </div>
     {:else if popupEvent.allDay}
-      <div class="popup-time">All Day</div>
+      <div class="popup-time">{$t.calendar.allDay}</div>
       <div class="popup-date">
         {new Date(popupEvent.start).toLocaleDateString(locale, {
           weekday: "long",
@@ -1046,20 +1079,20 @@
       </div>
     {/if}
 
-    {#if popupEvent.extendedProps?.locationUrl}
+    {#if hasOnlineUrl(popupEvent)}
       <div class="popup-online-section">
         <a
           href={popupEvent.extendedProps.locationUrl}
           target="_blank"
           rel="noopener noreferrer"
           class="popup-online-btn"
-          aria-label="Join online meeting"
+          aria-label={$t.calendar.joinOnlineMeeting}
         >
           <i class="ph-bold ph-video-camera" style="font-size: 1.15rem;"></i>
-          <span>Join Online Meeting</span>
+          <span>{$t.calendar.joinOnlineMeeting}</span>
         </a>
         <div class="popup-location-badge online">
-          {popupEvent.extendedProps?.shortLocation || "Online"}
+          {popupEvent.extendedProps?.shortLocation || $t.calendar.online}
         </div>
         {#if popupEvent.extendedProps?.location && !popupEvent.extendedProps.location.startsWith("http")}
           <div class="popup-location">
@@ -1067,15 +1100,19 @@
           </div>
         {/if}
       </div>
-    {:else if popupEvent.extendedProps?.location || popupEvent.extendedProps?.shortLocation}
+    {:else if isOnlineOnlyLocation(popupEvent)}
+      <div class="popup-online-section">
+        <div class="popup-location-badge online">
+          {popupEvent.extendedProps?.shortLocation || popupEvent.extendedProps?.location || $t.calendar.online}
+        </div>
+      </div>
+    {:else if getPhysicalMapsHref(popupEvent)}
       <a
-        href="https://maps.google.com/?q={encodeURIComponent(
-          popupEvent.extendedProps?.location,
-        )}"
+        href={getPhysicalMapsHref(popupEvent)}
         target="_blank"
         rel="noopener noreferrer"
         class="popup-location-link"
-        aria-label="Open location in Google Maps"
+        aria-label={$t.calendar.openLocationGoogleMaps}
       >
         <div class="popup-location-badge">
           {popupEvent.extendedProps?.shortLocation ||
@@ -1085,6 +1122,11 @@
           {popupEvent.extendedProps?.location}
         </div>
       </a>
+    {:else if popupEvent.extendedProps?.location || popupEvent.extendedProps?.shortLocation}
+      <div class="popup-location-badge">
+        {popupEvent.extendedProps?.shortLocation ||
+          popupEvent.extendedProps?.location}
+      </div>
     {/if}
 
     {#if popupEvent.extendedProps?.description}
@@ -1097,9 +1139,12 @@
 
 <style>
   .calendar-page {
-    padding: calc(env(safe-area-inset-top) + var(--spacing-sm)) 0
-      calc(var(--spacing-xl) * 2.5);
+    width: min(calc(100vw - 32px), 460px);
+    max-width: 460px;
+    margin: 0 auto;
+    padding: max(18px, env(safe-area-inset-top)) 18px calc(var(--spacing-xl) * 3);
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   .calendar-page > * {
@@ -1107,21 +1152,25 @@
   }
 
   .calendar-page-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
     border-radius: var(--radius-lg);
   }
 
   .calendar-main {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
+    gap: 22px;
   }
 
   .calendar-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: var(--spacing-md);
-    padding: var(--spacing-sm) var(--spacing-xs) 0;
+    gap: 12px;
+    padding: 0;
   }
 
   .calendar-title-block {
@@ -1675,6 +1724,11 @@
     min-width: 240px;
     max-width: 320px;
     animation: popupFadeIn 0.15s ease-out;
+  }
+
+  .event-popup.popup-panel-safe {
+    max-height: calc(100dvh - var(--bottom-nav-clearance) - 24px);
+    overflow: auto;
   }
 
   :global([data-theme="dark"]) .event-popup {
@@ -2281,17 +2335,22 @@
     }
   }
 
-  .calendar-page-layout {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   @media (min-width: 1024px) {
+    .calendar-page {
+      width: min(calc(100vw - 64px), 1040px);
+      max-width: 1040px;
+      padding-inline: 0;
+      padding-bottom: 56px;
+    }
+
+    .calendar-page-layout {
+      gap: 22px;
+    }
+
     .calendar-main {
       display: flex;
       flex-direction: column;
-      gap: var(--spacing-md);
+      gap: 22px;
     }
 
     .toolbar-views {
@@ -2401,6 +2460,13 @@
   @media (max-width: 768px) {
     .quick-links-section {
       margin: 0;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .calendar-page {
+      width: min(calc(100vw - 24px), 460px);
+      padding-inline: 12px;
     }
   }
 

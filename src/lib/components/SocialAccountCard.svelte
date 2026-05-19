@@ -6,12 +6,12 @@
   export let layout: "card" | "chip" = "card";
 
   const platformIcons = {
-    instagram: "📸",
-    facebook: "📘",
-    tiktok: "🎵",
-    youtube: "📺",
-    linkedin: "🔗",
-    whatsapp: "💬",
+    instagram: "ph-instagram-logo",
+    facebook: "ph-facebook-logo",
+    tiktok: "ph-tiktok-logo",
+    youtube: "ph-youtube-logo",
+    linkedin: "ph-linkedin-logo",
+    whatsapp: "ph-whatsapp-logo",
   } as const;
 
   const platformColors = {
@@ -43,7 +43,9 @@
     class="social-chip"
     style="--chip-color: {platformColors[account.platform]};"
   >
-    <span class="chip-icon">{platformIcons[account.platform]}</span>
+    <span class="chip-icon">
+      <i class="ph-fill {platformIcons[account.platform]}" aria-hidden="true"></i>
+    </span>
     <span class="chip-copy">
       <span class="chip-name">{account.name}</span>
       <span class="chip-platform">{platformNames[account.platform]}</span>
@@ -69,7 +71,7 @@
             {#if account.logoUrl}
               <img src={account.logoUrl} alt="" />
             {:else}
-              {platformIcons[account.platform]}
+              <i class="ph-fill {platformIcons[account.platform]}" aria-hidden="true"></i>
             {/if}
           </div>
 
@@ -134,7 +136,7 @@
             {#if account.logoUrl}
               <img src={account.logoUrl} alt="" />
             {:else}
-              {platformIcons[account.platform]}
+              <i class="ph-fill {platformIcons[account.platform]}" aria-hidden="true"></i>
             {/if}
           </div>
           {#if account.verified}
@@ -186,27 +188,34 @@
   .social-chip {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
+    gap: 10px;
+    padding: 9px 14px 9px 10px;
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    border-radius: 16px;
     text-decoration: none;
     color: var(--text-color);
     transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--campus-shadow-soft);
     min-width: 178px;
   }
 
   .social-chip:hover {
     border-color: var(--chip-color);
-    background: color-mix(in srgb, var(--chip-color) 8%, var(--card-bg));
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--campus-shadow);
   }
 
   .chip-icon {
-    font-size: 1.1rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--chip-color);
+    color: #ffffff;
+    font-size: 1.15rem;
     flex-shrink: 0;
   }
 
@@ -238,13 +247,13 @@
   .social-card {
     display: flex;
     flex-direction: column;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 24px;
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    border-radius: 18px;
     text-decoration: none;
     color: var(--text-color);
     transition: all 0.28s cubic-bezier(0.2, 0, 0, 1);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--campus-shadow-soft);
     position: relative;
     overflow: hidden;
     height: 100%;
@@ -253,8 +262,8 @@
 
   .social-card:hover {
     transform: translateY(-3px);
-    border-color: color-mix(in srgb, var(--accent-color) 28%, var(--border-color));
-    box-shadow: 0 14px 28px -18px color-mix(in srgb, var(--accent-color) 45%, transparent);
+    border-color: var(--accent-color);
+    box-shadow: var(--campus-shadow);
   }
 
   .club-card {
@@ -268,16 +277,10 @@
     gap: 10px;
     min-height: 220px;
     padding: 14px;
-    border-radius: 22px;
-    background:
-      linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--accent-color) 11%, var(--card-bg)) 0%,
-        color-mix(in srgb, var(--accent-color) 4%, var(--bg-secondary)) 100%
-      );
-    box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 10%, transparent),
-      0 14px 24px -20px color-mix(in srgb, var(--accent-color) 55%, transparent);
+    border-radius: 18px;
+    background: var(--surface-solid);
+    border-top: 4px solid var(--accent-color);
+    box-shadow: var(--campus-shadow-soft);
   }
 
   .club-card-surface.official-club {
@@ -294,8 +297,7 @@
     align-items: center;
     min-height: 22px;
     padding: 4px 12px 4px 10px;
-    background:
-      linear-gradient(90deg, var(--primary-color) 0%, #ff8b52 100%);
+    background: var(--primary-color);
     color: #fff;
     font-size: 0.58rem;
     font-weight: 800;
@@ -303,9 +305,9 @@
     text-transform: uppercase;
     clip-path: none;
     border-radius: 0 999px 999px 0;
-    border: 1px solid color-mix(in srgb, var(--primary-color) 72%, #fff);
+    border: 1px solid var(--primary-color);
     border-left: 0;
-    box-shadow: 0 10px 16px -12px color-mix(in srgb, var(--primary-color) 75%, transparent);
+    box-shadow: 0 8px 18px rgba(212, 68, 7, 0.18);
   }
 
   .club-card-head,
@@ -340,7 +342,7 @@
     font-size: 1.2rem;
     color: white;
     overflow: hidden;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, white 18%, transparent);
+    border: 1px solid rgba(255, 255, 255, 0.32);
   }
 
   .platform-icon img {
@@ -436,9 +438,9 @@
   }
 
   .category-tag {
-    background: color-mix(in srgb, var(--accent-color) 14%, var(--card-bg));
-    border: 1px solid color-mix(in srgb, var(--accent-color) 18%, transparent);
-    color: var(--accent-color);
+    background: #fff6dc;
+    border: 1px solid #f7b801;
+    color: #3e2c23;
   }
 
   .official-label {
@@ -479,5 +481,11 @@
     .club-meta-grid {
       grid-template-columns: 1fr;
     }
+  }
+
+  :global([data-theme="dark"]) .social-chip,
+  :global([data-theme="dark"]) .social-card,
+  :global([data-theme="dark"]) .club-card-surface {
+    border-color: rgba(255, 255, 255, 0.11);
   }
 </style>

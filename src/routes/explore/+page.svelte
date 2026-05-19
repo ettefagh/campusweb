@@ -162,15 +162,20 @@
           return {
             ...link,
             url: libraryUrl,
-            description: `${$activeCampus?.name || "Campus"} library catalogue`,
-            campusIds: campusId ? [campusId] : []
+            description: `${$activeCampus?.name || ""} ${$t.explore.campusLibraryDesc}`.trim(),
+            campusIds: campusId ? [campusId] : [],
           };
         }
         return link;
       })
       .filter((link): link is AppLink => Boolean(link))
       .filter((link) => !link.requiresAuth || $settingsStore.emailVerified)
-      .filter((link) => !link.campusIds || link.campusIds.includes("all") || (campusId && link.campusIds.includes(campusId)));
+      .filter(
+        (link) =>
+          !link.campusIds ||
+          link.campusIds.includes("all") ||
+          (campusId && link.campusIds.includes(campusId)),
+      );
 
     if (!query) return visibleLinks;
     return visibleLinks.filter(
@@ -266,7 +271,9 @@
       }
     });
 
-    const normalizedProgramName = programName ? normalizeProgram(programName) : "";
+    const normalizedProgramName = programName
+      ? normalizeProgram(programName)
+      : "";
     const matchesProgram = (c: any) => {
       if (!normalizedProgramName) return false;
       const values = [
@@ -286,7 +293,8 @@
       });
     };
 
-    const matchesSchool = (c: any) => Boolean(schoolId && c.school === schoolId);
+    const matchesSchool = (c: any) =>
+      Boolean(schoolId && c.school === schoolId);
     const contactPriority = (c: any) => {
       if (matchesProgram(c)) return 0;
       if (matchesSchool(c)) return 1;
@@ -295,38 +303,42 @@
       return 4;
     };
 
-    return Array.from(merged.values()).filter((c) => {
-      if (c.isPublic && !query) return true;
+    return Array.from(merged.values())
+      .filter((c) => {
+        if (c.isPublic && !query) return true;
 
-      // 1. Campus Filter (Must match or be general)
-      const isCampusMatch =
-        c.isPublic || (campusId && c.campusId === campusId) || c.campusId === "general";
-      if (!isCampusMatch) return false;
+        // 1. Campus Filter (Must match or be general)
+        const isCampusMatch =
+          c.isPublic ||
+          (campusId && c.campusId === campusId) ||
+          c.campusId === "general";
+        if (!isCampusMatch) return false;
 
-      // 2. If searching, apply search query logic
-      if (query) {
-        return (
-          c.person.toLowerCase().includes(query) ||
-          c.email.toLowerCase().includes(query) ||
-          (c.tags &&
-            c.tags.some((t: string) => t.toLowerCase().includes(query))) ||
-          c.programs.some((p: string) => p.toLowerCase().includes(query)) ||
-          c.services.some((s: string) => s.toLowerCase().includes(query))
-        );
-      }
+        // 2. If searching, apply search query logic
+        if (query) {
+          return (
+            c.person.toLowerCase().includes(query) ||
+            c.email.toLowerCase().includes(query) ||
+            (c.tags &&
+              c.tags.some((t: string) => t.toLowerCase().includes(query))) ||
+            c.programs.some((p: string) => p.toLowerCase().includes(query)) ||
+            c.services.some((s: string) => s.toLowerCase().includes(query))
+          );
+        }
 
-      // 3. Initial state (No query): Layered Cumulative Logic
-      // Layer 1: General Campus Contacts (No school tag)
-      const isGeneralLayer = !c.school;
+        // 3. Initial state (No query): Layered Cumulative Logic
+        // Layer 1: General Campus Contacts (No school tag)
+        const isGeneralLayer = !c.school;
 
-      // Layer 2: School Contacts (Requires school selection)
-      const isSchoolLayer = matchesSchool(c);
+        // Layer 2: School Contacts (Requires school selection)
+        const isSchoolLayer = matchesSchool(c);
 
-      // Layer 3: Program Contacts (Requires program selection)
-      const isProgramLayer = matchesProgram(c);
+        // Layer 3: Program Contacts (Requires program selection)
+        const isProgramLayer = matchesProgram(c);
 
-      return isGeneralLayer || isSchoolLayer || isProgramLayer;
-    }).sort((a, b) => contactPriority(a) - contactPriority(b));
+        return isGeneralLayer || isSchoolLayer || isProgramLayer;
+      })
+      .sort((a, b) => contactPriority(a) - contactPriority(b));
   });
 
   let visibleContacts = $derived.by(() => {
@@ -338,10 +350,34 @@
 
   // 3. External Search Sources
   const searchSources = [
-    { id: "google", name: "Google", icon: "🔍", searchable: true },
-    { id: "ecampus", name: "E-Campus Portal", icon: "💻", searchable: true },
-    { id: "website", name: "University Website", icon: "🌐", searchable: true },
-    { id: "catalog", name: "Library Catalog", icon: "📚", searchable: false },
+    {
+      id: "google",
+      name: "Google",
+      iconClass: "ph-bold ph-magnifying-glass",
+      color: "#14213D",
+      searchable: true,
+    },
+    {
+      id: "ecampus",
+      name: "E-Campus Portal",
+      iconClass: "ph-bold ph-laptop",
+      color: "#2FA4D7",
+      searchable: true,
+    },
+    {
+      id: "website",
+      name: "University Website",
+      iconClass: "ph-bold ph-globe",
+      color: "#3d348b",
+      searchable: true,
+    },
+    {
+      id: "catalog",
+      name: "Library Catalog",
+      iconClass: "ph-bold ph-books",
+      color: "#f18701",
+      searchable: false,
+    },
   ];
 
   function handleExternalSearch(sourceId: string) {
@@ -391,6 +427,31 @@
     return linkCategory?.[category] || category;
   }
 
+  function getCategoryIconClass(category: string) {
+    const normalized = category.toLowerCase();
+    if (normalized.includes("academic")) return "ph-bold ph-graduation-cap";
+    if (normalized.includes("campusweb")) return "ph-bold ph-house-line";
+    if (normalized.includes("e-campus")) return "ph-bold ph-laptop";
+    if (normalized.includes("services")) return "ph-bold ph-squares-four";
+    if (normalized.includes("resources")) return "ph-bold ph-books";
+    if (normalized.includes("utilities")) return "ph-bold ph-magic-wand";
+    if (normalized.includes("career")) return "ph-bold ph-briefcase";
+    if (normalized.includes("international"))
+      return "ph-bold ph-globe-hemisphere-east";
+    if (normalized.includes("app")) return "ph-bold ph-app-window";
+    return "ph-bold ph-link";
+  }
+
+  let contextSummary = $derived.by(() =>
+    [
+      $activeCampus?.name,
+      $activeDepartment?.shortName,
+      $settingsStore.programName,
+    ]
+      .filter(Boolean)
+      .join(" • "),
+  );
+
   const TOP_LINKS_LIMIT = 10;
   let topLinks = $derived.by(() => {
     if (searchQuery.trim()) return [];
@@ -412,7 +473,9 @@
 
   let displayCategories = $derived.by(() => {
     const source = searchQuery.trim() ? filteredLinks : remainingLinks;
-    return categoryOrder.filter((cat) => source.some((link) => link.category_name === cat));
+    return categoryOrder.filter((cat) =>
+      source.some((link) => link.category_name === cat),
+    );
   });
 
   const DIRECTORY_ID = "srh-contact-list";
@@ -423,31 +486,23 @@
 </svelte:head>
 
 <div class="explore-page" class:is-searching={searchQuery.trim() !== ""}>
-  <header class="page-header" class:narrow={$settingsStore.headerSize === 'small'} class:collapsed={searchQuery.trim() !== ""}>
-    <div class="logo-container">
-      <img
-        src="/icon-light.png"
-        alt="SRH University Logo"
-        class="logo light-mode"
-        width="36"
-        height="36"
-        loading="eager"
-        fetchpriority="high"
-      />
-      <img
-        src="/icon-dark.png"
-        alt="SRH University Logo"
-        class="logo dark-mode"
-        width="36"
-        height="36"
-        loading="eager"
-        fetchpriority="high"
-      />
+  <header
+    class="explore-hero"
+    class:narrow={$settingsStore.headerSize === "small"}
+    class:collapsed={searchQuery.trim() !== ""}
+  >
+    <div class="explore-title-row">
+      <div class="explore-title-copy">
+        <h1>{$t.explore.title}</h1>
+        <p>{$t.explore.subtitle}</p>
+      </div>
     </div>
-    <div class="header-text">
-      <h1>{$t.explore.title}</h1>
-      <p class="subtitle">{$t.explore.subtitle}</p>
-    </div>
+    {#if contextSummary}
+      <p class="explore-context">
+        <i class="ph-bold ph-map-pin" aria-hidden="true"></i>
+        <span>{contextSummary}</span>
+      </p>
+    {/if}
   </header>
 
   <div class="search-sticky-wrapper">
@@ -459,27 +514,36 @@
       />
     </div>
 
-    <!-- Category Navigation Chips (Moved here to be sticky) -->
     <div class="category-nav-wrapper">
-      <div class="category-nav glass">
+      <nav class="category-nav" aria-label={$t.explore.sections}>
         <div class="category-nav-scroll">
-          <!-- First Tag: SRH Contact List -->
           <button
+            type="button"
             class="cat-chip"
             onclick={(e) => {
-              e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+              e.currentTarget.scrollIntoView({
+                behavior: "smooth",
+                inline: "center",
+                block: "nearest",
+              });
               const el = document.getElementById(DIRECTORY_ID);
               if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           >
-            Contact List
+            <i class="ph-bold ph-address-book" aria-hidden="true"></i>
+            <span>{$t.explore.contactList}</span>
           </button>
 
           {#each displayCategories as category}
             <button
+              type="button"
               class="cat-chip"
               onclick={(e) => {
-                e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                e.currentTarget.scrollIntoView({
+                  behavior: "smooth",
+                  inline: "center",
+                  block: "nearest",
+                });
                 const el = document.getElementById(
                   `category-${category.replace(/\s+/g, "-")}`,
                 );
@@ -487,20 +551,29 @@
                   el.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
             >
-              {getCategoryName(category, $t.linkCategory)}
+              <i class={getCategoryIconClass(category)} aria-hidden="true"></i>
+              <span>{getCategoryName(category, $t.linkCategory)}</span>
             </button>
           {/each}
         </div>
-      </div>
+      </nav>
     </div>
   </div>
 
   <div class="explore-content">
-    <!-- 1. Top Links -->
     {#if !searchQuery.trim() && topLinks.length > 0}
-      <section class="category-section link-list-panel top-links-section" id="top-links">
-        <h2 class="category-title">Most visited links</h2>
-        <div class="links-grid top-links-grid">
+      <section
+        class="category-section link-list-panel top-links-section"
+        id="top-links"
+      >
+        <div class="explore-section-heading">
+          <div>
+            <p>{$t.explore.quickAccess}</p>
+            <h2>{$t.explore.mostVisitedLinks}</h2>
+          </div>
+          <span>{topLinks.length} {$t.explore.linksCount}</span>
+        </div>
+        <div class="links-stack top-links-stack">
           {#each topLinks as link (link.id)}
             <LinkCard
               {link}
@@ -510,6 +583,7 @@
                 : undefined}
               showTag={false}
               useViewer={true}
+              variant="compact-list"
               on:toggleFavorite={handleToggleFavorite}
             />
           {/each}
@@ -517,10 +591,15 @@
       </section>
     {/if}
 
-    <!-- 2. Link Categories (Scrollable) -->
     {#if displayCategories.length > 0}
       <div class="link-list-panel remaining-links-panel">
-        <h2 class="category-title">All links</h2>
+        <div class="explore-section-heading">
+          <div>
+            <p>{$t.explore.browseByService}</p>
+            <h2>{$t.explore.allLinks}</h2>
+          </div>
+          <span>{remainingLinks.length || filteredLinks.length} {$t.explore.linksCount}</span>
+        </div>
         <div class="links-scroll-area" class:is-enabled={!searchQuery.trim()}>
           <div class="links-scroll-content">
             {#each displayCategories as category}
@@ -528,10 +607,12 @@
                 class="category-section list-category-section"
                 id="category-{category.replace(/\s+/g, '-')}"
               >
-                <h3 class="category-title list-category-title">
-                  {getCategoryName(category, $t.linkCategory)}
+                <h3 class="list-category-title">
+                  <i class={getCategoryIconClass(category)} aria-hidden="true"
+                  ></i>
+                  <span>{getCategoryName(category, $t.linkCategory)}</span>
                 </h3>
-                <div class="links-grid">
+                <div class="links-stack">
                   {#each (searchQuery.trim() ? filteredLinks : remainingLinks).filter((link) => link.category_name === category) as link (link.id)}
                     <LinkCard
                       {link}
@@ -541,6 +622,7 @@
                         : undefined}
                       showTag={false}
                       useViewer={true}
+                      variant="compact-list"
                       on:toggleFavorite={handleToggleFavorite}
                     />
                   {/each}
@@ -553,15 +635,24 @@
     {/if}
 
     {#if searchQuery.trim() && displayCategories.length === 0 && filteredContacts.length === 0}
-      <div class="no-results glass">
-        <div class="no-results-icon">🔍</div>
-        <p>{$t.explore.noResults} "<strong>{searchQuery}</strong>"</p>
+      <div class="no-results">
+        <div class="no-results-icon">
+          <i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i>
+        </div>
+            <p>{$t.explore.noResults} "<strong>{searchQuery}</strong>"</p>
       </div>
     {/if}
 
-    <!-- 3. SRH Contact List (Moved before external) -->
     <section class="category-section directory-results" id={DIRECTORY_ID}>
-      <h2 class="category-title">Contact List</h2>
+      <div class="explore-section-heading">
+        <div>
+          <p>{$t.explore.peopleAndOffices}</p>
+          <h2>{$t.explore.contactList}</h2>
+        </div>
+        {#if visibleContacts.length > 0}
+          <span>{visibleContacts.length} {$t.explore.shown}</span>
+        {/if}
+      </div>
       {#if $activeCampus || $activeDepartment || $settingsStore.programName}
         <p class="category-subtitle">
           {#if $activeCampus}{$activeCampus.name}{/if}
@@ -574,33 +665,36 @@
 
       {#if !$settingsStore.campusId && filteredContacts.length === 0}
         <div class="contact-results-list">
-          <div class="verification-hint glass missing-content contact-card-like">
-          <div class="hint-icon">📍</div>
-          <div class="hint-text">
-            <h3>Campus Not Selected</h3>
-            <p>
-              Please select your campus in settings to view relevant contacts.
-            </p>
-            <button
-              class="hint-btn primary"
-              onclick={() => {
-                if (window.top && window.self !== window.top) {
-                  window.top.location.href = "/settings";
-                } else {
-                  window.location.href = "/settings";
-                }
-              }}
-            >
-              Go to Settings
-            </button>
+          <div class="verification-hint missing-content contact-card-like">
+            <div class="hint-icon">
+              <i class="ph-bold ph-map-pin" aria-hidden="true"></i>
+            </div>
+            <div class="hint-text">
+              <h3>{$t.explore.campusNotSelected}</h3>
+              <p>
+                {$t.explore.selectCampusHint}
+              </p>
+              <button
+                type="button"
+                class="hint-btn primary"
+                onclick={() => {
+                  if (window.top && window.self !== window.top) {
+                    window.top.location.href = "/settings";
+                  } else {
+                    window.location.href = "/settings";
+                  }
+                }}
+              >
+                {$t.explore.goToSettings}
+              </button>
+            </div>
           </div>
-        </div>
         </div>
       {:else if !searchQuery.trim() || filteredContacts.length > 0}
         {#if isContactsLoading}
           <div class="contacts-loading glass">
             <div class="spinner"></div>
-            <p>Securely loading private directory...</p>
+            <p>{$t.explore.loadingDirectory}</p>
           </div>
         {:else}
           <div class="contact-results-list">
@@ -611,154 +705,171 @@
                 role="button"
                 tabindex="0"
                 aria-expanded={expandedContactEmail === contact.email}
-                aria-label={`Show contact details for ${contact.person}`}
+                aria-label={`${$t.explore.showContactDetailsFor} ${contact.person}`}
                 onclick={() => toggleContactDetails(contact.email)}
-                onkeydown={(event) => handleContactCardKeydown(event, contact.email)}
+                onkeydown={(event) =>
+                  handleContactCardKeydown(event, contact.email)}
               >
-                  <div class="search-contact-info">
-                    <div class="search-contact-meta">
-                      {#if contact.programs && contact.programs.length > 0}
-                        <div class="contact-program-list">
-                          {#each contact.programs as prog}
-                            <div class="program-item">
-                              <i
-                                class="ph-bold ph-graduation-cap"
-                                style="margin-right: 4px; color: var(--primary-color);"
-                              ></i>
-                              {@html highlightMatch(prog, searchQuery)}
-                            </div>
-                          {/each}
-                        </div>
-                      {/if}
-                      {#if contact.services && contact.services.length > 0}
-                        <div class="contact-service-list">
-                          {#each contact.services as service}
-                            <div class="service-item">
-                              <i
-                                class="ph-bold ph-wrench"
-                                style="margin-right: 4px; color: var(--primary-color);"
-                              ></i>
-                              {@html highlightMatch(service, searchQuery)}
-                            </div>
-                          {/each}
-                        </div>
-                      {/if}
-                    </div>
-                    <div class="search-contact-name">
-                      {@html highlightMatch(contact.person, searchQuery)}
-                      <div class="search-contact-tags">
-                        {#each contact.tags as tag}
-                          {#if tag.startsWith("campus:")}
-                            <span class="contact-tag campus-tag"
-                              >{@html highlightMatch(
-                                tag.replace("campus:", ""),
-                                searchQuery,
-                              )}</span
-                            >
-                          {:else if tag.startsWith("school:")}
-                            <span class="contact-tag school-tag"
-                              >{@html highlightMatch(
-                                tag.replace("school:", ""),
-                                searchQuery,
-                              )}</span
-                            >
-                          {:else}
-                            <span class="contact-tag"
-                              >{@html highlightMatch(tag, searchQuery)}</span
-                            >
-                          {/if}
+                <div class="search-contact-info">
+                  <div class="search-contact-meta">
+                    {#if contact.programs && contact.programs.length > 0}
+                      <div class="contact-program-list">
+                        {#each contact.programs as prog}
+                          <div class="program-item">
+                            <i
+                              class="ph-bold ph-graduation-cap"
+                              style="margin-right: 4px; color: var(--primary-color);"
+                            ></i>
+                            {@html highlightMatch(prog, searchQuery)}
+                          </div>
                         {/each}
                       </div>
-                      <div class="contact-direct-details">
-                        <a
-                          class="contact-direct-link"
-                          href="mailto:{contact.email}"
-                          onclick={(event) => event.stopPropagation()}
-                        >
-                          <i class="ph-bold ph-envelope"></i>
-                          <span>{@html highlightMatch(contact.email, searchQuery)}</span>
-                        </a>
-                        {#if contact.phone}
-                          <a
-                            class="contact-direct-link"
-                            href="tel:{contact.phone.replace(/[\s-]/g, '')}"
-                            onclick={(event) => event.stopPropagation()}
-                          >
-                            <i class="ph-bold ph-phone"></i>
-                            <span>{contact.phone}</span>
-                          </a>
-                        {/if}
+                    {/if}
+                    {#if contact.services && contact.services.length > 0}
+                      <div class="contact-service-list">
+                        {#each contact.services as service}
+                          <div class="service-item">
+                            <i
+                              class="ph-bold ph-wrench"
+                              style="margin-right: 4px; color: var(--primary-color);"
+                            ></i>
+                            {@html highlightMatch(service, searchQuery)}
+                          </div>
+                        {/each}
                       </div>
-                    </div>
-                  </div>
-                  <div class="search-contact-actions">
-                    <a
-                      href="mailto:{contact.email}"
-                      class="search-contact-btn mail"
-                      onclick={(event) => event.stopPropagation()}
-                      title="Email"><i class="ph-bold ph-envelope"></i></a
-                    >
-                    <a
-                      href={getTeamsChatUrl(contact.email)}
-                      class="search-contact-btn chat"
-                      onclick={(event) => event.stopPropagation()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Chat on Teams"
-                      ><i class="ph-bold ph-chat-circle"></i></a
-                    >
-                    {#if contact.phone}
-                      <a
-                        href="tel:{contact.phone.replace(/[\s-]/g, '')}"
-                        class="search-contact-btn call"
-                        onclick={(event) => event.stopPropagation()}
-                        title="Call"><i class="ph-bold ph-phone"></i></a
-                      >
                     {/if}
                   </div>
+                  <div class="search-contact-name">
+                    {@html highlightMatch(contact.person, searchQuery)}
+                    <div class="search-contact-tags">
+                      {#each contact.tags as tag}
+                        {#if tag.startsWith("campus:")}
+                          <span class="contact-tag campus-tag"
+                            >{@html highlightMatch(
+                              tag.replace("campus:", ""),
+                              searchQuery,
+                            )}</span
+                          >
+                        {:else if tag.startsWith("school:")}
+                          <span class="contact-tag school-tag"
+                            >{@html highlightMatch(
+                              tag.replace("school:", ""),
+                              searchQuery,
+                            )}</span
+                          >
+                        {:else}
+                          <span class="contact-tag"
+                            >{@html highlightMatch(tag, searchQuery)}</span
+                          >
+                        {/if}
+                      {/each}
+                    </div>
+                    <div class="contact-direct-details">
+                      <a
+                        class="contact-direct-link"
+                        href="mailto:{contact.email}"
+                        onclick={(event) => event.stopPropagation()}
+                      >
+                        <i class="ph-bold ph-envelope"></i>
+                        <span
+                          >{@html highlightMatch(
+                            contact.email,
+                            searchQuery,
+                          )}</span
+                        >
+                      </a>
+                      {#if contact.phone}
+                        <a
+                          class="contact-direct-link"
+                          href="tel:{contact.phone.replace(/[\s-]/g, '')}"
+                          onclick={(event) => event.stopPropagation()}
+                        >
+                          <i class="ph-bold ph-phone"></i>
+                          <span>{contact.phone}</span>
+                        </a>
+                      {/if}
+                    </div>
+                  </div>
+                </div>
+                <div class="search-contact-actions">
+                  <a
+                    href="mailto:{contact.email}"
+                    class="search-contact-btn mail"
+                    onclick={(event) => event.stopPropagation()}
+                    title={$t.explore.emailContact}
+                    ><i class="ph-bold ph-envelope"></i></a
+                  >
+                  <a
+                    href={getTeamsChatUrl(contact.email)}
+                    class="search-contact-btn chat"
+                    onclick={(event) => event.stopPropagation()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={$t.explore.chatOnTeams}
+                    ><i class="ph-bold ph-chat-circle"></i></a
+                  >
+                  {#if contact.phone}
+                    <a
+                      href="tel:{contact.phone.replace(/[\s-]/g, '')}"
+                      class="search-contact-btn call"
+                      onclick={(event) => event.stopPropagation()}
+                      title={$t.explore.callContact}
+                      ><i class="ph-bold ph-phone"></i></a
+                    >
+                  {/if}
+                </div>
               </div>
             {/each}
             {#if !searchQuery.trim() && !$settingsStore.programName && filteredContacts.length > visibleContacts.length}
-              <p class="view-more-hint">Search to see more contacts...</p>
+              <p class="view-more-hint">{$t.explore.viewMoreContacts}</p>
             {/if}
             {#if !$settingsStore.emailVerified}
-            <div class="verification-hint glass contact-card-like">
-              <div class="hint-icon">🔒</div>
-              <div class="hint-text">
-                <h3>More contacts available</h3>
-                <p>Public contacts are shown. Verify your SRH email to unlock the full internal directory.</p>
-                <button
-                  class="hint-btn primary"
-                  onclick={() =>
-                    (window.location.href = "/settings#directory-access")}
-                >
-                  Verify SRH Email
-                </button>
+              <div class="verification-hint contact-card-like">
+                <div class="hint-icon">
+                  <i class="ph-bold ph-lock-key" aria-hidden="true"></i>
+                </div>
+                <div class="hint-text">
+                  <h3>{$t.explore.moreContactsTitle}</h3>
+                  <p>{$t.explore.moreContactsDesc}</p>
+                  <button
+                    type="button"
+                    class="hint-btn primary"
+                    onclick={() =>
+                      (window.location.href = "/settings#directory-access")}
+                  >
+                    {$t.explore.verifyEmail}
+                  </button>
+                </div>
               </div>
-            </div>
             {/if}
           </div>
         {/if}
       {:else}
         <div class="no-results glass">
-          <p>No contacts found matching "{searchQuery}"</p>
+          <p>{$t.explore.noContactsFound} "{searchQuery}"</p>
         </div>
       {/if}
     </section>
 
-    <!-- 4. External Portals (Only when searching) -->
     {#if searchQuery.trim()}
       <section class="category-section external-search-section">
-        <h2 class="category-title">
-          🌐 {$t.explore.externalTitle || "External Portals"}
-        </h2>
+        <div class="explore-section-heading">
+          <div>
+            <p>{$t.explore.searchElsewhere}</p>
+            <h2>{$t.explore.externalPortalsFallback}</h2>
+          </div>
+        </div>
         <div class="external-search-grid">
           {#each searchSources as source}
             <button
-              class="external-search-row glass"
+              type="button"
+              class="external-search-row"
+              style={`--source-color: ${source.color}`}
               onclick={() => handleExternalSearch(source.id)}
             >
-              <span class="external-icon">{source.icon}</span>
+              <span class="external-icon">
+                <i class={source.iconClass} aria-hidden="true"></i>
+              </span>
               <div class="external-row-content">
                 <span class="external-name">{source.name}</span>
                 <span class="external-query">
@@ -769,7 +880,9 @@
                   {/if}
                 </span>
               </div>
-              <span class="external-arrow">→</span>
+              <span class="external-arrow" aria-hidden="true">
+                <i class="ph-bold ph-caret-right"></i>
+              </span>
             </button>
           {/each}
         </div>
@@ -782,8 +895,9 @@
     {#if showGoToTop}
       <button
         class="fab-btn go-to-top glass"
+        type="button"
         onclick={goToTop}
-        aria-label="Go to top"
+        aria-label={$t.explore.goToTop}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -802,12 +916,13 @@
     {/if}
     <button
       class="fab-btn search-fab"
+      type="button"
       onclick={() => {
         isSearchActive = true;
-        const input = document.getElementById('search-input');
+        const input = document.getElementById("search-input");
         input?.focus();
       }}
-      aria-label="Search Explore"
+      aria-label={$t.explore.searchExplore}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -936,7 +1051,7 @@
     margin-bottom: var(--spacing-xl);
     border: 1px solid var(--glass-border-subtle);
     border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--glass-bg-light) 74%, transparent);
+    background: var(--surface-solid);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     box-shadow: 0 12px 30px -28px rgba(0, 0, 0, 0.45);
@@ -1303,8 +1418,7 @@
   }
 
   .verification-hint.missing-content {
-    background:
-      repeating-linear-gradient(
+    background: repeating-linear-gradient(
         -45deg,
         rgba(var(--primary-color-rgb, 212, 68, 7), 0.035) 0px,
         rgba(var(--primary-color-rgb, 212, 68, 7), 0.035) 12px,
@@ -1438,6 +1552,931 @@
     .fab-group {
       bottom: 24px; /* clears tab bar which is sidebar on desktop */
       right: 24px;
+    }
+  }
+
+  /* ── CampusWeb Explore Redesign ─────────────────────────────── */
+  .explore-page {
+    --explore-navy: #14213d;
+    --explore-blue: #2fa4d7;
+    --explore-orange: #d44407;
+    --explore-orange-hover: #f28c3e;
+    --explore-gold: #f7b801;
+    --explore-purple: #3d348b;
+    --explore-lavender: #7678ed;
+    --explore-surface: #ffffff;
+    --explore-background: #f5f0e6;
+    --explore-border: #e5e5e5;
+    --explore-text: #000000;
+    --explore-muted: #3e2c23;
+    --explore-soft-shadow: 0 12px 28px rgba(20, 33, 61, 0.08);
+    --explore-row-shadow: 0 4px 14px rgba(20, 33, 61, 0.06);
+
+    width: min(calc(100vw - 32px), 460px);
+    max-width: 460px;
+    margin: 0 auto;
+    padding: max(18px, env(safe-area-inset-top)) 18px
+      calc(var(--spacing-xl) * 3);
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    color: var(--explore-text);
+  }
+
+  .explore-hero {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition:
+      opacity 0.28s ease,
+      max-height 0.28s ease,
+      margin 0.28s ease;
+    opacity: 1;
+    max-height: 180px;
+  }
+
+  .explore-hero.collapsed {
+    opacity: 0;
+    max-height: 0;
+    margin: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .explore-hero.narrow {
+    gap: 8px;
+  }
+
+  .explore-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .explore-title-copy {
+    min-width: 0;
+  }
+
+  .explore-title-copy h1 {
+    margin: 0;
+    color: var(--text-color);
+    font-family: "SRH Headline", sans-serif;
+    font-size: clamp(1.75rem, 7vw, 2rem);
+    font-weight: 900;
+    line-height: 0.98;
+    letter-spacing: 0;
+  }
+
+  .explore-title-copy p {
+    margin: 7px 0 0;
+    color: var(--text-color-secondary);
+    font-size: 0.98rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .explore-bookmark-action {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    color: var(--text-color-secondary);
+    background: var(--explore-surface);
+    border: 1px solid var(--explore-border);
+    border-radius: 50%;
+    box-shadow: 0 8px 18px rgba(20, 33, 61, 0.08);
+    text-decoration: none;
+    font-size: 1.35rem;
+  }
+
+  .explore-bookmark-action:hover,
+  .explore-bookmark-action:focus-visible {
+    color: var(--explore-orange);
+    border-color: var(--explore-orange-hover);
+    outline: none;
+  }
+
+  .explore-context {
+    width: fit-content;
+    max-width: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    padding: 7px 11px;
+    color: var(--explore-muted);
+    background: #fff8ec;
+    border: 1px solid #f4dfc3;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .explore-context i {
+    color: var(--explore-orange);
+  }
+
+  .search-sticky-wrapper {
+    position: sticky;
+    top: max(0px, env(safe-area-inset-top));
+    z-index: 100;
+    padding-top: var(--spacing-lg);
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+    margin-top: 0;
+    background: transparent;
+  }
+
+  .explore-page.is-searching .search-sticky-wrapper {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: none;
+    box-shadow: none;
+    margin-bottom: 20px;
+    margin-top: 40px;
+  }
+
+  .search-bar-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding-inline: var(--spacing-lg);
+  }
+
+  .search-bar-container :global(.search-input-wrapper) {
+    height: 52px;
+    border-color: var(--explore-border);
+    border-radius: 14px;
+    box-shadow: var(--explore-soft-shadow);
+  }
+
+  .category-nav-wrapper {
+    margin-top: var(--spacing-sm);
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    overflow: visible;
+  }
+
+  .category-nav {
+    display: inline-flex;
+    width: auto;
+    max-width: 100%;
+    padding: 1px;
+    margin: 0 auto;
+    background: var(--glass-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 100px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .category-nav-scroll {
+    display: flex;
+    gap: 6px;
+    padding: 6px 8px;
+    margin: -4px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cat-chip {
+    min-height: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    color: var(--text-color-secondary);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    box-shadow: none;
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .cat-chip i {
+    color: var(--explore-orange);
+    font-size: 1rem;
+  }
+
+  .cat-chip:hover,
+  .cat-chip:focus-visible {
+    color: var(--explore-orange);
+    background: var(--bg-color);
+    border-color: var(--border-color);
+    outline: none;
+  }
+
+  .explore-content {
+    width: 100%;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 0;
+  }
+
+  .category-section {
+    margin-bottom: 0;
+    scroll-margin-top: 132px;
+    animation: reveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  .link-list-panel,
+  .directory-results,
+  .external-search-section {
+    margin: 0;
+    padding: 0;
+    background: var(--explore-surface);
+    border: 1px solid var(--explore-border);
+    border-radius: 16px;
+    box-shadow: var(--explore-soft-shadow);
+    overflow: hidden;
+  }
+
+  .explore-section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 10px;
+  }
+
+  .explore-section-heading p {
+    margin: 0 0 3px;
+    color: var(--explore-orange);
+    font-size: 0.78rem;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+
+  .explore-section-heading h2 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.18rem;
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  .explore-section-heading > span {
+    flex: 0 0 auto;
+    color: var(--text-color-secondary);
+    background: #f8fafc;
+    border: 1px solid var(--explore-border);
+    border-radius: 999px;
+    padding: 6px 9px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .links-stack {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .explore-page :global(.link-card-container) {
+    margin-top: 0;
+  }
+
+  .explore-page :global(.link-card.compact-list) {
+    min-height: 78px;
+    padding: 12px 16px;
+  }
+
+  .links-stack
+    :global(.link-card-container:not(:last-child) .link-card.compact-list) {
+    border-bottom: 1px solid rgba(7, 19, 47, 0.08);
+  }
+
+  .top-links-stack {
+    padding-bottom: 8px;
+  }
+
+  .links-scroll-area {
+    position: relative;
+  }
+
+  .links-scroll-area.is-enabled {
+    max-height: none;
+    overflow: visible;
+    mask-image: none;
+  }
+
+  .links-scroll-content {
+    padding-bottom: 0;
+  }
+
+  .list-category-section {
+    margin: 0;
+    padding: 0 0 8px;
+  }
+
+  .list-category-section:not(:first-child) {
+    border-top: 8px solid #f8fafc;
+  }
+
+  .list-category-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    padding: 14px 18px 7px;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+
+  .list-category-title i {
+    color: var(--explore-orange);
+    font-size: 1.05rem;
+  }
+
+  .category-subtitle {
+    margin: 0 20px 14px;
+    color: var(--text-color-secondary);
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .contact-results-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 0 16px 16px;
+  }
+
+  .search-contact-card {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px;
+    background: var(--explore-surface);
+    border: 1px solid var(--explore-border);
+    border-radius: 15px;
+    box-shadow: var(--explore-row-shadow);
+    cursor: pointer;
+    outline: none;
+    transition:
+      transform 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .search-contact-card:hover,
+  .search-contact-card:focus-visible,
+  .search-contact-card.is-expanded {
+    transform: translateY(-1px);
+    border-color: var(--explore-orange-hover);
+    box-shadow: 0 10px 24px rgba(212, 68, 7, 0.12);
+  }
+
+  .search-contact-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .search-contact-name {
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1.18;
+  }
+
+  .search-contact-meta {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 7px;
+    color: var(--explore-orange);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .contact-program-list,
+  .contact-service-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .program-item,
+  .service-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 8px;
+    background: #fff8ec;
+    border: 1px solid #f4dfc3;
+    border-radius: 999px;
+    color: var(--explore-muted);
+    line-height: 1.15;
+  }
+
+  .search-contact-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 9px;
+  }
+
+  .contact-tag {
+    padding: 4px 9px;
+    color: var(--text-color-secondary);
+    background: #f8fafc;
+    border: 1px solid var(--explore-border);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 750;
+    line-height: 1.1;
+  }
+
+  .campus-tag {
+    color: var(--explore-purple);
+    background: #f4f2ff;
+    border-color: #dedbff;
+  }
+
+  .school-tag {
+    color: #1c769b;
+    background: #eef9fd;
+    border-color: #c9edf9;
+  }
+
+  .contact-direct-details {
+    display: grid;
+    gap: 6px;
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      max-height 0.2s ease,
+      margin-top 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  .search-contact-card:hover .contact-direct-details,
+  .search-contact-card:focus-within .contact-direct-details,
+  .search-contact-card.is-expanded .contact-direct-details {
+    max-height: 104px;
+    margin-top: 11px;
+    opacity: 1;
+  }
+
+  .contact-direct-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    width: fit-content;
+    max-width: 100%;
+    color: var(--text-color-secondary);
+    font-size: 0.84rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  .contact-direct-link i {
+    color: var(--explore-orange);
+  }
+
+  .contact-direct-link:hover,
+  .contact-direct-link:focus-visible {
+    color: var(--explore-orange);
+    outline: none;
+  }
+
+  .search-contact-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  .search-contact-btn {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    color: var(--text-color-secondary);
+    background: #f8fafc;
+    border: 1px solid var(--explore-border);
+    border-radius: 12px;
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition:
+      transform 0.18s ease,
+      background 0.18s ease,
+      color 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  .search-contact-btn:hover,
+  .search-contact-btn:focus-visible {
+    color: #ffffff;
+    background: var(--explore-orange);
+    border-color: var(--explore-orange);
+    transform: translateY(-1px);
+    outline: none;
+  }
+
+  .search-contact-btn.chat:hover,
+  .search-contact-btn.chat:focus-visible {
+    background: var(--explore-blue);
+    border-color: var(--explore-blue);
+  }
+
+  .search-contact-btn.call:hover,
+  .search-contact-btn.call:focus-visible {
+    background: #2fb344;
+    border-color: #2fb344;
+  }
+
+  .external-search-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 0 16px 16px;
+  }
+
+  .external-search-row {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-height: 76px;
+    padding: 12px;
+    color: var(--text-color);
+    background: var(--explore-surface);
+    border: 1px solid var(--explore-border);
+    border-radius: 15px;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: var(--explore-row-shadow);
+    transition:
+      transform 0.18s ease,
+      border-color 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .external-search-row:hover,
+  .external-search-row:focus-visible {
+    transform: translateY(-1px);
+    border-color: var(--source-color, var(--explore-orange));
+    box-shadow: 0 10px 24px rgba(20, 33, 61, 0.1);
+    outline: none;
+  }
+
+  .external-icon {
+    width: 50px;
+    height: 50px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    color: #ffffff;
+    background: var(--source-color, var(--explore-orange));
+    border-radius: 13px;
+    font-size: 1.55rem;
+  }
+
+  .external-row-content {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+  }
+
+  .external-name {
+    color: var(--text-color);
+    font-size: 0.98rem;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+
+  .external-query {
+    color: var(--text-color-secondary);
+    font-size: 0.84rem;
+    font-weight: 650;
+    line-height: 1.25;
+  }
+
+  .external-arrow {
+    margin-left: auto;
+    color: var(--text-color-secondary);
+    font-size: 1.05rem;
+    opacity: 0.85;
+  }
+
+  .view-more-hint {
+    padding: 8px 16px 16px;
+    color: var(--text-color-secondary);
+    border-top: 1px solid var(--explore-border);
+    font-size: 0.84rem;
+    font-style: normal;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .verification-hint {
+    padding: 28px 18px;
+    background: var(--explore-surface);
+    border: 1px solid var(--explore-border);
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: var(--explore-row-shadow);
+  }
+
+  .verification-hint.contact-card-like {
+    border-radius: 15px;
+    padding: 28px 18px;
+    height: auto;
+  }
+
+  .verification-hint.missing-content {
+    background: #fff8ec;
+    border-color: #f4dfc3;
+  }
+
+  .hint-icon {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 14px;
+    color: #ffffff;
+    background: var(--explore-orange);
+    border-radius: 14px;
+    font-size: 1.7rem;
+  }
+
+  .hint-text h3 {
+    margin: 0 0 7px;
+    color: var(--text-color);
+    font-size: 1.05rem;
+    font-weight: 900;
+  }
+
+  .hint-text p {
+    margin: 0;
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+    font-weight: 650;
+    line-height: 1.35;
+  }
+
+  .hint-btn {
+    min-height: 44px;
+    margin-top: 18px;
+    padding: 0 24px;
+    color: #ffffff;
+    background: var(--explore-orange);
+    border: 1px solid var(--explore-orange);
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .hint-btn:hover,
+  .hint-btn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(212, 68, 7, 0.22);
+    outline: none;
+  }
+
+  .no-results {
+    padding: 34px 18px;
+    color: var(--text-color-secondary);
+    background: var(--explore-surface);
+    border: 1px solid var(--explore-border);
+    border-radius: 16px;
+    box-shadow: var(--explore-soft-shadow);
+    text-align: center;
+  }
+
+  .no-results-icon {
+    width: 54px;
+    height: 54px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 13px;
+    color: #ffffff;
+    background: var(--explore-orange);
+    border-radius: 14px;
+    font-size: 1.65rem;
+    opacity: 1;
+  }
+
+  .contacts-loading {
+    margin: 0 16px 16px;
+    padding: 34px 18px;
+    background: var(--explore-surface);
+    border: 1px solid var(--explore-border);
+    border-radius: 15px;
+    box-shadow: var(--explore-row-shadow);
+  }
+
+  .spinner {
+    border-color: #fff0e8;
+    border-top-color: var(--explore-orange);
+  }
+
+  .fab-group {
+    right: max(18px, env(safe-area-inset-right));
+    bottom: calc(var(--bottom-nav-height) + 16px);
+    gap: 10px;
+  }
+
+  .fab-btn {
+    width: 50px;
+    height: 50px;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.66);
+    box-shadow: 0 12px 24px rgba(212, 68, 7, 0.22);
+  }
+
+  .go-to-top {
+    color: var(--text-color-secondary);
+    background: var(--explore-surface);
+    border-color: var(--explore-border);
+    backdrop-filter: none;
+  }
+
+  .search-fab {
+    background: var(--explore-orange);
+  }
+
+  .search-fab:hover,
+  .search-fab:focus-visible {
+    background: var(--explore-orange-hover);
+    outline: none;
+  }
+
+  @media (min-width: 768px) {
+    .explore-page {
+      width: min(calc(100vw - 64px), 1040px);
+      max-width: 1040px;
+      padding-inline: 0;
+      padding-bottom: 56px;
+      gap: 24px;
+    }
+
+    .search-sticky-wrapper {
+      margin-inline: 0;
+      padding-inline: 0;
+      background: transparent;
+    }
+
+    .explore-content {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .top-links-section,
+    .remaining-links-panel {
+      grid-column: 1;
+    }
+
+    .directory-results {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      position: sticky;
+      top: 104px;
+    }
+
+    .external-search-section {
+      grid-column: 1 / -1;
+    }
+
+    .top-links-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0 16px 16px;
+    }
+
+    .top-links-stack :global(.link-card.compact-list) {
+      border: 1px solid var(--explore-border);
+      border-radius: 15px;
+      box-shadow: var(--explore-row-shadow);
+    }
+
+    .top-links-stack
+      :global(.link-card-container:not(:last-child) .link-card.compact-list) {
+      border-bottom: 1px solid var(--explore-border);
+    }
+
+    .contact-results-list {
+      grid-template-columns: 1fr;
+    }
+
+    .external-search-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .fab-group {
+      bottom: 24px;
+      right: 24px;
+    }
+  }
+
+  @media (min-width: 1120px) {
+    .top-links-stack {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 380px) {
+    .explore-page {
+      width: min(calc(100vw - 24px), 460px);
+      padding-inline: 12px;
+    }
+
+    .explore-section-heading {
+      padding-inline: 16px;
+    }
+
+    .explore-page :global(.link-card.compact-list) {
+      padding-inline: 14px;
+    }
+  }
+
+  :global([data-theme="dark"]) .explore-page {
+    --explore-surface: rgba(20, 20, 30, 0.96);
+    --explore-border: rgba(255, 255, 255, 0.12);
+    --explore-text: var(--dark-text);
+    --explore-muted: rgba(240, 240, 248, 0.72);
+    --explore-soft-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+    --explore-row-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  }
+
+  :global([data-theme="dark"]) .explore-context,
+  :global([data-theme="dark"]) .program-item,
+  :global([data-theme="dark"]) .service-item,
+  :global([data-theme="dark"]) .verification-hint.missing-content {
+    background: rgba(212, 68, 7, 0.14);
+    border-color: rgba(212, 68, 7, 0.28);
+  }
+
+  :global([data-theme="dark"]) .cat-chip,
+  :global([data-theme="dark"]) .explore-section-heading > span,
+  :global([data-theme="dark"]) .contact-tag,
+  :global([data-theme="dark"]) .search-contact-btn {
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  :global([data-theme="dark"]) .list-category-section:not(:first-child) {
+    border-top-color: rgba(255, 255, 255, 0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :global(html:not([data-theme="light"])) .explore-page {
+      --explore-surface: rgba(20, 20, 30, 0.96);
+      --explore-border: rgba(255, 255, 255, 0.12);
+      --explore-text: var(--dark-text);
+      --explore-muted: rgba(240, 240, 248, 0.72);
+      --explore-soft-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+      --explore-row-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+    }
+
+    :global(html:not([data-theme="light"])) .explore-context,
+    :global(html:not([data-theme="light"])) .program-item,
+    :global(html:not([data-theme="light"])) .service-item,
+    :global(html:not([data-theme="light"])) .verification-hint.missing-content {
+      background: rgba(212, 68, 7, 0.14);
+      border-color: rgba(212, 68, 7, 0.28);
+    }
+
+    :global(html:not([data-theme="light"])) .cat-chip,
+    :global(html:not([data-theme="light"])) .explore-section-heading > span,
+    :global(html:not([data-theme="light"])) .contact-tag,
+    :global(html:not([data-theme="light"])) .search-contact-btn {
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    :global(html:not([data-theme="light"]))
+      .list-category-section:not(:first-child) {
+      border-top-color: rgba(255, 255, 255, 0.06);
     }
   }
 </style>

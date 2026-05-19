@@ -60,6 +60,9 @@
   $: visibleSections = $settingsStore.homeSections.filter(
     (s: any) => s.id !== "feed",
   );
+  $: activeCampusName =
+    CAMPUSES.find((campus) => campus.id === $settingsStore.campusId)?.name ||
+    "";
 
   // When campus changes, clear department and program selection
   function handleCampusChange(campusId: string) {
@@ -237,34 +240,69 @@
 </svelte:head>
 
 <div class="settings-page">
-  <header class="page-header" class:narrow={$settingsStore.headerSize === 'small'}>
-
-    <div class="logo-container">
-      <img
-        src="/icon-light.png"
-        alt="SRH University Logo"
-        class="logo light-mode"
-        width="36"
-        height="36"
-      />
-      <img
-        src="/icon-dark.png"
-        alt="SRH University Logo"
-        class="logo dark-mode"
-        width="36"
-        height="36"
-      />
-    </div>
-    <div class="header-text">
+  <header class="settings-hero" class:narrow={$settingsStore.headerSize === 'small'}>
+    <div class="settings-hero-copy">
+      <span class="settings-eyebrow">{$t.settings.makeItYours}</span>
       <h1>{$t.settings.title}</h1>
-      <p class="subtitle">{$t.settings.subtitle}</p>
+      <p>{$t.settings.subtitle}</p>
+    </div>
+    <div class="settings-profile-icon" aria-hidden="true">
+      <i class="ph-bold ph-user-circle"></i>
+      <span></span>
     </div>
   </header>
+
+  <div class="settings-status-grid" aria-label={$t.settings.statusOverview}>
+    <a href="#campus-profile" class="status-tile">
+      <span class="status-icon status-icon--navy">
+        <i class="ph-bold ph-map-pin" aria-hidden="true"></i>
+      </span>
+      <span class="status-copy">
+        <span class="status-label">{$t.settings.campusLabel}</span>
+        <strong>{$isSetupComplete ? activeCampusName : $t.settings.notSet}</strong>
+      </span>
+    </a>
+    <a href="#directory-access" class="status-tile">
+      <span class="status-icon status-icon--blue">
+        <i class="ph-bold ph-shield-check" aria-hidden="true"></i>
+      </span>
+      <span class="status-copy">
+        <span class="status-label">{$t.settings.directoryLabel}</span>
+        <strong>{$settingsStore.emailVerified ? $t.settings.verified : $t.settings.locked}</strong>
+      </span>
+    </a>
+    <a href="#appearance" class="status-tile">
+      <span class="status-icon status-icon--gold">
+        <i class="ph-bold ph-palette" aria-hidden="true"></i>
+      </span>
+      <span class="status-copy">
+        <span class="status-label">{$t.settings.themeLabel}</span>
+        <strong>{$settingsStore.theme}</strong>
+      </span>
+    </a>
+    <a href="#accessibility" class="status-tile">
+      <span class="status-icon status-icon--purple">
+        <IosAccessibilityIcon />
+      </span>
+      <span class="status-copy">
+        <span class="status-label">{$t.settings.accessLabel}</span>
+        <strong>{$accessibility.highContrast || $accessibility.largeText ? $t.settings.custom : $t.settings.default}</strong>
+      </span>
+    </a>
+  </div>
+
+  <nav class="settings-jump-nav" aria-label={$t.settings.sectionsLabel}>
+    <a href="#campus-profile"><i class="ph-bold ph-graduation-cap" aria-hidden="true"></i><span>{$t.settings.campusLabel}</span></a>
+    <a href="#directory-access"><i class="ph-bold ph-lock-keyhole" aria-hidden="true"></i><span>{$t.settings.directoryLabel}</span></a>
+    <a href="#appearance"><i class="ph-bold ph-palette" aria-hidden="true"></i><span>{$t.settings.layout}</span></a>
+    <a href="#calendar-settings"><i class="ph-bold ph-calendar" aria-hidden="true"></i><span>{$t.nav.calendar}</span></a>
+    <a href="#accessibility"><IosAccessibilityIcon /><span>{$t.settings.accessLabel}</span></a>
+  </nav>
 
   <div class="settings-content">
 
   <!-- ── Campus & Programme ────────────────── -->
-  <section class="settings-section">
+  <section id="campus-profile" class="settings-section">
     <div class="section-header">
       <span class="section-icon"><i class="ph-bold ph-graduation-cap"></i></span>
       <div>
@@ -336,22 +374,22 @@
             <span class="section-icon"><i class="ph-bold ph-lock-keyhole"></i></span>
             <div>
               <div class="section-title-row">
-                <h2>Directory Access</h2>
-                <span class="privacy-badge">Zero-knowledge verification</span>
+                <h2>{$t.settings.directoryAccess}</h2>
+                <span class="privacy-badge">{$t.settings.zeroKnowledge}</span>
               </div>
               <p class="section-desc">
-                Verify with your SRH email. The app does not store your email address.
+                {$t.settings.verifyEmailDesc}
               </p>
             </div>
           {:else}
             <span class="section-icon"><i class="ph-bold ph-shield-check"></i></span>
             <div>
               <div class="section-title-row">
-                <h2>Directory Access</h2>
-                <span class="privacy-badge active">Secure access active</span>
+                <h2>{$t.settings.directoryAccess}</h2>
+                <span class="privacy-badge active">{$t.settings.secureAccessActive}</span>
               </div>
               <p class="section-desc">
-                Your anonymous session can access the university directory.
+                {$t.settings.directoryActiveDesc}
               </p>
             </div>
           {/if}
@@ -365,11 +403,10 @@
             <p
               style="color: var(--text-color-secondary); font-size: 0.95rem; margin: 0; line-height: 1.5;"
             >
-              Your access is active. The verification cookie confirms SRH
-              membership without storing your email address in the session.
+              {$t.settings.directoryActiveNote}
             </p>
             <button class="secondary-action-btn" on:click={handleDirectoryLogout}>
-              Sign out of directory access
+              {$t.settings.directorySignOut}
             </button>
           {/if}
         </div>
@@ -393,7 +430,7 @@
         <div
           class="segmented-control"
           role="group"
-          aria-label="Language selection"
+          aria-label={$t.settings.languageSelection}
         >
           {#each languageOptions as lang}
             <button
@@ -427,7 +464,7 @@
       <div class="a11y-body" style="padding-top: var(--spacing-md);">
         <!-- 1. Theme Picker -->
         <div class="setting-group" style="border-top: none; padding-top: 0;">
-          <h3 class="group-title">{$t.settings.themeLabel || "Theme"}</h3>
+          <h3 class="group-title">{$t.settings.themeLabel}</h3>
           <div
             class="theme-picker"
             role="group"
@@ -463,37 +500,60 @@
           </div>
         </div>
 
-        <!-- 2. Homepage Layout -->
-        <div class="setting-group" style="margin-top: var(--spacing-lg);">
-          <h3 class="group-title">Homepage Layout</h3>
-          <p class="section-desc" style="margin-bottom: var(--spacing-md);">
-            Choose which sections appear on your homepage and change their
-            order.
-          </p>
-          <div class="sections-list" use:sortableSections>
-            {#each visibleSections as sec, i (sec.id)}
-              <div class="setting-row section-item" class:is-header={sec.id === "header"} style={sec.id !== "header" ? "cursor: grab;" : ""}>
-                <div class="section-info">
-                  <span class="setting-label">
-                    {#if sec.id === "favorites"}<i class="ph-bold ph-star" style="margin-right: 8px; color: var(--primary-color);"></i>
-                    {:else if sec.id === "calendar"}<i class="ph-bold ph-calendar" style="margin-right: 8px; color: var(--primary-color);"></i>
-                    {:else if sec.id === "cards"}<i class="ph-bold ph-identification-card" style="margin-right: 8px; color: var(--primary-color);"></i>
-                    {:else if sec.id === "header"}<i class="ph-bold ph-house" style="margin-right: 8px; color: var(--primary-color);"></i>
-                    {:else if sec.id === "stories"}<i class="ph-bold ph-circles-three-plus" style="margin-right: 8px; color: var(--primary-color);"></i>
-                    {:else if sec.id === "feed"}<i class="ph-bold ph-newspaper" style="margin-right: 8px; color: var(--primary-color);"></i>
-                    {/if}
+	        <!-- 2. Homepage Layout -->
+	        <div class="setting-group setting-group--home-layout">
+	          <h3 class="group-title">{$t.settings.homepageLayout}</h3>
+	          <p class="section-desc section-desc--spaced">
+	            {$t.settings.homepageLayoutDesc}
+	          </p>
+	          <div class="setting-row setting-row--control">
+	            <div class="setting-info setting-copy">
+	              <span class="setting-label">{$t.settings.calendarWidgetMode}</span>
+	              <span class="setting-desc">{$t.settings.calendarWidgetModeDesc}</span>
+	            </div>
+	            <div class="segment-control segment-control--equal" role="group" aria-label={$t.settings.calendarWidgetMode}>
+	              <button
+	                class="segment-btn"
+	                class:active={$settingsStore.calendarWidgetMode !== "next"}
+	                aria-pressed={$settingsStore.calendarWidgetMode !== "next"}
+	                on:click={() => settingsStore.patch({ calendarWidgetMode: "today" })}
+	              >
+	                {$t.settings.calendarWidgetToday}
+	              </button>
+	              <button
+	                class="segment-btn"
+	                class:active={$settingsStore.calendarWidgetMode === "next"}
+	                aria-pressed={$settingsStore.calendarWidgetMode === "next"}
+	                on:click={() => settingsStore.patch({ calendarWidgetMode: "next" })}
+	              >
+	                {$t.settings.calendarWidgetNext}
+	              </button>
+	            </div>
+	          </div>
+	          <div class="sections-list" use:sortableSections>
+	            {#each visibleSections as sec, i (sec.id)}
+	              <div class="setting-row section-item" class:is-header={sec.id === "header"} style={sec.id !== "header" ? "cursor: grab;" : ""}>
+	                <div class="section-info">
+	                  <span class="setting-label">
+	                    {#if sec.id === "favorites"}<i class="section-label-icon ph-bold ph-star" aria-hidden="true"></i>
+	                    {:else if sec.id === "calendar"}<i class="section-label-icon ph-bold ph-calendar" aria-hidden="true"></i>
+	                    {:else if sec.id === "cards"}<i class="section-label-icon ph-bold ph-identification-card" aria-hidden="true"></i>
+	                    {:else if sec.id === "header"}<i class="section-label-icon ph-bold ph-house" aria-hidden="true"></i>
+	                    {:else if sec.id === "stories"}<i class="section-label-icon ph-bold ph-circles-three-plus" aria-hidden="true"></i>
+	                    {:else if sec.id === "feed"}<i class="section-label-icon ph-bold ph-newspaper" aria-hidden="true"></i>
+	                    {/if}
                     {sec.id === "favorites"
-                      ? "Favorite Links"
+                      ? $t.settings.favoriteLinks
                       : sec.id === "calendar"
-                        ? "Calendar Schedule"
+                        ? $t.settings.calendarSchedule
                         : sec.id === "cards"
-                          ? "Cards"
+                          ? $t.settings.cards
                           : sec.id === "header"
-                            ? "Header Section"
+                            ? $t.settings.headerSection
                             : sec.id === "stories"
-                              ? "Campus Stories"
+                              ? $t.settings.campusStories
                               : sec.id === "feed"
-                                ? "Feed Summary"
+                                ? $t.settings.feedSummary
                                 : sec.id}
                   </span>
                 </div>
@@ -511,8 +571,8 @@
                         })}
                     >
                       {$settingsStore.headerSize === "small"
-                        ? "Compact 📱"
-                        : "Prominent ✨"}
+                        ? $t.settings.compact
+                        : $t.settings.prominent}
                     </button>
                   {/if}
 
@@ -522,7 +582,7 @@
                     class:on={sec.enabled}
                     role="switch"
                     aria-checked={sec.enabled}
-                    aria-label="Toggle section"
+                    aria-label={$t.settings.toggleSection}
                     on:click={() => toggleSection(sec.id)}
                   >
                     <span class="toggle-knob"></span>
@@ -534,43 +594,35 @@
         </div>
 
         <!-- 3. Default Landing Page -->
-        <div class="setting-group" style="margin-top: var(--spacing-lg);">
-          <h3 class="group-title">Default Landing Page</h3>
-          <div
-            class="setting-row"
-            style="border-top: none; padding-top: 0; padding-bottom: 0;"
-          >
-            <div
-              class="setting-info"
-              style="display: flex; flex-direction: column; gap: 2px;"
-            >
-              <span class="setting-label" style="font-weight: 600;"
-                >Default Page</span
-              >
-              <span
-                class="setting-desc"
-                style="font-size: 0.78rem; color: var(--text-color-secondary);"
-                >Select the primary tab displayed on application startup.</span
-              >
-            </div>
-            <div class="segment-control">
-              <button
-                class="segment-btn"
-                class:active={$settingsStore.defaultPage !== "calendar"}
-                on:click={() => settingsStore.patch({ defaultPage: "home" })}
-              >
-                <i class="ph-bold ph-house" style="margin-right: 4px;"></i> Home
-              </button>
-              <button
-                class="segment-btn"
-                class:active={$settingsStore.defaultPage === "calendar"}
-                on:click={() =>
-                  settingsStore.patch({ defaultPage: "calendar" })}
-              >
-                <i class="ph-bold ph-calendar" style="margin-right: 4px;"></i> Calendar
-              </button>
-            </div>
-          </div>
+	        <div class="setting-group setting-group--landing">
+	          <h3 class="group-title">{$t.settings.defaultLandingPage}</h3>
+	          <div class="setting-row setting-row--control setting-row--last">
+	            <div class="setting-info setting-copy">
+	              <span class="setting-label">{$t.settings.defaultPage}</span>
+	              <span class="setting-desc">{$t.settings.defaultPageDesc}</span>
+	            </div>
+	            <div class="segment-control segment-control--equal">
+	              <button
+	                class="segment-btn"
+	                class:active={$settingsStore.defaultPage !== "calendar"}
+	                aria-pressed={$settingsStore.defaultPage !== "calendar"}
+	                on:click={() => settingsStore.patch({ defaultPage: "home" })}
+	              >
+	                <i class="ph-bold ph-house" aria-hidden="true"></i>
+	                <span>{$t.nav.home}</span>
+	              </button>
+	              <button
+	                class="segment-btn"
+	                class:active={$settingsStore.defaultPage === "calendar"}
+	                aria-pressed={$settingsStore.defaultPage === "calendar"}
+	                on:click={() =>
+	                  settingsStore.patch({ defaultPage: "calendar" })}
+	              >
+	                <i class="ph-bold ph-calendar" aria-hidden="true"></i>
+	                <span>{$t.nav.calendar}</span>
+	              </button>
+	            </div>
+	          </div>
         </div>
       </div>
     </details>
@@ -665,18 +717,16 @@
 
         <!-- 2. Subscriptions -->
         <div class="setting-group">
-          <h3 class="group-title">Subscriptions</h3>
+          <h3 class="group-title">{$t.settings.subscriptions}</h3>
           <div class="helper-box">
             <p>
-              💡 <strong>How to find your link:</strong> Go to
+              <strong>{$t.settings.howToFindLink}</strong>
               <a
                 href="https://srh-community.campusweb.cloud/en/mein-studium/mein-stundenplan.php"
                 target="_blank"
-                rel="noopener noreferrer">My Schedule</a
+                rel="noopener noreferrer">{$t.calendar.mySchedule}</a
               >
-              on the university portal. Below your schedule grid, you will find
-              the <strong>"iCal-Export"</strong> button — copy that link and paste
-              it below.
+              {$t.settings.calendarLinkHelp}
             </p>
           </div>
           <SecureCalendarInput />
@@ -684,10 +734,10 @@
 
         <!-- 3. Class Colors -->
         <div class="setting-group" style="margin-top: var(--spacing-lg);">
-          <h3 class="group-title">Class Colors</h3>
+          <h3 class="group-title">{$t.settings.classColors}</h3>
           {#if $activeClasses.length === 0}
             <p class="section-desc" style="opacity: 0.7;">
-              No active classes found in your calendar subscriptions.
+              {$t.settings.noActiveClasses}
             </p>
           {:else}
             <div class="class-colors-list">
@@ -706,7 +756,7 @@
                         cls.defaultColor}"
                       data-texture={getTextureForColor($classColors[cls.id] || cls.defaultColor)}
                       on:click={() => toggleColorChooser(cls.id)}
-                      aria-label="Change color"
+                      aria-label={$t.settings.changeColor}
                     ></button>
 
                     {#if activeColorChooser === cls.id}
@@ -717,7 +767,7 @@
                           e.key === "Escape" && (activeColorChooser = null)}
                         role="button"
                         tabindex="-1"
-                        aria-label="Close color chooser"
+                        aria-label={$t.settings.closeColorChooser}
                       ></div>
                       <div class="color-popup">
                         <div class="color-palette">
@@ -729,7 +779,7 @@
                               style="background-color: {ec.id}"
                               data-texture={ec.texture}
                               on:click={() => selectColor(cls.id, ec.id)}
-                              aria-label="Select color"
+                              aria-label={$t.settings.selectColor}
                             ></button>
                           {/each}
                         </div>
@@ -740,7 +790,7 @@
                       <button
                         class="btn-clear-color"
                         on:click={() => classColors.resetColor(cls.id)}
-                        aria-label="Reset color">🔄</button
+                        aria-label={$t.settings.resetColor}><i class="ph-bold ph-arrows-clockwise" aria-hidden="true"></i></button
                       >
                     {/if}
                   </div>
@@ -861,7 +911,7 @@
   </section>
 
   <!-- ── Reset ─────────────────────────────── -->
-  <section class="settings-section danger-section">
+  <section id="danger-zone" class="settings-section danger-section">
     <details bind:open={dangerOpen}>
       <summary class="section-header section-header--collapsible">
         <span class="section-icon"><i class="ph-bold ph-trash"></i></span>
@@ -908,15 +958,16 @@
       disabled={updateStatus === "updating"}
     >
       {#if updateStatus === "updating"}
-        <span class="update-spinner"></span> Updating…
+        <span class="update-spinner"></span> {$t.settings.updating}
       {:else}
-        🔄 Update App
+        <i class="ph-bold ph-arrows-clockwise" aria-hidden="true"></i>
+        {$t.settings.updateApp}
       {/if}
     </button>
   </div>
 
-  <footer class="mobile-footer">
-    <p>Crafted with ❤️ for My Classmates • Unofficial</p>
+  <footer class="mobile-footer page-footer-safe">
+    <p>{$t.settings.unofficial}</p>
     <a
       href="https://github.com/ettefagh/campusweb"
       target="_blank"
@@ -1759,7 +1810,6 @@
     text-align: center;
     border-top: 1px solid var(--border-color);
     margin-top: var(--spacing-xl);
-    margin-bottom: 80px; /* clears bottom nav bar on mobile */
     opacity: 0.6;
     font-size: 0.75rem;
     display: flex;
@@ -1781,6 +1831,932 @@
   @media (min-width: 1024px) {
     .mobile-footer {
       margin-bottom: 0;
+    }
+  }
+
+  /* ── CampusWeb Settings Redesign ───────────────────────────────── */
+  .settings-page {
+    --settings-navy: #14213d;
+    --settings-blue: #2fa4d7;
+    --settings-orange: #d44407;
+    --settings-orange-hover: #f28c3e;
+    --settings-gold: #f7b801;
+    --settings-purple: #3d348b;
+    --settings-lavender: #7678ed;
+    --settings-border: #e5e5e5;
+    --settings-surface: #ffffff;
+    --settings-cream: #f5f0e6;
+    --settings-muted: #3e2c23;
+    --settings-shadow: 0 12px 28px rgba(20, 33, 61, 0.08);
+    --settings-row-shadow: 0 4px 14px rgba(20, 33, 61, 0.06);
+
+    width: min(calc(100vw - 32px), 460px);
+    max-width: 460px;
+    margin: 0 auto;
+    padding: max(18px, env(safe-area-inset-top)) 18px calc(var(--spacing-xl) * 3);
+    color: var(--text-color);
+  }
+
+  .settings-page > *:not(.page-header) {
+    animation: reveal 0.42s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  .settings-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .settings-hero.narrow {
+    margin-bottom: 14px;
+  }
+
+  .settings-hero-copy {
+    min-width: 0;
+  }
+
+  .settings-eyebrow {
+    display: block;
+    color: var(--settings-orange);
+    font-family: "SRH Headline", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+
+  .settings-hero h1 {
+    margin: 0;
+    color: var(--text-color);
+    font-family: "SRH Headline", sans-serif;
+    font-size: clamp(1.85rem, 7vw, 2.1rem);
+    font-weight: 900;
+    line-height: 0.98;
+    letter-spacing: 0;
+  }
+
+  .settings-hero p {
+    margin: 8px 0 0;
+    color: var(--text-color-secondary);
+    font-size: 0.98rem;
+    font-weight: 650;
+    line-height: 1.35;
+  }
+
+  .settings-profile-icon {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    color: var(--text-color-secondary);
+    background: var(--settings-surface);
+    border: 1px solid var(--settings-border);
+    border-radius: 50%;
+    box-shadow: 0 8px 18px rgba(20, 33, 61, 0.08);
+    font-size: 1.55rem;
+  }
+
+  .settings-profile-icon span {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--settings-orange);
+    border: 2px solid var(--settings-surface);
+  }
+
+  .settings-status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .status-tile {
+    min-width: 0;
+    min-height: 78px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 12px;
+    color: var(--text-color);
+    background: var(--settings-surface);
+    border: 1px solid var(--settings-border);
+    border-radius: 16px;
+    box-shadow: var(--settings-row-shadow);
+    text-decoration: none;
+  }
+
+  .status-tile:hover,
+  .status-tile:focus-visible {
+    border-color: var(--settings-orange-hover);
+    outline: none;
+  }
+
+  .status-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    color: #ffffff;
+    border-radius: 13px;
+    font-size: 1.3rem;
+  }
+
+  .status-icon :global(.ios-accessibility-icon) {
+    width: 27px;
+    height: 27px;
+    color: #ffffff;
+  }
+
+  .status-icon--navy {
+    background: var(--settings-navy);
+  }
+
+  .status-icon--blue {
+    background: var(--settings-blue);
+  }
+
+  .status-icon--gold {
+    background: var(--settings-gold);
+  }
+
+  .status-icon--purple {
+    background: var(--settings-purple);
+  }
+
+  .status-copy {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+  }
+
+  .status-label {
+    color: var(--text-color-secondary);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .status-copy strong {
+    color: var(--text-color);
+    font-size: 0.92rem;
+    font-weight: 900;
+    line-height: 1.12;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+
+  .settings-jump-nav {
+    position: sticky;
+    top: max(0px, env(safe-area-inset-top));
+    z-index: 20;
+    display: flex;
+    gap: 8px;
+    margin: 0 -18px 18px;
+    padding: 7px 18px 10px;
+    overflow-x: auto;
+    background: rgba(255, 255, 255, 0.9);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .settings-jump-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .settings-jump-nav a {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex: 0 0 auto;
+    padding: 0 13px;
+    color: var(--text-color-secondary);
+    background: var(--settings-surface);
+    border: 1px solid var(--settings-border);
+    border-radius: 999px;
+    box-shadow: 0 4px 12px rgba(20, 33, 61, 0.05);
+    font-size: 0.82rem;
+    font-weight: 850;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .settings-jump-nav a:hover,
+  .settings-jump-nav a:focus-visible {
+    color: var(--settings-orange);
+    background: #fff8ec;
+    border-color: var(--settings-orange-hover);
+    outline: none;
+  }
+
+  .settings-jump-nav i,
+  .settings-jump-nav :global(.ios-accessibility-icon) {
+    width: 18px;
+    height: 18px;
+    color: var(--settings-orange);
+    font-size: 1rem;
+  }
+
+  .settings-content {
+    max-width: none;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .settings-section,
+  .update-card {
+    margin: 0;
+    padding: 0;
+    background: var(--settings-surface);
+    border: 1px solid var(--settings-border);
+    border-radius: 16px;
+    box-shadow: var(--settings-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
+  }
+
+  .settings-section {
+    scroll-margin-top: 88px;
+  }
+
+  .danger-section {
+    border-color: rgba(239, 68, 68, 0.22);
+  }
+
+  .section-header,
+  .section-header--collapsible {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0;
+    padding: 18px 20px;
+    user-select: none;
+  }
+
+  details .section-header--collapsible {
+    cursor: pointer;
+    list-style: none;
+  }
+
+  details .section-header--collapsible::-webkit-details-marker {
+    display: none;
+  }
+
+  details[open] .section-header--collapsible {
+    margin-bottom: 0;
+    border-bottom: 1px solid rgba(7, 19, 47, 0.08);
+  }
+
+  .section-header > div,
+  .section-header--collapsible > div {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .section-icon {
+    width: 50px;
+    height: 50px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    margin-top: 0;
+    color: #ffffff;
+    background: var(--settings-orange);
+    border-radius: 13px;
+    font-size: 1.5rem;
+    line-height: 1;
+    box-shadow: 0 9px 18px rgba(212, 68, 7, 0.18);
+  }
+
+  .settings-section:nth-of-type(1) .section-icon {
+    background: var(--settings-navy);
+  }
+
+  .settings-section:nth-of-type(2) .section-icon,
+  .settings-section:nth-of-type(8) .section-icon {
+    background: var(--settings-blue);
+  }
+
+  .settings-section:nth-of-type(3) .section-icon,
+  .settings-section:nth-of-type(5) .section-icon {
+    background: var(--settings-purple);
+  }
+
+  .settings-section:nth-of-type(4) .section-icon {
+    background: var(--settings-gold);
+  }
+
+  .danger-section .section-icon {
+    background: #ef4444;
+  }
+
+  .section-icon--accessibility {
+    color: #ffffff;
+    background: var(--settings-blue);
+  }
+
+  .section-icon :global(.ios-accessibility-icon) {
+    width: 31px;
+    height: 31px;
+    color: #ffffff;
+  }
+
+  h2 {
+    margin: 0 0 4px;
+    color: var(--text-color);
+    font-size: 1.08rem;
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: 0;
+  }
+
+  .section-desc {
+    color: var(--text-color-secondary);
+    font-size: 0.86rem;
+    font-weight: 650;
+    line-height: 1.32;
+  }
+
+  .section-title-row {
+    gap: 8px;
+  }
+
+  .privacy-badge {
+    min-height: 22px;
+    padding: 3px 8px;
+    color: #15803d;
+    background: #ecfdf3;
+    border-color: #bbf7d0;
+    font-size: 0.64rem;
+    letter-spacing: 0;
+  }
+
+  .privacy-badge.active {
+    color: var(--settings-orange);
+    background: #fff8ec;
+    border-color: #f4dfc3;
+  }
+
+  .chevron {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    margin-left: auto;
+    color: var(--text-color-secondary);
+    background: #f8fafc;
+    border: 1px solid var(--settings-border);
+    border-radius: 50%;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .a11y-body {
+    padding: 16px 20px 20px !important;
+    animation: slideDown 0.24s ease;
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 66px;
+    padding: 12px 0;
+    border-top: 1px solid rgba(7, 19, 47, 0.08);
+  }
+
+  .section-header + .setting-row,
+  .a11y-body > .setting-row:first-child {
+    border-top: none;
+  }
+
+  .setting-label {
+    color: var(--text-color);
+    font-size: 0.96rem;
+    font-weight: 850;
+    line-height: 1.18;
+  }
+
+  .setting-info,
+  .toggle-info,
+  .section-info,
+  .class-color-info {
+    min-width: 0;
+  }
+
+  .toggle-desc,
+  .setting-desc,
+  .class-title-hint {
+    color: var(--text-color-secondary);
+    font-size: 0.8rem;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+
+  .setting-select {
+    min-height: 44px;
+    max-width: 58%;
+    color: var(--text-color);
+    background-color: #f8fafc;
+    border: 1px solid var(--settings-border);
+    border-radius: 13px;
+    font-size: 0.88rem;
+    font-weight: 750;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+
+  .setting-select:focus,
+  .segment:focus-visible,
+  .segment-btn:focus-visible,
+  .theme-card:focus-visible,
+  .toggle:focus-visible,
+  .chip-toggle-btn:focus-visible,
+  .btn-update:focus-visible,
+  .secondary-action-btn:focus-visible,
+  .btn-reset:focus-visible {
+    outline: 3px solid rgba(47, 164, 215, 0.32);
+    outline-offset: 2px;
+  }
+
+	  .setting-group {
+	    padding: 16px 0 0;
+	    border-top: 1px solid rgba(7, 19, 47, 0.08);
+	  }
+
+	  .setting-group--home-layout,
+	  .setting-group--landing {
+	    margin-top: var(--spacing-lg);
+	  }
+
+	  .section-desc--spaced {
+	    margin-bottom: 14px;
+	  }
+
+	  .setting-row--control {
+	    align-items: flex-start;
+	    border-top: none;
+	    padding: 0 0 14px;
+	  }
+
+	  .setting-row--last {
+	    padding-bottom: 0;
+	  }
+
+	  .setting-copy {
+	    display: flex;
+	    flex: 1 1 220px;
+	    flex-direction: column;
+	    gap: 4px;
+	    padding-top: 4px;
+	  }
+
+  .group-title {
+    margin: 0 0 10px;
+    color: var(--text-color);
+    font-size: 0.92rem;
+    font-weight: 900;
+    opacity: 1;
+  }
+
+	  .segmented-control,
+	  .segment-control {
+	    background: #f5f0e6;
+	    border: 1px solid var(--settings-border);
+	    border-radius: 15px;
+	    padding: 4px;
+	    display: inline-flex;
+	    align-items: stretch;
+	    gap: 4px;
+	    max-width: 100%;
+	  }
+
+	  .segment-control--equal {
+	    width: min(100%, 320px);
+	    flex: 0 0 auto;
+	  }
+
+	  .segment,
+	  .segment-btn {
+	    display: inline-flex;
+	    align-items: center;
+	    justify-content: center;
+	    gap: 6px;
+	    flex: 1 1 0;
+	    min-width: 0;
+	    min-height: 40px;
+	    padding-inline: 12px;
+	    font-size: 0.86rem;
+	    line-height: 1.1;
+    color: var(--text-color-secondary);
+    border-radius: 11px;
+    font-weight: 800;
+  }
+
+  .segment.active,
+  .segment-btn.active {
+    color: #ffffff;
+    background: var(--settings-orange);
+    box-shadow: 0 5px 14px rgba(212, 68, 7, 0.2);
+  }
+
+  .theme-picker {
+    gap: 10px;
+  }
+
+  .theme-card {
+    min-height: 82px;
+    padding: 14px 10px;
+    background: #ffffff;
+    border: 1px solid var(--settings-border);
+    border-radius: 15px;
+    font-size: 0.84rem;
+    line-height: 1.2;
+    font-weight: 800;
+    box-shadow: var(--settings-row-shadow);
+  }
+
+  .theme-card.active {
+    color: var(--settings-orange);
+    background: #fff8ec;
+    border-color: var(--settings-orange-hover);
+  }
+
+  .theme-icon {
+    font-size: 1.45rem;
+  }
+
+	  .sections-list {
+	    gap: 0;
+	    overflow: hidden;
+	    border: 1px solid var(--settings-border);
+	    border-radius: 15px;
+	    background: #ffffff;
+	  }
+
+	  .section-item {
+	    min-height: 62px;
+	    padding: 12px 14px;
+	    background: #ffffff;
+	  }
+
+	  .section-label-icon {
+	    width: 22px;
+	    margin-right: 8px;
+	    color: var(--primary-color);
+	    text-align: center;
+	    flex: 0 0 auto;
+	  }
+
+	  .section-info .setting-label {
+	    display: inline-flex;
+	    align-items: center;
+	    min-width: 0;
+	  }
+
+  .section-item + .section-item {
+    border-top: 1px solid rgba(7, 19, 47, 0.08);
+  }
+
+  .section-actions {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .chip-toggle-btn {
+    min-height: 38px;
+    margin-right: 0;
+    padding: 0 14px;
+    font-size: 0.79rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--settings-orange);
+    background: #fff8ec;
+    border: 1px solid #f4dfc3;
+    border-radius: 999px;
+    box-shadow: none;
+  }
+
+  .toggle {
+    width: 56px;
+    height: 30px;
+    background: #d9dce5;
+    border: 1px solid rgba(20, 33, 61, 0.08);
+  }
+
+  .toggle.on {
+    background: var(--settings-orange);
+  }
+
+  .toggle-knob {
+    box-shadow: 0 2px 6px rgba(20, 33, 61, 0.26);
+  }
+
+  .helper-box {
+    background: #fff8ec;
+    border-color: #f4dfc3;
+    border-radius: 15px;
+    padding: 12px 14px;
+  }
+
+  .helper-box p {
+    color: var(--text-color-secondary);
+    font-weight: 650;
+  }
+
+  .secondary-action-btn,
+  .btn-reset,
+  .btn-cancel,
+  .btn-danger,
+  .btn-update {
+    min-height: 46px;
+    padding-inline: 14px;
+    font-size: 0.9rem;
+    line-height: 1.15;
+    border-radius: 13px;
+    font-weight: 800;
+  }
+
+  .secondary-action-btn {
+    color: var(--text-color);
+    background: #f8fafc;
+    border: 1px solid var(--settings-border);
+  }
+
+  .btn-update {
+    gap: 8px;
+    background: var(--settings-orange);
+    box-shadow: 0 8px 18px rgba(212, 68, 7, 0.18);
+  }
+
+  .update-card {
+    padding: 16px 18px;
+  }
+
+  .update-version {
+    font-weight: 900;
+  }
+
+  .update-desc {
+    opacity: 1;
+    font-weight: 650;
+  }
+
+  .confirm-box {
+    background: #fff1f2;
+    border-color: #fecdd3;
+    border-radius: 15px;
+  }
+
+  .class-colors-list {
+    border: 1px solid var(--settings-border);
+    border-radius: 15px;
+    overflow: visible;
+  }
+
+  .class-colors-list .setting-row {
+    padding-inline: 14px;
+  }
+
+  .active-color-swatch,
+  .btn-clear-color {
+    width: 34px;
+    height: 34px;
+  }
+
+  .color-palette {
+    width: 176px;
+    gap: 7px;
+    padding: 10px;
+    background: var(--settings-surface);
+    border-color: var(--settings-border);
+    border-radius: 15px;
+    box-shadow: var(--settings-shadow);
+  }
+
+  .palette-swatch {
+    width: 26px;
+    height: 26px;
+  }
+
+  .mobile-footer {
+    margin: 6px 0 0;
+    padding: 22px 18px calc(var(--bottom-nav-height) + 14px);
+    color: var(--text-color-secondary);
+    border-top: 0;
+    opacity: 1;
+    font-weight: 650;
+  }
+
+	  @media (max-width: 480px) {
+	    .setting-row {
+	      min-height: 64px;
+	      padding: 12px 0;
+	      gap: 12px;
+	    }
+
+	    .setting-row--control {
+	      align-items: stretch;
+	      min-height: 0;
+	      padding: 0 0 14px;
+	    }
+
+	    .setting-copy {
+	      flex-basis: auto;
+	      padding-top: 0;
+	    }
+
+    .setting-label {
+      font-size: 0.94rem;
+      font-weight: 850;
+    }
+
+    .setting-select {
+      min-width: 132px;
+      max-width: 58%;
+      min-height: 42px;
+      font-size: 0.84rem;
+      border-radius: 12px;
+    }
+
+	    .segment-control {
+	      width: 100%;
+	      max-width: 100%;
+	      overflow: visible;
+	    }
+
+	    .segment-btn {
+	      padding-inline: 12px;
+	      white-space: normal;
+	      min-width: 0;
+	    }
+	  }
+
+  @media (max-width: 380px) {
+    .settings-page {
+      width: min(calc(100vw - 24px), 460px);
+      padding-inline: 12px;
+    }
+
+    .settings-jump-nav {
+      margin-inline: -12px;
+      padding-inline: 12px;
+    }
+
+    .section-header,
+    .section-header--collapsible {
+      padding-inline: 16px;
+    }
+
+    .a11y-body {
+      padding-inline: 16px !important;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .settings-page {
+      width: min(calc(100vw - 64px), 1040px);
+      max-width: 1040px;
+      padding-inline: 0;
+      padding-bottom: 56px;
+    }
+
+    .settings-status-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .settings-jump-nav {
+      margin-inline: 0;
+      padding-inline: 0;
+      background: transparent;
+    }
+
+    .settings-content {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px;
+      align-items: start;
+    }
+
+  }
+
+  :global([data-theme="dark"]) .settings-page {
+    --settings-surface: rgba(20, 20, 30, 0.96);
+    --settings-border: rgba(255, 255, 255, 0.12);
+    --settings-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+    --settings-row-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  }
+
+  :global([data-theme="dark"]) .settings-jump-nav {
+    background: rgba(13, 13, 20, 0.86);
+  }
+
+  :global([data-theme="dark"]) .status-tile,
+  :global([data-theme="dark"]) .theme-card,
+  :global([data-theme="dark"]) .sections-list,
+  :global([data-theme="dark"]) .section-item,
+  :global([data-theme="dark"]) .setting-select,
+  :global([data-theme="dark"]) .secondary-action-btn,
+  :global([data-theme="dark"]) .settings-jump-nav a {
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  :global([data-theme="dark"]) .helper-box {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  :global([data-theme="dark"]) .helper-box p {
+    color: #eef3ff;
+  }
+
+  :global([data-theme="dark"]) .helper-box a {
+    color: #ffd79e;
+  }
+
+  :global([data-theme="dark"]) .confirm-box {
+    background: rgba(251, 113, 133, 0.14);
+    border-color: rgba(251, 113, 133, 0.38);
+  }
+
+  :global([data-theme="dark"]) .segmented-control,
+  :global([data-theme="dark"]) .segment-control,
+  :global([data-theme="dark"]) .chevron {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  :global([data-theme="dark"]) details[open] .section-header--collapsible,
+  :global([data-theme="dark"]) .setting-row,
+  :global([data-theme="dark"]) .setting-group,
+  :global([data-theme="dark"]) .section-item + .section-item {
+    border-color: rgba(255, 255, 255, 0.09);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :global(html:not([data-theme="light"])) .settings-page {
+      --settings-surface: rgba(20, 20, 30, 0.96);
+      --settings-border: rgba(255, 255, 255, 0.12);
+      --settings-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
+      --settings-row-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+    }
+
+    :global(html:not([data-theme="light"])) .settings-jump-nav {
+      background: rgba(13, 13, 20, 0.86);
+    }
+
+    :global(html:not([data-theme="light"])) .status-tile,
+    :global(html:not([data-theme="light"])) .theme-card,
+    :global(html:not([data-theme="light"])) .sections-list,
+    :global(html:not([data-theme="light"])) .section-item,
+    :global(html:not([data-theme="light"])) .setting-select,
+    :global(html:not([data-theme="light"])) .secondary-action-btn,
+    :global(html:not([data-theme="light"])) .settings-jump-nav a {
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    :global(html:not([data-theme="light"])) .helper-box {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    :global(html:not([data-theme="light"])) .helper-box p {
+      color: #eef3ff;
+    }
+
+    :global(html:not([data-theme="light"])) .helper-box a {
+      color: #ffd79e;
+    }
+
+    :global(html:not([data-theme="light"])) .confirm-box {
+      background: rgba(251, 113, 133, 0.14);
+      border-color: rgba(251, 113, 133, 0.38);
+    }
+
+    :global(html:not([data-theme="light"])) .segmented-control,
+    :global(html:not([data-theme="light"])) .segment-control,
+    :global(html:not([data-theme="light"])) .chevron {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    :global(html:not([data-theme="light"])) details[open] .section-header--collapsible,
+    :global(html:not([data-theme="light"])) .setting-row,
+    :global(html:not([data-theme="light"])) .setting-group,
+    :global(html:not([data-theme="light"])) .section-item + .section-item {
+      border-color: rgba(255, 255, 255, 0.09);
     }
   }
 </style>

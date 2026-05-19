@@ -605,7 +605,7 @@
 
   .stories-bar.rectangular {
     gap: 14px;
-    padding: 8px 2px 16px;
+    padding: 8px 2px 0px;
     margin-inline: -2px;
     scroll-snap-type: x proximity;
   }
@@ -689,13 +689,6 @@
     line-height: 1.12;
     font-weight: 900;
     color: var(--text-color);
-  }
-
-  .story-card-body span {
-    font-size: 0.86rem;
-    line-height: 1.2;
-    font-weight: 650;
-    color: var(--text-color-secondary);
   }
 
   .add-card {
@@ -809,8 +802,9 @@
   }
 
   .story-card .story-tag {
-    left: 10px;
-    bottom: 8px;
+    border-style: solid;
+    left: 5px;
+    bottom: 4px;
     transform: none;
     border: none;
     border-radius: 6px;

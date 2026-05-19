@@ -47,18 +47,18 @@
 <style>
   .promo-card {
     position: relative;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    border-radius: 18px;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--campus-shadow-soft);
   }
 
   .promo-card:hover {
     transform: translateY(-4px);
     border-color: var(--primary-color);
-    box-shadow: 0 12px 24px -10px color-mix(in srgb, var(--primary-color) 20%, transparent);
+    box-shadow: var(--campus-shadow);
   }
 
   .promo-badge {
@@ -118,7 +118,7 @@
     width: 100%;
     height: 160px;
     object-fit: cover;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid #e5e5e5;
   }
 
   .promo-text {
@@ -150,8 +150,8 @@
 
   .promo-footer {
     padding: 16px 20px;
-    border-top: 1px solid var(--border-color);
-    background: var(--bg-secondary);
+    border-top: 1px solid #e5e5e5;
+    background: #f5f0e6;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -167,5 +167,15 @@
   .promo-card:hover .promo-cta {
     opacity: 1;
     text-decoration: underline;
+  }
+
+  :global([data-theme="dark"]) .promo-card,
+  :global([data-theme="dark"]) .promo-image,
+  :global([data-theme="dark"]) .promo-footer {
+    border-color: rgba(255, 255, 255, 0.11);
+  }
+
+  :global([data-theme="dark"]) .promo-footer {
+    background: rgba(255, 255, 255, 0.08);
   }
 </style>

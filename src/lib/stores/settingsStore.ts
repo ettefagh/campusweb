@@ -37,6 +37,8 @@ export interface Campus {
   libraryUrl?: string;
   /** Base URL for campus-specific iCal feeds if available */
   calendarBaseUrl?: string;
+  /** Optional location string used by weather/geocoding lookups */
+  weatherLocation?: string;
 }
 
 export interface Department {
@@ -69,13 +71,15 @@ export interface AppSettings {
   defaultPage: 'home' | 'calendar';
   /** Feed refresh rate in minutes */
   feedRefreshRate: number;
+  /** Home calendar widget mode */
+  calendarWidgetMode: 'today' | 'next';
 }
 
 // ── Static Data: Campuses ─────────────────────────────────────────────────────
 
 export const CAMPUSES: Campus[] = [
   { id: 'bamberg', university: 'SRH', name: 'Bamberg', city: 'Bamberg', country: 'DE', stateCode: 'BY' },
-  { id: 'berlin', university: 'SRH', name: 'Berlin', city: 'Berlin', country: 'DE', stateCode: 'BE', libraryUrl: 'https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB' },
+  { id: 'berlin', university: 'SRH', name: 'Berlin', city: 'Berlin', country: 'DE', stateCode: 'BE', libraryUrl: 'https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB', weatherLocation: 'Neukölln 12059 Berlin' },
   { id: 'bonn', university: 'SRH', name: 'Bonn', city: 'Bonn', country: 'DE', stateCode: 'NW' },
   { id: 'bremen', university: 'SRH', name: 'Bremen', city: 'Bremen', country: 'DE', stateCode: 'HB', libraryUrl: 'https://katalog.hamm.de/' },
   { id: 'dresden', university: 'SRH', name: 'Dresden', city: 'Dresden', country: 'DE', stateCode: 'SN' },
@@ -167,6 +171,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     { id: 'feed', enabled: false }
   ],
   feedRefreshRate: 5,
+  calendarWidgetMode: 'today',
 };
 
 const STORAGE_KEY = 'app_settings';
