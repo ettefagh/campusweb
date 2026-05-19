@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { t } from "$lib/i18n";
   import { settingsStore, CAMPUSES } from "$lib/stores/settingsStore";
   import { getEmailUrl } from "$lib/utils/emailHelper";
@@ -30,7 +31,6 @@
   let innerWidth = 0;
   let contactSheetOpen = false;
   let clubModalOpen = false;
-  let feedInitialized = false;
   $: isPortraitMobile = innerWidth < 600;
 
   // ── Directory state ──────────────────────────────────────────
@@ -86,10 +86,7 @@
     );
   }
 
-  async function initializeFeed() {
-    if (feedInitialized || typeof window === "undefined") return;
-    feedInitialized = true;
-
+  onMount(() => {
     getStories(); // Only hits network if last load > refreshRate
     fetchClubs(); // Load dynamic clubs from KV
 
@@ -102,10 +99,45 @@
         console.error("Failed to parse dismissed promotions", e);
       }
     }
-  }
 
-  $: if (active) {
-    initializeFeed();
+    // Defer loading of heavy third-party scripts to optimize initial FCP, LCP, and Speed Index
+    if (typeof window !== "undefined") {
+      const deferTimeout = window.requestIdleCallback
+        ? (cb: () => void) => window.requestIdleCallback(cb, { timeout: 2000 })
+        : (cb: () => void) => setTimeout(cb, 1200);
+
+      deferTimeout(() => {
+        // Force reload of Instagram embeds
+        const w = window as any;
+        if (w.instgrm) {
+          w.instgrm.Embeds.process();
+        } else {
+          const script = document.createElement("script");
+          script.id = "instagram-embed-script";
+          script.src = "//www.instagram.com/embed.js";
+          script.async = true;
+          document.body.appendChild(script);
+        }
+
+        // Dynamic TikTok Embed Script loading
+        if (
+          !document.querySelector(
+            'script[src="https://www.tiktok.com/embed.js"]',
+          )
+        ) {
+          const tiktokScript = document.createElement("script");
+          tiktokScript.src = "https://www.tiktok.com/embed.js";
+          tiktokScript.async = true;
+          document.body.appendChild(tiktokScript);
+        }
+      });
+    }
+  });
+
+  // Re-process embeds when the component becomes active to ensure visibility
+  $: if (active && typeof window !== "undefined") {
+    const w = window as any;
+    if (w.instgrm) w.instgrm.Embeds.process();
   }
 
   function openContactSheet() {
@@ -241,34 +273,57 @@
       <SectionHeader title={$t.feed.socialMedia} />
       <div class="embed-wrapper">
         {#each instagramEmbeds as acc}
-          <a
-            class="embed-card embed-link-card"
-            href={acc.url}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <div class="embed-card">
             <div class="embed-label">@{acc.handle}</div>
-            <div class="embed-link-copy">
-              <h3>{acc.name}</h3>
-              <p>{acc.description || $t.feed.officialLabel}</p>
-            </div>
-            <span class="embed-link-cta">Open Instagram ↗</span>
-          </a>
+            <blockquote
+              class="instagram-media"
+              data-instgrm-permalink={acc.url}
+              data-instgrm-version="14"
+              style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:8px; width:100%; margin-bottom: -18px;"
+            >
+              <div class="insta-placeholder">
+                <div class="insta-skeleton-header">
+                  <div class="insta-skeleton-avatar"></div>
+                  <div class="insta-skeleton-text"></div>
+                </div>
+                <div class="insta-skeleton-image">
+                  <div class="insta-spinner"></div>
+                </div>
+              </div>
+            </blockquote>
+          </div>
         {/each}
 
-        <a
-          class="embed-card embed-link-card tiktok-embed-card"
-          href={tiktokFeed.cite}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <div class="embed-card tiktok-embed-card">
           <div class="embed-label">#{tiktokFeed.label}</div>
-          <div class="embed-link-copy">
-            <h3>{tiktokFeed.title}</h3>
-            <p>Open the official creator profile without loading third-party scripts.</p>
+          <div class="tiktok-card">
+            <blockquote
+              class="tiktok-embed"
+              cite={tiktokFeed.cite}
+              data-unique-id="srhuniversity"
+              data-embed-type="creator"
+              style="max-width: 780px; min-width: 288px;"
+            >
+              <div class="tiktok-placeholder">
+                <div class="tiktok-skeleton-header">
+                  <div class="tiktok-skeleton-avatar"></div>
+                  <div class="tiktok-skeleton-meta">
+                    <div class="tiktok-skeleton-text title"></div>
+                    <div class="tiktok-skeleton-text subtitle"></div>
+                  </div>
+                </div>
+                <div class="tiktok-skeleton-body">
+                  <div class="tiktok-skeleton-stats">
+                    <div class="tiktok-skeleton-stat"></div>
+                    <div class="tiktok-skeleton-stat"></div>
+                    <div class="tiktok-skeleton-stat"></div>
+                  </div>
+                  <div class="tiktok-spinner"></div>
+                </div>
+              </div>
+            </blockquote>
           </div>
-          <span class="embed-link-cta">Open TikTok ↗</span>
-        </a>
+        </div>
       </div>
     </section>
   {/if}
@@ -537,6 +592,56 @@
     flex-direction: column;
   }
 
+  .insta-placeholder {
+    padding: 16px;
+    min-height: 450px;
+    background: var(--surface-solid);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .insta-skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .insta-skeleton-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(150, 150, 150, 0.2);
+    animation: pulse 1.5s infinite;
+  }
+
+  .insta-skeleton-text {
+    height: 14px;
+    width: 120px;
+    border-radius: 4px;
+    background: rgba(150, 150, 150, 0.2);
+    animation: pulse 1.5s infinite;
+  }
+
+  .insta-skeleton-image {
+    flex: 1;
+    border-radius: 4px;
+    background: rgba(150, 150, 150, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 1.5s infinite;
+  }
+
+  .insta-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(150, 150, 150, 0.3);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
   .embed-label {
     padding: var(--spacing-sm) var(--spacing-md);
     font-size: 0.82rem;
@@ -555,38 +660,102 @@
     background: rgba(255, 255, 255, 0.08);
   }
 
-  .embed-link-card {
-    padding: 14px 16px 16px;
-    gap: 10px;
-    text-decoration: none;
-    color: var(--text-color);
+  /* TikTok */
+  .tiktok-card {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    overflow: hidden;
+    margin-top: -19px;
+    margin-bottom: -18px;
+    display: flex;
+    justify-content: center;
+    flex: 1;
   }
 
-  .embed-link-copy {
+  .tiktok-placeholder {
+    padding: 24px;
+    min-height: 380px;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    min-width: 0;
+    gap: 20px;
   }
 
-  .embed-link-copy h3 {
-    margin: 0;
-    font-size: 1rem;
-    line-height: 1.25;
+  .tiktok-skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
 
-  .embed-link-copy p {
-    margin: 0;
-    color: var(--text-color-secondary);
-    font-size: 0.88rem;
-    line-height: 1.45;
+  .tiktok-skeleton-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(150, 150, 150, 0.15);
+    animation: pulse 1.5s infinite;
   }
 
-  .embed-link-cta {
-    margin-top: auto;
-    font-size: 0.82rem;
-    font-weight: 800;
-    color: var(--primary-color);
+  .tiktok-skeleton-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .tiktok-skeleton-text {
+    border-radius: 4px;
+    background: rgba(150, 150, 150, 0.15);
+    animation: pulse 1.5s infinite;
+  }
+
+  .tiktok-skeleton-text.title {
+    height: 16px;
+    width: 140px;
+  }
+
+  .tiktok-skeleton-text.subtitle {
+    height: 12px;
+    width: 90px;
+  }
+
+  .tiktok-skeleton-body {
+    flex: 1;
+    border-radius: var(--radius-lg);
+    background: rgba(150, 150, 150, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    animation: pulse 1.5s infinite;
+  }
+
+  .tiktok-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(150, 150, 150, 0.2);
+    border-top-color: #ee1d52;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes pulse {
+    0% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.6;
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @keyframes reveal {
