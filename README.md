@@ -1,3 +1,4 @@
+<!-- trigger CodeQL scan -->
 <p align="center">
   <img src="static/assets/logo.png" width="200" alt="CampusWeb Logo">
 </p>
