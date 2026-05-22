@@ -122,7 +122,8 @@
 	--dark-border: rgba(255, 255, 255, 0.12);
 
 	/* Layout */
-	--sidebar-width: 220px;
+	--sidebar-width: 0px;
+	--topbar-height: 70px;
 	--bottom-nav-height: 112px;
 	--bottom-nav-clearance: calc(74px + env(safe-area-inset-bottom, 0px) + var(--spacing-xl));
 
@@ -352,6 +353,42 @@ body {
 	padding: var(--spacing-md);
 	padding-bottom: var(--bottom-nav-clearance);
 	overflow-x: hidden;
+}
+
+/* ── Masonry Layout ────────────────────────────────────────────── */
+.masonry-layout {
+	column-count: 1;
+	column-gap: var(--spacing-md);
+}
+
+/* 2 columns on tablet and desktop */
+@media (min-width: 768px) {
+	.masonry-layout {
+		column-count: 2;
+	}
+}
+
+/* 3 columns on very wide desktop screens (optional) */
+@media (min-width: 1244px) {
+	.masonry-layout {
+		column-count: 3;
+		column-gap: var(--spacing-lg);
+	}
+}
+
+/* Target the cards inside the masonry layout */
+.masonry-layout > * {
+	break-inside: avoid;
+	margin-bottom: var(--spacing-md);
+	/* display: inline-block prevents flex/grid bugs inside columns */
+	display: inline-block; 
+	width: 100%;
+}
+
+@media (min-width: 1244px) {
+	.masonry-layout > * {
+		margin-bottom: var(--spacing-lg);
+	}
 }
 
 /* ── Glass Utility ────────────────────────────────────────────────── */

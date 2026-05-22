@@ -186,7 +186,8 @@
 
   @media (min-width: 1024px) {
     .app-container {
-      margin-left: var(--sidebar-width, 220px);
+      margin-left: 0;
+      padding-top: var(--topbar-height, 70px);
       padding-bottom: 0;
     }
   }

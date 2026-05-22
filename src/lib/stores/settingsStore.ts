@@ -55,6 +55,7 @@ export interface Department {
 export interface AppSettings {
   language: AppLanguage;
   theme: AppTheme;
+  firstName: string | null;
   campusId: string | null;
   departmentId: string | null;
   programName: string | null;
@@ -155,6 +156,7 @@ export const DEPARTMENTS: Department[] = Object.entries(CAMPUS_SCHOOLS).flatMap(
 const DEFAULT_SETTINGS: AppSettings = {
   language: 'en',
   theme: 'auto',
+  firstName: null,
   campusId: null,
   departmentId: null,
   programName: null,
@@ -180,6 +182,23 @@ const STORAGE_KEY = 'app_settings';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function normalizeSettings(settings: AppSettings): AppSettings {
+  const headerItem =
+    settings.homeSections.find((section: HomeSection) => section.id === 'header') ??
+    { id: 'header', enabled: true };
+
+  headerItem.enabled = true;
+
+  return {
+    ...settings,
+    headerSize: 'big',
+    homeSections: [
+      headerItem,
+      ...settings.homeSections.filter((section: HomeSection) => section.id !== 'header'),
+    ],
+  };
+}
+
 function readFromStorage(): AppSettings {
   if (!browser) return { ...DEFAULT_SETTINGS };
   try {
@@ -204,16 +223,7 @@ function readFromStorage(): AppSettings {
     }
     
     const finalSettings = { ...DEFAULT_SETTINGS, ...parsed };
-    
-    // Additional safeguard: ensure 'header' is at index 0
-    if (finalSettings.homeSections) {
-      const headerItem = finalSettings.homeSections.find((s: HomeSection) => s.id === 'header');
-      if (headerItem) {
-        finalSettings.homeSections = [headerItem, ...finalSettings.homeSections.filter((s: HomeSection) => s.id !== 'header')];
-      }
-    }
-    
-    return finalSettings;
+    return normalizeSettings(finalSettings);
   } catch {
     return { ...DEFAULT_SETTINGS };
   }
@@ -221,7 +231,7 @@ function readFromStorage(): AppSettings {
 
 function persist(settings: AppSettings): void {
   if (!browser) return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizeSettings(settings)));
 }
 
 // ── Store Factory ─────────────────────────────────────────────────────────────
@@ -235,7 +245,7 @@ function createSettingsStore() {
     /** Update any subset of settings */
     patch(partial: Partial<AppSettings>): void {
       update((current) => {
-        const next = { ...current, ...partial };
+        const next = normalizeSettings({ ...current, ...partial });
         persist(next);
         return next;
       });
@@ -243,7 +253,7 @@ function createSettingsStore() {
 
     /** Reset to factory defaults */
     reset(): void {
-      const fresh = { ...DEFAULT_SETTINGS };
+      const fresh = normalizeSettings({ ...DEFAULT_SETTINGS });
       persist(fresh);
       set(fresh);
     },

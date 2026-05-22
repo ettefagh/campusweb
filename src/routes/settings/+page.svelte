@@ -100,7 +100,7 @@
   ];
 
   let showResetConfirm = false;
-  let campusOpen = true;
+  let campusOpen = false;
 
   function handleReset() {
     settingsStore.reset();
@@ -161,6 +161,7 @@
   let directoryOpen = false;
   let languageOpen = false;
   let appearanceOpen = false;
+  let feedOpen = false;
   let sharingOpen = false;
   let dangerOpen = false;
   let activeColorChooser: string | null = null;
@@ -288,7 +289,8 @@
     if (hash === "#directory-access") directoryOpen = true;
     if (hash === "#appearance") appearanceOpen = true;
     if (hash === "#language") languageOpen = true;
-    if (hash === "#calendar-settings") calendarSettingsOpen = true;
+    if (hash === "#calendar-settings" || hash === "#calendar-subscriptions") calendarSettingsOpen = true;
+    if (hash === "#feed-settings") feedOpen = true;
     if (hash === "#sharing") sharingOpen = true;
     if (hash === "#danger-zone") dangerOpen = true;
 
@@ -309,7 +311,8 @@
     if (hash === "#directory-access") directoryOpen = true;
     if (hash === "#appearance") appearanceOpen = true;
     if (hash === "#language") languageOpen = true;
-    if (hash === "#calendar-settings") calendarSettingsOpen = true;
+    if (hash === "#calendar-settings" || hash === "#calendar-subscriptions") calendarSettingsOpen = true;
+    if (hash === "#feed-settings") feedOpen = true;
     if (hash === "#sharing") sharingOpen = true;
     if (hash === "#danger-zone") dangerOpen = true;
 
@@ -381,11 +384,14 @@
   </div>
 
   <nav class="settings-jump-nav" aria-label={$t.settings.sectionsLabel}>
-    <a href="#campus-profile"><i class="ph-bold ph-graduation-cap" aria-hidden="true"></i><span>{$t.settings.campusLabel}</span></a>
-    <a href="#directory-access"><i class="ph-bold ph-lock-keyhole" aria-hidden="true"></i><span>{$t.settings.directoryLabel}</span></a>
-    <a href="#appearance"><i class="ph-bold ph-palette" aria-hidden="true"></i><span>{$t.settings.layout}</span></a>
-    <a href="#calendar-settings"><i class="ph-bold ph-calendar" aria-hidden="true"></i><span>{$t.nav.calendar}</span></a>
-    <a href="#accessibility"><IosAccessibilityIcon /><span>{$t.settings.accessLabel}</span></a>
+    <a href="#campus-profile" class="jump-link--campus"><i class="ph-bold ph-student" aria-hidden="true"></i><span>{$t.settings.campusLabel}</span></a>
+    <a href="#directory-access" class="jump-link--security"><i class="ph-bold ph-shield-check" aria-hidden="true"></i><span>{$t.settings.directoryLabel}</span></a>
+    <a href="#calendar-subscriptions" class="jump-link--calendar"><i class="ph-bold ph-calendar-dots" aria-hidden="true"></i><span>{$t.nav.calendar}</span></a>
+    <a href="#appearance" class="jump-link--appearance"><i class="ph-bold ph-layout" aria-hidden="true"></i><span>{$t.settings.layout}</span></a>
+    <a href="#accessibility" class="jump-link--access"><IosAccessibilityIcon /><span>{$t.settings.accessLabel}</span></a>
+    <a href="#language" class="jump-link--language"><i class="ph-bold ph-translate" aria-hidden="true"></i><span>{$t.settings.languageTitle}</span></a>
+    <a href="#feed-settings" class="jump-link--feed"><i class="ph-bold ph-rss" aria-hidden="true"></i><span>{$t.settings.feedTitle}</span></a>
+    <a href="#sharing" class="jump-link--sharing"><i class="ph-bold ph-share-network" aria-hidden="true"></i><span>{$t.settings.shareNative}</span></a>
   </nav>
 
   <div class="settings-content">
@@ -393,12 +399,12 @@
     <section id="campus-profile" class="settings-section">
       <details bind:open={campusOpen}>
         <summary class="section-header section-header--collapsible">
-          <span class="section-icon"><i class="ph-bold ph-graduation-cap"></i></span>
+          <span class="section-icon section-icon--campus"><i class="ph-bold ph-student" aria-hidden="true"></i></span>
           <div>
             <h2>{$t.settings.campusTitle}</h2>
             <p class="section-desc">{$t.settings.campusDesc}</p>
           </div>
-          <span class="chevron" aria-hidden="true">›</span>
+          <span class="chevron" aria-hidden="true"><i class="ph-bold ph-caret-right"></i></span>
         </summary>
 
         <div class="a11y-body">
@@ -460,10 +466,10 @@
       </details>
     </section>
 
-  <section id="directory-access" class="settings-section">
+    <section id="directory-access" class="settings-section">
       <details bind:open={directoryOpen}>
         <summary class="section-header section-header--collapsible">
-          <span class="section-icon section-icon--directory">
+          <span class="section-icon section-icon--security section-icon--directory">
             <i
               class="ph-bold ph-lock-keyhole"
               class:is-active={!$settingsStore.emailVerified}
@@ -494,7 +500,7 @@
               </p>
             </div>
           {/if}
-          <span class="chevron" aria-hidden="true">›</span>
+          <span class="chevron" aria-hidden="true"><i class="ph-bold ph-caret-right"></i></span>
         </summary>
 
         <div class="a11y-body" style="padding-top: var(--spacing-md);">
@@ -514,335 +520,17 @@
       </details>
   </section>
 
-  <!-- ── Language ──────────────────────────── -->
-  <section id="language" class="settings-section">
-
-    <details bind:open={languageOpen}>
-      <summary class="section-header section-header--collapsible">
-        <span class="section-icon"><i class="ph-bold ph-globe"></i></span>
-        <div>
-          <h2>{$t.settings.languageTitle}</h2>
-          <p class="section-desc">{$t.settings.languageDesc}</p>
-        </div>
-        <span class="chevron" aria-hidden="true">›</span>
-      </summary>
-
-      <div class="a11y-body" style="padding-top: var(--spacing-md);">
-        <div
-          class="segmented-control"
-          role="group"
-          aria-label={$t.settings.languageSelection}
-        >
-          {#each languageOptions as lang}
-            <button
-              class="segment"
-              class:active={$settingsStore.language === lang.value}
-              on:click={() => handleLanguageChange(lang.value)}
-              aria-pressed={$settingsStore.language === lang.value}
-            >
-              <span class="segment-flag">{lang.flag}</span>
-              <span class="segment-label">{lang.native}</span>
-            </button>
-          {/each}
-        </div>
-      </div>
-    </details>
-  </section>
-
-  <!-- ── Appearance ────────────────────────── -->
-  <section id="appearance" class="settings-section">
-
-    <details bind:open={appearanceOpen}>
-      <summary class="section-header section-header--collapsible">
-        <span class="section-icon"><i class="ph-bold ph-palette"></i></span>
-        <div>
-          <h2>{$t.settings.appearanceTitle}</h2>
-          <p class="section-desc">{$t.settings.appearanceDesc}</p>
-        </div>
-        <span class="chevron" aria-hidden="true">›</span>
-      </summary>
-
-      <div class="a11y-body" style="padding-top: var(--spacing-md);">
-        <!-- 1. Theme Picker -->
-        <div class="setting-group" style="border-top: none; padding-top: 0;">
-          <h3 class="group-title">{$t.settings.themeLabel}</h3>
-          <div
-            class="theme-picker"
-            role="group"
-            aria-label={$t.settings.appearanceTitle}
-          >
-            <button
-              class="theme-card"
-              class:active={$settingsStore.theme === "auto"}
-              on:click={() => settingsStore.patch({ theme: "auto" })}
-              aria-pressed={$settingsStore.theme === "auto"}
-            >
-              <span class="theme-icon"><i class="ph-bold ph-arrows-counter-clockwise"></i></span>
-              <span class="theme-label">{$t.settings.themeAuto}</span>
-            </button>
-            <button
-              class="theme-card"
-              class:active={$settingsStore.theme === "light"}
-              on:click={() => settingsStore.patch({ theme: "light" })}
-              aria-pressed={$settingsStore.theme === "light"}
-            >
-              <span class="theme-icon"><i class="ph-bold ph-sun"></i></span>
-              <span class="theme-label">{$t.settings.themeLight}</span>
-            </button>
-            <button
-              class="theme-card"
-              class:active={$settingsStore.theme === "dark"}
-              on:click={() => settingsStore.patch({ theme: "dark" })}
-              aria-pressed={$settingsStore.theme === "dark"}
-            >
-              <span class="theme-icon"><i class="ph-bold ph-moon"></i></span>
-              <span class="theme-label">{$t.settings.themeDark}</span>
-            </button>
-          </div>
-        </div>
-
-	        <!-- 2. Homepage Layout -->
-	        <div class="setting-group setting-group--home-layout">
-	          <h3 class="group-title">{$t.settings.homepageLayout}</h3>
-	          <p class="section-desc section-desc--spaced">
-	            {$t.settings.homepageLayoutDesc}
-	          </p>
-	          <div class="setting-row setting-row--control">
-	            <div class="setting-info setting-copy">
-	              <span class="setting-label">{$t.settings.calendarWidgetMode}</span>
-	              <span class="setting-desc">{$t.settings.calendarWidgetModeDesc}</span>
-	            </div>
-	            <div class="segment-control segment-control--equal" role="group" aria-label={$t.settings.calendarWidgetMode}>
-	              <button
-	                class="segment-btn"
-	                class:active={$settingsStore.calendarWidgetMode !== "next"}
-	                aria-pressed={$settingsStore.calendarWidgetMode !== "next"}
-	                on:click={() => settingsStore.patch({ calendarWidgetMode: "today" })}
-	              >
-	                {$t.settings.calendarWidgetToday}
-	              </button>
-	              <button
-	                class="segment-btn"
-	                class:active={$settingsStore.calendarWidgetMode === "next"}
-	                aria-pressed={$settingsStore.calendarWidgetMode === "next"}
-	                on:click={() => settingsStore.patch({ calendarWidgetMode: "next" })}
-	              >
-	                {$t.settings.calendarWidgetNext}
-	              </button>
-	            </div>
-	          </div>
-	          <div class="sections-list" use:sortableSections>
-	            {#each visibleSections as sec, i (sec.id)}
-	              <div class="setting-row section-item" class:is-header={sec.id === "header"} style={sec.id !== "header" ? "cursor: grab;" : ""}>
-	                <div class="section-info">
-	                  <span class="setting-label">
-	                    {#if sec.id === "favorites"}<i class="section-label-icon ph-bold ph-star" aria-hidden="true"></i>
-	                    {:else if sec.id === "calendar"}<i class="section-label-icon ph-bold ph-calendar" aria-hidden="true"></i>
-	                    {:else if sec.id === "cards"}<i class="section-label-icon ph-bold ph-identification-card" aria-hidden="true"></i>
-	                    {:else if sec.id === "header"}<i class="section-label-icon ph-bold ph-house" aria-hidden="true"></i>
-	                    {:else if sec.id === "stories"}<i class="section-label-icon ph-bold ph-circles-three-plus" aria-hidden="true"></i>
-	                    {:else if sec.id === "feed"}<i class="section-label-icon ph-bold ph-newspaper" aria-hidden="true"></i>
-	                    {/if}
-                    {sec.id === "favorites"
-                      ? $t.settings.favoriteLinks
-                      : sec.id === "calendar"
-                        ? $t.settings.calendarSchedule
-                        : sec.id === "cards"
-                          ? $t.settings.cards
-                          : sec.id === "header"
-                            ? $t.settings.headerSection
-                            : sec.id === "stories"
-                              ? $t.settings.campusStories
-                              : sec.id === "feed"
-                                ? $t.settings.feedSummary
-                                : sec.id}
-                  </span>
-                </div>
-                <div class="section-actions">
-                  {#if sec.id === "header"}
-                    <!-- Compact/Prominent Swap Button/Chip (one button, swap options) -->
-                    <button
-                      class="chip-toggle-btn"
-                      on:click={() =>
-                        settingsStore.patch({
-                          headerSize:
-                            $settingsStore.headerSize === "small"
-                              ? "big"
-                              : "small",
-                        })}
-                    >
-                      {$settingsStore.headerSize === "small"
-                        ? $t.settings.compact
-                        : $t.settings.prominent}
-                    </button>
-                  {/if}
-
-                  <!-- Toggle button -->
-                  <button
-                    class="toggle"
-                    class:on={sec.enabled}
-                    role="switch"
-                    aria-checked={sec.enabled}
-                    aria-label={$t.settings.toggleSection}
-                    on:click={() => toggleSection(sec.id)}
-                  >
-                    <span class="toggle-knob"></span>
-                  </button>
-                </div>
-              </div>
-            {/each}
-          </div>
-        </div>
-
-        <!-- 3. Default Landing Page -->
-	        <div class="setting-group setting-group--landing">
-	          <h3 class="group-title">{$t.settings.defaultLandingPage}</h3>
-	          <div class="setting-row setting-row--control setting-row--last">
-	            <div class="setting-info setting-copy">
-	              <span class="setting-label">{$t.settings.defaultPage}</span>
-	              <span class="setting-desc">{$t.settings.defaultPageDesc}</span>
-	            </div>
-	            <div class="segment-control segment-control--equal">
-	              <button
-	                class="segment-btn"
-	                class:active={$settingsStore.defaultPage !== "calendar"}
-	                aria-pressed={$settingsStore.defaultPage !== "calendar"}
-	                on:click={() => settingsStore.patch({ defaultPage: "home" })}
-	              >
-	                <i class="ph-bold ph-house" aria-hidden="true"></i>
-	                <span>{$t.nav.home}</span>
-	              </button>
-	              <button
-	                class="segment-btn"
-	                class:active={$settingsStore.defaultPage === "calendar"}
-	                aria-pressed={$settingsStore.defaultPage === "calendar"}
-	                on:click={() =>
-	                  settingsStore.patch({ defaultPage: "calendar" })}
-	              >
-	                <i class="ph-bold ph-calendar" aria-hidden="true"></i>
-	                <span>{$t.nav.calendar}</span>
-	              </button>
-	            </div>
-	          </div>
-        </div>
-      </div>
-    </details>
-  </section>
-  
-  <!-- ── Feed ──────────────────────────────── -->
-  <section id="feed-settings" class="settings-section">
-
-    <details>
-      <summary class="section-header section-header--collapsible">
-        <span class="section-icon"><i class="ph-bold ph-rss"></i></span>
-        <div>
-          <h2>{$t.settings.feedTitle}</h2>
-          <p class="section-desc">{$t.settings.feedDesc}</p>
-        </div>
-        <span class="chevron" aria-hidden="true">›</span>
-      </summary>
-
-      <div class="a11y-body" style="padding-top: var(--spacing-md);">
-        <div class="setting-row">
-          <div class="setting-info">
-            <span class="setting-label">{$t.settings.refreshRateLabel}</span>
-          </div>
-          <div class="segment-control">
-            <button
-              class="segment-btn"
-              class:active={$settingsStore.feedRefreshRate === 5}
-              on:click={() => settingsStore.patch({ feedRefreshRate: 5 })}
-            >
-              {$t.settings.refreshRate5m}
-            </button>
-            <button
-              class="segment-btn"
-              class:active={$settingsStore.feedRefreshRate === 15}
-              on:click={() => settingsStore.patch({ feedRefreshRate: 15 })}
-            >
-              {$t.settings.refreshRate15m}
-            </button>
-            <button
-              class="segment-btn"
-              class:active={$settingsStore.feedRefreshRate === 60}
-              on:click={() => settingsStore.patch({ feedRefreshRate: 60 })}
-            >
-              {$t.settings.refreshRate1h}
-            </button>
-            <button
-              class="segment-btn"
-              class:active={$settingsStore.feedRefreshRate === 0}
-              on:click={() => settingsStore.patch({ feedRefreshRate: 0 })}
-            >
-              {$t.settings.refreshRateManual}
-            </button>
-          </div>
-        </div>
-      </div>
-    </details>
-  </section>
-
-  <!-- ── Share with Friends ───────────────── -->
-  <section id="sharing" class="settings-section">
-    <details bind:open={sharingOpen}>
-      <summary class="section-header section-header--collapsible">
-        <span class="section-icon"><i class="ph-bold ph-share-network"></i></span>
-        <div>
-          <h2>{$t.settings.shareTitle}</h2>
-          <p class="section-desc">{$t.settings.shareDesc}</p>
-        </div>
-        <span class="chevron" aria-hidden="true">›</span>
-      </summary>
-
-      <div class="a11y-body" style="padding-top: var(--spacing-md);">
-        <p class="section-desc section-desc--spaced">{$t.settings.sharePrivacyNote}</p>
-
-        <div class="segment-control segment-control--equal" role="group" aria-label={$t.settings.shareActions}>
-          <button class="segment-btn" on:click={handleNativeShare}>
-            <i class="ph-bold ph-share-fat" aria-hidden="true"></i>
-            <span>{$t.settings.shareNative}</span>
-          </button>
-          <button class="segment-btn" on:click={copyShareLink}>
-            <i class="ph-bold ph-copy" aria-hidden="true"></i>
-            <span>{$t.settings.shareCopy}</span>
-          </button>
-          <button class="segment-btn" on:click={toggleQr} aria-expanded={showQr}>
-            <i class="ph-bold ph-qr-code" aria-hidden="true"></i>
-            <span>{showQr ? $t.settings.shareHideQr : $t.settings.shareShowQr}</span>
-          </button>
-        </div>
-
-        {#if shareStatus === "shared"}
-          <p class="section-desc">{$t.settings.shareSharedOk}</p>
-        {:else if shareStatus === "copied"}
-          <p class="section-desc">{$t.settings.shareCopiedOk}</p>
-        {:else if shareStatus === "error"}
-          <p class="section-desc">{$t.settings.shareError}</p>
-        {/if}
-
-        {#if showQr}
-          <div class="qr-panel">
-            <img src={qrImageUrl} alt={$t.settings.shareQrAlt} loading="lazy" />
-            <p class="section-desc">{$t.settings.shareScanHint}</p>
-          </div>
-        {/if}
-      </div>
-    </details>
-  </section>
-
-  <!-- ── Calendar Settings (Collapsible) ────────────── -->
-  <section id="calendar-settings" class="settings-section a11y-section">
+    <!-- ── Calendar Settings (Collapsible) ────────────── -->
+    <section id="calendar-subscriptions" class="settings-section a11y-section">
 
     <details bind:open={calendarSettingsOpen}>
       <summary class="section-header section-header--collapsible">
-        <span class="section-icon"><i class="ph-bold ph-calendar"></i></span>
+        <span class="section-icon section-icon--calendar"><i class="ph-bold ph-calendar-dots" aria-hidden="true"></i></span>
         <div>
           <h2>{$t.settings.calendarTitle}</h2>
-          <p class="section-desc">
-            Manage subscriptions, colors, and preferences.
-          </p>
+          <p class="section-desc">{$t.settings.calendarDesc}</p>
         </div>
-        <span class="chevron" aria-hidden="true">›</span>
+        <span class="chevron" aria-hidden="true"><i class="ph-bold ph-caret-right"></i></span>
       </summary>
 
       <div class="a11y-body">
@@ -952,8 +640,171 @@
     </details>
   </section>
 
-  <!-- ── Accessibility ─────────────────────── -->
-  <section id="accessibility" class="settings-section a11y-section">
+    <!-- ── Appearance ────────────────────────── -->
+    <section id="appearance" class="settings-section">
+
+    <details bind:open={appearanceOpen}>
+      <summary class="section-header section-header--collapsible">
+        <span class="section-icon section-icon--appearance"><i class="ph-bold ph-layout" aria-hidden="true"></i></span>
+        <div>
+          <h2>{$t.settings.appearanceTitle}</h2>
+          <p class="section-desc">{$t.settings.appearanceDesc}</p>
+        </div>
+        <span class="chevron" aria-hidden="true"><i class="ph-bold ph-caret-right"></i></span>
+      </summary>
+
+      <div class="a11y-body" style="padding-top: var(--spacing-md);">
+        <!-- 1. Theme Picker -->
+        <div class="setting-group" style="border-top: none; padding-top: 0;">
+          <h3 class="group-title">{$t.settings.themeLabel}</h3>
+          <div
+            class="theme-picker"
+            role="group"
+            aria-label={$t.settings.appearanceTitle}
+          >
+            <button
+              class="theme-card"
+              class:active={$settingsStore.theme === "auto"}
+              on:click={() => settingsStore.patch({ theme: "auto" })}
+              aria-pressed={$settingsStore.theme === "auto"}
+            >
+              <span class="theme-icon"><i class="ph-bold ph-arrows-counter-clockwise"></i></span>
+              <span class="theme-label">{$t.settings.themeAuto}</span>
+            </button>
+            <button
+              class="theme-card"
+              class:active={$settingsStore.theme === "light"}
+              on:click={() => settingsStore.patch({ theme: "light" })}
+              aria-pressed={$settingsStore.theme === "light"}
+            >
+              <span class="theme-icon"><i class="ph-bold ph-sun"></i></span>
+              <span class="theme-label">{$t.settings.themeLight}</span>
+            </button>
+            <button
+              class="theme-card"
+              class:active={$settingsStore.theme === "dark"}
+              on:click={() => settingsStore.patch({ theme: "dark" })}
+              aria-pressed={$settingsStore.theme === "dark"}
+            >
+              <span class="theme-icon"><i class="ph-bold ph-moon"></i></span>
+              <span class="theme-label">{$t.settings.themeDark}</span>
+            </button>
+          </div>
+        </div>
+
+	        <!-- 2. Homepage Layout -->
+	        <div class="setting-group setting-group--home-layout">
+	          <h3 class="group-title">{$t.settings.homepageLayout}</h3>
+	          <p class="section-desc section-desc--spaced">
+	            {$t.settings.homepageLayoutDesc}
+	          </p>
+	          <div class="setting-row setting-row--control">
+	            <div class="setting-info setting-copy">
+	              <span class="setting-label">{$t.settings.calendarWidgetMode}</span>
+	              <span class="setting-desc">{$t.settings.calendarWidgetModeDesc}</span>
+	            </div>
+	            <div class="segment-control segment-control--equal" role="group" aria-label={$t.settings.calendarWidgetMode}>
+	              <button
+	                class="segment-btn"
+	                class:active={$settingsStore.calendarWidgetMode !== "next"}
+	                aria-pressed={$settingsStore.calendarWidgetMode !== "next"}
+	                on:click={() => settingsStore.patch({ calendarWidgetMode: "today" })}
+	              >
+	                {$t.settings.calendarWidgetToday}
+	              </button>
+	              <button
+	                class="segment-btn"
+	                class:active={$settingsStore.calendarWidgetMode === "next"}
+	                aria-pressed={$settingsStore.calendarWidgetMode === "next"}
+	                on:click={() => settingsStore.patch({ calendarWidgetMode: "next" })}
+	              >
+	                {$t.settings.calendarWidgetNext}
+	              </button>
+	            </div>
+	          </div>
+	          <div class="sections-list" use:sortableSections>
+	            {#each visibleSections as sec, i (sec.id)}
+	              <div class="setting-row section-item" class:is-header={sec.id === "header"} style={sec.id !== "header" ? "cursor: grab;" : ""}>
+	                <div class="section-info">
+	                  <span class="setting-label">
+	                    {#if sec.id === "favorites"}<i class="section-label-icon ph-bold ph-star" aria-hidden="true"></i>
+	                    {:else if sec.id === "calendar"}<i class="section-label-icon ph-bold ph-calendar" aria-hidden="true"></i>
+	                    {:else if sec.id === "cards"}<i class="section-label-icon ph-bold ph-identification-card" aria-hidden="true"></i>
+	                    {:else if sec.id === "header"}<i class="section-label-icon ph-bold ph-house" aria-hidden="true"></i>
+	                    {:else if sec.id === "stories"}<i class="section-label-icon ph-bold ph-circles-three-plus" aria-hidden="true"></i>
+	                    {:else if sec.id === "feed"}<i class="section-label-icon ph-bold ph-newspaper" aria-hidden="true"></i>
+	                    {/if}
+                    {sec.id === "favorites"
+                      ? $t.settings.favoriteLinks
+                      : sec.id === "calendar"
+                        ? $t.settings.calendarSchedule
+                        : sec.id === "cards"
+                          ? $t.settings.cards
+                          : sec.id === "header"
+                            ? $t.settings.headerSection
+                            : sec.id === "stories"
+                              ? $t.settings.campusStories
+                              : sec.id === "feed"
+                                ? $t.settings.feedSummary
+                                : sec.id}
+                  </span>
+	                </div>
+	                <div class="section-actions">
+	                  {#if sec.id !== "header"}
+	                    <button
+	                      class="toggle"
+	                      class:on={sec.enabled}
+	                      role="switch"
+	                      aria-checked={sec.enabled}
+	                      aria-label={$t.settings.toggleSection}
+	                      on:click={() => toggleSection(sec.id)}
+	                    >
+	                      <span class="toggle-knob"></span>
+	                    </button>
+	                  {/if}
+	                </div>
+	              </div>
+	            {/each}
+          </div>
+        </div>
+
+        <!-- 3. Default Landing Page -->
+	        <div class="setting-group setting-group--landing">
+	          <h3 class="group-title">{$t.settings.defaultLandingPage}</h3>
+	          <div class="setting-row setting-row--control setting-row--last">
+	            <div class="setting-info setting-copy">
+	              <span class="setting-label">{$t.settings.defaultPage}</span>
+	              <span class="setting-desc">{$t.settings.defaultPageDesc}</span>
+	            </div>
+	            <div class="segment-control segment-control--equal">
+	              <button
+	                class="segment-btn"
+	                class:active={$settingsStore.defaultPage !== "calendar"}
+	                aria-pressed={$settingsStore.defaultPage !== "calendar"}
+	                on:click={() => settingsStore.patch({ defaultPage: "home" })}
+	              >
+	                <i class="ph-bold ph-house" aria-hidden="true"></i>
+	                <span>{$t.nav.home}</span>
+	              </button>
+	              <button
+	                class="segment-btn"
+	                class:active={$settingsStore.defaultPage === "calendar"}
+	                aria-pressed={$settingsStore.defaultPage === "calendar"}
+	                on:click={() =>
+	                  settingsStore.patch({ defaultPage: "calendar" })}
+	              >
+	                <i class="ph-bold ph-calendar" aria-hidden="true"></i>
+	                <span>{$t.nav.calendar}</span>
+	              </button>
+	            </div>
+	          </div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+    <!-- ── Accessibility ─────────────────────── -->
+    <section id="accessibility" class="settings-section a11y-section">
     <details bind:open={a11yOpen}>
       <summary class="section-header section-header--collapsible">
         <span class="section-icon section-icon--accessibility"><IosAccessibilityIcon /></span>
@@ -961,7 +812,7 @@
           <h2>{$t.settings.a11yTitle}</h2>
           <p class="section-desc">{$t.settings.a11yDesc}</p>
         </div>
-        <span class="chevron" aria-hidden="true">›</span>
+        <span class="chevron" aria-hidden="true"><i class="ph-bold ph-caret-right"></i></span>
       </summary>
 
       <div class="a11y-body">
@@ -1059,16 +910,152 @@
     </details>
   </section>
 
-  <!-- ── Reset ─────────────────────────────── -->
-  <section id="danger-zone" class="settings-section danger-section">
+    <!-- ── Language ──────────────────────────── -->
+    <section id="language" class="settings-section">
+
+    <details bind:open={languageOpen}>
+      <summary class="section-header section-header--collapsible">
+        <span class="section-icon section-icon--language"><i class="ph-bold ph-translate" aria-hidden="true"></i></span>
+        <div>
+          <h2>{$t.settings.languageTitle}</h2>
+          <p class="section-desc">{$t.settings.languageDesc}</p>
+        </div>
+        <span class="chevron" aria-hidden="true"><i class="ph-bold ph-caret-right"></i></span>
+      </summary>
+
+      <div class="a11y-body" style="padding-top: var(--spacing-md);">
+        <div
+          class="segmented-control"
+          role="group"
+          aria-label={$t.settings.languageSelection}
+        >
+          {#each languageOptions as lang}
+            <button
+              class="segment"
+              class:active={$settingsStore.language === lang.value}
+              on:click={() => handleLanguageChange(lang.value)}
+              aria-pressed={$settingsStore.language === lang.value}
+            >
+              <span class="segment-flag">{lang.flag}</span>
+              <span class="segment-label">{lang.native}</span>
+            </button>
+          {/each}
+        </div>
+      </div>
+    </details>
+  </section>
+
+    <!-- ── Feed ──────────────────────────────── -->
+    <section id="feed-settings" class="settings-section">
+
+    <details bind:open={feedOpen}>
+      <summary class="section-header section-header--collapsible">
+        <span class="section-icon section-icon--feed"><i class="ph-bold ph-rss" aria-hidden="true"></i></span>
+        <div>
+          <h2>{$t.settings.feedTitle}</h2>
+          <p class="section-desc">{$t.settings.feedDesc}</p>
+        </div>
+        <span class="chevron" aria-hidden="true"><i class="ph-bold ph-caret-right"></i></span>
+      </summary>
+
+      <div class="a11y-body" style="padding-top: var(--spacing-md);">
+        <div class="setting-row setting-row--control setting-row--last">
+          <div class="setting-info setting-copy">
+            <span class="setting-label">{$t.settings.refreshRateLabel}</span>
+          </div>
+          <div class="segment-control segment-control--equal">
+            <button
+              class="segment-btn"
+              class:active={$settingsStore.feedRefreshRate === 5}
+              on:click={() => settingsStore.patch({ feedRefreshRate: 5 })}
+            >
+              {$t.settings.refreshRate5m}
+            </button>
+            <button
+              class="segment-btn"
+              class:active={$settingsStore.feedRefreshRate === 15}
+              on:click={() => settingsStore.patch({ feedRefreshRate: 15 })}
+            >
+              {$t.settings.refreshRate15m}
+            </button>
+            <button
+              class="segment-btn"
+              class:active={$settingsStore.feedRefreshRate === 60}
+              on:click={() => settingsStore.patch({ feedRefreshRate: 60 })}
+            >
+              {$t.settings.refreshRate1h}
+            </button>
+            <button
+              class="segment-btn"
+              class:active={$settingsStore.feedRefreshRate === 0}
+              on:click={() => settingsStore.patch({ feedRefreshRate: 0 })}
+            >
+              {$t.settings.refreshRateManual}
+            </button>
+          </div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+    <!-- ── Share with Friends ───────────────── -->
+    <section id="sharing" class="settings-section">
+    <details bind:open={sharingOpen}>
+      <summary class="section-header section-header--collapsible">
+        <span class="section-icon section-icon--sharing"><i class="ph-bold ph-paper-plane-tilt" aria-hidden="true"></i></span>
+        <div>
+          <h2>{$t.settings.shareTitle}</h2>
+          <p class="section-desc">{$t.settings.shareDesc}</p>
+        </div>
+        <span class="chevron" aria-hidden="true"><i class="ph-bold ph-caret-right"></i></span>
+      </summary>
+
+      <div class="a11y-body" style="padding-top: var(--spacing-md);">
+        <p class="section-desc section-desc--spaced">{$t.settings.sharePrivacyNote}</p>
+
+        <div class="segment-control segment-control--equal" role="group" aria-label={$t.settings.shareActions}>
+          <button class="segment-btn" on:click={handleNativeShare}>
+            <i class="ph-bold ph-share-fat" aria-hidden="true"></i>
+            <span>{$t.settings.shareNative}</span>
+          </button>
+          <button class="segment-btn" on:click={copyShareLink}>
+            <i class="ph-bold ph-copy" aria-hidden="true"></i>
+            <span>{$t.settings.shareCopy}</span>
+          </button>
+          <button class="segment-btn" on:click={toggleQr} aria-expanded={showQr}>
+            <i class="ph-bold ph-qr-code" aria-hidden="true"></i>
+            <span>{showQr ? $t.settings.shareHideQr : $t.settings.shareShowQr}</span>
+          </button>
+        </div>
+
+        {#if shareStatus === "shared"}
+          <p class="section-desc">{$t.settings.shareSharedOk}</p>
+        {:else if shareStatus === "copied"}
+          <p class="section-desc">{$t.settings.shareCopiedOk}</p>
+        {:else if shareStatus === "error"}
+          <p class="section-desc">{$t.settings.shareError}</p>
+        {/if}
+
+        {#if showQr}
+          <div class="qr-panel">
+            <img src={qrImageUrl} alt={$t.settings.shareQrAlt} loading="lazy" />
+            <p class="section-desc">{$t.settings.shareScanHint}</p>
+          </div>
+        {/if}
+      </div>
+    </details>
+  </section>
+
+    <!-- ── Reset ─────────────────────────────── -->
+    <section id="danger-zone" class="settings-section danger-section">
     <details bind:open={dangerOpen}>
       <summary class="section-header section-header--collapsible">
-        <span class="section-icon"><i class="ph-bold ph-trash"></i></span>
+        <span class="section-icon section-icon--danger"><i class="ph-bold ph-warning-octagon" aria-hidden="true"></i></span>
         <div>
           <h2>{$t.settings.resetTitle}</h2>
           <p class="section-desc">{$t.settings.resetDesc}</p>
         </div>
-        <span class="chevron" aria-hidden="true">›</span>
+        <span class="chevron" aria-hidden="true"><i class="ph-bold ph-caret-right"></i></span>
       </summary>
 
       <div class="a11y-body" style="padding-top: var(--spacing-md);">
@@ -1332,36 +1319,6 @@
     background: rgba(212, 68, 7, 0.06);
     color: var(--primary-color);
     font-weight: 700;
-  }
-
-  /* ── In-line Chip Toggle Button ── */
-  .chip-toggle-btn {
-    background: rgba(0, 0, 0, 0.04);
-    border: 1px solid var(--border-color);
-    color: var(--primary-color);
-    font-size: 0.8rem;
-    font-weight: 700;
-    padding: 5px 12px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: var(--spacing-xs);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  }
-
-  .chip-toggle-btn:hover {
-    background: rgba(212, 68, 7, 0.06);
-    border-color: var(--primary-color);
-    transform: scale(1.03);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .chip-toggle-btn {
-      background: rgba(255, 255, 255, 0.04);
-    }
   }
 
   /* ── Segment Picker ── */
@@ -1944,23 +1901,6 @@
     gap: var(--spacing-sm);
   }
 
-  .chip-toggle-btn {
-    background: var(--bg-color);
-    border: 1px solid var(--border-color);
-    color: var(--text-color);
-    font-size: 0.8rem;
-    padding: 4px 12px;
-    border-radius: var(--radius-full);
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .chip-toggle-btn:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-    background: rgba(212, 68, 7, 0.05);
-  }
-
   @keyframes reveal {
     from {
       opacity: 0;
@@ -2010,6 +1950,9 @@
     --settings-gold: #f7b801;
     --settings-purple: #3d348b;
     --settings-lavender: #7678ed;
+    --settings-teal: #00817a;
+    --settings-green: #2d8f63;
+    --settings-red: #cf3f32;
     --settings-border: #e5e5e5;
     --settings-surface: #ffffff;
     --settings-cream: #f5f0e6;
@@ -2019,6 +1962,7 @@
 
     width: min(calc(100vw - 32px), 460px);
     max-width: 460px;
+    box-sizing: border-box;
     margin: 0 auto;
     padding: max(18px, env(safe-area-inset-top)) 18px calc(var(--spacing-xl) * 3);
     color: var(--text-color);
@@ -2042,6 +1986,8 @@
 
   .settings-hero-copy {
     min-width: 0;
+    display: grid;
+    gap: 6px;
   }
 
   .settings-eyebrow {
@@ -2065,11 +2011,13 @@
   }
 
   .settings-hero p {
-    margin: 8px 0 0;
+    max-width: 32ch;
+    margin: 2px 0 0;
     color: var(--text-color-secondary);
-    font-size: 0.98rem;
-    font-weight: 650;
-    line-height: 1.35;
+    font-size: 0.95rem;
+    font-weight: 560;
+    line-height: 1.42;
+    opacity: 0.82;
   }
 
   .settings-profile-icon {
@@ -2144,32 +2092,33 @@
   }
 
   .status-icon--navy {
-    background: var(--settings-navy);
+    background: linear-gradient(135deg, var(--settings-navy), #284978);
   }
 
   .status-icon--blue {
-    background: var(--settings-blue);
+    background: linear-gradient(135deg, var(--settings-blue), #62c8e8);
   }
 
   .status-icon--gold {
-    background: var(--settings-gold);
+    background: linear-gradient(135deg, var(--settings-gold), #f59e0b);
   }
 
   .status-icon--purple {
-    background: var(--settings-purple);
+    background: linear-gradient(135deg, var(--settings-purple), var(--settings-lavender));
   }
 
   .status-copy {
     min-width: 0;
     display: grid;
-    gap: 2px;
+    gap: 3px;
   }
 
   .status-label {
     color: var(--text-color-secondary);
     font-size: 0.72rem;
-    font-weight: 800;
-    line-height: 1.1;
+    font-weight: 700;
+    line-height: 1.15;
+    opacity: 0.72;
   }
 
   .status-copy strong {
@@ -2192,7 +2141,7 @@
     margin: 0 -18px 18px;
     padding: 7px 18px 10px;
     overflow-x: auto;
-    background: rgba(255, 255, 255, 0.9);
+    background: transparent;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
@@ -2202,6 +2151,8 @@
   }
 
   .settings-jump-nav a {
+    --jump-color: var(--settings-orange);
+    --jump-tint: #fff8ec;
     min-height: 38px;
     display: inline-flex;
     align-items: center;
@@ -2221,9 +2172,9 @@
 
   .settings-jump-nav a:hover,
   .settings-jump-nav a:focus-visible {
-    color: var(--settings-orange);
-    background: #fff8ec;
-    border-color: var(--settings-orange-hover);
+    color: var(--jump-color);
+    background: var(--jump-tint);
+    border-color: var(--jump-color);
     outline: none;
   }
 
@@ -2231,8 +2182,44 @@
   .settings-jump-nav :global(.ios-accessibility-icon) {
     width: 18px;
     height: 18px;
-    color: var(--settings-orange);
+    color: var(--jump-color);
     font-size: 1rem;
+  }
+
+  .jump-link--campus {
+    --jump-color: var(--settings-navy);
+    --jump-tint: #eef3fb;
+  }
+
+  .jump-link--security,
+  .jump-link--access {
+    --jump-color: var(--settings-blue);
+    --jump-tint: #edf9fd;
+  }
+
+  .jump-link--calendar {
+    --jump-color: var(--settings-orange);
+    --jump-tint: #fff4e8;
+  }
+
+  .jump-link--appearance {
+    --jump-color: var(--settings-purple);
+    --jump-tint: #f1f0ff;
+  }
+
+  .jump-link--language {
+    --jump-color: var(--settings-teal);
+    --jump-tint: #e9fbf7;
+  }
+
+  .jump-link--feed {
+    --jump-color: var(--settings-green);
+    --jump-tint: #eefaf2;
+  }
+
+  .jump-link--sharing {
+    --jump-color: #b35b00;
+    --jump-tint: #fff6df;
   }
 
   .settings-content {
@@ -2279,7 +2266,7 @@
     align-items: center;
     gap: 14px;
     margin: 0;
-    padding: 18px 20px 8px;
+    padding: 20px 22px 10px;
     user-select: none;
   }
 
@@ -2297,13 +2284,26 @@
     border-bottom: 1px solid rgba(7, 19, 47, 0.08);
   }
 
+  details[open] .section-header--collapsible .chevron {
+    background: rgba(20, 33, 61, 0.08);
+    border-color: rgba(20, 33, 61, 0.1);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+
+  details[open] .section-header--collapsible .chevron i {
+    transform: rotate(90deg);
+  }
+
   .section-header > div,
   .section-header--collapsible > div {
     min-width: 0;
     flex: 1;
+    text-align: left;
   }
 
   .section-icon {
+    --section-icon-bg: linear-gradient(135deg, var(--settings-orange), var(--settings-orange-hover));
+    --section-icon-shadow: rgba(212, 68, 7, 0.2);
     width: 50px;
     height: 50px;
     display: grid;
@@ -2311,38 +2311,56 @@
     flex: 0 0 auto;
     margin-top: 0;
     color: #ffffff;
-    background: var(--settings-orange);
+    background: var(--section-icon-bg);
     border-radius: 13px;
     font-size: 1.5rem;
     line-height: 1;
-    box-shadow: 0 9px 18px rgba(212, 68, 7, 0.18);
+    box-shadow: 0 9px 18px var(--section-icon-shadow);
   }
 
-  .settings-section:nth-of-type(1) .section-icon {
-    background: var(--settings-navy);
+  .section-icon--campus {
+    --section-icon-bg: linear-gradient(135deg, var(--settings-navy), #26466f);
+    --section-icon-shadow: rgba(20, 33, 61, 0.24);
   }
 
-  .settings-section:nth-of-type(2) .section-icon,
-  .settings-section:nth-of-type(8) .section-icon {
-    background: var(--settings-blue);
+  .section-icon--security,
+  .section-icon--accessibility {
+    --section-icon-bg: linear-gradient(135deg, var(--settings-blue), #67c8e6);
+    --section-icon-shadow: rgba(47, 164, 215, 0.24);
   }
 
-  .settings-section:nth-of-type(3) .section-icon,
-  .settings-section:nth-of-type(5) .section-icon {
-    background: var(--settings-purple);
+  .section-icon--calendar {
+    --section-icon-bg: linear-gradient(135deg, var(--settings-orange), #f28c3e);
+    --section-icon-shadow: rgba(212, 68, 7, 0.24);
   }
 
-  .settings-section:nth-of-type(4) .section-icon {
-    background: var(--settings-gold);
+  .section-icon--appearance {
+    --section-icon-bg: linear-gradient(135deg, var(--settings-purple), var(--settings-lavender));
+    --section-icon-shadow: rgba(61, 52, 139, 0.24);
   }
 
-  .danger-section .section-icon {
-    background: #ef4444;
+  .section-icon--language {
+    --section-icon-bg: linear-gradient(135deg, var(--settings-teal), #42bcae);
+    --section-icon-shadow: rgba(0, 129, 122, 0.22);
+  }
+
+  .section-icon--feed {
+    --section-icon-bg: linear-gradient(135deg, var(--settings-green), #69b77d);
+    --section-icon-shadow: rgba(45, 143, 99, 0.22);
+  }
+
+  .section-icon--sharing {
+    --section-icon-bg: linear-gradient(135deg, var(--settings-gold), #f59e0b);
+    --section-icon-shadow: rgba(247, 184, 1, 0.24);
+  }
+
+  .section-icon--danger {
+    --section-icon-bg: linear-gradient(135deg, var(--settings-red), #ef6a5a);
+    --section-icon-shadow: rgba(207, 63, 50, 0.22);
   }
 
   .section-icon--accessibility {
     color: #ffffff;
-    background: var(--settings-blue);
   }
 
   .section-icon :global(.ios-accessibility-icon) {
@@ -2369,19 +2387,21 @@
   }
 
   h2 {
-    margin: 0 0 4px;
+    margin: 0 0 5px;
     color: var(--text-color);
     font-size: 1.08rem;
-    font-weight: 900;
-    line-height: 1.08;
+    font-weight: 850;
+    line-height: 1.12;
     letter-spacing: 0;
   }
 
   .section-desc {
     color: var(--text-color-secondary);
-    font-size: 0.86rem;
-    font-weight: 650;
-    line-height: 1.32;
+    max-width: 34ch;
+    font-size: 0.84rem;
+    font-weight: 560;
+    line-height: 1.42;
+    opacity: 0.76;
   }
 
   .section-title-row {
@@ -2390,21 +2410,39 @@
 
 
   .chevron {
-    width: 28px;
-    height: 28px;
+    width: 34px;
+    height: 34px;
     display: grid;
     place-items: center;
     margin-left: auto;
-    color: var(--text-color-secondary);
-    background: #f8fafc;
-    border: 1px solid var(--settings-border);
+    flex: 0 0 auto;
+    color: rgba(20, 33, 61, 0.68);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.96));
+    border: 1px solid rgba(20, 33, 61, 0.08);
     border-radius: 50%;
-    font-size: 1.1rem;
+    font-size: 0.98rem;
     line-height: 1;
+    box-shadow: 0 8px 18px rgba(20, 33, 61, 0.08);
+    transition:
+      background 0.22s ease,
+      border-color 0.22s ease,
+      color 0.22s ease,
+      box-shadow 0.22s ease;
+  }
+
+  .chevron i {
+    transition: transform 0.22s ease;
+  }
+
+  .section-header--collapsible:hover .chevron,
+  .section-header--collapsible:focus-visible .chevron {
+    color: var(--text-color);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(238, 243, 249, 0.98));
+    border-color: rgba(20, 33, 61, 0.12);
   }
 
   .a11y-body {
-    padding: 16px 20px 20px !important;
+    padding: 18px 22px 24px !important;
     animation: slideDown 0.24s ease;
   }
 
@@ -2413,8 +2451,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    min-height: 66px;
-    padding: 12px 0;
+    min-height: 68px;
+    padding: 14px 0;
     border-top: 1px solid rgba(7, 19, 47, 0.08);
   }
 
@@ -2425,8 +2463,8 @@
   .setting-label {
     color: var(--text-color);
     font-size: 0.96rem;
-    font-weight: 850;
-    line-height: 1.18;
+    font-weight: 800;
+    line-height: 1.2;
   }
 
   .setting-info,
@@ -2441,8 +2479,9 @@
   .class-title-hint {
     color: var(--text-color-secondary);
     font-size: 0.8rem;
-    font-weight: 650;
-    line-height: 1.3;
+    font-weight: 560;
+    line-height: 1.42;
+    opacity: 0.76;
   }
 
   .setting-select {
@@ -2462,7 +2501,6 @@
   .segment-btn:focus-visible,
   .theme-card:focus-visible,
   .toggle:focus-visible,
-  .chip-toggle-btn:focus-visible,
   .btn-update:focus-visible,
   .secondary-action-btn:focus-visible,
   .btn-reset:focus-visible {
@@ -2471,23 +2509,23 @@
   }
 
 	  .setting-group {
-	    padding: 16px 0 0;
+	    padding: 18px 0 0;
 	    border-top: 1px solid rgba(7, 19, 47, 0.08);
 	  }
 
 	  .setting-group--home-layout,
 	  .setting-group--landing {
-	    margin-top: var(--spacing-lg);
+	    margin-top: 20px;
 	  }
 
 	  .section-desc--spaced {
-	    margin-bottom: 14px;
+	    margin-bottom: 16px;
 	  }
 
 	  .setting-row--control {
 	    align-items: flex-start;
 	    border-top: none;
-	    padding: 0 0 14px;
+	    padding: 0 0 16px;
 	  }
 
 	  .setting-row--last {
@@ -2498,16 +2536,18 @@
 	    display: flex;
 	    flex: 1 1 220px;
 	    flex-direction: column;
-	    gap: 4px;
-	    padding-top: 4px;
+	    gap: 5px;
+	    padding-top: 2px;
 	  }
 
   .group-title {
-    margin: 0 0 10px;
+    margin: 0 0 12px;
     color: var(--text-color);
-    font-size: 0.92rem;
-    font-weight: 900;
-    opacity: 1;
+    font-size: 0.84rem;
+    font-weight: 780;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    opacity: 0.78;
   }
 
 	  .segmented-control,
@@ -2586,8 +2626,8 @@
 	  }
 
 	  .section-item {
-	    min-height: 62px;
-	    padding: 12px 14px;
+	    min-height: 64px;
+	    padding: 14px 16px;
 	    background: #ffffff;
 	  }
 
@@ -2614,20 +2654,6 @@
     flex-shrink: 0;
   }
 
-  .chip-toggle-btn {
-    min-height: 38px;
-    margin-right: 0;
-    padding: 0 14px;
-    font-size: 0.79rem;
-    font-weight: 800;
-    line-height: 1.1;
-    color: var(--settings-orange);
-    background: #fff8ec;
-    border: 1px solid #f4dfc3;
-    border-radius: 999px;
-    box-shadow: none;
-  }
-
   .toggle {
     width: 56px;
     height: 30px;
@@ -2652,7 +2678,9 @@
 
   .helper-box p {
     color: var(--text-color-secondary);
-    font-weight: 650;
+    font-weight: 560;
+    line-height: 1.45;
+    opacity: 0.8;
   }
 
   .secondary-action-btn,
@@ -2683,7 +2711,7 @@
   .update-card {
     max-width: none;
     margin: 18px 0 0;
-    padding: 16px 18px;
+    padding: 18px 20px;
     background: var(--settings-surface);
     border: 1px solid var(--settings-border);
     border-radius: 16px;
@@ -2695,8 +2723,9 @@
   }
 
   .update-desc {
-    opacity: 1;
-    font-weight: 650;
+    opacity: 0.72;
+    font-weight: 560;
+    line-height: 1.38;
   }
 
   .confirm-box {
@@ -2739,11 +2768,12 @@
   .mobile-footer {
     max-width: 680px;
     margin: 6px auto 0;
-    padding: 22px 18px calc(var(--bottom-nav-height) + 14px);
+    padding: 24px 20px calc(var(--bottom-nav-height) + 16px);
     color: var(--text-color-secondary);
     border-top: 0;
-    opacity: 1;
-    font-weight: 650;
+    opacity: 0.76;
+    font-weight: 560;
+    line-height: 1.45;
   }
 
 	  @media (max-width: 480px) {
@@ -2754,12 +2784,14 @@
 	    }
 
 	    .setting-row--control {
+	      flex-direction: column;
 	      align-items: stretch;
 	      min-height: 0;
 	      padding: 0 0 14px;
 	    }
 
 	    .setting-copy {
+	      width: 100%;
 	      flex-basis: auto;
 	      padding-top: 0;
 	    }
@@ -2780,13 +2812,19 @@
 	    .segment-control {
 	      width: 100%;
 	      max-width: 100%;
+	      flex: 0 0 auto;
 	      overflow: visible;
+	    }
+
+	    .segment-control--equal {
+	      width: 100%;
 	    }
 
 	    .segment-btn {
 	      padding-inline: 12px;
 	      white-space: normal;
 	      min-width: 0;
+	      min-height: 42px;
 	    }
 	  }
 
@@ -2803,19 +2841,19 @@
 
     .section-header,
     .section-header--collapsible {
-      padding-inline: 16px;
+      padding-inline: 18px;
     }
 
     .a11y-body {
-      padding-inline: 16px !important;
+      padding-inline: 18px !important;
     }
   }
 
   @media (min-width: 768px) {
     .settings-page {
-      width: min(calc(100vw - 64px), 1040px);
+      width: min(100%, 1040px);
       max-width: 1040px;
-      padding-inline: 0;
+      padding-inline: 18px;
       padding-bottom: 56px;
     }
 
@@ -2838,10 +2876,6 @@
     --settings-row-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
   }
 
-  :global([data-theme="dark"]) .settings-jump-nav {
-    background: rgba(13, 13, 20, 0.86);
-  }
-
   :global([data-theme="dark"]) .status-tile,
   :global([data-theme="dark"]) .theme-card,
   :global([data-theme="dark"]) .sections-list,
@@ -2850,6 +2884,10 @@
   :global([data-theme="dark"]) .secondary-action-btn,
   :global([data-theme="dark"]) .settings-jump-nav a {
     background: rgba(255, 255, 255, 0.07);
+  }
+
+  :global([data-theme="dark"]) .settings-jump-nav a {
+    --jump-tint: rgba(255, 255, 255, 0.1);
   }
 
   :global([data-theme="dark"]) .helper-box {
@@ -2876,6 +2914,21 @@
     background: rgba(255, 255, 255, 0.08);
   }
 
+  :global([data-theme="dark"]) .chevron {
+    color: rgba(255, 255, 255, 0.72);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22);
+  }
+
+  :global([data-theme="dark"]) .theme-card.active {
+    background: rgba(212, 68, 7, 0.16);
+    border-color: rgba(242, 140, 62, 0.5);
+  }
+
+  :global([data-theme="dark"]) .theme-card.active {
+    color: #ffd79e;
+  }
+
   :global([data-theme="dark"]) details[open] .section-header--collapsible,
   :global([data-theme="dark"]) .settings-content > .settings-section + .settings-section,
   :global([data-theme="dark"]) .setting-row,
@@ -2892,10 +2945,6 @@
       --settings-row-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
     }
 
-    :global(html:not([data-theme="light"])) .settings-jump-nav {
-      background: rgba(13, 13, 20, 0.86);
-    }
-
     :global(html:not([data-theme="light"])) .status-tile,
     :global(html:not([data-theme="light"])) .theme-card,
     :global(html:not([data-theme="light"])) .sections-list,
@@ -2904,6 +2953,10 @@
     :global(html:not([data-theme="light"])) .secondary-action-btn,
     :global(html:not([data-theme="light"])) .settings-jump-nav a {
       background: rgba(255, 255, 255, 0.07);
+    }
+
+    :global(html:not([data-theme="light"])) .settings-jump-nav a {
+      --jump-tint: rgba(255, 255, 255, 0.1);
     }
 
     :global(html:not([data-theme="light"])) .helper-box {
@@ -2928,6 +2981,21 @@
     :global(html:not([data-theme="light"])) .segment-control,
     :global(html:not([data-theme="light"])) .chevron {
       background: rgba(255, 255, 255, 0.08);
+    }
+
+    :global(html:not([data-theme="light"])) .chevron {
+      color: rgba(255, 255, 255, 0.72);
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22);
+    }
+
+    :global(html:not([data-theme="light"])) .theme-card.active {
+      background: rgba(212, 68, 7, 0.16);
+      border-color: rgba(242, 140, 62, 0.5);
+    }
+
+    :global(html:not([data-theme="light"])) .theme-card.active {
+      color: #ffd79e;
     }
 
     :global(html:not([data-theme="light"])) details[open] .section-header--collapsible,

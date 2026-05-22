@@ -97,7 +97,10 @@
 <div class="email-gate-inline" transition:fade>
     {#if step === 'email'}
         <div class="gate-form">
+            <label for="srh-email" class="sr-only">SRH Email Address</label>
             <input
+                id="srh-email"
+                name="email"
                 type="email"
                 placeholder="Enter your SRH email"
                 bind:value={email}
@@ -111,7 +114,10 @@
         </div>
     {:else}
         <div class="gate-form">
+            <label for="srh-pin" class="sr-only">6-digit Verification PIN</label>
             <input
+                id="srh-pin"
+                name="pin"
                 type="text"
                 inputmode="numeric"
                 pattern="[0-9]*"

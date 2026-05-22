@@ -29,6 +29,9 @@
 
   import { t } from "$lib/i18n";
 
+  import { resolveLocationToRoom } from "$lib/utils/locationToRoomId";
+  import { interactiveMapEnabled } from "$lib/config/features";
+
   // ─── Internationalization ──────────────────────────────────────────
   $: locale = $settingsStore.language ?? "en";
 
@@ -1092,23 +1095,49 @@
         {/if}
       </div>
     {:else if popupEvent.extendedProps?.location || popupEvent.extendedProps?.shortLocation}
-      <a
-        href="https://maps.google.com/?q={encodeURIComponent(
-          popupEvent.extendedProps?.location,
-        )}"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="popup-location-link"
-        aria-label="Open location in Google Maps"
-      >
-        <div class="popup-location-badge">
-          {popupEvent.extendedProps?.shortLocation ||
-            popupEvent.extendedProps?.location}
-        </div>
-        <div class="popup-location">
-          {popupEvent.extendedProps?.location}
-        </div>
-      </a>
+      {@const resolvedRoom = resolveLocationToRoom(popupEvent.extendedProps?.shortLocation || popupEvent.extendedProps?.location)}
+      <div class="popup-location-section">
+        <a
+          href="https://maps.google.com/?q={encodeURIComponent(
+            popupEvent.extendedProps?.location,
+          )}"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="popup-location-link"
+          aria-label="Open location in Google Maps"
+        >
+          <div class="popup-location-badge">
+            {popupEvent.extendedProps?.shortLocation ||
+              popupEvent.extendedProps?.location}
+          </div>
+          <div class="popup-location">
+            {popupEvent.extendedProps?.location}
+          </div>
+        </a>
+        {#if resolvedRoom}
+          {#if interactiveMapEnabled}
+            <a
+              href="/explore/map?to={resolvedRoom.id}"
+              class="popup-directions-btn"
+              aria-label="Get indoor navigation directions to {resolvedRoom.name}"
+            >
+              <i class="ph-bold ph-navigation-arrow"></i>
+              <span>Get Directions</span>
+              <span class="directions-room-badge">{resolvedRoom.id}</span>
+            </a>
+          {:else}
+            <div
+              class="popup-directions-btn disabled"
+              aria-disabled="true"
+              title="Indoor navigation is temporarily unavailable"
+            >
+              <i class="ph-bold ph-navigation-arrow"></i>
+              <span>Directions paused</span>
+              <span class="directions-room-badge">{resolvedRoom.id}</span>
+            </div>
+          {/if}
+        {/if}
+      </div>
     {/if}
 
     {#if popupEvent.extendedProps?.description}
@@ -1793,6 +1822,72 @@
     transform: translateY(0);
   }
 
+  /* ── Campus Map Directions Button ── */
+  .popup-location-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .popup-directions-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.12) 0%, rgba(79, 172, 254, 0.12) 100%);
+    color: #00d4f0;
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 8px 14px;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    border: 1px solid rgba(0, 242, 254, 0.28);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 212, 240, 0.1);
+    width: fit-content;
+  }
+
+  .popup-directions-btn i {
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .popup-directions-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.22) 0%, rgba(79, 172, 254, 0.22) 100%);
+    border-color: rgba(0, 242, 254, 0.5);
+    box-shadow: 0 4px 16px rgba(0, 212, 240, 0.22), 0 0 0 1px rgba(0, 242, 254, 0.15);
+    transform: translateY(-1.5px);
+    color: #00f2fe;
+  }
+
+  .popup-directions-btn:active {
+    transform: translateY(0);
+  }
+
+  .popup-directions-btn.disabled {
+    cursor: default;
+    pointer-events: none;
+    opacity: 0.55;
+    color: #94a3b8;
+    border-color: rgba(148, 163, 184, 0.18);
+    background: rgba(148, 163, 184, 0.08);
+    box-shadow: none;
+  }
+
+  .directions-room-badge {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    background: rgba(0, 242, 254, 0.15);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: #7ee8fa;
+    margin-left: auto;
+  }
+
+
+
   .popup-location-badge.online {
     align-self: flex-start;
     background: rgba(34, 197, 94, 0.1);
@@ -1945,8 +2040,9 @@
     display: none !important;
   }
 
-  :global(.ec-day-head) {
-    color: var(--text-color) !important;
+  :global(.ec-day-head),
+  :global(.ec-day-head time) {
+    color: var(--text-color-secondary) !important;
   }
 
   :global(.ec-today .ec-day-head) {

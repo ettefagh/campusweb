@@ -10,6 +10,26 @@ import {
 const PROTECTED_API_PREFIXES = ['/api/contacts', '/api/calendar/academic'];
 const PROTECTED_PAGE_PREFIXES: string[] = [];
 
+const SECURITY_HEADERS = {
+  'Content-Security-Policy':
+    "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://www.instagram.com https://www.tiktok.com; connect-src 'self' https: wss:; frame-src https:; worker-src 'self' blob:; upgrade-insecure-requests",
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'X-Frame-Options': 'DENY',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+} as const;
+
+function applySecurityHeaders(response: Response): Response {
+  if (!dev) {
+    for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+      response.headers.set(key, value);
+    }
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+
+  return response;
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
   const token = event.cookies.get(AUTH_COOKIE_NAME);
   const verified = await verifyAnonymousSessionToken(token, event.platform?.env);
@@ -21,10 +41,10 @@ export const handle: Handle = async ({ event, resolve }) => {
   const isProtectedPage = PROTECTED_PAGE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   if (!verified && isProtectedApi) {
-    return new Response(JSON.stringify({ error: 'Verification required.' }), {
+    return applySecurityHeaders(new Response(JSON.stringify({ error: 'Verification required.' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }
-    });
+    }));
   }
 
   if (!verified && isProtectedPage) {
@@ -42,5 +62,5 @@ export const handle: Handle = async ({ event, resolve }) => {
     });
   }
 
-  return resolve(event);
+  return applySecurityHeaders(await resolve(event));
 };

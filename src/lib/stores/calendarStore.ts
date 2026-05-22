@@ -33,7 +33,7 @@ export function getTextureForColor(color: string): string {
 }
 
 const STORAGE_KEY = 'calendar_subscriptions';
-const UPDATE_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours
+const UPDATE_INTERVAL = 3 * 60 * 60 * 1000; // 3 hours
 
 function createCalendarStore() {
     const { subscribe, set, update } = writable<CalendarSubscription[]>([]);

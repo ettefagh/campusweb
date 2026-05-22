@@ -99,6 +99,15 @@
         </p>
 
         <div class="welcome-form">
+          <label for="welcome-name">First Name</label>
+          <input
+            type="text"
+            id="welcome-name"
+            placeholder="e.g. Alex"
+            value={$settingsStore.firstName ?? ""}
+            on:input={(event) => settingsStore.patch({ firstName: event.currentTarget.value || null })}
+          />
+
           <label for="welcome-campus">Campus</label>
           <select
             id="welcome-campus"
@@ -428,7 +437,8 @@
     font-weight: 800;
   }
 
-  .welcome-form select {
+  .welcome-form select,
+  .welcome-form input {
     width: 100%;
     min-height: 48px;
     padding: 0 14px;

@@ -23,6 +23,8 @@ srh-auth-module/
 # Private security operations docs
 docs/private/
 docs/*.local.md
+.github/
+docs/
 
 # Editor and OS
 .codex/

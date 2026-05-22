@@ -8,7 +8,7 @@
 	import { favorites } from "$lib/stores/favorites";
 	import { allLinks } from "$lib/data/links";
 	import { t } from "$lib/i18n";
-	import { settingsStore } from "$lib/stores/settingsStore";
+	import { settingsStore, type HomeSection } from "$lib/stores/settingsStore";
 	import { getCalendarEvents } from "$lib/stores/calendarCache";
 	import { activeClasses, calendarStore, holidayEvents, type CalendarSubscription } from "$lib/stores/calendarStore";
 	import { classColors } from "$lib/stores/classColors";
@@ -52,6 +52,47 @@
 		};
 	}
 
+	function sortableHomeBlocks(node: HTMLElement, options: { enabled: boolean }) {
+		let sortable: Sortable | null = null;
+
+		function update(opts: { enabled: boolean }) {
+			if (opts.enabled) {
+				if (!sortable) {
+					sortable = new Sortable(node, {
+						animation: 180,
+						draggable: ".home-block",
+						handle: ".home-block-drag-handle",
+						ghostClass: "home-block-ghost",
+						chosenClass: "home-block-chosen",
+						dragClass: "home-block-dragging",
+						delay: 90,
+						delayOnTouchOnly: true,
+						touchStartThreshold: 5,
+						onEnd: () => {
+							const orderedIds = Array.from(node.querySelectorAll<HTMLElement>(".home-block"))
+								.map((el) => el.dataset.sectionId)
+								.filter((id): id is string => Boolean(id));
+
+							reorderHomeBlocks(orderedIds);
+						}
+					});
+				}
+			} else if (sortable) {
+				sortable.destroy();
+				sortable = null;
+			}
+		}
+
+		update(options);
+
+		return {
+			update,
+			destroy() {
+				if (sortable) sortable.destroy();
+			}
+		};
+	}
+
 	let showGoToTop = false;
 	let container: HTMLElement | null = null;
 	$: isStoriesLoading = $storiesLoading;
@@ -60,11 +101,22 @@
 	let calendarSubscriptions: CalendarSubscription[] = [];
 	let isLoadingCalendarPreview = false;
 	let selectedCalendarEvent: CalendarEvent | null = null;
+	let calendarWidgetMode: "today" | "next" = "today";
+	let calendarWidgetTitle = "";
+	let calendarWidgetEmptyText = "";
 	let returnFocusElement: HTMLElement | null = null;
 	let loadedCalendarAuthState: boolean | null = null;
 
+	function getGreeting() {
+		const hour = new Date().getHours();
+		if (hour < 12) return 'Good morning';
+		if (hour < 18) return 'Good afternoon';
+		return 'Good evening';
+	}
+
 	onMount(() => {
 		getStories();
+		calendarStore.refreshAll();
 		if ($settingsStore.defaultPage === 'calendar') {
 			goto('/calendar', { replaceState: true });
 		}
@@ -92,8 +144,14 @@
 
 	$: {
 		$holidayEvents;
+		calendarWidgetMode;
 		updateUpcomingEvents();
 	}
+
+	$: calendarWidgetMode = $settingsStore.calendarWidgetMode || "today";
+	$: calendarWidgetTitle = calendarWidgetMode === "next" ? $t.home.nextEvents : getTodayCalendarTitle();
+	$: calendarWidgetEmptyText =
+		calendarWidgetMode === "next" ? $t.home.calendarPreparedNext : $t.home.calendarPreparedToday;
 
 	async function loadCalendarPreview(isVerified: boolean) {
 		if (loadedCalendarAuthState === isVerified) return;
@@ -114,7 +172,7 @@
 		const previewLimit = 4;
 		const subscriptionEvents = calendarSubscriptions.flatMap((subscription) => subscription.cachedEvents);
 		const allEvents = [...staticCalendarEvents, ...subscriptionEvents, ...$holidayEvents];
-		const mode = $settingsStore.calendarWidgetMode || "today";
+		const mode = calendarWidgetMode;
 		const today = new Date();
 		const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
 		const dayEnd = dayStart + 24 * 60 * 60 * 1000;
@@ -203,17 +261,10 @@
 		return event.backgroundColor || "var(--primary-color)";
 	}
 
-	function getCalendarWidgetTitle() {
-		if (($settingsStore.calendarWidgetMode || "today") === "next") return $t.home.nextEvents;
+	function getTodayCalendarTitle() {
 		const now = new Date();
 		const weekday = now.toLocaleDateString([], { weekday: "long" });
 		return `${weekday} ${now.getDate()}`;
-	}
-
-	function getCalendarWidgetEmptyText() {
-		return ($settingsStore.calendarWidgetMode || "today") === "next"
-			? $t.home.calendarPreparedNext
-			: $t.home.calendarPreparedToday;
 	}
 
 	function goToTop() {
@@ -226,6 +277,7 @@
 
 	let isEditMode = false;
 	let isManagingFavorites = false;
+	let isArrangingHomeBlocks = false;
 	let isStorySuggestionOpen = false;
 	let searchQuery = "";
 	let draggedFavoriteId = "";
@@ -245,6 +297,9 @@
 		: $favorites
 				.map((favId) => allLinks.find((link) => link.id === favId))
 				.filter((link): link is typeof allLinks[number] => !!link);
+	$: availableHomeBlocks = $settingsStore.homeSections.filter(
+		(section) => section.id !== "header" && !section.enabled
+	);
 
 	function toggleEditMode() {
 		isEditMode = !isEditMode;
@@ -252,6 +307,7 @@
 	}
 
 	function startManagingFavorites() {
+		isArrangingHomeBlocks = false;
 		isManagingFavorites = true;
 		isEditMode = false;
 		searchQuery = "";
@@ -267,6 +323,74 @@
 	function handleToggleFavorite(event: CustomEvent<{ linkId: string }>) {
 		favorites.toggle(event.detail.linkId);
 	}
+
+	function getHomeSectionLabel(id: string) {
+		if (id === "stories") return $t.home.campusStories;
+		if (id === "favorites") return $t.home.universityLinks || $t.settings.favoriteLinks;
+		if (id === "cards") return $t.settings.cards;
+		if (id === "calendar") return $t.home.calendarSchedule;
+		if (id === "feed") return $t.home.campusFeed;
+		return id;
+	}
+
+	function getHomeSectionDescription(id: string) {
+		if (id === "stories") return $t.home.campusStoriesDesc;
+		if (id === "favorites") return $t.home.customBookmarks;
+		if (id === "cards") return $t.home.cardsDesc;
+		if (id === "calendar") return $t.settings.calendarWidgetModeDesc;
+		if (id === "feed") return $t.home.feedPrepared;
+		return $t.home.homeBlockFallbackDesc;
+	}
+
+	function getHomeSectionIcon(id: string) {
+		if (id === "stories") return "ph-bold ph-circles-three-plus";
+		if (id === "favorites") return "ph-bold ph-star";
+		if (id === "cards") return "ph-bold ph-identification-card";
+		if (id === "calendar") return "ph-bold ph-calendar";
+		if (id === "feed") return "ph-bold ph-newspaper";
+		return "ph-bold ph-squares-four";
+	}
+
+	function reorderHomeBlocks(orderedBlockIds: string[]) {
+		const sectionsById = new Map($settingsStore.homeSections.map((section) => [section.id, section]));
+		const header = sectionsById.get("header") ?? { id: "header", enabled: true };
+		const orderedBlocks = orderedBlockIds
+			.map((id) => sectionsById.get(id))
+			.filter((section): section is HomeSection => Boolean(section));
+		const remainingSections = $settingsStore.homeSections.filter(
+			(section) => section.id !== "header" && !orderedBlockIds.includes(section.id)
+		);
+
+		settingsStore.patch({ homeSections: [header, ...orderedBlocks, ...remainingSections] });
+	}
+
+	function setHomeBlockEnabled(id: string, enabled: boolean) {
+		const sectionsById = new Map($settingsStore.homeSections.map((section) => [section.id, section]));
+		const header = sectionsById.get("header") ?? { id: "header", enabled: true };
+		const target = sectionsById.get(id);
+		if (!target || id === "header") return;
+
+		const activeBlocks = $settingsStore.homeSections.filter(
+			(section) => section.id !== "header" && section.id !== id && section.enabled
+		);
+		const inactiveBlocks = $settingsStore.homeSections.filter(
+			(section) => section.id !== "header" && section.id !== id && !section.enabled
+		);
+		const updatedTarget = { ...target, enabled };
+		const nextSections = enabled
+			? [header, ...activeBlocks, updatedTarget, ...inactiveBlocks]
+			: [header, ...activeBlocks, ...inactiveBlocks, updatedTarget];
+
+		settingsStore.patch({ homeSections: nextSections });
+	}
+
+	function toggleHomeBlockArrangeMode() {
+		isArrangingHomeBlocks = !isArrangingHomeBlocks;
+		if (isArrangingHomeBlocks) {
+			finishManagingFavorites();
+			isArrangingHomeBlocks = true;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -279,200 +403,284 @@
 
 <div class="home-page">
 	{#each $settingsStore.homeSections as section, i (section.id)}
-		{#if section.enabled}
-			{#if section.id === "header"}
-				<header class="home-hero" class:compact={$settingsStore.headerSize === 'small'}>
-					<div class="home-hero-top">
-						<div class="home-greeting">
-							<span>{$t.home.greeting}</span>
-							<h1>{$t.home.welcomeBack}</h1>
-						</div>
-						<WeatherNotifications campusId={$settingsStore.campusId} />
+		{#if section.enabled && section.id === "header"}
+			<header class="home-hero" class:compact={$settingsStore.headerSize === 'small'}>
+				<div class="home-hero-top">
+					<div class="home-greeting">
+						<span>{getGreeting()}</span>
+						<h1>{$settingsStore.firstName ? `Hi, ${$settingsStore.firstName}!` : $t.home.welcomeBack}</h1>
 					</div>
-					<button class="home-search" type="button" on:click={triggerExploreSearch} aria-label={$t.home.searchCampusWeb}>
-						<i class="ph ph-magnifying-glass" aria-hidden="true"></i>
-						<span>{$t.home.searchCampusWeb}</span>
-						<i class="ph ph-corners-out" aria-hidden="true"></i>
-					</button>
-					<div class="home-context">
-						<img
-							src="/icon-light.png"
-							alt=""
-							class="home-context-logo light-mode"
-							width="32"
-							loading="eager"
-							fetchpriority="high"
-						/>
-						<img
-							src="/icon-dark.png"
-							alt=""
-							class="home-context-logo dark-mode"
-							width="32"
-							loading="eager"
-							fetchpriority="high"
-						/>
-						<p>{$t.home.subtitle}</p>
-					</div>
-				</header>
-			{:else if section.id === "stories"}
-				<section class="stories-section" id="stories" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
-					<SectionHeader title={$t.home.campusStories}>
-						<button
-							class="section-action-btn stories-suggest-btn"
-							type="button"
-							on:click={() => (isStorySuggestionOpen = true)}
-						>
-							{$t.home.suggestStory || $t.settings.suggestStoryTitle}
-						</button>
-					</SectionHeader>
-					<StoriesSlider stories={$cachedStories} loading={isStoriesLoading} allowSuggestions={true} variant="rectangular" />
-				</section>
-			{:else if section.id === "favorites"}
-				<section class="links-section" id="favorites" style={i <= 1 ? "" : "animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;"} use:sortableFavorites={{ enabled: isManagingFavorites && !isEditMode }}>
-					<SectionHeader title={$t.home.universityLinks || $t.settings.favoriteLinks} subtitle={$t.home.customBookmarks}>
-
-						<div class="favorite-links-actions">
-							{#if isManagingFavorites}
-								<button
-									class="favorite-icon-btn passive"
-									type="button"
-									aria-label={$t.home.dragReorder}
-									title={$t.home.dragReorder}
-								>
-									<i class="ph-bold ph-dots-six-vertical"></i>
-								</button>
-								<button
-									class="favorite-icon-btn"
-									class:active={isEditMode}
-									type="button"
-									on:click={toggleEditMode}
-									aria-label={$t.home.editFavorites}
-									title={$t.home.editFavorites}
-								>
-									<i class="ph-bold ph-pencil-simple"></i>
-									<span>{$t.home.edit}</span>
-								</button>
-								<button
-									class="favorite-icon-btn done"
-									type="button"
-									on:click={finishManagingFavorites}
-									aria-label={$t.home.doneManaging}
-									title={$t.home.done}
-								>
-									<i class="ph-bold ph-check"></i>
-								</button>
-							{:else}
-								<button 
-									class="section-action-btn"
-									type="button"
-									on:click={startManagingFavorites}
-								>
-									Manage
-								</button>
-							{/if}
-						</div>
-					</SectionHeader>
-					{#if isEditMode}
-						<div class="search-container">
-							<input
-								type="text"
-								placeholder={$t.home.searchPlaceholder}
-								bind:value={searchQuery}
-								class="search-input"
-							/>
-						</div>
-					{/if}
-					{#if displayLinks.length === 0}
-						<div class="empty-state" style="grid-column: 1 / -1; width: 100%;">
-							<p>{$t.home.emptyState}</p>
-						</div>
-					{:else}
-						{#each displayLinks as link (link.id)}
-							<LinkCard
-								{link}
-								isFavorite={$favorites.includes(link.id)}
-								editMode={isEditMode}
-								reorderMode={isManagingFavorites && !isEditMode}
-								useViewer={!isEditMode && !isManagingFavorites}
-								variant="compact-list"
-								on:toggleFavorite={handleToggleFavorite}
-							/>
-						{/each}
-					{/if}
-				</section>
-			{:else if section.id === "cards"}
-				<section class="links-section full-width-section" id="wallet" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
-					<IdSlider />
-				</section>
-			{:else if section.id === "calendar"}
-				<section class="links-section full-width-section" id="calendar" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
-
-						<SectionHeader 
-							title={getCalendarWidgetTitle()} 
-							href="/calendar"
-							hrefLabel="{$t.home?.viewAll || 'View Full Calendar'} →"
-						/>
-						<div class="calendar-preview">
-							{#if isLoadingCalendarPreview}
-								<p class="calendar-preview-empty">{$t.calendar.loading || "Loading calendar..."}</p>
-							{:else if upcomingEvents.length === 0}
-								<p class="calendar-preview-empty">{getCalendarWidgetEmptyText()}</p>
-							{:else}
-								<ul class="calendar-preview-list">
-									{#each upcomingEvents as event (event.id)}
-										<li class="calendar-preview-item">
-										<button
-											class="calendar-preview-button"
-											type="button"
-												aria-label={getEventAriaLabel(event)}
-												on:click={(clickEvent) => openCalendarEvent(event, clickEvent)}
-											>
-												<div class="calendar-preview-dot" style={`background:${resolveEventDotColor(event)}`}></div>
-												{#if ($settingsStore.calendarWidgetMode || "today") === "today"}
-													<div class="calendar-preview-content calendar-preview-content-today">
-														<div class="calendar-preview-main">
-															<p class="calendar-preview-title">{event.title}</p>
-															<p class="calendar-preview-meta">{formatEventStartTime(event)}</p>
-														</div>
-														<div class="calendar-preview-aside">
-															<p class="calendar-preview-meta">{event.extendedProps?.shortLocation || event.extendedProps?.location || ""}</p>
-															{#if !event.allDay}
-																<p class="calendar-preview-meta">{formatEventEndTime(event)}</p>
-															{/if}
-														</div>
-													</div>
-												{:else}
-													<div class="calendar-preview-content">
-														<p class="calendar-preview-title">{event.title}</p>
-														<p class="calendar-preview-meta">
-															<span>{formatEventDate(event)} · {formatEventTime(event)}</span>
-														</p>
-													</div>
-												{/if}
-											</button>
-										</li>
-									{/each}
-							</ul>
-						{/if}
-					</div>
-				</section>
-			{:else if section.id === "feed"}
-				<section class="links-section full-width-section" id="feed" style="animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: {i * 100}ms;">
-
-					<SectionHeader 
-						title={$t.home.campusFeed} 
-						href="/feed"
-						hrefLabel="{$t.home?.viewAllNews || 'View All News'} →"
+					<WeatherNotifications campusId={$settingsStore.campusId} />
+				</div>
+				<div class="home-context">
+					<img
+						src="/icon-light.png"
+						alt=""
+						class="home-context-logo light-mode"
+						width="32"
+						loading="eager"
+						fetchpriority="high"
 					/>
-					<div class="modular-placeholder glass">
-						<p>{$t.home.feedPrepared}</p>
-					</div>
-				</section>
-			{/if}
+					<img
+						src="/icon-dark.png"
+						alt=""
+						class="home-context-logo dark-mode"
+						width="32"
+						loading="eager"
+						fetchpriority="high"
+					/>
+					<p>{$t.home.subtitle}</p>
+				</div>
+			</header>
 		{/if}
 	{/each}
 
+	<div class="home-blocks masonry-layout" class:is-arranging={isArrangingHomeBlocks} use:sortableHomeBlocks={{ enabled: isArrangingHomeBlocks }}>
+		{#each $settingsStore.homeSections as section, i (section.id)}
+			{#if section.enabled && section.id !== "header"}
+				<div
+					class="home-block"
+					class:home-block--full={section.id === "stories"}
+					class:is-arranging={isArrangingHomeBlocks}
+					data-section-id={section.id}
+					style={i <= 1 ? "" : `animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: ${i * 100}ms;`}
+				>
+					{#if section.id === "stories"}
+						<section class="stories-section" id="stories">
+							<StoriesSlider stories={$cachedStories} loading={isStoriesLoading} allowSuggestions={true} variant="rectangular" />
+						</section>
+					{:else if section.id === "favorites"}
+						<section class="links-section" id="favorites" use:sortableFavorites={{ enabled: isManagingFavorites && !isEditMode && !isArrangingHomeBlocks }}>
+							<SectionHeader title={$t.home.universityLinks || $t.settings.favoriteLinks} subtitle={$t.home.customBookmarks}>
+
+								<div class="favorite-links-actions">
+									{#if isManagingFavorites}
+										<button
+											class="favorite-icon-btn passive"
+											type="button"
+											aria-label={$t.home.dragReorder}
+											title={$t.home.dragReorder}
+										>
+											<i class="ph-bold ph-dots-six-vertical"></i>
+										</button>
+										<button
+											class="favorite-icon-btn"
+											class:active={isEditMode}
+											type="button"
+											on:click={toggleEditMode}
+											aria-label={$t.home.editFavorites}
+											title={$t.home.editFavorites}
+										>
+											<i class="ph-bold ph-pencil-simple"></i>
+											<span>{$t.home.edit}</span>
+										</button>
+										<button
+											class="favorite-icon-btn done"
+											type="button"
+											on:click={finishManagingFavorites}
+											aria-label={$t.home.doneManaging}
+											title={$t.home.done}
+										>
+											<i class="ph-bold ph-check"></i>
+										</button>
+									{:else}
+										<button 
+											class="section-action-btn"
+											type="button"
+											on:click={startManagingFavorites}
+										>
+											Manage
+										</button>
+									{/if}
+								</div>
+							</SectionHeader>
+
+							{#if displayLinks.length === 0}
+								<div class="empty-state" style="grid-column: 1 / -1; width: 100%;">
+									<p>{$t.home.emptyState}</p>
+								</div>
+							{:else}
+								{#each displayLinks as link (link.id)}
+									<LinkCard
+										{link}
+										isFavorite={$favorites.includes(link.id)}
+										editMode={isEditMode}
+										reorderMode={isManagingFavorites && !isEditMode && !isArrangingHomeBlocks}
+										useViewer={!isEditMode && !isManagingFavorites && !isArrangingHomeBlocks}
+										variant="compact-list"
+										on:toggleFavorite={handleToggleFavorite}
+									/>
+								{/each}
+							{/if}
+						</section>
+					{:else if section.id === "cards"}
+						<section class="links-section" id="wallet">
+							<IdSlider />
+						</section>
+					{:else if section.id === "calendar"}
+						<section class="links-section" id="calendar">
+								<SectionHeader 
+									title={calendarWidgetTitle} 
+									href="/calendar"
+									hrefLabel="{$t.home?.viewAll || 'View Full Calendar'} →"
+								/>
+								<div class="calendar-preview">
+									{#if isLoadingCalendarPreview}
+										<p class="calendar-preview-empty">{$t.calendar.loading || "Loading calendar..."}</p>
+									{:else if upcomingEvents.length === 0}
+										<p class="calendar-preview-empty">{calendarWidgetEmptyText}</p>
+									{:else}
+										<ul class="calendar-preview-list">
+											{#each upcomingEvents as event (event.id)}
+												<li class="calendar-preview-item">
+												<button
+													class="calendar-preview-button"
+													type="button"
+														aria-label={getEventAriaLabel(event)}
+														on:click={(clickEvent) => openCalendarEvent(event, clickEvent)}
+													>
+														<div class="calendar-preview-dot" style={`background:${resolveEventDotColor(event)}`}></div>
+														{#if ($settingsStore.calendarWidgetMode || "today") === "today"}
+															<div class="calendar-preview-content calendar-preview-content-today">
+																<div class="calendar-preview-main">
+																	<p class="calendar-preview-title">{event.title}</p>
+																	<p class="calendar-preview-meta">{formatEventStartTime(event)}</p>
+																</div>
+																<div class="calendar-preview-aside">
+																	<p class="calendar-preview-meta">{event.extendedProps?.shortLocation || event.extendedProps?.location || ""}</p>
+																	{#if !event.allDay}
+																		<p class="calendar-preview-meta">{formatEventEndTime(event)}</p>
+																	{/if}
+																</div>
+															</div>
+														{:else}
+															<div class="calendar-preview-content">
+																<p class="calendar-preview-title">{event.title}</p>
+																<p class="calendar-preview-meta">
+																	<span>{formatEventDate(event)} · {formatEventTime(event)}</span>
+																</p>
+															</div>
+														{/if}
+													</button>
+												</li>
+											{/each}
+										</ul>
+									{/if}
+								</div>
+						</section>
+					{:else if section.id === "feed"}
+						<section class="links-section" id="feed">
+							<SectionHeader 
+								title={$t.home.campusFeed} 
+								href="/feed"
+								hrefLabel="{$t.home?.viewAllNews || 'View All News'} →"
+							/>
+							<div class="modular-placeholder glass">
+								<p>{$t.home.feedPrepared}</p>
+							</div>
+						</section>
+					{/if}
+
+					{#if isArrangingHomeBlocks}
+						<div class="home-block-controls">
+							<button
+								class="home-block-drag-handle"
+								type="button"
+								aria-label={`${$t.home.dragHomeBlock}: ${getHomeSectionLabel(section.id)}`}
+								title={$t.home.dragHomeBlock}
+								on:click|preventDefault
+							>
+								<i class="ph-bold ph-dots-six-vertical" aria-hidden="true"></i>
+								<span>{getHomeSectionLabel(section.id)}</span>
+							</button>
+							{#if section.id === "calendar"}
+								<div
+									class="home-block-type-control"
+									role="group"
+									aria-label={$t.settings.calendarWidgetMode}
+								>
+									<select
+										aria-label={$t.settings.calendarWidgetMode}
+										value={$settingsStore.calendarWidgetMode || "today"}
+										on:change={(event) =>
+											settingsStore.patch({
+												calendarWidgetMode: (event.currentTarget as HTMLSelectElement).value as "today" | "next"
+											})
+										}
+									>
+										<option value="today">{$t.settings.calendarWidgetToday}</option>
+										<option value="next">{$t.settings.calendarWidgetNext}</option>
+									</select>
+								</div>
+							{/if}
+							<button
+								class="home-block-control-btn remove"
+								type="button"
+								aria-label={`${$t.home.removeBlock}: ${getHomeSectionLabel(section.id)}`}
+								on:click={() => setHomeBlockEnabled(section.id, false)}
+							>
+								<i class="ph-bold ph-minus-circle" aria-hidden="true"></i>
+								<span>{$t.home.removeBlock}</span>
+							</button>
+						</div>
+					{/if}
+				</div>
+			{/if}
+		{/each}
+
+		{#if isArrangingHomeBlocks}
+			<section class="available-blocks-panel" aria-labelledby="available-home-blocks-title">
+				<div class="available-blocks-header">
+					<span class="available-blocks-kicker">{$t.home.availableBlocksKicker}</span>
+					<h2 id="available-home-blocks-title">{$t.home.availableBlocks}</h2>
+					<p>{$t.home.availableBlocksDesc}</p>
+				</div>
+
+				{#if availableHomeBlocks.length === 0}
+					<p class="available-blocks-empty">{$t.home.noAvailableBlocks}</p>
+				{:else}
+					<div class="available-blocks-list">
+						{#each availableHomeBlocks as section (section.id)}
+							<article class="available-block-card">
+								<span class="available-block-icon" aria-hidden="true">
+									<i class={getHomeSectionIcon(section.id)}></i>
+								</span>
+								<div class="available-block-copy">
+									<h3>{getHomeSectionLabel(section.id)}</h3>
+									<p>{getHomeSectionDescription(section.id)}</p>
+								</div>
+								<button
+									class="home-block-control-btn add"
+									type="button"
+									aria-label={`${$t.home.addBlock}: ${getHomeSectionLabel(section.id)}`}
+									on:click={() => setHomeBlockEnabled(section.id, true)}
+								>
+									<i class="ph-bold ph-plus-circle" aria-hidden="true"></i>
+									<span>{$t.home.addBlock}</span>
+								</button>
+							</article>
+						{/each}
+					</div>
+				{/if}
+			</section>
+		{/if}
+	</div>
+
 	<div class="fab-group">
+		<button
+			class="fab-btn arrange-blocks"
+			class:active={isArrangingHomeBlocks}
+			type="button"
+			on:click={toggleHomeBlockArrangeMode}
+			aria-label={isArrangingHomeBlocks ? $t.home.doneArrangeBlocks : $t.home.arrangeBlocks}
+			title={isArrangingHomeBlocks ? $t.home.doneArrangeBlocks : $t.home.arrangeBlocks}
+		>
+			{#if isArrangingHomeBlocks}
+				<i class="ph-bold ph-check" aria-hidden="true"></i>
+			{:else}
+				<i class="ph-bold ph-squares-four" aria-hidden="true"></i>
+			{/if}
+		</button>
 		{#if showGoToTop}
 			<button class="fab-btn go-to-top glass" on:click={goToTop} aria-label={$t.home.goToTop}>
 				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -480,12 +688,6 @@
 				</svg>
 			</button>
 		{/if}
-		<button class="fab-btn search-fab" on:click={triggerExploreSearch} aria-label={$t.home.searchExplore}>
-			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-				<circle cx="11" cy="11" r="8"></circle>
-				<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-			</svg>
-		</button>
 	</div>
 </div>
 
@@ -603,41 +805,7 @@
 		letter-spacing: 0;
 	}
 
-	.home-search {
-		width: 100%;
-		height: 62px;
-		display: grid;
-		grid-template-columns: auto 1fr auto;
-		align-items: center;
-		gap: 14px;
-		padding: 0 18px;
-		color: var(--text-color-secondary);
-		background: var(--surface-solid);
-		border: 1px solid var(--surface-border);
-		border-radius: 14px;
-		box-shadow: var(--campus-shadow-soft);
-		text-align: left;
-		box-sizing: border-box;
-		max-width: 100%;
-	}
 
-	.home-search i {
-		font-size: 1.55rem;
-		line-height: 1;
-	}
-
-	.home-search span {
-		font-size: 1.05rem;
-		font-weight: 650;
-		color: var(--text-color-secondary);
-	}
-
-	.home-search:hover,
-	.home-search:focus-visible {
-		transform: translateY(-1px);
-		border-color: rgba(var(--primary-color-rgb), 0.28);
-		box-shadow: var(--campus-shadow);
-	}
 
 	.home-context {
 		display: none;
@@ -688,13 +856,262 @@
 		line-height: 1.35;
 	}
 
-	.stories-section,
-	.links-section {
-		min-width: 0;
-		max-width: 100%;
-	}
+		.stories-section,
+		.links-section {
+			max-width: 100%;
+		}
 
-	.links-section {
+		.home-blocks {
+			width: 100%;
+			max-width: 100%;
+		}
+
+		.home-block {
+			position: relative;
+			max-width: 100%;
+		}
+
+		.home-block--full {
+			column-span: all;
+		}
+
+		.home-block.is-arranging {
+			cursor: grab;
+			-webkit-tap-highlight-color: transparent;
+		}
+
+		:global(.home-block-chosen) {
+			cursor: grabbing;
+		}
+
+		:global(.home-block-ghost) {
+			opacity: 0.42;
+		}
+
+			:global(.home-block-dragging) {
+				transform: rotate(0.4deg);
+			}
+
+			.home-block-controls {
+				width: 100%;
+				min-width: min-content;
+				display: grid;
+				grid-template-columns: minmax(min-content, 1fr) auto auto;
+				gap: 8px;
+				margin-top: 8px;
+			}
+
+			.home-block-drag-handle {
+				width: 100%;
+				min-height: 42px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+			gap: 8px;
+			border: 1px dashed rgba(var(--primary-color-rgb), 0.36);
+			border-radius: 14px;
+			background: color-mix(in srgb, var(--primary-color), transparent 92%);
+			color: var(--primary-color);
+			font: inherit;
+			font-size: 0.82rem;
+			font-weight: 850;
+			letter-spacing: 0.01em;
+			cursor: grab;
+			box-shadow: 0 8px 18px rgba(7, 19, 47, 0.06);
+			touch-action: none;
+		}
+
+		.home-block-drag-handle:active {
+			cursor: grabbing;
+		}
+
+			.home-block-drag-handle i {
+				font-size: 1.05rem;
+				line-height: 1;
+			}
+
+			.home-block-type-control {
+				min-height: 42px;
+				min-width: min-content;
+				display: inline-flex;
+				align-items: stretch;
+				border: 1px solid var(--surface-border);
+				border-radius: 14px;
+				background: var(--surface-soft);
+				overflow: hidden;
+			}
+
+			.home-block-type-control select {
+				min-width: min-content;
+				width: 100%;
+				border: 0;
+				background: transparent;
+				color: var(--text-color);
+				font: inherit;
+				font-size: 0.8rem;
+				font-weight: 850;
+				line-height: 1.05;
+				padding: 0 34px 0 12px;
+				cursor: pointer;
+				appearance: none;
+				-webkit-appearance: none;
+				-moz-appearance: none;
+				background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+				background-position: calc(100% - 16px) calc(50% + 1px), calc(100% - 10px) calc(50% + 1px);
+				background-size: 6px 6px, 6px 6px;
+				background-repeat: no-repeat;
+				padding-right: 30px;
+			}
+
+			.home-block-type-control select:hover,
+			.home-block-type-control select:focus-visible {
+				outline: none;
+				background-color: var(--surface-solid);
+				color: var(--primary-color);
+			}
+
+			.home-block-type-control select option {
+				color: var(--text-color);
+				background: var(--surface-solid);
+			}
+
+			.home-block-control-btn {
+				min-height: 42px;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 7px;
+				border: 1px solid var(--surface-border);
+				border-radius: 14px;
+				background: var(--surface-solid);
+				color: var(--text-color);
+				font: inherit;
+				font-size: 0.82rem;
+				font-weight: 850;
+				cursor: pointer;
+				transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+				-webkit-tap-highlight-color: transparent;
+			}
+
+			.home-block-control-btn:hover,
+			.home-block-control-btn:focus-visible {
+				transform: translateY(-1px);
+				outline: none;
+			}
+
+			.home-block-control-btn.remove {
+				padding: 0 12px;
+				color: var(--text-color-secondary);
+			}
+
+			.home-block-control-btn.remove:hover,
+			.home-block-control-btn.remove:focus-visible {
+				border-color: rgba(207, 63, 50, 0.35);
+				background: rgba(207, 63, 50, 0.08);
+				color: #cf3f32;
+			}
+
+			.home-block-control-btn.add {
+				flex: 0 0 auto;
+				padding: 0 13px;
+				border-color: rgba(var(--primary-color-rgb), 0.26);
+				background: color-mix(in srgb, var(--primary-color), transparent 91%);
+				color: var(--primary-color);
+			}
+
+			.available-blocks-panel {
+				grid-column: 1 / -1;
+				min-width: min-content;
+				border: 1px solid var(--surface-border);
+				border-radius: 18px;
+				background: linear-gradient(180deg, var(--surface-solid), var(--surface-soft));
+				box-shadow: var(--campus-shadow-soft);
+				padding: 18px;
+			}
+
+			.available-blocks-header {
+				display: grid;
+				gap: 5px;
+				margin-bottom: 14px;
+			}
+
+			.available-blocks-kicker {
+				color: var(--primary-color);
+				font-size: 0.76rem;
+				font-weight: 900;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+			}
+
+			.available-blocks-header h2 {
+				margin: 0;
+				font-size: 1.13rem;
+				line-height: 1.1;
+			}
+
+			.available-blocks-header p,
+			.available-blocks-empty {
+				margin: 0;
+				color: var(--text-color-secondary);
+				font-size: 0.88rem;
+				line-height: 1.38;
+			}
+
+			.available-blocks-list {
+				display: grid;
+				gap: 10px;
+			}
+
+			.available-block-card {
+				min-width: min-content;
+				display: grid;
+				grid-template-columns: auto minmax(min-content, 1fr) auto;
+				align-items: center;
+				gap: 12px;
+				padding: 12px;
+				border: 1px solid var(--surface-border);
+				border-radius: 14px;
+				background: var(--surface-solid);
+			}
+
+			.available-block-icon {
+				width: 42px;
+				height: 42px;
+				display: grid;
+				place-items: center;
+				border-radius: 12px;
+				background: color-mix(in srgb, var(--primary-color), transparent 88%);
+				color: var(--primary-color);
+				flex: 0 0 auto;
+			}
+
+			.available-block-icon i {
+				font-size: 1.35rem;
+				line-height: 1;
+			}
+
+			.available-block-copy {
+				min-width: min-content;
+			}
+
+			.available-block-copy h3,
+			.available-block-copy p {
+				margin: 0;
+			}
+
+			.available-block-copy h3 {
+				font-size: 0.96rem;
+				line-height: 1.18;
+			}
+
+			.available-block-copy p {
+				margin-top: 3px;
+				color: var(--text-color-secondary);
+				font-size: 0.8rem;
+				line-height: 1.25;
+			}
+
+		.links-section {
 		background: var(--surface-solid);
 		border: 1px solid var(--surface-border);
 		border-radius: 16px;
@@ -707,7 +1124,7 @@
 	}
 
 	.stories-section {
-		overflow: hidden;
+		overflow: visible;
 	}
 
 	.links-section :global(.modular-section-header) {
@@ -729,16 +1146,7 @@
 		flex: 0 0 auto;
 	}
 
-	.stories-section :global(.modular-section-header) {
-		margin-bottom: 6px;
-	}
 
-	.stories-suggest-btn {
-		min-height: 36px;
-		padding: 0 14px;
-		font-size: 0.84rem;
-		font-weight: 800;
-	}
 
 	.links-section :global(.link-card-container:not(:last-child) .link-card.compact-list) {
 		border-bottom: 1px solid rgba(7, 19, 47, 0.08);
@@ -749,28 +1157,7 @@
 	}
 
 
-	.search-container {
-		grid-column: 1 / -1;
-		margin: 0;
-		padding: 12px 16px;
-		width: 100%;
-		box-sizing: border-box;
-	}
 
-	.search-input {
-		width: 100%;
-		padding: var(--spacing-md);
-		border: 2px solid var(--border-color);
-		border-radius: var(--radius-md);
-		font-size: 1rem;
-		background: var(--surface-soft);
-		color: var(--text-color);
-	}
-
-	.search-input:focus {
-		outline: none;
-		border-color: var(--primary-color);
-	}
 
 	.empty-state {
 		text-align: center;
@@ -778,7 +1165,7 @@
 		color: var(--text-color-secondary);
 	}
 
-	.full-width-section, .stories-section {
+	.stories-section {
 		display: block !important;
 		grid-column: 1 / -1;
 	}
@@ -1152,17 +1539,27 @@
 		transform: scale(0.95);
 	}
 
-	.search-fab {
-		background: var(--primary-color, #d44407);
-		color: white;
-	}
 
-	.go-to-top {
-		background: var(--glass-bg-strong);
-		border: 1px solid var(--glass-border);
-		backdrop-filter: blur(8px);
-		color: var(--text-color);
-	}
+
+		.go-to-top {
+			background: var(--glass-bg-strong);
+			border: 1px solid var(--glass-border);
+			backdrop-filter: blur(8px);
+			color: var(--text-color);
+		}
+
+		.arrange-blocks {
+			background: var(--surface-solid);
+			border: 1px solid var(--surface-border);
+			color: var(--text-color);
+		}
+
+		.arrange-blocks.active {
+			background: var(--primary-color);
+			border-color: var(--primary-color);
+			color: white;
+			box-shadow: 0 8px 22px rgba(212, 68, 7, 0.3);
+		}
 
 	@media (min-width: 1024px) {
 		.home-page {
@@ -1191,28 +1588,18 @@
 			align-items: center;
 		}
 
-		.home-context {
-			display: flex;
-			grid-column: 1;
-		}
+			.home-context {
+				display: flex;
+				grid-column: 1;
+			}
 
-		.home-search {
-			grid-column: 2;
-			grid-row: 1 / span 2;
-			align-self: center;
-		}
+			.home-blocks {
+				grid-column: 1 / -1;
+			}
 
-		.links-section {
-			grid-column: 1;
+			.fab-group {
+				bottom: 24px;
+				right: 24px;
+			}
 		}
-
-		.full-width-section {
-			grid-column: auto;
-		}
-
-		.fab-group {
-			bottom: 24px;
-			right: 24px;
-		}
-	}
-</style>
+	</style>

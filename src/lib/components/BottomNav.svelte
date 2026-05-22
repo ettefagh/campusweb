@@ -61,28 +61,29 @@
   }
 </script>
 
-<!-- Desktop Sidebar -->
-<aside class="sidebar-nav" aria-label="Main navigation (desktop)">
-  <div class="sidebar-brand">
+<!-- Desktop Topbar -->
+<aside class="topbar-nav" aria-label="Main navigation (desktop)">
+  <div class="topbar-brand">
     <img
       src="/icon-light.png"
       alt="Campusweb"
-      class="sidebar-logo light-mode"
+      class="topbar-logo light-mode"
       width="32"
     />
     <img
       src="/icon-dark.png"
       alt="Campusweb"
-      class="sidebar-logo dark-mode"
+      class="topbar-logo dark-mode"
       width="32"
     />
-    <span class="sidebar-title">Campusweb</span>
+    <span class="topbar-title">Campusweb</span>
   </div>
-  <nav class="sidebar-links">
+  
+  <nav class="topbar-links">
     {#each navItems as item}
       <a
         href={item.path}
-        class="sidebar-item"
+        class="topbar-item"
         class:active={$page.url.pathname === item.path}
         aria-label={item.ariaLabel}
         aria-current={$page.url.pathname === item.path ? "page" : undefined}
@@ -94,14 +95,15 @@
       </a>
     {/each}
   </nav>
-  <div class="sidebar-footer">
-    <div class="project-info">
-      <p class="crafted">Crafted with ❤️ for classmates</p>
-      <p class="status">Unofficial Project</p>
-      <a href="https://github.com/ettefagh/campusweb" target="_blank" rel="noopener noreferrer" class="github-link">
-        <span class="github-icon">GitHub</span>
-      </a>
+
+  <div class="topbar-right">
+    <div class="topbar-status">
+      <span class="crafted">Crafted with ❤️</span>
+      <span class="status">Unofficial Project</span>
     </div>
+    <a href="https://github.com/ettefagh/campusweb" target="_blank" rel="noopener noreferrer" class="github-btn" aria-label="GitHub Repository">
+      <i class="ph ph-github-logo"></i>
+    </a>
   </div>
 </aside>
 
@@ -247,9 +249,9 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════
-     DESKTOP: Sidebar (hidden on mobile) — Liquid Glass
+     DESKTOP: Topbar Navigation (hidden on mobile) — Liquid Glass
      ═══════════════════════════════════════════════════════════════ */
-  .sidebar-nav {
+  .topbar-nav {
     display: none;
   }
 
@@ -259,149 +261,142 @@
       display: none;
     }
 
-    /* Show sidebar on desktop */
-    .sidebar-nav {
+    /* Show topbar on desktop */
+    .topbar-nav {
       display: flex;
-      flex-direction: column;
       position: fixed;
       top: 0;
       left: 0;
-      bottom: 0;
-      width: var(--sidebar-width, 220px);
+      right: 0;
+      height: var(--topbar-height, 70px);
       background: var(--glass-bg-strong);
       backdrop-filter: var(--glass-blur-strong);
       -webkit-backdrop-filter: var(--glass-blur-strong);
-      border-right: 1px solid var(--glass-border);
+      border-bottom: 1px solid var(--glass-border);
       z-index: 100;
-      padding: var(--spacing-lg) 0;
-      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.06), 1px 0 0 var(--glass-border-subtle);
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--spacing-xl);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03), inset 0 -1px 0 rgba(255, 255, 255, 0.1);
     }
 
-    .sidebar-brand {
+    .topbar-brand {
       display: flex;
       align-items: center;
       gap: var(--spacing-sm);
-      padding: var(--spacing-sm) var(--spacing-lg);
-      margin-bottom: var(--spacing-lg);
     }
 
-    .sidebar-logo {
+    .topbar-logo {
       width: 32px;
       height: auto;
       border-radius: var(--radius-sm);
       object-fit: contain;
     }
 
-    .sidebar-logo.dark-mode {
+    .topbar-logo.dark-mode {
       display: none;
     }
 
-    .sidebar-title {
+    .topbar-title {
       font-size: 1.15rem;
       font-weight: 700;
       color: var(--primary-color);
       letter-spacing: -0.01em;
     }
 
-    .sidebar-links {
+    .topbar-links {
       display: flex;
-      flex-direction: column;
-      gap: 2px;
-      padding: 0 var(--spacing-sm);
-      flex: 1;
+      flex-direction: row;
+      gap: var(--spacing-sm);
+      align-items: center;
     }
 
-    .sidebar-item {
+    .topbar-item {
       display: flex;
       align-items: center;
-      gap: var(--spacing-md);
-      padding: var(--spacing-sm) var(--spacing-md);
+      gap: var(--spacing-sm);
+      padding: 8px var(--spacing-md);
       color: var(--text-color);
       text-decoration: none;
-      border-radius: var(--radius-sm);
-      transition: all 0.18s ease;
+      border-radius: var(--radius-md);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       font-size: 0.95rem;
       font-weight: 500;
       position: relative;
     }
 
-    .sidebar-item .icon {
-      font-size: 20px;
+    .topbar-item .icon {
+      font-size: 18px;
       line-height: 1;
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
     }
 
-    .sidebar-item .label {
+    .topbar-item .label {
       font-size: 0.95rem;
       line-height: 1;
     }
 
-    .sidebar-item:hover {
+    .topbar-item:hover {
       background: rgba(212, 68, 7, 0.08);
       color: var(--primary-color);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+      transform: translateY(-1px);
     }
 
-    .sidebar-item.active {
+    .topbar-item.active {
       background: rgba(212, 68, 7, 0.12);
       color: var(--primary-color);
       font-weight: 600;
       box-shadow: var(--shadow-sm);
     }
 
-    .sidebar-item.active::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 24px;
-      background: var(--primary-color);
-      border-radius: 0 3px 3px 0;
-      box-shadow: 0 0 8px rgba(212, 68, 7, 0.5);
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
     }
 
-    .sidebar-footer {
-      padding: var(--spacing-lg) var(--spacing-md);
-      border-top: 1px solid var(--glass-border-subtle);
-      margin-top: auto;
-    }
-
-    .project-info {
+    .topbar-status {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      align-items: flex-end;
+      line-height: 1.25;
     }
 
     .crafted {
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       font-weight: 500;
       color: var(--text-color);
       margin: 0;
     }
 
     .status {
-      font-size: 0.75rem;
+      font-size: 0.65rem;
       color: var(--text-color-secondary);
       margin: 0;
       opacity: 0.8;
     }
 
-    .github-link {
+    .github-btn {
       display: inline-flex;
       align-items: center;
-      margin-top: 8px;
-      font-size: 0.8rem;
-      font-weight: 600;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(212, 68, 7, 0.06);
       color: var(--primary-color);
-      text-decoration: none;
-      transition: opacity 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid rgba(212, 68, 7, 0.12);
+      font-size: 20px;
     }
 
-    .github-link:hover {
-      opacity: 0.8;
-      text-decoration: underline;
+    .github-btn:hover {
+      background: rgba(212, 68, 7, 0.12);
+      transform: scale(1.05);
+      border-color: rgba(212, 68, 7, 0.25);
     }
   }
 
@@ -409,24 +404,23 @@
      DARK MODE overrides
      ═══════════════════════════════════════════════════════════════ */
   @media (prefers-color-scheme: dark) {
-    .sidebar-logo.light-mode {
+    .topbar-logo.light-mode {
       display: none;
     }
-    .sidebar-logo.dark-mode {
+    .topbar-logo.dark-mode {
       display: inline-block;
     }
-
-    .sidebar-nav {
-      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+    .topbar-nav {
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.35);
     }
   }
 
   /* Combine dark + desktop for logo display */
   @media (prefers-color-scheme: dark) and (min-width: 1024px) {
-    .sidebar-logo.light-mode {
+    .topbar-logo.light-mode {
       display: none;
     }
-    .sidebar-logo.dark-mode {
+    .topbar-logo.dark-mode {
       display: inline-block;
     }
   }

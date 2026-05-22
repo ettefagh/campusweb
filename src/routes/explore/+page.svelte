@@ -11,6 +11,7 @@
   import SearchBar from "$lib/components/SearchBar.svelte";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
+  import { interactiveMapEnabled } from "$lib/config/features";
 
   let campusContacts = $state<any[]>([]);
   let generalContacts = $state<any[]>([]);
@@ -427,6 +428,23 @@
     return linkCategory?.[category] || category;
   }
 
+  function openOutlookCompose(email: string, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      window.location.href = `ms-outlook://compose?to=${email}`;
+      setTimeout(() => {
+        if (!document.hidden) {
+          window.location.href = `https://outlook.office.com/mail/deeplink/compose?to=${email}`;
+        }
+      }, 2000);
+    } else {
+      window.open(`https://outlook.office.com/mail/deeplink/compose?to=${email}`, '_blank');
+    }
+  }
+
   function getCategoryIconClass(category: string) {
     const normalized = category.toLowerCase();
     if (normalized.includes("academic")) return "ph-bold ph-graduation-cap";
@@ -478,6 +496,11 @@
     );
   });
 
+  let totalLinksCount = $derived.by(() => {
+    if (searchQuery.trim()) return filteredLinks.length;
+    return topLinks.length + remainingLinks.length;
+  });
+
   const DIRECTORY_ID = "srh-contact-list";
 </script>
 
@@ -485,7 +508,11 @@
   <title>{$t.explore.pageTitle}</title>
 </svelte:head>
 
-<div class="explore-page" class:is-searching={searchQuery.trim() !== ""}>
+<div
+  class="explore-page"
+  class:is-searching={searchQuery.trim() !== ""}
+  class:search-active={isSearchActive}
+>
   <header
     class="explore-hero"
     class:narrow={$settingsStore.headerSize === "small"}
@@ -561,47 +588,44 @@
   </div>
 
   <div class="explore-content">
-    {#if !searchQuery.trim() && topLinks.length > 0}
-      <section
-        class="category-section link-list-panel top-links-section"
-        id="top-links"
-      >
-        <div class="explore-section-heading">
-          <div>
-            <p>{$t.explore.quickAccess}</p>
-            <h2>{$t.explore.mostVisitedLinks}</h2>
-          </div>
-          <span>{topLinks.length} {$t.explore.linksCount}</span>
-        </div>
-        <div class="links-stack top-links-stack">
-          {#each topLinks as link (link.id)}
-            <LinkCard
-              {link}
-              isFavorite={$favorites.includes(link.id)}
-              customUrl={link.id === "library-catalogue"
-                ? libraryUrl
-                : undefined}
-              showTag={false}
-              useViewer={true}
-              variant="compact-list"
-              on:toggleFavorite={handleToggleFavorite}
-            />
-          {/each}
-        </div>
-      </section>
-    {/if}
-
-    {#if displayCategories.length > 0}
+    {#if displayCategories.length > 0 || (!searchQuery.trim() && topLinks.length > 0)}
       <div class="link-list-panel remaining-links-panel">
         <div class="explore-section-heading">
           <div>
             <p>{$t.explore.browseByService}</p>
             <h2>{$t.explore.allLinks}</h2>
           </div>
-          <span>{remainingLinks.length || filteredLinks.length} {$t.explore.linksCount}</span>
+          <span>{totalLinksCount} {$t.explore.linksCount}</span>
         </div>
         <div class="links-scroll-area" class:is-enabled={!searchQuery.trim()}>
           <div class="links-scroll-content">
+            {#if !searchQuery.trim() && topLinks.length > 0}
+              <section
+                class="category-section list-category-section top-links-section"
+                id="top-links"
+              >
+                <h3 class="list-category-title">
+                  <i class="ph-bold ph-star" aria-hidden="true"></i>
+                  <span>{$t.explore.mostVisitedLinks}</span>
+                </h3>
+                <div class="links-stack top-links-stack">
+                  {#each topLinks as link (link.id)}
+                    <LinkCard
+                      {link}
+                      isFavorite={$favorites.includes(link.id)}
+                      customUrl={link.id === "library-catalogue"
+                        ? libraryUrl
+                        : undefined}
+                      showTag={false}
+                      useViewer={true}
+                      variant="compact-list"
+                      on:toggleFavorite={handleToggleFavorite}
+                    />
+                  {/each}
+                </div>
+              </section>
+            {/if}
+
             {#each displayCategories as category}
               <section
                 class="category-section list-category-section"
@@ -710,6 +734,10 @@
                 onkeydown={(event) =>
                   handleContactCardKeydown(event, contact.email)}
               >
+                <div class="search-contact-info-wrapper">
+                  <div class="contact-avatar">
+                    {contact.person.charAt(0).toUpperCase()}
+                  </div>
                 <div class="search-contact-info">
                   <div class="search-contact-meta">
                     {#if contact.programs && contact.programs.length > 0}
@@ -765,10 +793,10 @@
                       {/each}
                     </div>
                     <div class="contact-direct-details">
-                      <a
+                      <button
                         class="contact-direct-link"
-                        href="mailto:{contact.email}"
-                        onclick={(event) => event.stopPropagation()}
+                        type="button"
+                        onclick={(event) => openOutlookCompose(contact.email, event)}
                       >
                         <i class="ph-bold ph-envelope"></i>
                         <span
@@ -777,7 +805,7 @@
                             searchQuery,
                           )}</span
                         >
-                      </a>
+                      </button>
                       {#if contact.phone}
                         <a
                           class="contact-direct-link"
@@ -791,13 +819,14 @@
                     </div>
                   </div>
                 </div>
+                </div>
                 <div class="search-contact-actions">
-                  <a
-                    href="mailto:{contact.email}"
+                  <button
+                    type="button"
                     class="search-contact-btn mail"
-                    onclick={(event) => event.stopPropagation()}
+                    onclick={(event) => openOutlookCompose(contact.email, event)}
                     title={$t.explore.emailContact}
-                    ><i class="ph-bold ph-envelope"></i></a
+                    ><i class="ph-bold ph-envelope"></i></button
                   >
                   <a
                     href={getTeamsChatUrl(contact.email)}
@@ -887,6 +916,41 @@
           {/each}
         </div>
       </section>
+    {/if}
+
+    {#if !searchQuery.trim()}
+      {#if interactiveMapEnabled}
+        <!-- Interactive Campus Map Premium Promo Card -->
+        <a href="/explore/map" class="map-promo-banner-card glass">
+          <div class="banner-glow-effect"></div>
+          <div class="banner-icon-box">
+            <i class="ph-bold ph-map-trifold"></i>
+          </div>
+          <div class="banner-body">
+            <div class="banner-tag">NEW FEATURE</div>
+            <h2>Interactive Campus Map</h2>
+            <p>Navigate floors, find rooms in SHED, Cube & Hall, and calculate accessible routes.</p>
+          </div>
+          <div class="banner-arrow">
+            <i class="ph-bold ph-arrow-right"></i>
+          </div>
+        </a>
+      {:else}
+        <div class="map-promo-banner-card glass coming-soon-map-card" aria-disabled="true">
+          <div class="banner-glow-effect"></div>
+          <div class="banner-icon-box">
+            <i class="ph-bold ph-map-trifold"></i>
+          </div>
+          <div class="banner-body">
+            <div class="banner-tag">COMING SOON</div>
+            <h2>Interactive Campus Map</h2>
+            <p>A redesigned indoor map and wayfinding view is on the way.</p>
+          </div>
+          <div class="banner-arrow">
+            <i class="ph-bold ph-sparkle"></i>
+          </div>
+        </div>
+      {/if}
     {/if}
   </div>
 
@@ -1062,7 +1126,7 @@
   }
 
   .top-links-section {
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
   }
 
   @keyframes reveal {
@@ -1190,6 +1254,30 @@
     box-shadow: var(--shadow-md);
   }
 
+  .search-contact-info-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .contact-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), #8953ff);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    flex: 0 0 auto;
+    margin-top: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
   .search-contact-info {
     flex: 1;
     min-width: 0;
@@ -1247,6 +1335,12 @@
     font-weight: 650;
     text-decoration: none;
     overflow-wrap: anywhere;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
   }
 
   .contact-direct-link i {
@@ -1682,28 +1776,47 @@
 
   .search-sticky-wrapper {
     position: sticky;
-    top: max(0px, env(safe-area-inset-top));
+    top: 0;
     z-index: 100;
-    padding-top: var(--spacing-lg);
-    transition: all 0.3s ease;
-    margin-bottom: 20px;
+    padding: 10px 0 12px;
+    transition:
+      background 0.22s ease,
+      box-shadow 0.22s ease,
+      border-color 0.22s ease;
+    margin: -10px 0 10px;
+    border-bottom: 1px solid transparent;
     margin-top: 0;
     background: transparent;
   }
 
+  .search-sticky-wrapper::before {
+    content: "";
+    position: absolute;
+    inset: 0 -18px;
+    z-index: -1;
+    background: transparent;
+    transition:
+      background 0.22s ease,
+      box-shadow 0.22s ease,
+      backdrop-filter 0.22s ease;
+  }
+
+  .explore-page.search-active .search-sticky-wrapper::before,
+  .explore-page.is-searching .search-sticky-wrapper::before {
+    background: color-mix(in srgb, var(--bg-color) 88%, transparent);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 12px 28px rgba(20, 33, 61, 0.08);
+  }
+
   .explore-page.is-searching .search-sticky-wrapper {
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: none;
-    box-shadow: none;
-    margin-bottom: 20px;
-    margin-top: 40px;
+    margin-top: 0;
   }
 
   .search-bar-container {
     max-width: 600px;
     margin: 0 auto;
-    padding-inline: var(--spacing-lg);
+    padding-inline: 0;
   }
 
   .search-bar-container :global(.search-input-wrapper) {
@@ -1714,7 +1827,7 @@
   }
 
   .category-nav-wrapper {
-    margin-top: var(--spacing-sm);
+    margin-top: 8px;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -1868,9 +1981,16 @@
   }
 
   .links-scroll-area.is-enabled {
-    max-height: none;
-    overflow: visible;
-    mask-image: none;
+    max-height: min(68vh, 720px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to bottom, #000 88%, transparent 100%);
+  }
+
+  .links-scroll-area.is-enabled::-webkit-scrollbar {
+    width: 0;
+    height: 0;
   }
 
   .links-scroll-content {
@@ -2496,6 +2616,124 @@
     :global(html:not([data-theme="light"]))
       .list-category-section:not(:first-child) {
       border-top-color: rgba(255, 255, 255, 0.06);
+    }
+  }
+
+  /* ── Map Promo Banner ── */
+  .map-promo-banner-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 1.25rem;
+    background:
+      linear-gradient(135deg, rgba(28, 28, 62, 0.72) 0%, rgba(56, 33, 91, 0.58) 52%, rgba(15, 23, 42, 0.5) 100%);
+    border: 1px solid rgba(168, 85, 247, 0.28);
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .map-promo-banner-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(196, 181, 253, 0.55);
+    box-shadow: 0 10px 30px -10px rgba(168, 85, 247, 0.28), 0 0 15px rgba(96, 165, 250, 0.16);
+  }
+
+  .banner-glow-effect {
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    width: 250px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, rgba(96, 165, 250, 0.14) 45%, transparent 72%);
+    filter: blur(20px);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
+
+  .banner-icon-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #a855f7 0%, #60a5fa 100%);
+    color: #f8fafc;
+    font-size: 1.75rem;
+    box-shadow: 0 0 24px rgba(168, 85, 247, 0.38);
+    flex-shrink: 0;
+  }
+
+  .banner-body {
+    flex: 1;
+  }
+
+  .banner-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #e9d5ff;
+    background: rgba(168, 85, 247, 0.14);
+    padding: 0.2rem 0.5rem;
+    border-radius: 9999px;
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(196, 181, 253, 0.24);
+  }
+
+  .banner-body h2 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .banner-body p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    line-height: 1.4;
+  }
+
+  .banner-arrow {
+    font-size: 1.25rem;
+    color: #cbd5e1;
+    transition: transform 0.3s ease, color 0.3s ease;
+  }
+
+  .map-promo-banner-card:hover .banner-arrow {
+    transform: translateX(4px);
+    color: #e9d5ff;
+  }
+
+  .coming-soon-map-card {
+    cursor: default;
+    opacity: 0.92;
+    pointer-events: none;
+  }
+
+  .coming-soon-map-card:hover {
+    transform: none;
+    border-color: rgba(168, 85, 247, 0.28);
+    box-shadow: none;
+  }
+
+  @media (max-width: 640px) {
+    .map-promo-banner-card {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.25rem;
+    }
+    
+    .banner-arrow {
+      align-self: flex-end;
+      margin-top: -1.5rem;
     }
   }
 </style>

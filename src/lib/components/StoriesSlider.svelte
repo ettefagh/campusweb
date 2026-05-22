@@ -595,16 +595,16 @@
     display: flex;
     gap: 11px;
     overflow-x: auto;
-    padding: 8px 0 12px;
-
+    padding: 8px 18px 12px;
+    margin-inline: -18px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
 
   .stories-bar.rectangular {
     gap: 14px;
-    padding: 8px 2px 0px;
-    margin-inline: -2px;
+    padding: 8px 18px 0px;
+    margin-inline: -18px;
     scroll-snap-type: x proximity;
   }
   .stories-bar::-webkit-scrollbar {

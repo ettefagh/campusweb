@@ -234,7 +234,7 @@
   {/if}
 
   <!-- ── Content ── -->
-  <main class="viewer-content">
+  <div class="viewer-content">
     {#if url && isValidUrl}
       <iframe
         bind:this={iframeEl}
@@ -247,12 +247,12 @@
     {:else}
       <div class="error-state">
         <span class="error-icon">⛔</span>
-        <p class="error-title">Unauthorized URL</p>
+        <h2 class="error-title">Unauthorized URL</h2>
         <p class="error-desc">This link cannot be opened in CampusWeb.</p>
         <a href="/" class="btn">Return Home</a>
       </div>
     {/if}
-  </main>
+  </div>
 </div>
 
 <style>
