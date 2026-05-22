@@ -7,6 +7,7 @@ export const MAX_FAVORITE_CONTACTS = 5;
 export type FavoriteContactToggleResult = 'added' | 'removed' | 'limit' | 'invalid';
 
 export function normalizeContactEmail(email: string) {
+	if (email.startsWith('default:')) return email;
 	return email.trim().toLowerCase();
 }
 
@@ -24,10 +25,11 @@ function sanitizeEmails(value: unknown): string[] {
 }
 
 function readInitialContacts() {
-	if (!browser) return [];
+	const DEFAULT_CONTACTS = ['student-service.hsg@srh.de', 'default:course-coordinator', 'default:study-advisor'];
+	if (!browser) return DEFAULT_CONTACTS;
 	try {
 		const raw = localStorage.getItem(STORAGE_KEY);
-		return raw ? sanitizeEmails(JSON.parse(raw)) : [];
+		return raw ? sanitizeEmails(JSON.parse(raw)) : DEFAULT_CONTACTS;
 	} catch (error) {
 		console.error('Failed to parse cached favorite contacts', error);
 		return [];

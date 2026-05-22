@@ -19,6 +19,7 @@
 	import { goto } from "$app/navigation";
 	import SectionHeader from "$lib/components/SectionHeader.svelte";
 	import Sortable from 'sortablejs';
+	import ContactModal from "$lib/components/ContactModal.svelte";
 
 	function sortableFavorites(node: HTMLElement, options: { enabled: boolean }) {
 		let sortable: Sortable | null = null;
@@ -127,6 +128,67 @@
 			update,
 			destroy() {
 				if (sortable) sortable.destroy();
+			}
+		};
+	}
+
+	function masonryGrid(node: HTMLElement) {
+		function applyMasonry() {
+			if (window.innerWidth < 768) {
+				const items = node.querySelectorAll<HTMLElement>('.home-block');
+				items.forEach(item => {
+					item.style.gridRowEnd = 'auto';
+				});
+				return;
+			}
+			const items = node.querySelectorAll<HTMLElement>('.home-block');
+			const gap = window.innerWidth >= 1024 ? 24 : 16;
+
+			items.forEach(item => {
+				item.style.gridRowEnd = 'auto';
+			});
+
+			items.forEach(item => {
+				const content = item.firstElementChild;
+				if (content) {
+					const rect = content.getBoundingClientRect();
+					const rows = Math.ceil(rect.height + gap);
+					item.style.gridRowEnd = `span ${rows}`;
+				}
+			});
+		}
+
+		let observer: ResizeObserver;
+		let mutationObserver: MutationObserver;
+		
+		if (typeof ResizeObserver !== 'undefined') {
+			observer = new ResizeObserver(() => applyMasonry());
+			observer.observe(node);
+			Array.from(node.children).forEach(child => observer.observe(child));
+			
+			if (typeof MutationObserver !== 'undefined') {
+				mutationObserver = new MutationObserver((mutations) => {
+					let shouldUpdate = false;
+					for (const m of mutations) {
+						if (m.type === 'childList') {
+							shouldUpdate = true;
+							m.addedNodes.forEach(n => {
+								if (n instanceof HTMLElement) observer.observe(n);
+							});
+						}
+					}
+					if (shouldUpdate) applyMasonry();
+				});
+				mutationObserver.observe(node, { childList: true });
+			}
+		}
+
+		setTimeout(applyMasonry, 0);
+
+		return {
+			destroy() {
+				if (observer) observer.disconnect();
+				if (mutationObserver) mutationObserver.disconnect();
 			}
 		};
 	}
@@ -350,6 +412,9 @@
 	let isManagingFavoriteContacts = false;
 	let isArrangingHomeBlocks = false;
 	let isStorySuggestionOpen = false;
+	
+	let isContactModalOpen = false;
+	let selectedContactForModal: any = null;
 	let searchQuery = "";
 	let draggedFavoriteId = "";
 
@@ -379,6 +444,38 @@
 	);
 	$: displayFavoriteContacts = $favoriteContacts.map((email) => {
 		const normalized = normalizeContactEmail(email);
+		
+		if (normalized === 'default:course-coordinator') {
+			const cc = [...homeCampusContacts, ...homeGeneralContacts].find(c => c.service === 'Course Coordination');
+			if (cc) {
+				return { ...cc, services: ['Course Coordination'], programs: [], tags: cc.tags || [] };
+			}
+			return {
+				email: normalized,
+				person: 'Course Coordinator',
+				services: [], programs: [], tags: [],
+				locked: !$settingsStore.emailVerified || !$settingsStore.campusId
+			};
+		}
+
+		if (normalized === 'default:study-advisor') {
+			const advisor = homeProgramDirectors[0];
+			if (advisor) {
+				return {
+					...advisor,
+					services: [],
+					programs: [`${advisor.degree || ""} ${advisor.program || ""}`.trim()].filter(Boolean),
+					tags: advisor.tags || []
+				};
+			}
+			return {
+				email: normalized,
+				person: 'Study Advisor',
+				services: [], programs: [], tags: [],
+				locked: !$settingsStore.emailVerified || !$settingsStore.programName
+			};
+		}
+
 		return (
 			homeContactDirectory.get(normalized) ?? {
 				email: normalized,
@@ -676,7 +773,7 @@
 		{/if}
 	{/each}
 
-	<div class="home-blocks" class:is-arranging={isArrangingHomeBlocks} use:sortableHomeBlocks={{ enabled: isArrangingHomeBlocks }}>
+	<div class="home-blocks" class:is-arranging={isArrangingHomeBlocks} use:sortableHomeBlocks={{ enabled: isArrangingHomeBlocks }} use:masonryGrid>
 		{#each $settingsStore.homeSections as section, i (section.id)}
 			{#if section.enabled && section.id !== "header"}
 				<div
@@ -701,32 +798,19 @@
 								<div class="favorite-links-actions">
 									{#if isManagingFavorites}
 										<button
-											class="favorite-icon-btn passive"
-											type="button"
-											aria-label={$t.home.dragReorder}
-											title={$t.home.dragReorder}
-										>
-											<i class="ph-bold ph-dots-six-vertical"></i>
-										</button>
-										<button
-											class="favorite-icon-btn"
+											class="section-action-btn"
 											class:active={isEditMode}
 											type="button"
 											on:click={toggleEditMode}
-											aria-label={$t.home.editFavorites}
-											title={$t.home.editFavorites}
 										>
-											<i class="ph-bold ph-pencil-simple"></i>
-											<span>{$t.home.edit}</span>
+											{isEditMode ? $t.home.done : $t.home.edit}
 										</button>
 										<button
-											class="favorite-icon-btn done"
+											class="section-action-btn primary"
 											type="button"
 											on:click={finishManagingFavorites}
-											aria-label={$t.home.doneManaging}
-											title={$t.home.done}
 										>
-											<i class="ph-bold ph-check"></i>
+											{$t.home.done}
 										</button>
 									{:else}
 										<button 
@@ -764,21 +848,11 @@
 								<div class="favorite-links-actions">
 									{#if isManagingFavoriteContacts}
 										<button
-											class="favorite-icon-btn passive"
-											type="button"
-											aria-label={$t.home.dragReorder}
-											title={$t.home.dragReorder}
-										>
-											<i class="ph-bold ph-dots-six-vertical"></i>
-										</button>
-										<button
-											class="favorite-icon-btn done"
+											class="section-action-btn primary"
 											type="button"
 											on:click={finishManagingFavoriteContacts}
-											aria-label={$t.home.done}
-											title={$t.home.done}
 										>
-											<i class="ph-bold ph-check"></i>
+											{$t.home.done}
 										</button>
 									{:else}
 										<button
@@ -806,17 +880,32 @@
 							{:else}
 								<div class="favorite-contact-list">
 									{#each displayFavoriteContacts as contact (contact.email)}
-										<div class="favorite-contact-row" class:is-locked={contact.locked}>
+										<button
+											class="contact-card-btn"
+											class:is-locked={contact.locked}
+											type="button"
+											aria-label={`View details for ${contact.person}`}
+											on:click={() => {
+												if (!isManagingFavoriteContacts && !contact.locked) {
+													selectedContactForModal = contact;
+													isContactModalOpen = true;
+												} else if (contact.locked && !isManagingFavoriteContacts) {
+													goto("/settings#directory-access");
+												}
+											}}
+										>
 											{#if isManagingFavoriteContacts}
-												<button
+												<div
 													class="favorite-contact-reorder-handle"
-													type="button"
+													role="button"
+													tabindex="0"
 													aria-label={`${$t.home.dragHomeBlock}: ${contact.person}`}
 													title={$t.home.dragHomeBlock}
-													on:click|preventDefault
+													on:click|preventDefault|stopPropagation
+													on:keydown|preventDefault|stopPropagation
 												>
 													<i class="ph-bold ph-dots-six-vertical" aria-hidden="true"></i>
-												</button>
+												</div>
 											{/if}
 											<div class="favorite-contact-avatar" aria-hidden="true">
 												{#if contact.locked}
@@ -830,54 +919,26 @@
 												<span>{contact.locked ? $t.home.verifyFavoriteContacts : getContactSummary(contact)}</span>
 											</div>
 											{#if isManagingFavoriteContacts}
-												<button
+												<div
 													class="favorite-contact-action danger"
-													type="button"
+													role="button"
+													tabindex="0"
 													aria-label={`${$t.home.removeBlock}: ${contact.person}`}
-													on:click={() => favoriteContacts.remove(contact.email)}
+													on:click|stopPropagation={() => favoriteContacts.remove(contact.email)}
+													on:keydown|stopPropagation={(e) => {
+														if (e.key === 'Enter' || e.key === ' ') {
+															favoriteContacts.remove(contact.email);
+														}
+													}}
 												>
 													<i class="ph-bold ph-minus-circle" aria-hidden="true"></i>
-												</button>
+												</div>
 											{:else if contact.locked}
-												<button
-													class="favorite-contact-action"
-													type="button"
-													aria-label={$t.explore.verifyEmail}
-													on:click={() => goto("/settings#directory-access")}
-												>
-													<i class="ph-bold ph-lock-key" aria-hidden="true"></i>
-												</button>
-											{:else}
-												<div class="favorite-contact-actions">
-													<button
-														class="favorite-contact-action"
-														type="button"
-														aria-label={$t.explore.emailContact}
-														on:click={(event) => openOutlookCompose(contact.email, event)}
-													>
-														<i class="ph-bold ph-envelope" aria-hidden="true"></i>
-													</button>
-													<a
-														class="favorite-contact-action"
-														href={getTeamsChatUrl(contact.email)}
-														target="_blank"
-														rel="noopener noreferrer"
-														aria-label={$t.explore.chatOnTeams}
-													>
-														<i class="ph-bold ph-chat-circle" aria-hidden="true"></i>
-													</a>
-													{#if contact.phone}
-														<a
-															class="favorite-contact-action"
-															href={`tel:${contact.phone.replace(/[\s-]/g, "")}`}
-															aria-label={$t.explore.callContact}
-														>
-															<i class="ph-bold ph-phone" aria-hidden="true"></i>
-														</a>
-													{/if}
+												<div class="favorite-contact-action locked-indicator" aria-hidden="true">
+													<i class="ph-bold ph-lock-key"></i>
 												</div>
 											{/if}
-										</div>
+										</button>
 									{/each}
 								</div>
 							{/if}
@@ -998,40 +1059,42 @@
 		{/each}
 
 		{#if isArrangingHomeBlocks}
-			<section class="available-blocks-panel" aria-labelledby="available-home-blocks-title">
-				<div class="available-blocks-header">
-					<span class="available-blocks-kicker">{$t.home.availableBlocksKicker}</span>
-					<h2 id="available-home-blocks-title">{$t.home.availableBlocks}</h2>
-					<p>{$t.home.availableBlocksDesc}</p>
-				</div>
-
-				{#if availableHomeBlocks.length === 0}
-					<p class="available-blocks-empty">{$t.home.noAvailableBlocks}</p>
-				{:else}
-					<div class="available-blocks-list">
-						{#each availableHomeBlocks as section (section.id)}
-							<article class="available-block-card">
-								<span class="available-block-icon" aria-hidden="true">
-									<i class={getHomeSectionIcon(section.id)}></i>
-								</span>
-								<div class="available-block-copy">
-									<h3>{getHomeSectionLabel(section.id)}</h3>
-									<p>{getHomeSectionDescription(section.id)}</p>
-								</div>
-								<button
-									class="home-block-control-btn add"
-									type="button"
-									aria-label={`${$t.home.addBlock}: ${getHomeSectionLabel(section.id)}`}
-									on:click={() => setHomeBlockEnabled(section.id, true)}
-								>
-									<i class="ph-bold ph-plus-circle" aria-hidden="true"></i>
-									<span>{$t.home.addBlock}</span>
-								</button>
-							</article>
-						{/each}
+			<div class="home-block home-block--full" style="order: 99;">
+				<section class="available-blocks-panel" aria-labelledby="available-home-blocks-title">
+					<div class="available-blocks-header">
+						<span class="available-blocks-kicker">{$t.home.availableBlocksKicker}</span>
+						<h2 id="available-home-blocks-title">{$t.home.availableBlocks}</h2>
+						<p>{$t.home.availableBlocksDesc}</p>
 					</div>
-				{/if}
-			</section>
+
+					{#if availableHomeBlocks.length === 0}
+						<p class="available-blocks-empty">{$t.home.noAvailableBlocks}</p>
+					{:else}
+						<div class="available-blocks-list">
+							{#each availableHomeBlocks as section (section.id)}
+								<article class="available-block-card">
+									<span class="available-block-icon" aria-hidden="true">
+										<i class={getHomeSectionIcon(section.id)}></i>
+									</span>
+									<div class="available-block-copy">
+										<h3>{getHomeSectionLabel(section.id)}</h3>
+										<p>{getHomeSectionDescription(section.id)}</p>
+									</div>
+									<button
+										class="home-block-control-btn add"
+										type="button"
+										aria-label={`${$t.home.addBlock}: ${getHomeSectionLabel(section.id)}`}
+										on:click={() => setHomeBlockEnabled(section.id, true)}
+									>
+										<i class="ph-bold ph-plus-circle" aria-hidden="true"></i>
+										<span>{$t.home.addBlock}</span>
+									</button>
+								</article>
+							{/each}
+						</div>
+					{/if}
+				</section>
+			</div>
 		{/if}
 	</div>
 
@@ -1070,9 +1133,15 @@
 			</button>
 		{/if}
 	</div>
-</div>
 
-<StorySuggestionModal bind:isOpen={isStorySuggestionOpen} />
+	<StorySuggestionModal bind:isOpen={isStorySuggestionOpen} />
+
+	<ContactModal
+		isOpen={isContactModalOpen}
+		contact={selectedContactForModal}
+		on:close={() => (isContactModalOpen = false)}
+	/>
+</div>
 
 {#if selectedCalendarEvent}
 	<div
@@ -1247,7 +1316,7 @@
 			max-width: 100%;
 			display: grid;
 			grid-template-columns: minmax(0, 1fr);
-			gap: var(--spacing-md);
+			gap: var(--spacing-md) 0;
 			grid-auto-flow: dense;
 			align-items: start;
 		}
@@ -1255,13 +1324,16 @@
 		@media (min-width: 768px) {
 			.home-blocks {
 				grid-template-columns: repeat(2, minmax(0, 1fr));
+				grid-auto-rows: 1px;
+				gap: 0 var(--spacing-md);
 			}
 		}
 
 		@media (min-width: 1024px) {
 			.home-blocks {
 				grid-template-columns: repeat(2, minmax(0, 1fr));
-				gap: var(--spacing-lg);
+				grid-auto-rows: 1px;
+				gap: 0 var(--spacing-lg);
 			}
 		}
 
@@ -1614,49 +1686,70 @@
 		padding: 8px 16px 16px;
 	}
 
-	.favorite-contact-row {
+	.contact-card-btn {
+		width: 100%;
+		text-align: left;
 		min-width: 0;
 		display: grid;
 		grid-template-columns: auto minmax(0, 1fr) auto;
 		align-items: center;
-		gap: 10px;
-		padding: 10px 12px;
+		gap: 12px;
+		padding: 10px 14px;
 		border: 1px solid var(--surface-border);
-		border-radius: 10px;
-		background: var(--surface-soft);
+		border-radius: 12px;
+		background: var(--surface-solid);
+		cursor: pointer;
+		font-family: inherit;
+		transition: all 0.2s ease;
+		outline: none;
+		-webkit-tap-highlight-color: transparent;
 	}
 
-	.favorite-contact-row:has(.favorite-contact-reorder-handle) {
+	.contact-card-btn:hover,
+	.contact-card-btn:focus-visible {
+		background: var(--hover-bg);
+		border-color: rgba(var(--primary-color-rgb), 0.3);
+	}
+
+	.contact-card-btn:active {
+		transform: scale(0.98);
+	}
+
+	.contact-card-btn:has(.favorite-contact-reorder-handle) {
 		grid-template-columns: auto auto minmax(0, 1fr) auto;
+		cursor: default;
+	}
+	.contact-card-btn:has(.favorite-contact-reorder-handle):active {
+		transform: none;
 	}
 
-	.favorite-contact-row.is-locked {
+	.contact-card-btn.is-locked {
 		opacity: 0.82;
 	}
 
 	.favorite-contact-avatar,
 	.favorite-contact-reorder-handle,
 	.favorite-contact-action {
-		width: 34px;
-		height: 34px;
+		width: 38px;
+		height: 38px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		flex: 0 0 auto;
-		border-radius: 9px;
+		border-radius: 10px;
 	}
 
 	.favorite-contact-avatar {
 		background: color-mix(in srgb, var(--primary-color), transparent 88%);
 		color: var(--primary-color);
-		font-size: 0.9rem;
-		font-weight: 900;
+		font-size: 1rem;
+		font-weight: 800;
 	}
 
 	.favorite-contact-copy {
 		min-width: 0;
 		display: grid;
-		gap: 3px;
+		gap: 2px;
 	}
 
 	.favorite-contact-copy strong,
@@ -1669,53 +1762,52 @@
 
 	.favorite-contact-copy strong {
 		color: var(--text-color);
-		font-size: 0.92rem;
-		line-height: 1.18;
+		font-size: 0.96rem;
+		font-weight: 700;
+		line-height: 1.2;
 	}
 
 	.favorite-contact-copy span {
 		color: var(--text-color-secondary);
-		font-size: 0.78rem;
-		line-height: 1.2;
-	}
-
-	.favorite-contact-actions {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
+		font-size: 0.8rem;
+		line-height: 1.3;
 	}
 
 	.favorite-contact-reorder-handle,
 	.favorite-contact-action {
-		border: 1px solid var(--surface-border);
-		background: var(--surface-solid);
+		background: transparent;
 		color: var(--text-color-secondary);
-		text-decoration: none;
-		font: inherit;
 		cursor: pointer;
-		-webkit-tap-highlight-color: transparent;
+		transition: all 0.2s;
+	}
+
+	.favorite-contact-action.locked-indicator {
+		cursor: default;
+		pointer-events: none;
 	}
 
 	.favorite-contact-reorder-handle {
 		cursor: grab;
 		touch-action: none;
+		margin-left: -6px;
 	}
 
 	.favorite-contact-action:hover,
 	.favorite-contact-action:focus-visible,
 	.favorite-contact-reorder-handle:hover,
 	.favorite-contact-reorder-handle:focus-visible {
-		outline: none;
-		border-color: rgba(var(--primary-color-rgb), 0.3);
-		background: color-mix(in srgb, var(--primary-color), transparent 90%);
 		color: var(--primary-color);
+		background: color-mix(in srgb, var(--primary-color), transparent 90%);
+	}
+
+	.favorite-contact-action.danger {
+		background: rgba(207, 63, 50, 0.08);
+		color: #cf3f32;
 	}
 
 	.favorite-contact-action.danger:hover,
 	.favorite-contact-action.danger:focus-visible {
-		border-color: rgba(207, 63, 50, 0.35);
-		background: rgba(207, 63, 50, 0.08);
-		color: #cf3f32;
+		background: rgba(207, 63, 50, 0.15);
 	}
 
 
@@ -1987,75 +2079,11 @@
 		-webkit-backdrop-filter: none;
 	}
 
-	.favorite-icon-btn {
-		min-height: var(--touch-target-min);
-		border: 1px solid transparent;
-		border-radius: calc(var(--radius-md) - 4px);
-		background: transparent;
-		font-size: 0.8rem;
-		font-weight: 700;
-		cursor: pointer;
-		color: var(--text-color);
-		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-		-webkit-tap-highlight-color: transparent;
-	}
-
-	.favorite-icon-btn {
-		min-width: var(--touch-target-min);
-		padding: 0 12px;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 6px;
-	}
-
-	.favorite-icon-btn i {
-		font-size: 1rem;
-		line-height: 1;
-	}
-
-	.favorite-icon-btn.passive {
-		cursor: grab;
-		color: var(--text-color-secondary);
-		background: rgba(255, 255, 255, 0.32);
-	}
-
-	.favorite-icon-btn.done {
-		background: var(--primary-color);
-		color: white;
-		border-color: var(--primary-color);
-	}
-
-	.favorite-icon-btn:hover,
-	.favorite-icon-btn:focus-visible {
-		background: rgba(212, 68, 7, 0.12);
-		color: var(--primary-color);
-		border-color: rgba(212, 68, 7, 0.22);
-		outline: none;
-	}
-
-	.favorite-icon-btn.done:hover {
-		background: var(--primary-color);
-		color: white;
-		border-color: var(--primary-color);
-		filter: brightness(1.05);
-	}
-
-	.favorite-icon-btn.active {
-		background: var(--primary-color);
-		color: white;
-		border-color: var(--primary-color);
-		box-shadow: 0 2px 8px rgba(212, 68, 7, 0.3);
-	}
 
 	@media (max-width: 420px) {
 		.favorite-links-actions {
 			align-self: stretch;
 			justify-content: space-between;
-		}
-
-		.favorite-icon-btn {
-			flex: 1;
 		}
 	}
 
