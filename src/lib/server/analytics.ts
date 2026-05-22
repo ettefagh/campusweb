@@ -27,6 +27,11 @@ const ALLOWED_EVENT_TYPES: Set<UsageEventType> = new Set([
   "share_link_visit"
 ]);
 
+export type UsageSummaryQueryResult =
+  | { state: "not_configured"; missing: string[] }
+  | { state: "error"; reason: string }
+  | { state: "ok"; rows: Array<{ eventType: string; count: number }> };
+
 export function isAllowedUsageEventType(value: string): value is UsageEventType {
   return ALLOWED_EVENT_TYPES.has(value as UsageEventType);
 }
@@ -63,13 +68,17 @@ export async function queryUsageSummary(opts: {
   apiToken?: string;
   dataset?: string;
   days?: number;
-}) {
+}): Promise<UsageSummaryQueryResult> {
   const accountId = (opts.accountId || "").trim();
   const apiToken = (opts.apiToken || "").trim();
   const dataset = (opts.dataset || "campusweb_usage_events").trim();
   const days = Number.isFinite(opts.days) ? Math.min(Math.max(Number(opts.days), 1), 90) : 30;
 
-  if (!accountId || !apiToken) return null;
+  const missing: string[] = [];
+  if (!accountId) missing.push("CLOUDFLARE_ACCOUNT_ID");
+  if (!apiToken) missing.push("PRIVATE_CLOUDFLARE_ANALYTICS_API_TOKEN");
+  if (!dataset) missing.push("PRIVATE_CLOUDFLARE_ANALYTICS_DATASET");
+  if (missing.length > 0) return { state: "not_configured", missing };
 
   const query = `SELECT blob1 AS event_type, SUM(_sample_interval) AS count
 FROM ${dataset}
@@ -89,16 +98,22 @@ ORDER BY count DESC`;
     }
   );
 
-  if (!response.ok) return null;
+  if (!response.ok) {
+    const details = (await response.text().catch(() => "")).trim();
+    const reason = details ? `${response.status} ${response.statusText}: ${details}` : `${response.status} ${response.statusText}`;
+    return { state: "error", reason: reason.slice(0, 300) };
+  }
 
   const payload = await response.json().catch(() => null);
   const rows = Array.isArray(payload?.result) ? payload.result : [];
-  if (rows.length === 0) return [];
+  if (rows.length === 0) return { state: "ok", rows: [] };
 
-  return rows
+  const mappedRows = rows
     .map((row: any) => ({
       eventType: String(row?.event_type || ""),
       count: Number(row?.count || 0)
     }))
     .filter((row: { eventType: string; count: number }) => row.eventType && Number.isFinite(row.count));
+
+  return { state: "ok", rows: mappedRows };
 }

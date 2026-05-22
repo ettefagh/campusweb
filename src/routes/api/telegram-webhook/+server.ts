@@ -304,6 +304,16 @@ function getDirectCreateTemplate() {
   ].join("\n");
 }
 
+function parseUsageDays(text: string) {
+  const match = text.trim().match(/^\/usage(?:\s+(\d{1,3}))?$/i);
+  if (!match) return 7;
+
+  const parsed = match[1] ? Number.parseInt(match[1], 10) : 7;
+  if (!Number.isFinite(parsed)) return 7;
+
+  return Math.min(Math.max(parsed, 1), 90);
+}
+
 function normalizeInternalImageUrl(value: string | undefined) {
   if (!value) return value;
   const match = value.match(/^https?:\/\/[^/]+\/\/?api\/images\/(.+)$/i);
@@ -579,21 +589,28 @@ async function buildStatsView(params: {
   }
 
   if (params.section === "usage") {
-    const rows = await queryUsageSummary({
-      accountId: params.runtimeEnv?.CLOUDFLARE_ACCOUNT_ID,
-      apiToken: params.runtimeEnv?.PRIVATE_CLOUDFLARE_ANALYTICS_API_TOKEN,
-      dataset: params.runtimeEnv?.PRIVATE_CLOUDFLARE_ANALYTICS_DATASET,
+    const usageSummary = await queryUsageSummary({
+      accountId: params.runtimeEnv?.CLOUDFLARE_ACCOUNT_ID || (env as any).CLOUDFLARE_ACCOUNT_ID,
+      apiToken:
+        params.runtimeEnv?.PRIVATE_CLOUDFLARE_ANALYTICS_API_TOKEN ||
+        (env as any).PRIVATE_CLOUDFLARE_ANALYTICS_API_TOKEN,
+      dataset:
+        params.runtimeEnv?.PRIVATE_CLOUDFLARE_ANALYTICS_DATASET ||
+        (env as any).PRIVATE_CLOUDFLARE_ANALYTICS_DATASET,
       days: params.days
     });
 
     text += `<b>Privacy-Preserving Usage Events (${params.days}d):</b>\n`;
-    if (!rows) {
+    if (usageSummary.state === "not_configured") {
       text += `Analytics Engine query not configured.\n`;
-      text += `Set CLOUDFLARE_ACCOUNT_ID + PRIVATE_CLOUDFLARE_ANALYTICS_API_TOKEN.\n`;
-    } else if (rows.length === 0) {
+      text += `Missing: ${usageSummary.missing.join(", ")}\n`;
+    } else if (usageSummary.state === "error") {
+      text += `Analytics Engine query failed.\n`;
+      text += `${escapeTelegramHtml(usageSummary.reason)}\n`;
+    } else if (usageSummary.rows.length === 0) {
       text += `No usage events returned in this window.\n`;
     } else {
-      rows.forEach((row: { eventType: string; count: number }, index: number) => {
+      usageSummary.rows.forEach((row: { eventType: string; count: number }, index: number) => {
         text += `${index + 1}. ${escapeTelegramHtml(row.eventType)} - ${Math.round(row.count)}\n`;
       });
     }
@@ -754,12 +771,13 @@ export async function POST({ request, platform }) {
       return json({ success: true });
     }
 
-    if (body.message && body.message.text === "/usage") {
+    if (body.message && /^\/usage(?:\s+\d{1,3})?$/i.test(body.message.text || "")) {
       const msgChatId = body.message.chat.id.toString();
       if (msgChatId === adminChatId) {
+        const days = parseUsageDays(body.message.text || "");
         const { text: usageText, keyboard } = await buildStatsView({
           runtimeEnv,
-          days: 7,
+          days,
           section: "usage",
           limit: 5
         });

@@ -1,0 +1,4 @@
+Contact: mailto:hello@campusweb.zardaloo.eu.org
+Expires: 2027-05-22T00:00:00Z
+Preferred-Languages: en, de
+Canonical: https://campusweb.pages.dev/.well-known/security.txt

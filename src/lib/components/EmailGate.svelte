@@ -9,8 +9,10 @@
     let info = '';
     let hash = '';
     let expiresAt = 0;
-    let isLoading = false;
+    let loadingAction: 'request' | 'verify' | '' = '';
     let step: 'email' | 'pin' = 'email';
+
+    $: isLoading = loadingAction !== '';
 
     async function requestPin() {
         const normalizedEmail = normalizeEmail(email);
@@ -22,7 +24,7 @@
             return;
         }
 
-        isLoading = true;
+        loadingAction = 'request';
         try {
             const response = await fetch('/api/auth/request-pin', {
                 method: 'POST',
@@ -44,7 +46,7 @@
         } catch (err: any) {
             error = err?.message || 'Could not send a PIN.';
         } finally {
-            isLoading = false;
+            loadingAction = '';
         }
     }
 
@@ -57,7 +59,7 @@
             return;
         }
 
-        isLoading = true;
+        loadingAction = 'verify';
         try {
             const response = await fetch('/api/auth/verify-pin', {
                 method: 'POST',
@@ -80,7 +82,7 @@
         } catch (err: any) {
             error = err?.message || 'The PIN could not be verified.';
         } finally {
-            isLoading = false;
+            loadingAction = '';
         }
     }
 
@@ -91,6 +93,7 @@
         step = 'email';
         error = '';
         info = '';
+        loadingAction = '';
     }
 </script>
 
@@ -109,7 +112,7 @@
                 disabled={isLoading}
             />
             <button class="gate-btn" on:click={requestPin} disabled={isLoading}>
-                {isLoading ? 'Sending...' : 'Send PIN'}
+                {loadingAction === 'request' ? 'Sending...' : 'Send PIN'}
             </button>
         </div>
     {:else}
@@ -130,10 +133,15 @@
                 disabled={isLoading}
             />
             <button class="gate-btn" on:click={verifyPin} disabled={isLoading}>
-                {isLoading ? 'Checking...' : 'Verify'}
+                {loadingAction === 'verify' ? 'Checking...' : 'Verify'}
             </button>
         </div>
-        <button class="gate-link" type="button" on:click={resetFlow}>Use a different email</button>
+        <div class="gate-secondary-actions">
+            <button class="gate-link" type="button" on:click={requestPin} disabled={isLoading}>
+                {loadingAction === 'request' ? 'Sending...' : 'Request new PIN'}
+            </button>
+            <button class="gate-link" type="button" on:click={resetFlow} disabled={isLoading}>Use a different email</button>
+        </div>
     {/if}
     {#if info}
         <p class="gate-info" transition:fade>{info}</p>
@@ -181,7 +189,6 @@
         font-weight: 700;
     }
     .gate-link {
-        margin-top: var(--spacing-sm);
         padding: 0;
         border: none;
         background: transparent;
@@ -189,6 +196,16 @@
         cursor: pointer;
         font-size: 0.85rem;
         font-weight: 600;
+    }
+    .gate-link:disabled {
+        opacity: 0.6;
+        cursor: wait;
+    }
+    .gate-secondary-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-sm);
     }
     .gate-info {
         color: var(--text-color-secondary);
