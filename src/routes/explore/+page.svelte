@@ -7,6 +7,7 @@
   } from "$lib/stores/settingsStore";
   import { allLinks, categoryOrder, type AppLink } from "$lib/data/links";
   import { favorites } from "$lib/stores/favorites";
+  import { favoriteContacts, normalizeContactEmail } from "$lib/stores/favoriteContacts";
   import LinkCard from "$lib/components/LinkCard.svelte";
   import SearchBar from "$lib/components/SearchBar.svelte";
   import { onMount } from "svelte";
@@ -56,6 +57,7 @@
   let searchQuery = $state("");
   let isSearchActive = $state(false);
   let expandedContactEmail = $state<string | null>(null);
+  let favoriteContactMessage = $state("");
   let libraryUrl = $state(
     "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB",
   );
@@ -123,6 +125,14 @@
 
   function handleToggleFavorite(event: CustomEvent<{ linkId: string }>) {
     favorites.toggle(event.detail.linkId);
+  }
+
+  function handleToggleFavoriteContact(contact: any, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    const result = favoriteContacts.toggle(contact.email);
+    favoriteContactMessage =
+      result === "limit" ? $t.explore.favoriteContactLimitReached : "";
   }
 
   function toggleContactDetails(email: string) {
@@ -686,6 +696,9 @@
             • {$settingsStore.programName}{/if}
         </p>
       {/if}
+      {#if favoriteContactMessage}
+        <p class="favorite-contact-message" role="status">{favoriteContactMessage}</p>
+      {/if}
 
       {#if !$settingsStore.campusId && filteredContacts.length === 0}
         <div class="contact-results-list">
@@ -821,6 +834,19 @@
                 </div>
                 </div>
                 <div class="search-contact-actions">
+                  <button
+                    type="button"
+                    class="search-contact-btn favorite"
+                    class:active={$favoriteContacts.includes(normalizeContactEmail(contact.email))}
+                    onclick={(event) => handleToggleFavoriteContact(contact, event)}
+                    title={$favoriteContacts.includes(normalizeContactEmail(contact.email))
+                      ? $t.explore.removeFavoriteContact
+                      : $t.explore.addFavoriteContact}
+                    aria-label={$favoriteContacts.includes(normalizeContactEmail(contact.email))
+                      ? $t.explore.removeFavoriteContact
+                      : $t.explore.addFavoriteContact}
+                    ><i class={$favoriteContacts.includes(normalizeContactEmail(contact.email)) ? "ph-fill ph-star" : "ph-bold ph-star"}></i></button
+                  >
                   <button
                     type="button"
                     class="search-contact-btn mail"
@@ -1367,6 +1393,14 @@
     align-items: center;
     gap: 10px;
   }
+
+  .favorite-contact-message {
+    margin: 8px 16px 0;
+    color: var(--primary-color);
+    font-size: 0.86rem;
+    font-weight: 800;
+  }
+
   .search-contact-btn {
     width: 42px;
     height: 42px;
@@ -1386,6 +1420,12 @@
     color: white;
     border-color: var(--primary-color);
     transform: scale(1.05);
+  }
+
+  .search-contact-btn.favorite.active {
+    color: var(--primary-color);
+    border-color: rgba(var(--primary-color-rgb), 0.32);
+    background: color-mix(in srgb, var(--primary-color), transparent 90%);
   }
 
   /* ── External Search ── */
@@ -2234,6 +2274,19 @@
     border-color: var(--explore-orange);
     transform: translateY(-1px);
     outline: none;
+  }
+
+  .search-contact-btn.favorite.active {
+    color: var(--explore-orange);
+    border-color: rgba(212, 68, 7, 0.32);
+    background: rgba(212, 68, 7, 0.08);
+  }
+
+  .search-contact-btn.favorite.active:hover,
+  .search-contact-btn.favorite.active:focus-visible {
+    color: #ffffff;
+    background: var(--explore-orange);
+    border-color: var(--explore-orange);
   }
 
   .search-contact-btn.chat:hover,

@@ -384,6 +384,74 @@
     {/each}
   {/if}
 
+  {#if !loading && storiesToShow.length === 0}
+    <!-- Guide 1: Explore Campus -->
+    <a
+      href="/explore"
+      class="story-bubble guide-bubble"
+      class:rectangular={variant === "rectangular"}
+    >
+      {#if variant === "rectangular"}
+        <div class="story-card guide-card guide-card--explore">
+          <div class="guide-card-icon-wrapper">
+            <i class="ph-bold ph-compass"></i>
+          </div>
+          <span>Explore</span>
+          <strong>Campus Map</strong>
+        </div>
+      {:else}
+        <div class="story-ring guide-ring guide-ring--explore">
+          <div class="guide-icon"><i class="ph-bold ph-compass"></i></div>
+        </div>
+        <span class="story-label">Explore</span>
+      {/if}
+    </a>
+
+    <!-- Guide 2: Canteen Menu -->
+    <a
+      href="/explore#srh-canteen-menu"
+      class="story-bubble guide-bubble"
+      class:rectangular={variant === "rectangular"}
+    >
+      {#if variant === "rectangular"}
+        <div class="story-card guide-card guide-card--canteen">
+          <div class="guide-card-icon-wrapper">
+            <i class="ph-bold ph-fork-knife"></i>
+          </div>
+          <span>Canteen</span>
+          <strong>Today's Menu</strong>
+        </div>
+      {:else}
+        <div class="story-ring guide-ring guide-ring--canteen">
+          <div class="guide-icon"><i class="ph-bold ph-fork-knife"></i></div>
+        </div>
+        <span class="story-label">Canteen</span>
+      {/if}
+    </a>
+
+    <!-- Guide 3: Daily Schedule -->
+    <a
+      href="/calendar"
+      class="story-bubble guide-bubble"
+      class:rectangular={variant === "rectangular"}
+    >
+      {#if variant === "rectangular"}
+        <div class="story-card guide-card guide-card--schedule">
+          <div class="guide-card-icon-wrapper">
+            <i class="ph-bold ph-calendar-blank"></i>
+          </div>
+          <span>Schedule</span>
+          <strong>My Calendar</strong>
+        </div>
+      {:else}
+        <div class="story-ring guide-ring guide-ring--schedule">
+          <div class="guide-icon"><i class="ph-bold ph-calendar-blank"></i></div>
+        </div>
+        <span class="story-label">Schedule</span>
+      {/if}
+    </a>
+  {/if}
+
   {#each storiesToShow as story, idx}
     <button
       class="story-bubble"
@@ -1213,5 +1281,158 @@
     .story-image {
       object-fit: contain;
     }
+  }
+
+  /* Premium Guide Cards for Empty Stories Track */
+  .guide-card {
+    display: flex;
+    min-height: 184px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 4px;
+    padding: 14px;
+    border-radius: 12px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .guide-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.4) 100%);
+    pointer-events: none;
+  }
+
+  /* Different gradient colors for each guide card */
+  .guide-card--explore {
+    background: linear-gradient(135deg, rgba(29, 78, 216, 0.15) 0%, rgba(30, 64, 175, 0.4) 100%), var(--surface-solid);
+    border: 1px solid rgba(29, 78, 216, 0.25);
+  }
+  .guide-card--canteen {
+    background: linear-gradient(135deg, rgba(212, 68, 7, 0.15) 0%, rgba(180, 50, 5, 0.4) 100%), var(--surface-solid);
+    border: 1px solid rgba(212, 68, 7, 0.25);
+  }
+  .guide-card--schedule {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(4, 120, 87, 0.4) 100%), var(--surface-solid);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+  }
+
+  .guide-card-icon-wrapper {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: #fff;
+    margin-bottom: auto;
+    z-index: 2;
+    font-size: 1.15rem;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  }
+
+  .guide-card--explore .guide-card-icon-wrapper {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  }
+  .guide-card--canteen .guide-card-icon-wrapper {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+  }
+  .guide-card--schedule .guide-card-icon-wrapper {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+
+  .guide-card span {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-color-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    z-index: 2;
+  }
+
+  .guide-card strong {
+    font-size: 0.94rem;
+    line-height: 1.2;
+    font-weight: 900;
+    color: var(--text-color);
+    z-index: 2;
+  }
+
+  .guide-bubble:hover .guide-card {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Bubble Mode Guide Styles */
+  .guide-ring {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--surface-soft);
+    border: 2px solid var(--surface-border);
+  }
+
+  .guide-ring::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    padding: 2.5px;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+  }
+
+  .guide-ring--explore::before {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  }
+  .guide-ring--canteen::before {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+  }
+  .guide-ring--schedule::before {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+
+  .guide-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    color: var(--text-color);
+    background: var(--surface-solid);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 0.25s ease;
+  }
+
+  .guide-ring--explore .guide-icon {
+    color: #2563eb;
+  }
+  .guide-ring--canteen .guide-icon {
+    color: #ea580c;
+  }
+  .guide-ring--schedule .guide-icon {
+    color: #16a34a;
+  }
+
+  .guide-bubble:hover .guide-ring {
+    transform: scale(1.08);
+  }
+
+  .guide-bubble:hover .guide-icon {
+    background: var(--surface-soft);
+    transform: rotate(8deg);
   }
 </style>

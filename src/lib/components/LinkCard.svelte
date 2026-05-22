@@ -387,7 +387,7 @@
 		line-height: 1.22;
 		color: var(--text-color-secondary);
 		margin: 0;
-		max-width: 27ch;
+		max-width: 42ch;
 	}
 
 	.compact-chevron {

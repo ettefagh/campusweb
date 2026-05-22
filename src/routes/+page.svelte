@@ -6,6 +6,7 @@
 	import WeatherNotifications from "$lib/components/WeatherNotifications.svelte";
 	import { cachedStories, getStories, storiesLoading } from "$lib/stores/feedCache";
 	import { favorites } from "$lib/stores/favorites";
+	import { favoriteContacts, normalizeContactEmail } from "$lib/stores/favoriteContacts";
 	import { allLinks } from "$lib/data/links";
 	import { t } from "$lib/i18n";
 	import { settingsStore, type HomeSection } from "$lib/stores/settingsStore";
@@ -44,6 +45,43 @@
 		
 		update(options);
 		
+		return {
+			update,
+			destroy() {
+				if (sortable) sortable.destroy();
+			}
+		};
+	}
+
+	function sortableFavoriteContacts(node: HTMLElement, options: { enabled: boolean }) {
+		let sortable: Sortable | null = null;
+
+		function update(opts: { enabled: boolean }) {
+			if (opts.enabled) {
+				if (!sortable) {
+					sortable = new Sortable(node, {
+						animation: 150,
+						draggable: ".favorite-contact-row",
+						handle: ".favorite-contact-reorder-handle",
+						onEnd: (evt) => {
+							if (
+								evt.oldDraggableIndex !== undefined &&
+								evt.newDraggableIndex !== undefined &&
+								evt.oldDraggableIndex !== evt.newDraggableIndex
+							) {
+								favoriteContacts.reorder(evt.oldDraggableIndex, evt.newDraggableIndex);
+							}
+						}
+					});
+				}
+			} else if (sortable) {
+				sortable.destroy();
+				sortable = null;
+			}
+		}
+
+		update(options);
+
 		return {
 			update,
 			destroy() {
@@ -104,8 +142,24 @@
 	let calendarWidgetMode: "today" | "next" = "today";
 	let calendarWidgetTitle = "";
 	let calendarWidgetEmptyText = "";
+	let homePublicContacts: any[] = [];
+	let homeCampusContacts: any[] = [];
+	let homeGeneralContacts: any[] = [];
+	let homeProgramDirectors: any[] = [];
+	let isHomeContactsLoading = false;
+	let loadedHomeContactsAuthState: boolean | null = null;
 	let returnFocusElement: HTMLElement | null = null;
 	let loadedCalendarAuthState: boolean | null = null;
+
+	type HomeFavoriteContact = {
+		email: string;
+		person: string;
+		phone?: string;
+		services: string[];
+		programs: string[];
+		tags: string[];
+		locked?: boolean;
+	};
 
 	function getGreeting() {
 		const hour = new Date().getHours();
@@ -116,6 +170,7 @@
 
 	onMount(() => {
 		getStories();
+		loadHomePublicContacts();
 		calendarStore.refreshAll();
 		if ($settingsStore.defaultPage === 'calendar') {
 			goto('/calendar', { replaceState: true });
@@ -133,8 +188,10 @@
 		});
 		const unsubscribeSettings = settingsStore.subscribe((settings) => {
 			loadCalendarPreview(settings.emailVerified);
+			loadHomePrivateContacts(settings.emailVerified);
 		});
 		loadCalendarPreview($settingsStore.emailVerified);
+		loadHomePrivateContacts($settingsStore.emailVerified);
 		return () => {
 			container?.removeEventListener("scroll", handleScroll);
 			unsubscribeCalendar();
@@ -275,8 +332,22 @@
 		goto("/explore?focus=true");
 	}
 
+	function goToContactList() {
+		goto("/explore#srh-contact-list");
+	}
+
+	const blockLayoutConfigs: Record<string, { minCols: number; fullWidth?: boolean; position?: "left" | "right" }> = {
+		stories: { minCols: 2, fullWidth: true },
+		favorites: { minCols: 1, position: "left" },
+		favoriteContacts: { minCols: 1 },
+		cards: { minCols: 1 },
+		calendar: { minCols: 1 },
+		feed: { minCols: 1 }
+	};
+
 	let isEditMode = false;
 	let isManagingFavorites = false;
+	let isManagingFavoriteContacts = false;
 	let isArrangingHomeBlocks = false;
 	let isStorySuggestionOpen = false;
 	let searchQuery = "";
@@ -300,6 +371,25 @@
 	$: availableHomeBlocks = $settingsStore.homeSections.filter(
 		(section) => section.id !== "header" && !section.enabled
 	);
+	$: homeContactDirectory = buildHomeContactDirectory(
+		homeCampusContacts,
+		homePublicContacts,
+		homeGeneralContacts,
+		homeProgramDirectors
+	);
+	$: displayFavoriteContacts = $favoriteContacts.map((email) => {
+		const normalized = normalizeContactEmail(email);
+		return (
+			homeContactDirectory.get(normalized) ?? {
+				email: normalized,
+				person: normalized,
+				services: [],
+				programs: [],
+				tags: [],
+				locked: !$settingsStore.emailVerified
+			}
+		);
+	});
 
 	function toggleEditMode() {
 		isEditMode = !isEditMode;
@@ -308,6 +398,7 @@
 
 	function startManagingFavorites() {
 		isArrangingHomeBlocks = false;
+		isManagingFavoriteContacts = false;
 		isManagingFavorites = true;
 		isEditMode = false;
 		searchQuery = "";
@@ -324,9 +415,22 @@
 		favorites.toggle(event.detail.linkId);
 	}
 
+	function startManagingFavoriteContacts() {
+		isArrangingHomeBlocks = false;
+		isManagingFavorites = false;
+		isEditMode = false;
+		searchQuery = "";
+		isManagingFavoriteContacts = true;
+	}
+
+	function finishManagingFavoriteContacts() {
+		isManagingFavoriteContacts = false;
+	}
+
 	function getHomeSectionLabel(id: string) {
 		if (id === "stories") return $t.home.campusStories;
 		if (id === "favorites") return $t.home.universityLinks || $t.settings.favoriteLinks;
+		if (id === "favoriteContacts") return $t.home.favoriteContacts;
 		if (id === "cards") return $t.settings.cards;
 		if (id === "calendar") return $t.home.calendarSchedule;
 		if (id === "feed") return $t.home.campusFeed;
@@ -336,6 +440,7 @@
 	function getHomeSectionDescription(id: string) {
 		if (id === "stories") return $t.home.campusStoriesDesc;
 		if (id === "favorites") return $t.home.customBookmarks;
+		if (id === "favoriteContacts") return $t.home.favoriteContactsDesc;
 		if (id === "cards") return $t.home.cardsDesc;
 		if (id === "calendar") return $t.settings.calendarWidgetModeDesc;
 		if (id === "feed") return $t.home.feedPrepared;
@@ -345,6 +450,7 @@
 	function getHomeSectionIcon(id: string) {
 		if (id === "stories") return "ph-bold ph-circles-three-plus";
 		if (id === "favorites") return "ph-bold ph-star";
+		if (id === "favoriteContacts") return "ph-bold ph-address-book";
 		if (id === "cards") return "ph-bold ph-identification-card";
 		if (id === "calendar") return "ph-bold ph-calendar";
 		if (id === "feed") return "ph-bold ph-newspaper";
@@ -388,7 +494,142 @@
 		isArrangingHomeBlocks = !isArrangingHomeBlocks;
 		if (isArrangingHomeBlocks) {
 			finishManagingFavorites();
+			finishManagingFavoriteContacts();
 			isArrangingHomeBlocks = true;
+		}
+	}
+
+	async function loadHomePublicContacts() {
+		try {
+			const response = await fetch("/api/public-contacts");
+			if (response.ok) {
+				const data = await response.json();
+				homePublicContacts = data.publicContacts || [];
+			}
+		} catch {
+			homePublicContacts = [];
+		}
+	}
+
+	async function loadHomePrivateContacts(isVerified: boolean) {
+		if (!isVerified) {
+			loadedHomeContactsAuthState = false;
+			homeCampusContacts = [];
+			homeGeneralContacts = [];
+			homeProgramDirectors = [];
+			return;
+		}
+		if (loadedHomeContactsAuthState === true || isHomeContactsLoading) return;
+
+		isHomeContactsLoading = true;
+		try {
+			const response = await fetch("/api/contacts");
+			if (response.ok) {
+				const data = await response.json();
+				homeCampusContacts = data.campusContacts || [];
+				homeGeneralContacts = data.generalContacts || [];
+				homeProgramDirectors = data.programDirectors || [];
+				loadedHomeContactsAuthState = true;
+			} else if (response.status === 401) {
+				settingsStore.patch({ emailVerified: false });
+			}
+		} catch {
+			homeCampusContacts = [];
+			homeGeneralContacts = [];
+			homeProgramDirectors = [];
+		} finally {
+			isHomeContactsLoading = false;
+		}
+	}
+
+	function getSchoolFromTags(tags?: string[]) {
+		const found = tags?.find((tag) => tag.toLowerCase().startsWith("school:"));
+		return found ? found.split(":")[1].toLowerCase() : null;
+	}
+
+	function buildHomeContactDirectory(
+		campusContacts: any[],
+		publicContacts: any[],
+		generalContacts: any[],
+		programDirectors: any[]
+	) {
+		const allContacts = [
+			...campusContacts.map((contact) => ({
+				...contact,
+				services: [contact.service].filter(Boolean),
+				programs: [],
+				school: getSchoolFromTags(contact.tags)
+			})),
+			...publicContacts.map((contact) => ({
+				...contact,
+				services: [contact.service].filter(Boolean),
+				programs: [],
+				school: getSchoolFromTags(contact.tags)
+			})),
+			...generalContacts.map((contact) => ({
+				...contact,
+				services: [contact.service].filter(Boolean),
+				programs: [],
+				school: getSchoolFromTags(contact.tags)
+			})),
+			...programDirectors.map((contact) => ({
+				...contact,
+				services: [],
+				programs: [`${contact.degree || ""} ${contact.program || ""}`.trim()].filter(Boolean),
+				school: contact.school?.toLowerCase(),
+				tags: contact.degree ? [contact.degree, ...(contact.tags || [])] : contact.tags || []
+			}))
+		];
+
+		const contactsByEmail = new Map<string, HomeFavoriteContact>();
+		for (const contact of allContacts) {
+			const email = normalizeContactEmail(contact.email || "");
+			if (!email) continue;
+			const existing = contactsByEmail.get(email);
+			if (existing) {
+				for (const service of contact.services || []) {
+					if (service && !existing.services.includes(service)) existing.services.push(service);
+				}
+				for (const program of contact.programs || []) {
+					if (program && !existing.programs.includes(program)) existing.programs.push(program);
+				}
+				existing.tags = [...new Set([...(existing.tags || []), ...(contact.tags || [])])];
+			} else {
+				contactsByEmail.set(email, {
+					email,
+					person: contact.person || email,
+					phone: contact.phone,
+					services: [...(contact.services || [])],
+					programs: [...(contact.programs || [])],
+					tags: [...(contact.tags || [])]
+				});
+			}
+		}
+		return contactsByEmail;
+	}
+
+	function getContactSummary(contact: HomeFavoriteContact) {
+		return contact.programs[0] || contact.services[0] || contact.email;
+	}
+
+	function getTeamsChatUrl(email: string) {
+		return `https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(email)}`;
+	}
+
+	function openOutlookCompose(email: string, event: Event) {
+		event.stopPropagation();
+		event.preventDefault();
+		const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+		if (isMobile) {
+			window.location.href = `ms-outlook://compose?to=${email}`;
+			setTimeout(() => {
+				if (!document.hidden) {
+					window.location.href = `https://outlook.office.com/mail/deeplink/compose?to=${email}`;
+				}
+			}, 2000);
+		} else {
+			window.open(`https://outlook.office.com/mail/deeplink/compose?to=${email}`, "_blank");
 		}
 	}
 </script>
@@ -435,12 +676,16 @@
 		{/if}
 	{/each}
 
-	<div class="home-blocks masonry-layout" class:is-arranging={isArrangingHomeBlocks} use:sortableHomeBlocks={{ enabled: isArrangingHomeBlocks }}>
+	<div class="home-blocks" class:is-arranging={isArrangingHomeBlocks} use:sortableHomeBlocks={{ enabled: isArrangingHomeBlocks }}>
 		{#each $settingsStore.homeSections as section, i (section.id)}
 			{#if section.enabled && section.id !== "header"}
 				<div
 					class="home-block"
-					class:home-block--full={section.id === "stories"}
+					class:home-block--full={blockLayoutConfigs[section.id]?.fullWidth}
+					class:home-block--span-2={!blockLayoutConfigs[section.id]?.fullWidth && blockLayoutConfigs[section.id]?.minCols === 2}
+					class:home-block--span-3={!blockLayoutConfigs[section.id]?.fullWidth && blockLayoutConfigs[section.id]?.minCols === 3}
+					class:home-block--left={blockLayoutConfigs[section.id]?.position === "left"}
+					class:home-block--right={blockLayoutConfigs[section.id]?.position === "right"}
 					class:is-arranging={isArrangingHomeBlocks}
 					data-section-id={section.id}
 					style={i <= 1 ? "" : `animation: reveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) backwards; animation-delay: ${i * 100}ms;`}
@@ -511,6 +756,130 @@
 										on:toggleFavorite={handleToggleFavorite}
 									/>
 								{/each}
+							{/if}
+						</section>
+					{:else if section.id === "favoriteContacts"}
+						<section class="links-section" id="favorite-contacts" use:sortableFavoriteContacts={{ enabled: isManagingFavoriteContacts && !isArrangingHomeBlocks }}>
+							<SectionHeader title={$t.home.favoriteContacts} subtitle={$t.home.favoriteContactsDesc}>
+								<div class="favorite-links-actions">
+									{#if isManagingFavoriteContacts}
+										<button
+											class="favorite-icon-btn passive"
+											type="button"
+											aria-label={$t.home.dragReorder}
+											title={$t.home.dragReorder}
+										>
+											<i class="ph-bold ph-dots-six-vertical"></i>
+										</button>
+										<button
+											class="favorite-icon-btn done"
+											type="button"
+											on:click={finishManagingFavoriteContacts}
+											aria-label={$t.home.done}
+											title={$t.home.done}
+										>
+											<i class="ph-bold ph-check"></i>
+										</button>
+									{:else}
+										<button
+											class="section-action-btn"
+											type="button"
+											on:click={startManagingFavoriteContacts}
+										>
+											Manage
+										</button>
+									{/if}
+								</div>
+							</SectionHeader>
+
+							{#if isHomeContactsLoading && displayFavoriteContacts.length === 0}
+								<div class="empty-state">
+									<p>{$t.explore.loadingDirectory}</p>
+								</div>
+							{:else if displayFavoriteContacts.length === 0}
+								<div class="favorite-contacts-empty">
+									<p>{$t.home.noFavoriteContacts}</p>
+									<button type="button" class="section-action-btn" on:click={goToContactList}>
+										{$t.home.findContacts}
+									</button>
+								</div>
+							{:else}
+								<div class="favorite-contact-list">
+									{#each displayFavoriteContacts as contact (contact.email)}
+										<div class="favorite-contact-row" class:is-locked={contact.locked}>
+											{#if isManagingFavoriteContacts}
+												<button
+													class="favorite-contact-reorder-handle"
+													type="button"
+													aria-label={`${$t.home.dragHomeBlock}: ${contact.person}`}
+													title={$t.home.dragHomeBlock}
+													on:click|preventDefault
+												>
+													<i class="ph-bold ph-dots-six-vertical" aria-hidden="true"></i>
+												</button>
+											{/if}
+											<div class="favorite-contact-avatar" aria-hidden="true">
+												{#if contact.locked}
+													<i class="ph-bold ph-lock-key"></i>
+												{:else}
+													{contact.person.charAt(0).toUpperCase()}
+												{/if}
+											</div>
+											<div class="favorite-contact-copy">
+												<strong>{contact.person}</strong>
+												<span>{contact.locked ? $t.home.verifyFavoriteContacts : getContactSummary(contact)}</span>
+											</div>
+											{#if isManagingFavoriteContacts}
+												<button
+													class="favorite-contact-action danger"
+													type="button"
+													aria-label={`${$t.home.removeBlock}: ${contact.person}`}
+													on:click={() => favoriteContacts.remove(contact.email)}
+												>
+													<i class="ph-bold ph-minus-circle" aria-hidden="true"></i>
+												</button>
+											{:else if contact.locked}
+												<button
+													class="favorite-contact-action"
+													type="button"
+													aria-label={$t.explore.verifyEmail}
+													on:click={() => goto("/settings#directory-access")}
+												>
+													<i class="ph-bold ph-lock-key" aria-hidden="true"></i>
+												</button>
+											{:else}
+												<div class="favorite-contact-actions">
+													<button
+														class="favorite-contact-action"
+														type="button"
+														aria-label={$t.explore.emailContact}
+														on:click={(event) => openOutlookCompose(contact.email, event)}
+													>
+														<i class="ph-bold ph-envelope" aria-hidden="true"></i>
+													</button>
+													<a
+														class="favorite-contact-action"
+														href={getTeamsChatUrl(contact.email)}
+														target="_blank"
+														rel="noopener noreferrer"
+														aria-label={$t.explore.chatOnTeams}
+													>
+														<i class="ph-bold ph-chat-circle" aria-hidden="true"></i>
+													</a>
+													{#if contact.phone}
+														<a
+															class="favorite-contact-action"
+															href={`tel:${contact.phone.replace(/[\s-]/g, "")}`}
+															aria-label={$t.explore.callContact}
+														>
+															<i class="ph-bold ph-phone" aria-hidden="true"></i>
+														</a>
+													{/if}
+												</div>
+											{/if}
+										</div>
+									{/each}
+								</div>
 							{/if}
 						</section>
 					{:else if section.id === "cards"}
@@ -668,6 +1037,18 @@
 
 	<div class="fab-group">
 		<button
+			class="fab-btn search-fab"
+			type="button"
+			on:click={triggerExploreSearch}
+			aria-label={$t.explore?.searchExplore || "Search"}
+			title={$t.explore?.searchExplore || "Search"}
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+				<circle cx="11" cy="11" r="8"></circle>
+				<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+			</svg>
+		</button>
+		<button
 			class="fab-btn arrange-blocks"
 			class:active={isArrangingHomeBlocks}
 			type="button"
@@ -752,11 +1133,11 @@
 
 <style>
 	.home-page {
-		width: min(calc(100vw - 32px), 460px);
+		width: 100%;
 		max-width: 460px;
 		box-sizing: border-box;
 		margin: 0 auto;
-		padding: 10px 18px calc(var(--spacing-xl) * 3.1);
+		padding: 10px 18px calc(var(--bottom-nav-clearance) + 160px);
 		display: flex;
 		flex-direction: column;
 		gap: 28px;
@@ -864,15 +1245,73 @@
 		.home-blocks {
 			width: 100%;
 			max-width: 100%;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr);
+			gap: var(--spacing-md);
+			grid-auto-flow: dense;
+			align-items: start;
+		}
+
+		@media (min-width: 768px) {
+			.home-blocks {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+		}
+
+		@media (min-width: 1024px) {
+			.home-blocks {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: var(--spacing-lg);
+			}
 		}
 
 		.home-block {
 			position: relative;
+			width: 100%;
 			max-width: 100%;
+			min-width: 0; /* Prevents children from expanding grid column width */
+			order: 10; /* Default layout order */
+		}
+
+		.home-block--span-2,
+		.home-block--span-3 {
+			grid-column: span 1;
 		}
 
 		.home-block--full {
-			column-span: all;
+			grid-column: 1 / -1 !important;
+			order: 1 !important; /* Full width blocks like stories always go first */
+		}
+
+		@media (min-width: 768px) {
+			/* Force specific column positions when not in drag-and-drop arrange mode */
+			:not(.is-arranging) > .home-block--left {
+				grid-column-start: 1;
+				order: 5; /* Left column blocks go before auto-placed order 10 blocks */
+			}
+
+			:not(.is-arranging) > .home-block--right {
+				grid-column-end: -1;
+				order: 15; /* Right column blocks go after auto-placed order 10 blocks */
+			}
+		}
+
+		@media (min-width: 768px) {
+			.home-block--span-2 {
+				grid-column: span 2;
+			}
+			.home-block--span-3 {
+				grid-column: span 2;
+			}
+		}
+
+		@media (min-width: 1024px) {
+			.home-block--span-2 {
+				grid-column: span 2;
+			}
+			.home-block--span-3 {
+				grid-column: span 2;
+			}
 		}
 
 		.home-block.is-arranging {
@@ -1156,6 +1595,129 @@
 		border-bottom-color: rgba(255, 255, 255, 0.08);
 	}
 
+	.favorite-contacts-empty {
+		display: grid;
+		gap: 12px;
+		justify-items: center;
+		padding: 22px 18px;
+		text-align: center;
+		color: var(--text-color-secondary);
+	}
+
+	.favorite-contacts-empty p {
+		margin: 0;
+	}
+
+	.favorite-contact-list {
+		display: grid;
+		gap: 8px;
+		padding: 8px 16px 16px;
+	}
+
+	.favorite-contact-row {
+		min-width: 0;
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 10px;
+		padding: 10px 12px;
+		border: 1px solid var(--surface-border);
+		border-radius: 10px;
+		background: var(--surface-soft);
+	}
+
+	.favorite-contact-row:has(.favorite-contact-reorder-handle) {
+		grid-template-columns: auto auto minmax(0, 1fr) auto;
+	}
+
+	.favorite-contact-row.is-locked {
+		opacity: 0.82;
+	}
+
+	.favorite-contact-avatar,
+	.favorite-contact-reorder-handle,
+	.favorite-contact-action {
+		width: 34px;
+		height: 34px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex: 0 0 auto;
+		border-radius: 9px;
+	}
+
+	.favorite-contact-avatar {
+		background: color-mix(in srgb, var(--primary-color), transparent 88%);
+		color: var(--primary-color);
+		font-size: 0.9rem;
+		font-weight: 900;
+	}
+
+	.favorite-contact-copy {
+		min-width: 0;
+		display: grid;
+		gap: 3px;
+	}
+
+	.favorite-contact-copy strong,
+	.favorite-contact-copy span {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.favorite-contact-copy strong {
+		color: var(--text-color);
+		font-size: 0.92rem;
+		line-height: 1.18;
+	}
+
+	.favorite-contact-copy span {
+		color: var(--text-color-secondary);
+		font-size: 0.78rem;
+		line-height: 1.2;
+	}
+
+	.favorite-contact-actions {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.favorite-contact-reorder-handle,
+	.favorite-contact-action {
+		border: 1px solid var(--surface-border);
+		background: var(--surface-solid);
+		color: var(--text-color-secondary);
+		text-decoration: none;
+		font: inherit;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.favorite-contact-reorder-handle {
+		cursor: grab;
+		touch-action: none;
+	}
+
+	.favorite-contact-action:hover,
+	.favorite-contact-action:focus-visible,
+	.favorite-contact-reorder-handle:hover,
+	.favorite-contact-reorder-handle:focus-visible {
+		outline: none;
+		border-color: rgba(var(--primary-color-rgb), 0.3);
+		background: color-mix(in srgb, var(--primary-color), transparent 90%);
+		color: var(--primary-color);
+	}
+
+	.favorite-contact-action.danger:hover,
+	.favorite-contact-action.danger:focus-visible {
+		border-color: rgba(207, 63, 50, 0.35);
+		background: rgba(207, 63, 50, 0.08);
+		color: #cf3f32;
+	}
+
 
 
 
@@ -1289,6 +1851,8 @@
 		color: var(--text-color-secondary);
 		font-size: 0.88rem;
 		text-align: center;
+		word-break: break-word;
+		white-space: normal;
 	}
 
 	.home-event-modal-backdrop {
@@ -1514,6 +2078,7 @@
 		flex-direction: column;
 		gap: 12px;
 		z-index: 9999;
+		pointer-events: none; /* Make container click-through to background card links */
 	}
 
 	.fab-btn {
@@ -1528,6 +2093,7 @@
 		cursor: pointer;
 		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 		transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+		pointer-events: auto; /* Restore pointer events on the actual buttons */
 	}
 
 	.fab-btn:hover {
@@ -1561,6 +2127,26 @@
 			box-shadow: 0 8px 22px rgba(212, 68, 7, 0.3);
 		}
 
+		.search-fab {
+			background: var(--primary-color, #d44407);
+			color: #ffffff;
+			border: 1px solid rgba(255, 255, 255, 0.66);
+			box-shadow: 0 12px 24px rgba(212, 68, 7, 0.22);
+		}
+
+		.search-fab:hover,
+		.search-fab:focus-visible {
+			background: #f28c3e; /* var(--srh-orange-light) / --explore-orange-hover */
+			outline: none;
+		}
+
+	@media (min-width: 768px) {
+		.home-page {
+			width: 100%;
+			max-width: 720px;
+		}
+	}
+
 	@media (min-width: 1024px) {
 		.home-page {
 			width: min(100%, 1020px);
@@ -1570,6 +2156,7 @@
 			align-items: start;
 			gap: 30px 32px;
 			padding-top: 28px;
+			padding-bottom: var(--spacing-xl);
 		}
 
 		.home-hero,

@@ -728,6 +728,7 @@
 	                <div class="section-info">
 	                  <span class="setting-label">
 	                    {#if sec.id === "favorites"}<i class="section-label-icon ph-bold ph-star" aria-hidden="true"></i>
+	                    {:else if sec.id === "favoriteContacts"}<i class="section-label-icon ph-bold ph-address-book" aria-hidden="true"></i>
 	                    {:else if sec.id === "calendar"}<i class="section-label-icon ph-bold ph-calendar" aria-hidden="true"></i>
 	                    {:else if sec.id === "cards"}<i class="section-label-icon ph-bold ph-identification-card" aria-hidden="true"></i>
 	                    {:else if sec.id === "header"}<i class="section-label-icon ph-bold ph-house" aria-hidden="true"></i>
@@ -736,6 +737,8 @@
 	                    {/if}
                     {sec.id === "favorites"
                       ? $t.settings.favoriteLinks
+                      : sec.id === "favoriteContacts"
+                        ? $t.settings.favoriteContacts
                       : sec.id === "calendar"
                         ? $t.settings.calendarSchedule
                         : sec.id === "cards"

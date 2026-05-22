@@ -885,7 +885,7 @@
 
   .modal-grid {
     display: grid;
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: var(--spacing-lg);
   }
 

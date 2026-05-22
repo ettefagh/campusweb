@@ -169,9 +169,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   homeSections: [
     { id: 'header', enabled: true },
     { id: 'stories', enabled: true },
+    { id: 'calendar', enabled: true },
     { id: 'favorites', enabled: true },
     { id: 'cards', enabled: true },
-    { id: 'calendar', enabled: false },
+    { id: 'favoriteContacts', enabled: false },
     { id: 'feed', enabled: false }
   ],
   feedRefreshRate: 5,
