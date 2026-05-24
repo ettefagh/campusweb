@@ -9,7 +9,10 @@
   } from "$lib/stores/settingsStore";
   import { allLinks, categoryOrder, type AppLink } from "$lib/data/links";
   import { favorites } from "$lib/stores/favorites";
-  import { favoriteContacts, normalizeContactEmail } from "$lib/stores/favoriteContacts";
+  import {
+    favoriteContacts,
+    normalizeContactEmail,
+  } from "$lib/stores/favoriteContacts";
   import LinkCard from "$lib/components/LinkCard.svelte";
   import SearchBar from "$lib/components/SearchBar.svelte";
   import { onMount } from "svelte";
@@ -175,7 +178,8 @@
           return {
             ...link,
             url: libraryUrl,
-            description: `${$activeCampus?.name || ""} ${$t.explore.campusLibraryDesc}`.trim(),
+            description:
+              `${$activeCampus?.name || ""} ${$t.explore.campusLibraryDesc}`.trim(),
             campusIds: campusId ? [campusId] : [],
           };
         }
@@ -444,7 +448,7 @@
     event.stopPropagation();
     event.preventDefault();
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
+
     if (isMobile) {
       window.location.href = `ms-outlook://compose?to=${email}`;
       setTimeout(() => {
@@ -453,7 +457,10 @@
         }
       }, 2000);
     } else {
-      window.open(`https://outlook.office.com/mail/deeplink/compose?to=${email}`, '_blank');
+      window.open(
+        `https://outlook.office.com/mail/deeplink/compose?to=${email}`,
+        "_blank",
+      );
     }
   }
 
@@ -520,7 +527,7 @@
   class="explore-page"
   class:is-searching={searchQuery.trim() !== ""}
   class:search-active={isSearchActive}
-  style:display={active ? 'block' : 'none'}
+  style:display={active ? "block" : "none"}
 >
   <header
     class="explore-hero"
@@ -672,7 +679,7 @@
         <div class="no-results-icon">
           <i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i>
         </div>
-            <p>{$t.explore.noResults} "<strong>{searchQuery}</strong>"</p>
+        <p>{$t.explore.noResults} "<strong>{searchQuery}</strong>"</p>
       </div>
     {/if}
 
@@ -696,7 +703,9 @@
         </p>
       {/if}
       {#if favoriteContactMessage}
-        <p class="favorite-contact-message" role="status">{favoriteContactMessage}</p>
+        <p class="favorite-contact-message" role="status">
+          {favoriteContactMessage}
+        </p>
       {/if}
 
       {#if !$settingsStore.campusId && filteredContacts.length === 0}
@@ -750,106 +759,121 @@
                   <div class="contact-avatar">
                     {contact.person.charAt(0).toUpperCase()}
                   </div>
-                <div class="search-contact-info">
-                  <div class="search-contact-meta">
-                    {#if contact.programs && contact.programs.length > 0}
-                      <div class="contact-program-list">
-                        {#each contact.programs as prog}
-                          <div class="program-item">
-                            <i
-                              class="ph-bold ph-graduation-cap"
-                              style="margin-right: 4px; color: var(--primary-color);"
-                            ></i>
-                            {@html highlightMatch(prog, searchQuery)}
-                          </div>
-                        {/each}
-                      </div>
-                    {/if}
-                    {#if contact.services && contact.services.length > 0}
-                      <div class="contact-service-list">
-                        {#each contact.services as service}
-                          <div class="service-item">
-                            <i
-                              class="ph-bold ph-wrench"
-                              style="margin-right: 4px; color: var(--primary-color);"
-                            ></i>
-                            {@html highlightMatch(service, searchQuery)}
-                          </div>
-                        {/each}
-                      </div>
-                    {/if}
-                  </div>
-                  <div class="search-contact-name">
-                    {@html highlightMatch(contact.person, searchQuery)}
-                    <div class="search-contact-tags">
-                      {#each contact.tags as tag}
-                        {#if tag.startsWith("campus:")}
-                          <span class="contact-tag campus-tag"
-                            >{@html highlightMatch(
-                              tag.replace("campus:", ""),
-                              searchQuery,
-                            )}</span
-                          >
-                        {:else if tag.startsWith("school:")}
-                          <span class="contact-tag school-tag"
-                            >{@html highlightMatch(
-                              tag.replace("school:", ""),
-                              searchQuery,
-                            )}</span
-                          >
-                        {:else}
-                          <span class="contact-tag"
-                            >{@html highlightMatch(tag, searchQuery)}</span
-                          >
-                        {/if}
-                      {/each}
-                    </div>
-                    <div class="contact-direct-details">
-                      <button
-                        class="contact-direct-link"
-                        type="button"
-                        onclick={(event) => openOutlookCompose(contact.email, event)}
-                      >
-                        <i class="ph-bold ph-envelope"></i>
-                        <span
-                          >{@html highlightMatch(
-                            contact.email,
-                            searchQuery,
-                          )}</span
-                        >
-                      </button>
-                      {#if contact.phone}
-                        <a
-                          class="contact-direct-link"
-                          href="tel:{contact.phone.replace(/[\s-]/g, '')}"
-                          onclick={(event) => event.stopPropagation()}
-                        >
-                          <i class="ph-bold ph-phone"></i>
-                          <span>{contact.phone}</span>
-                        </a>
+                  <div class="search-contact-info">
+                    <div class="search-contact-meta">
+                      {#if contact.programs && contact.programs.length > 0}
+                        <div class="contact-program-list">
+                          {#each contact.programs as prog}
+                            <div class="program-item">
+                              <i
+                                class="ph-bold ph-graduation-cap"
+                                style="margin-right: 4px; color: var(--primary-color);"
+                              ></i>
+                              {@html highlightMatch(prog, searchQuery)}
+                            </div>
+                          {/each}
+                        </div>
+                      {/if}
+                      {#if contact.services && contact.services.length > 0}
+                        <div class="contact-service-list">
+                          {#each contact.services as service}
+                            <div class="service-item">
+                              <i
+                                class="ph-bold ph-wrench"
+                                style="margin-right: 4px; color: var(--primary-color);"
+                              ></i>
+                              {@html highlightMatch(service, searchQuery)}
+                            </div>
+                          {/each}
+                        </div>
                       {/if}
                     </div>
+                    <div class="search-contact-name">
+                      {@html highlightMatch(contact.person, searchQuery)}
+                      <div class="search-contact-tags">
+                        {#each contact.tags as tag}
+                          {#if tag.startsWith("campus:")}
+                            <span class="contact-tag campus-tag"
+                              >{@html highlightMatch(
+                                tag.replace("campus:", ""),
+                                searchQuery,
+                              )}</span
+                            >
+                          {:else if tag.startsWith("school:")}
+                            <span class="contact-tag school-tag"
+                              >{@html highlightMatch(
+                                tag.replace("school:", ""),
+                                searchQuery,
+                              )}</span
+                            >
+                          {:else}
+                            <span class="contact-tag"
+                              >{@html highlightMatch(tag, searchQuery)}</span
+                            >
+                          {/if}
+                        {/each}
+                      </div>
+                      <div class="contact-direct-details">
+                        <button
+                          class="contact-direct-link"
+                          type="button"
+                          onclick={(event) =>
+                            openOutlookCompose(contact.email, event)}
+                        >
+                          <i class="ph-bold ph-envelope"></i>
+                          <span
+                            >{@html highlightMatch(
+                              contact.email,
+                              searchQuery,
+                            )}</span
+                          >
+                        </button>
+                        {#if contact.phone}
+                          <a
+                            class="contact-direct-link"
+                            href="tel:{contact.phone.replace(/[\s-]/g, '')}"
+                            onclick={(event) => event.stopPropagation()}
+                          >
+                            <i class="ph-bold ph-phone"></i>
+                            <span>{contact.phone}</span>
+                          </a>
+                        {/if}
+                      </div>
+                    </div>
                   </div>
-                </div>
                 </div>
                 <div class="search-contact-actions">
                   <button
                     type="button"
                     class="search-contact-btn favorite"
-                    class:active={$favoriteContacts.includes(normalizeContactEmail(contact.email))}
-                    onclick={(event) => handleToggleFavoriteContact(contact, event)}
-                    title={$favoriteContacts.includes(normalizeContactEmail(contact.email))
+                    class:active={$favoriteContacts.includes(
+                      normalizeContactEmail(contact.email),
+                    )}
+                    onclick={(event) =>
+                      handleToggleFavoriteContact(contact, event)}
+                    title={$favoriteContacts.includes(
+                      normalizeContactEmail(contact.email),
+                    )
                       ? $t.explore.removeFavoriteContact
                       : $t.explore.addFavoriteContact}
-                    aria-label={$favoriteContacts.includes(normalizeContactEmail(contact.email))
+                    aria-label={$favoriteContacts.includes(
+                      normalizeContactEmail(contact.email),
+                    )
                       ? $t.explore.removeFavoriteContact
                       : $t.explore.addFavoriteContact}
-                    ><i class={$favoriteContacts.includes(normalizeContactEmail(contact.email)) ? "ph-fill ph-star" : "ph-bold ph-star"}></i></button
+                    ><i
+                      class={$favoriteContacts.includes(
+                        normalizeContactEmail(contact.email),
+                      )
+                        ? "ph-fill ph-star"
+                        : "ph-bold ph-star"}
+                    ></i></button
                   >
                   <button
                     type="button"
                     class="search-contact-btn mail"
-                    onclick={(event) => openOutlookCompose(contact.email, event)}
+                    onclick={(event) =>
+                      openOutlookCompose(contact.email, event)}
                     title={$t.explore.emailContact}
                     ><i class="ph-bold ph-envelope"></i></button
                   >
@@ -954,14 +978,20 @@
           <div class="banner-body">
             <div class="banner-tag">NEW FEATURE</div>
             <h2>Interactive Campus Map</h2>
-            <p>Navigate floors, find rooms in SHED, Cube & Hall, and calculate accessible routes.</p>
+            <p>
+              Navigate floors, find rooms in SHED, Cube & Hall, and calculate
+              accessible routes.
+            </p>
           </div>
           <div class="banner-arrow">
             <i class="ph-bold ph-arrow-right"></i>
           </div>
         </a>
       {:else}
-        <div class="map-promo-banner-card glass coming-soon-map-card" aria-disabled="true">
+        <div
+          class="map-promo-banner-card glass coming-soon-map-card"
+          aria-disabled="true"
+        >
           <div class="banner-glow-effect"></div>
           <div class="banner-icon-box">
             <i class="ph-bold ph-map-trifold"></i>
@@ -1842,7 +1872,6 @@
 
   .explore-page.search-active .search-sticky-wrapper::before,
   .explore-page.is-searching .search-sticky-wrapper::before {
-    background: color-mix(in srgb, var(--bg-color) 88%, transparent);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     box-shadow: 0 12px 28px rgba(20, 33, 61, 0.08);
@@ -2680,19 +2709,28 @@
     padding: 1.5rem;
     margin-bottom: 2rem;
     border-radius: 1.25rem;
-    background:
-      linear-gradient(135deg, rgba(28, 28, 62, 0.72) 0%, rgba(56, 33, 91, 0.58) 52%, rgba(15, 23, 42, 0.5) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(28, 28, 62, 0.72) 0%,
+      rgba(56, 33, 91, 0.58) 52%,
+      rgba(15, 23, 42, 0.5) 100%
+    );
     border: 1px solid rgba(168, 85, 247, 0.28);
     text-decoration: none;
     color: inherit;
     overflow: hidden;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+    transition:
+      transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
   }
 
   .map-promo-banner-card:hover {
     transform: translateY(-2px);
     border-color: rgba(196, 181, 253, 0.55);
-    box-shadow: 0 10px 30px -10px rgba(168, 85, 247, 0.28), 0 0 15px rgba(96, 165, 250, 0.16);
+    box-shadow:
+      0 10px 30px -10px rgba(168, 85, 247, 0.28),
+      0 0 15px rgba(96, 165, 250, 0.16);
   }
 
   .banner-glow-effect {
@@ -2701,7 +2739,12 @@
     left: 10%;
     width: 250px;
     height: 150px;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, rgba(96, 165, 250, 0.14) 45%, transparent 72%);
+    background: radial-gradient(
+      circle,
+      rgba(168, 85, 247, 0.18) 0%,
+      rgba(96, 165, 250, 0.14) 45%,
+      transparent 72%
+    );
     filter: blur(20px);
     pointer-events: none;
     transform: translate(-50%, -50%);
@@ -2755,7 +2798,9 @@
   .banner-arrow {
     font-size: 1.25rem;
     color: #cbd5e1;
-    transition: transform 0.3s ease, color 0.3s ease;
+    transition:
+      transform 0.3s ease,
+      color 0.3s ease;
   }
 
   .map-promo-banner-card:hover .banner-arrow {
@@ -2782,7 +2827,7 @@
       gap: 1rem;
       padding: 1.25rem;
     }
-    
+
     .banner-arrow {
       align-self: flex-end;
       margin-top: -1.5rem;

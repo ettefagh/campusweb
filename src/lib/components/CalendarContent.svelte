@@ -39,9 +39,10 @@
 
   // ─── Responsive Layout Breakpoints ─────────────────────────────────
   let innerWidth = 1024;
+  let innerHeight = 1024;
   $: isDesktop = innerWidth >= 1024;
-  $: isLandscapeMobile = innerWidth >= 600 && innerWidth < 1024;
-  $: isPortraitMobile = innerWidth < 600;
+  $: isLandscapeMobile = innerWidth < 1024 && innerWidth > innerHeight;
+  $: isPortraitMobile = innerWidth < 1024 && innerWidth <= innerHeight;
 
   // ─── Calendar Instance & UI State ─────────────────────────────────
   let ecComponent: any;
@@ -685,7 +686,7 @@
   }
 </script>
 
-<svelte:window bind:innerWidth on:click={handleWindowClick} />
+<svelte:window bind:innerWidth bind:innerHeight on:click={handleWindowClick} />
 
 <div class="calendar-page" style:display={active ? 'flex' : 'none'}>
   <div class="calendar-page-layout">
@@ -1159,12 +1160,14 @@
 
   .calendar-page-layout {
     border-radius: var(--radius-lg);
+    min-width: 0;
   }
 
   .calendar-main {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+    min-width: 0;
   }
 
   .calendar-header {
@@ -1503,6 +1506,7 @@
     box-shadow: var(--campus-shadow);
     height: clamp(440px, calc(100svh - 330px), 720px);
     min-height: 440px;
+    min-width: 0; /* Add this to prevent flex child expansion */
     padding-bottom: 67px; /* Reserve space for the absolutely-positioned navigation toolbar */
     transition: opacity 0.3s ease;
   }
@@ -2097,13 +2101,13 @@
 
   /* Dark mode: translucent dark base with a subtle color wash */
   :global(html[data-theme="dark"] .ec-event-inner) {
-    background-color: #000000b3 !important;
+    background-color: rgba(255, 255, 255, 0.04) !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
     color: white !important;
   }
 
   :global(html[data-theme="dark"] .ec-event-inner::before) {
-    opacity: 0.25; /* Increased tint intensity to remain visible against the dark base */
+    opacity: 0.35; /* Increased tint intensity to remain visible against the dark base */
   }
 
   :global(.ec-event:hover .ec-event-inner) {

@@ -67,7 +67,7 @@
   // Rebuild greeting context reactively when any input state changes (mount, settings, events, weather)
   $: if (isMounted) {
     baseCtx = {
-      userId: $settingsStore.deviceId || "unknown",
+      userId: "unknown",
       firstName: $settingsStore.firstName,
       dayPeriod: getDayPeriod(),
       nextClass: getNextClassContext(upcomingEvents),

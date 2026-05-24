@@ -183,10 +183,10 @@ export const RULES: GreetingRule[] = [
   }
 ];
 
-export function evaluateGreeting(ctx: GreetingContext, tGreetings?: Record<string, {headline: string, subline?: string}[]>): GreetingDecision {
+export function evaluateGreeting(ctx: GreetingContext, tGreetings?: Record<string, readonly { readonly headline: string; readonly subline?: string }[]>): GreetingDecision {
   const eligibleRules = RULES.filter(r => 
     r.enabled && 
-    !ctx.recentGreetingIds.includes(r.id) &&
+    (r.priority >= 100 || !ctx.recentGreetingIds.includes(r.id)) &&
     r.when(ctx)
   );
   

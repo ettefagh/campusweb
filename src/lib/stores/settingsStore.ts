@@ -75,7 +75,7 @@ export interface AppSettings {
   /** Feed refresh rate in minutes */
   feedRefreshRate: number;
   /** Home calendar widget mode */
-  calendarWidgetMode: 'today' | 'next';
+  calendarWidgetMode: 'today' | 'next' | 'month';
 }
 
 // ── Static Data: Campuses ─────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     { id: 'favorites', enabled: true },
     { id: 'cards', enabled: true },
     { id: 'favoriteContacts', enabled: false },
-    { id: 'feed', enabled: false }
+
   ],
   feedRefreshRate: 5,
   calendarWidgetMode: 'today',
