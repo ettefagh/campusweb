@@ -1,0 +1,4221 @@
+{
+  "sourcePdf": "/Users/h.ettefagh/Documents/Vibe Coding/campusweb/docs/Berlin (London style) - Railmap.pdf",
+  "pageWidth": 10480.0,
+  "pageHeight": 7402.05,
+  "generatedAt": "2026-05-23",
+  "itemCount": 468,
+  "items": [
+    {
+      "text": "Richtung",
+      "normalizedText": "richtung",
+      "x": 3241.51,
+      "y": 393.63,
+      "width": 198.1,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Richtung Neustrelitz",
+      "normalizedText": "richtung neustrelitz",
+      "x": 4603.37,
+      "y": 393.63,
+      "width": 463.39,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Richtung Templin",
+      "normalizedText": "richtung templin",
+      "x": 5219.4,
+      "y": 393.63,
+      "width": 394.85,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Richtung Stralsund",
+      "normalizedText": "richtung stralsund",
+      "x": 9478.39,
+      "y": 432.47,
+      "width": 424.03,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Wittenberge",
+      "normalizedText": "wittenberge",
+      "x": 3163.94,
+      "y": 437.65,
+      "width": 275.66,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Groß Schönebeck",
+      "normalizedText": "gross schönebeck",
+      "x": 6684.55,
+      "y": 441.63,
+      "width": 392.02,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Kremmen",
+      "normalizedText": "kremmen",
+      "x": 3656.56,
+      "y": 455.36,
+      "width": 193.91,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "und Schwedt",
+      "normalizedText": "und schwedt",
+      "x": 9478.39,
+      "y": 480.47,
+      "width": 292.08,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Schwante",
+      "normalizedText": "schwante",
+      "x": 3745.51,
+      "y": 546.92,
+      "width": 187.57,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Sachsenhausen (Nordb)",
+      "normalizedText": "sachsenhausen nordb",
+      "x": 5203.04,
+      "y": 571.2,
+      "width": 461.33,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wandlitzsee",
+      "normalizedText": "wandlitzsee",
+      "x": 6672.91,
+      "y": 600.18,
+      "width": 239.82,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bernau-",
+      "normalizedText": "bernau-",
+      "x": 7771.55,
+      "y": 607.45,
+      "width": 153.09,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Friedenstal",
+      "normalizedText": "friedenstal",
+      "x": 7739.25,
+      "y": 643.44,
+      "width": 217.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Eberswalde",
+      "normalizedText": "eberswalde",
+      "x": 9398.13,
+      "y": 661.88,
+      "width": 226.63,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Oranienburg",
+      "normalizedText": "oranienburg",
+      "x": 4746.29,
+      "y": 671.12,
+      "width": 243.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Vehlefanz",
+      "normalizedText": "vehlefanz",
+      "x": 3869.41,
+      "y": 674.6,
+      "width": 195.8,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hbf",
+      "normalizedText": "hbf",
+      "x": 9398.13,
+      "y": 697.87,
+      "width": 73.46,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Zepernick",
+      "normalizedText": "zepernick",
+      "x": 7411.69,
+      "y": 711.56,
+      "width": 194.84,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bärenklau",
+      "normalizedText": "bärenklau",
+      "x": 3967.48,
+      "y": 768.56,
+      "width": 194.0,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wandlitz",
+      "normalizedText": "wandlitz",
+      "x": 6672.91,
+      "y": 773.98,
+      "width": 174.38,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Lehnitz",
+      "normalizedText": "lehnitz",
+      "x": 4850.66,
+      "y": 779.9,
+      "width": 143.14,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schmachtenhagen",
+      "normalizedText": "schmachtenhagen",
+      "x": 5642.99,
+      "y": 805.73,
+      "width": 354.31,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Zühlsdorf",
+      "normalizedText": "zühlsdorf",
+      "x": 6293.82,
+      "y": 805.73,
+      "width": 196.73,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Melchow",
+      "normalizedText": "melchow",
+      "x": 9205.56,
+      "y": 847.69,
+      "width": 177.53,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Röntgental",
+      "normalizedText": "röntgental",
+      "x": 7245.96,
+      "y": 856.67,
+      "width": 215.46,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Velten (Mark)",
+      "normalizedText": "velten mark",
+      "x": 4075.93,
+      "y": 877.84,
+      "width": 266.11,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schönwalde",
+      "normalizedText": "schönwalde",
+      "x": 6780.77,
+      "y": 902.03,
+      "width": 234.32,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rüdnitz",
+      "normalizedText": "rüdnitz",
+      "x": 8355.6,
+      "y": 907.49,
+      "width": 150.15,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Biesenthal",
+      "normalizedText": "biesenthal",
+      "x": 8755.27,
+      "y": 907.49,
+      "width": 203.7,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wensickendorf",
+      "normalizedText": "wensickendorf",
+      "x": 5988.31,
+      "y": 912.24,
+      "width": 298.49,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bernau",
+      "normalizedText": "bernau",
+      "x": 8054.0,
+      "y": 912.37,
+      "width": 136.29,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Borgsdorf",
+      "normalizedText": "borgsdorf",
+      "x": 4848.9,
+      "y": 917.62,
+      "width": 191.44,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "(Barnim)",
+      "normalizedText": "barnim",
+      "x": 6780.77,
+      "y": 938.03,
+      "width": 165.35,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Basdorf",
+      "normalizedText": "basdorf",
+      "x": 6506.22,
+      "y": 946.22,
+      "width": 150.36,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Birkenwerder",
+      "normalizedText": "birkenwerder",
+      "x": 4864.31,
+      "y": 1000.02,
+      "width": 262.88,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Buch",
+      "normalizedText": "buch",
+      "x": 7215.22,
+      "y": 1006.91,
+      "width": 95.97,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schönerlinde",
+      "normalizedText": "schönerlinde",
+      "x": 6859.94,
+      "y": 1026.56,
+      "width": 257.92,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hohen Neuendorf",
+      "normalizedText": "hohen neuendorf",
+      "x": 4479.42,
+      "y": 1092.92,
+      "width": 354.4,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "West",
+      "normalizedText": "west",
+      "x": 4605.3,
+      "y": 1128.92,
+      "width": 102.61,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hohen",
+      "normalizedText": "hohen",
+      "x": 5150.33,
+      "y": 1139.25,
+      "width": 128.86,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hennigsdorf",
+      "normalizedText": "hennigsdorf",
+      "x": 3796.29,
+      "y": 1170.5,
+      "width": 241.04,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Neuendorf",
+      "normalizedText": "neuendorf",
+      "x": 5065.28,
+      "y": 1175.24,
+      "width": 213.91,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Karow",
+      "normalizedText": "karow",
+      "x": 7019.29,
+      "y": 1181.33,
+      "width": 124.87,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schönfließ",
+      "normalizedText": "schönfliess",
+      "x": 6094.53,
+      "y": 1186.79,
+      "width": 209.92,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bergfelde",
+      "normalizedText": "bergfelde",
+      "x": 5712.54,
+      "y": 1188.81,
+      "width": 187.32,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Heiligensee",
+      "normalizedText": "heiligensee",
+      "x": 4347.46,
+      "y": 1261.76,
+      "width": 224.53,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Mühlenbeck-",
+      "normalizedText": "mühlenbeck-",
+      "x": 6408.57,
+      "y": 1267.85,
+      "width": 256.75,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Frohnau",
+      "normalizedText": "frohnau",
+      "x": 5267.3,
+      "y": 1292.59,
+      "width": 158.84,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Mönchmühle",
+      "normalizedText": "mönchmühle",
+      "x": 6407.31,
+      "y": 1303.85,
+      "width": 258.01,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Waidmannslust",
+      "normalizedText": "waidmannslust",
+      "x": 5604.98,
+      "y": 1323.92,
+      "width": 302.65,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hermsdorf",
+      "normalizedText": "hermsdorf",
+      "x": 5274.1,
+      "y": 1370.04,
+      "width": 214.75,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schulzendorf",
+      "normalizedText": "schulzendorf",
+      "x": 4477.45,
+      "y": 1391.75,
+      "width": 260.74,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wittenau",
+      "normalizedText": "wittenau",
+      "x": 5701.2,
+      "y": 1439.17,
+      "width": 179.3,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Werneuchen",
+      "normalizedText": "werneuchen",
+      "x": 9725.27,
+      "y": 1454.92,
+      "width": 251.33,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rathaus",
+      "normalizedText": "rathaus",
+      "x": 5331.56,
+      "y": 1463.03,
+      "width": 155.69,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Reinickendorf",
+      "normalizedText": "reinickendorf",
+      "x": 5213.88,
+      "y": 1499.02,
+      "width": 273.38,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Tegel",
+      "normalizedText": "tegel",
+      "x": 4584.55,
+      "y": 1506.83,
+      "width": 107.35,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Blankenburg",
+      "normalizedText": "blankenburg",
+      "x": 6530.49,
+      "y": 1517.96,
+      "width": 242.8,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Alt-Tegel",
+      "normalizedText": "alt-tegel",
+      "x": 4204.83,
+      "y": 1533.38,
+      "width": 183.92,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wilhelmsruh",
+      "normalizedText": "wilhelmsruh",
+      "x": 5824.47,
+      "y": 1543.42,
+      "width": 257.29,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Karl-Bonhoeffer-",
+      "normalizedText": "karl-bonhoeffer-",
+      "x": 5010.3,
+      "y": 1550.26,
+      "width": 335.29,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Nervenklinik",
+      "normalizedText": "nervenklinik",
+      "x": 5097.12,
+      "y": 1586.26,
+      "width": 248.47,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Seefeld (Mark)",
+      "normalizedText": "seefeld mark",
+      "x": 9546.98,
+      "y": 1596.21,
+      "width": 283.75,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Borsigwerke",
+      "normalizedText": "borsigwerke",
+      "x": 4241.58,
+      "y": 1637.58,
+      "width": 238.27,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schönholz",
+      "normalizedText": "schönholz",
+      "x": 5929.01,
+      "y": 1654.84,
+      "width": 202.23,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Heinersdorf",
+      "normalizedText": "heinersdorf",
+      "x": 6400.29,
+      "y": 1669.21,
+      "width": 235.49,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Eichborndamm",
+      "normalizedText": "eichborndamm",
+      "x": 4872.29,
+      "y": 1682.98,
+      "width": 297.36,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Alt-",
+      "normalizedText": "alt-",
+      "x": 5576.04,
+      "y": 1686.01,
+      "width": 76.57,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Holzhauser Straße",
+      "normalizedText": "holzhauser strasse",
+      "x": 4206.09,
+      "y": 1720.99,
+      "width": 357.13,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Blumberg",
+      "normalizedText": "blumberg",
+      "x": 9507.33,
+      "y": 1729.52,
+      "width": 186.69,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wismar",
+      "normalizedText": "wismar",
+      "x": 1681.65,
+      "y": 1732.11,
+      "width": 172.03,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Lindauer Allee",
+      "normalizedText": "lindauer allee",
+      "x": 5092.29,
+      "y": 1785.38,
+      "width": 282.16,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Otisstraße",
+      "normalizedText": "otisstrasse",
+      "x": 4443.76,
+      "y": 1807.43,
+      "width": 205.81,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Pankow",
+      "normalizedText": "pankow",
+      "x": 6331.24,
+      "y": 1820.62,
+      "width": 146.92,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Blumberg-Rehhahn",
+      "normalizedText": "blumberg-rehhahn",
+      "x": 9186.5,
+      "y": 1866.82,
+      "width": 374.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Nauen",
+      "normalizedText": "nauen",
+      "x": 1839.56,
+      "y": 1867.24,
+      "width": 126.59,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wollankstraße",
+      "normalizedText": "wollankstrasse",
+      "x": 5669.37,
+      "y": 1891.05,
+      "width": 283.5,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Scharnweberstraße",
+      "normalizedText": "scharnweberstrasse",
+      "x": 4356.91,
+      "y": 1894.87,
+      "width": 376.4,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Paracelsus-Bad",
+      "normalizedText": "paracelsus-bad",
+      "x": 5124.79,
+      "y": 1915.62,
+      "width": 290.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kurt-Schumacher-Platz",
+      "normalizedText": "kurt-schumacher-platz",
+      "x": 4360.73,
+      "y": 1980.34,
+      "width": 456.96,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Franz-Neumann-Platz",
+      "normalizedText": "franz-neumann-platz",
+      "x": 5642.32,
+      "y": 1991.3,
+      "width": 420.88,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ahrensfelde Nord",
+      "normalizedText": "ahrensfelde nord",
+      "x": 9072.84,
+      "y": 2004.11,
+      "width": 354.65,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Residenzstraße",
+      "normalizedText": "residenzstrasse",
+      "x": 5225.51,
+      "y": 2014.4,
+      "width": 294.71,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schäfersee",
+      "normalizedText": "schäfersee",
+      "x": 5691.05,
+      "y": 2029.57,
+      "width": 131.82,
+      "height": 26.0,
+      "size": 26.0
+    },
+    {
+      "text": "Afrikanische Straße",
+      "normalizedText": "afrikanische strasse",
+      "x": 4530.2,
+      "y": 2066.74,
+      "width": 376.99,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wartenberg",
+      "normalizedText": "wartenberg",
+      "x": 7824.39,
+      "y": 2070.98,
+      "width": 230.41,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Nauener Platz",
+      "normalizedText": "nauener platz",
+      "x": 5275.2,
+      "y": 2094.79,
+      "width": 274.34,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bornholmer",
+      "normalizedText": "bornholmer",
+      "x": 5915.28,
+      "y": 2099.33,
+      "width": 235.75,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Straße",
+      "normalizedText": "strasse",
+      "x": 6026.53,
+      "y": 2135.32,
+      "width": 124.49,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ahrensfelde Friedhof",
+      "normalizedText": "ahrensfelde friedhof",
+      "x": 8870.87,
+      "y": 2141.41,
+      "width": 419.2,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rehberge",
+      "normalizedText": "rehberge",
+      "x": 4811.18,
+      "y": 2153.17,
+      "width": 182.7,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Brieselang",
+      "normalizedText": "brieselang",
+      "x": 1751.7,
+      "y": 2172.37,
+      "width": 200.21,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Osloer",
+      "normalizedText": "osloer",
+      "x": 5569.87,
+      "y": 2190.85,
+      "width": 133.98,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Vinetastraße",
+      "normalizedText": "vinetastrasse",
+      "x": 6853.3,
+      "y": 2212.18,
+      "width": 248.51,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Pankstraße",
+      "normalizedText": "pankstrasse",
+      "x": 5846.19,
+      "y": 2221.63,
+      "width": 211.81,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Seestraße",
+      "normalizedText": "seestrasse",
+      "x": 4888.42,
+      "y": 2239.61,
+      "width": 189.92,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Leopoldplatz",
+      "normalizedText": "leopoldplatz",
+      "x": 5230.05,
+      "y": 2290.39,
+      "width": 256.45,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Haselhorst",
+      "normalizedText": "haselhorst",
+      "x": 3157.1,
+      "y": 2318.11,
+      "width": 213.57,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rohrdamm",
+      "normalizedText": "rohrdamm",
+      "x": 3541.02,
+      "y": 2318.11,
+      "width": 216.22,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Falkensee",
+      "normalizedText": "falkensee",
+      "x": 2376.62,
+      "y": 2333.35,
+      "width": 190.85,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Amrumer",
+      "normalizedText": "amrumer",
+      "x": 4916.52,
+      "y": 2350.24,
+      "width": 189.0,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Zitadelle",
+      "normalizedText": "zitadelle",
+      "x": 2847.9,
+      "y": 2365.06,
+      "width": 175.65,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Siemensdamm",
+      "normalizedText": "siemensdamm",
+      "x": 3813.65,
+      "y": 2365.06,
+      "width": 284.3,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Finken-",
+      "normalizedText": "finken-",
+      "x": 2020.41,
+      "y": 2378.8,
+      "width": 144.48,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ahrensfelde",
+      "normalizedText": "ahrensfelde",
+      "x": 9245.84,
+      "y": 2386.48,
+      "width": 242.72,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Gesundbrunnen",
+      "normalizedText": "gesundbrunnen",
+      "x": 5603.51,
+      "y": 2388.62,
+      "width": 316.05,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "krug",
+      "normalizedText": "krug",
+      "x": 2078.71,
+      "y": 2414.79,
+      "width": 86.18,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Paulsternstraße",
+      "normalizedText": "paulsternstrasse",
+      "x": 3310.49,
+      "y": 2422.01,
+      "width": 307.78,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schönhauser",
+      "normalizedText": "schönhauser",
+      "x": 6843.14,
+      "y": 2433.19,
+      "width": 250.19,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Strausberg",
+      "normalizedText": "strausberg",
+      "x": 9825.53,
+      "y": 2434.49,
+      "width": 206.22,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Altstadt Spandau",
+      "normalizedText": "altstadt spandau",
+      "x": 2591.7,
+      "y": 2458.13,
+      "width": 336.88,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Halemweg",
+      "normalizedText": "halemweg",
+      "x": 3912.14,
+      "y": 2473.04,
+      "width": 205.13,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Allee",
+      "normalizedText": "allee",
+      "x": 6843.14,
+      "y": 2473.17,
+      "width": 102.98,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Nord",
+      "normalizedText": "nord",
+      "x": 9931.45,
+      "y": 2476.49,
+      "width": 100.3,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hohenschönhausen",
+      "normalizedText": "hohenschönhausen",
+      "x": 7652.87,
+      "y": 2482.66,
+      "width": 384.22,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Westhafen",
+      "normalizedText": "westhafen",
+      "x": 5159.82,
+      "y": 2499.46,
+      "width": 214.28,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wedding",
+      "normalizedText": "wedding",
+      "x": 5435.17,
+      "y": 2500.01,
+      "width": 173.29,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Jakob-Kaiser-",
+      "normalizedText": "jakob-kaiser-",
+      "x": 4017.93,
+      "y": 2544.44,
+      "width": 266.45,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Mehrower Allee",
+      "normalizedText": "mehrower allee",
+      "x": 9091.24,
+      "y": 2557.67,
+      "width": 311.39,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Gehrenseestraße",
+      "normalizedText": "gehrenseestrasse",
+      "x": 8336.25,
+      "y": 2577.79,
+      "width": 332.81,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Seegefeld",
+      "normalizedText": "seegefeld",
+      "x": 2160.23,
+      "y": 2582.16,
+      "width": 191.69,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Voltastraße",
+      "normalizedText": "voltastrasse",
+      "x": 6227.59,
+      "y": 2602.53,
+      "width": 224.83,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Spandau",
+      "normalizedText": "spandau",
+      "x": 2641.89,
+      "y": 2612.65,
+      "width": 164.6,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Humboldthain",
+      "normalizedText": "humboldthain",
+      "x": 5715.48,
+      "y": 2636.59,
+      "width": 284.21,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Prenzlauer",
+      "normalizedText": "prenzlauer",
+      "x": 7120.72,
+      "y": 2649.15,
+      "width": 209.24,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Beusselstraße",
+      "normalizedText": "beusselstrasse",
+      "x": 4470.35,
+      "y": 2657.13,
+      "width": 271.57,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Perle-",
+      "normalizedText": "perle-",
+      "x": 5389.86,
+      "y": 2663.64,
+      "width": 118.69,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Raoul-",
+      "normalizedText": "raoul-",
+      "x": 8983.8,
+      "y": 2665.11,
+      "width": 129.02,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Stadt",
+      "normalizedText": "stadt",
+      "x": 9928.64,
+      "y": 2675.78,
+      "width": 103.11,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Eberswalder",
+      "normalizedText": "eberswalder",
+      "x": 6856.87,
+      "y": 2685.61,
+      "width": 244.44,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Reinickendorfer",
+      "normalizedText": "reinickendorfer",
+      "x": 5687.8,
+      "y": 2689.09,
+      "width": 314.03,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bernauer",
+      "normalizedText": "bernauer",
+      "x": 6353.0,
+      "y": 2689.43,
+      "width": 176.95,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Albrechtshof",
+      "normalizedText": "albrechtshof",
+      "x": 2198.12,
+      "y": 2692.96,
+      "width": 261.07,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hönow",
+      "normalizedText": "hönow",
+      "x": 9502.34,
+      "y": 2695.69,
+      "width": 139.02,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "berger",
+      "normalizedText": "berger",
+      "x": 5389.86,
+      "y": 2698.63,
+      "width": 125.83,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wallenberg-",
+      "normalizedText": "wallenberg-",
+      "x": 8983.8,
+      "y": 2701.1,
+      "width": 239.86,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Louis-Lewin-",
+      "normalizedText": "louis-lewin-",
+      "x": 9288.14,
+      "y": 2765.32,
+      "width": 251.16,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wustermark",
+      "normalizedText": "wustermark",
+      "x": 1688.11,
+      "y": 2768.51,
+      "width": 243.18,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Staaken",
+      "normalizedText": "staaken",
+      "x": 2364.73,
+      "y": 2769.14,
+      "width": 151.12,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schwartz-",
+      "normalizedText": "schwartz-",
+      "x": 5768.61,
+      "y": 2771.66,
+      "width": 194.04,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Elstal",
+      "normalizedText": "elstal",
+      "x": 2044.48,
+      "y": 2773.68,
+      "width": 111.34,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Nord-",
+      "normalizedText": "nord-",
+      "x": 6084.16,
+      "y": 2778.51,
+      "width": 117.1,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "kopffstraße",
+      "normalizedText": "kopffstrasse",
+      "x": 5768.61,
+      "y": 2807.66,
+      "width": 224.45,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Marzahn",
+      "normalizedText": "marzahn",
+      "x": 8841.26,
+      "y": 2811.02,
+      "width": 164.51,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "bahnhof",
+      "normalizedText": "bahnhof",
+      "x": 6084.16,
+      "y": 2814.5,
+      "width": 164.09,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rosenthaler",
+      "normalizedText": "rosenthaler",
+      "x": 6491.73,
+      "y": 2824.75,
+      "width": 236.92,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Jungfernheide",
+      "normalizedText": "jungfernheide",
+      "x": 4262.12,
+      "y": 2838.4,
+      "width": 282.16,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hegermühle",
+      "normalizedText": "hegermühle",
+      "x": 9790.41,
+      "y": 2847.01,
+      "width": 241.33,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Senefelderplatz",
+      "normalizedText": "senefelderplatz",
+      "x": 6852.88,
+      "y": 2863.06,
+      "width": 310.59,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Greifswalder",
+      "normalizedText": "greifswalder",
+      "x": 7291.24,
+      "y": 2864.78,
+      "width": 253.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hellersdorf",
+      "normalizedText": "hellersdorf",
+      "x": 9233.75,
+      "y": 2875.49,
+      "width": 227.77,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Birkenstraße",
+      "normalizedText": "birkenstrasse",
+      "x": 4857.38,
+      "y": 2880.49,
+      "width": 245.53,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Naturkunde-",
+      "normalizedText": "naturkunde-",
+      "x": 5516.32,
+      "y": 2911.02,
+      "width": 250.03,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Oranienburger",
+      "normalizedText": "oranienburger",
+      "x": 6086.51,
+      "y": 2920.97,
+      "width": 284.34,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Dallgow-",
+      "normalizedText": "dallgow-",
+      "x": 2156.2,
+      "y": 2928.32,
+      "width": 175.01,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Poelchaustraße",
+      "normalizedText": "poelchaustrasse",
+      "x": 8717.78,
+      "y": 2932.02,
+      "width": 300.09,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Cottbusser",
+      "normalizedText": "cottbusser",
+      "x": 9141.64,
+      "y": 2938.74,
+      "width": 216.76,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "museum",
+      "normalizedText": "museum",
+      "x": 5596.92,
+      "y": 2946.01,
+      "width": 169.43,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "inbetriebnahme vsl.",
+      "normalizedText": "inbetriebnahme vsl",
+      "x": 950.43,
+      "y": 2946.7,
+      "width": 318.01,
+      "height": 34.57,
+      "size": 34.57
+    },
+    {
+      "text": "Döberitz",
+      "normalizedText": "döberitz",
+      "x": 2159.14,
+      "y": 2968.31,
+      "width": 169.18,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Halbjahr",
+      "normalizedText": "halbjahr",
+      "x": 1026.82,
+      "y": 2979.33,
+      "width": 136.19,
+      "height": 34.57,
+      "size": 34.57
+    },
+    {
+      "text": "Mierendorffplatz",
+      "normalizedText": "mierendorffplatz",
+      "x": 4303.74,
+      "y": 2980.36,
+      "width": 331.42,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ruhleben",
+      "normalizedText": "ruhleben",
+      "x": 2839.33,
+      "y": 2991.66,
+      "width": 186.9,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rathenow",
+      "normalizedText": "rathenow",
+      "x": 1629.19,
+      "y": 2998.55,
+      "width": 224.11,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Weinmeister-",
+      "normalizedText": "weinmeister-",
+      "x": 6266.69,
+      "y": 3018.62,
+      "width": 268.17,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rosa-Luxemburg-",
+      "normalizedText": "rosa-luxemburg-",
+      "x": 6858.89,
+      "y": 3022.91,
+      "width": 340.7,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Petershagen Nord",
+      "normalizedText": "petershagen nord",
+      "x": 9567.52,
+      "y": 3045.34,
+      "width": 351.2,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "und Stendal",
+      "normalizedText": "und stendal",
+      "x": 1629.19,
+      "y": 3046.55,
+      "width": 268.66,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Tor",
+      "normalizedText": "tor",
+      "x": 5788.94,
+      "y": 3057.47,
+      "width": 65.35,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kienberg",
+      "normalizedText": "kienberg",
+      "x": 9075.87,
+      "y": 3057.52,
+      "width": 172.91,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Landsberger",
+      "normalizedText": "landsberger",
+      "x": 7506.36,
+      "y": 3064.11,
+      "width": 238.85,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Springpfuhl",
+      "normalizedText": "springpfuhl",
+      "x": 8681.07,
+      "y": 3066.34,
+      "width": 229.82,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Gärten der Welt",
+      "normalizedText": "gärten der welt",
+      "x": 9049.28,
+      "y": 3099.94,
+      "width": 198.09,
+      "height": 26.0,
+      "size": 26.0
+    },
+    {
+      "text": "Fredersdorf",
+      "normalizedText": "fredersdorf",
+      "x": 9625.02,
+      "y": 3106.91,
+      "width": 232.13,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hackescher",
+      "normalizedText": "hackescher",
+      "x": 6290.59,
+      "y": 3117.95,
+      "width": 224.78,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Olympia-",
+      "normalizedText": "olympia-",
+      "x": 2981.54,
+      "y": 3123.83,
+      "width": 183.2,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Stresow",
+      "normalizedText": "stresow",
+      "x": 2691.45,
+      "y": 3143.62,
+      "width": 157.67,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schillingstraße",
+      "normalizedText": "schillingstrasse",
+      "x": 6872.67,
+      "y": 3147.52,
+      "width": 287.11,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hauptbahnhof",
+      "normalizedText": "hauptbahnhof",
+      "x": 5435.34,
+      "y": 3151.34,
+      "width": 284.09,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Markt",
+      "normalizedText": "markt",
+      "x": 6346.7,
+      "y": 3153.95,
+      "width": 112.56,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Stadion",
+      "normalizedText": "stadion",
+      "x": 3018.59,
+      "y": 3165.83,
+      "width": 146.16,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Neuenhagen",
+      "normalizedText": "neuenhagen",
+      "x": 9551.9,
+      "y": 3169.32,
+      "width": 242.84,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Richard-",
+      "normalizedText": "richard-",
+      "x": 4069.93,
+      "y": 3170.24,
+      "width": 164.72,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Turmstraße",
+      "normalizedText": "turmstrasse",
+      "x": 4871.91,
+      "y": 3178.69,
+      "width": 227.01,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kaulsdorf-Nord",
+      "normalizedText": "kaulsdorf-nord",
+      "x": 8843.69,
+      "y": 3179.65,
+      "width": 311.72,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Westend",
+      "normalizedText": "westend",
+      "x": 3684.41,
+      "y": 3190.45,
+      "width": 175.85,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Neu-",
+      "normalizedText": "neu-",
+      "x": 3389.03,
+      "y": 3208.0,
+      "width": 97.27,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wagner-",
+      "normalizedText": "wagner-",
+      "x": 4070.39,
+      "y": 3212.24,
+      "width": 164.26,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Strausberger Platz",
+      "normalizedText": "strausberger platz",
+      "x": 7262.18,
+      "y": 3225.26,
+      "width": 353.98,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hoppegarten",
+      "normalizedText": "hoppegarten",
+      "x": 9479.32,
+      "y": 3231.02,
+      "width": 253.72,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Alexanderplatz",
+      "normalizedText": "alexanderplatz",
+      "x": 6860.28,
+      "y": 3252.73,
+      "width": 296.1,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Pichelsberg",
+      "normalizedText": "pichelsberg",
+      "x": 2738.24,
+      "y": 3259.28,
+      "width": 223.52,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kostrzyn",
+      "normalizedText": "kostrzyn",
+      "x": 9953.16,
+      "y": 3280.21,
+      "width": 199.01,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Storkower",
+      "normalizedText": "storkower",
+      "x": 7632.75,
+      "y": 3282.38,
+      "width": 200.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Biesdorf",
+      "normalizedText": "biesdorf",
+      "x": 8665.95,
+      "y": 3290.24,
+      "width": 163.21,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kaulsdorf",
+      "normalizedText": "kaulsdorf",
+      "x": 9148.44,
+      "y": 3290.24,
+      "width": 194.63,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wuhletal",
+      "normalizedText": "wuhletal",
+      "x": 8874.04,
+      "y": 3290.98,
+      "width": 182.7,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Birkenstein",
+      "normalizedText": "birkenstein",
+      "x": 9421.15,
+      "y": 3292.25,
+      "width": 219.07,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Friedrichstraße",
+      "normalizedText": "friedrichstrasse",
+      "x": 5883.57,
+      "y": 3321.07,
+      "width": 294.71,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Weberwiese",
+      "normalizedText": "weberwiese",
+      "x": 7373.31,
+      "y": 3336.4,
+      "width": 241.92,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rotes",
+      "normalizedText": "rotes",
+      "x": 6524.2,
+      "y": 3338.58,
+      "width": 110.33,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Sophie-",
+      "normalizedText": "sophie-",
+      "x": 4010.0,
+      "y": 3339.8,
+      "width": 147.8,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Olympiastadion",
+      "normalizedText": "olympiastadion",
+      "x": 2767.59,
+      "y": 3372.47,
+      "width": 310.34,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Charlotte-",
+      "normalizedText": "charlotte-",
+      "x": 3982.11,
+      "y": 3375.79,
+      "width": 203.57,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Unter",
+      "normalizedText": "unter",
+      "x": 6075.06,
+      "y": 3397.05,
+      "width": 114.47,
+      "height": 41.81,
+      "size": 41.81
+    },
+    {
+      "text": "Spree",
+      "normalizedText": "spree",
+      "x": 4671.01,
+      "y": 3398.32,
+      "width": 105.4,
+      "height": 40.0,
+      "size": 40.0
+    },
+    {
+      "text": "Kaiserdamm",
+      "normalizedText": "kaiserdamm",
+      "x": 3632.46,
+      "y": 3409.22,
+      "width": 243.56,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Jannowitzbrücke",
+      "normalizedText": "jannowitzbrücke",
+      "x": 6954.74,
+      "y": 3430.48,
+      "width": 332.3,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "den Linden",
+      "normalizedText": "den linden",
+      "x": 5974.3,
+      "y": 3432.88,
+      "width": 215.23,
+      "height": 41.81,
+      "size": 41.81
+    },
+    {
+      "text": "Frankfurter",
+      "normalizedText": "frankfurter",
+      "x": 7503.3,
+      "y": 3440.93,
+      "width": 224.03,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Lichtenberg",
+      "normalizedText": "lichtenberg",
+      "x": 8072.3,
+      "y": 3446.67,
+      "width": 230.5,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Mahlsdorf",
+      "normalizedText": "mahlsdorf",
+      "x": 9274.4,
+      "y": 3457.86,
+      "width": 201.26,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Theodor-",
+      "normalizedText": "theodor-",
+      "x": 3315.44,
+      "y": 3461.22,
+      "width": 183.62,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bellevue",
+      "normalizedText": "bellevue",
+      "x": 4832.06,
+      "y": 3463.45,
+      "width": 167.79,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bundestag",
+      "normalizedText": "bundestag",
+      "x": 5475.88,
+      "y": 3472.43,
+      "width": 200.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Deutsche",
+      "normalizedText": "deutsche",
+      "x": 4463.05,
+      "y": 3472.98,
+      "width": 185.56,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Heerstraße",
+      "normalizedText": "heerstrasse",
+      "x": 2969.15,
+      "y": 3480.2,
+      "width": 216.51,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kloster-",
+      "normalizedText": "kloster-",
+      "x": 6626.81,
+      "y": 3492.34,
+      "width": 160.02,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Heuss-",
+      "normalizedText": "heuss-",
+      "x": 3363.99,
+      "y": 3497.21,
+      "width": 135.07,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bismarck-",
+      "normalizedText": "bismarck-",
+      "x": 4051.79,
+      "y": 3501.92,
+      "width": 192.15,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Magdalenen-",
+      "normalizedText": "magdalenen-",
+      "x": 7947.16,
+      "y": 3506.75,
+      "width": 250.11,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Oper",
+      "normalizedText": "oper",
+      "x": 4463.05,
+      "y": 3508.97,
+      "width": 100.8,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Friedrichsfelde",
+      "normalizedText": "friedrichsfelde",
+      "x": 8537.68,
+      "y": 3510.15,
+      "width": 295.22,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Brandenburger",
+      "normalizedText": "brandenburger",
+      "x": 5822.25,
+      "y": 3510.57,
+      "width": 287.99,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Museums-",
+      "normalizedText": "museums-",
+      "x": 6325.41,
+      "y": 3516.2,
+      "width": 203.15,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Elsterwerdaer Platz",
+      "normalizedText": "elsterwerdaer platz",
+      "x": 8940.67,
+      "y": 3523.67,
+      "width": 384.93,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ost",
+      "normalizedText": "ost",
+      "x": 8537.68,
+      "y": 3546.14,
+      "width": 71.78,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Tiergarten",
+      "normalizedText": "tiergarten",
+      "x": 4716.52,
+      "y": 3547.61,
+      "width": 200.8,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Havel",
+      "normalizedText": "havel",
+      "x": 2438.25,
+      "y": 3548.68,
+      "width": 104.4,
+      "height": 40.0,
+      "size": 40.0
+    },
+    {
+      "text": "insel",
+      "normalizedText": "insel",
+      "x": 6380.31,
+      "y": 3552.19,
+      "width": 93.32,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ostbahnhof",
+      "normalizedText": "ostbahnhof",
+      "x": 7101.39,
+      "y": 3562.87,
+      "width": 235.87,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Messe Nord",
+      "normalizedText": "messe nord",
+      "x": 3640.98,
+      "y": 3571.64,
+      "width": 232.51,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Campus für Demokratie",
+      "normalizedText": "campus für demokratie",
+      "x": 7933.75,
+      "y": 3584.22,
+      "width": 273.98,
+      "height": 24.5,
+      "size": 24.5
+    },
+    {
+      "text": "Priort",
+      "normalizedText": "priort",
+      "x": 2032.76,
+      "y": 3599.36,
+      "width": 112.27,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Biesdorf-Süd",
+      "normalizedText": "biesdorf-süd",
+      "x": 8856.63,
+      "y": 3606.71,
+      "width": 252.38,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hansaplatz",
+      "normalizedText": "hansaplatz",
+      "x": 5156.05,
+      "y": 3607.17,
+      "width": 214.41,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ernst-Reuter",
+      "normalizedText": "ernst-reuter",
+      "x": 4599.93,
+      "y": 3610.82,
+      "width": 254.27,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "ZOB",
+      "normalizedText": "zob",
+      "x": 3789.33,
+      "y": 3613.64,
+      "width": 84.17,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Samariterstraße",
+      "normalizedText": "samariterstrasse",
+      "x": 7237.32,
+      "y": 3623.89,
+      "width": 311.6,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Anton-Wilhelm-",
+      "normalizedText": "anton-wilhelm-",
+      "x": 5820.07,
+      "y": 3629.26,
+      "width": 323.78,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wilmersdorfer",
+      "normalizedText": "wilmersdorfer",
+      "x": 3953.88,
+      "y": 3639.38,
+      "width": 293.12,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "-Platz",
+      "normalizedText": "-platz",
+      "x": 4599.93,
+      "y": 3646.82,
+      "width": 112.27,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Spittelmarkt",
+      "normalizedText": "spittelmarkt",
+      "x": 6397.15,
+      "y": 3663.16,
+      "width": 242.21,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Amo-Straße",
+      "normalizedText": "amo-strasse",
+      "x": 5865.3,
+      "y": 3665.26,
+      "width": 233.27,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Friedrichs- Tierpark",
+      "normalizedText": "friedrichs- tierpark",
+      "x": 8405.13,
+      "y": 3673.15,
+      "width": 395.39,
+      "height": 43.22,
+      "size": 42.0
+    },
+    {
+      "text": "Savigny-",
+      "normalizedText": "savigny-",
+      "x": 4349.86,
+      "y": 3697.22,
+      "width": 159.73,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "felde",
+      "normalizedText": "felde",
+      "x": 8458.09,
+      "y": 3709.15,
+      "width": 103.03,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Messe",
+      "normalizedText": "messe",
+      "x": 3298.22,
+      "y": 3713.39,
+      "width": 120.58,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "platz",
+      "normalizedText": "platz",
+      "x": 4381.28,
+      "y": 3733.21,
+      "width": 96.89,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Warschauer",
+      "normalizedText": "warschauer",
+      "x": 7316.49,
+      "y": 3739.6,
+      "width": 232.22,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Westkreuz",
+      "normalizedText": "westkreuz",
+      "x": 3664.21,
+      "y": 3740.39,
+      "width": 209.71,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Süd",
+      "normalizedText": "süd",
+      "x": 3346.44,
+      "y": 3749.38,
+      "width": 72.37,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hausvog-",
+      "normalizedText": "hausvog-",
+      "x": 6272.96,
+      "y": 3759.67,
+      "width": 179.76,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Märkisches",
+      "normalizedText": "märkisches",
+      "x": 6586.53,
+      "y": 3761.69,
+      "width": 216.01,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Stadtmitte",
+      "normalizedText": "stadtmitte",
+      "x": 5961.18,
+      "y": 3772.1,
+      "width": 206.39,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Potsdamer",
+      "normalizedText": "potsdamer",
+      "x": 5413.51,
+      "y": 3778.24,
+      "width": 209.62,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Nöldnerplatz",
+      "normalizedText": "nöldnerplatz",
+      "x": 8265.98,
+      "y": 3780.84,
+      "width": 259.85,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "teiplatz",
+      "normalizedText": "teiplatz",
+      "x": 6288.54,
+      "y": 3795.67,
+      "width": 148.6,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ostkreuz",
+      "normalizedText": "ostkreuz",
+      "x": 7662.64,
+      "y": 3822.99,
+      "width": 178.88,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Zoologischer",
+      "normalizedText": "zoologischer",
+      "x": 4889.39,
+      "y": 3851.4,
+      "width": 252.88,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Mendelssohn-",
+      "normalizedText": "mendelssohn-",
+      "x": 5289.9,
+      "y": 3868.2,
+      "width": 277.66,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Heinrich-",
+      "normalizedText": "heinrich-",
+      "x": 6832.14,
+      "y": 3868.91,
+      "width": 181.69,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Anhalter",
+      "normalizedText": "anhalter",
+      "x": 5836.37,
+      "y": 3874.29,
+      "width": 171.74,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rummelsburg",
+      "normalizedText": "rummelsburg",
+      "x": 8206.95,
+      "y": 3879.19,
+      "width": 272.16,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kochstraße",
+      "normalizedText": "kochstrasse",
+      "x": 6249.9,
+      "y": 3885.55,
+      "width": 220.67,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Garten",
+      "normalizedText": "garten",
+      "x": 4889.39,
+      "y": 3891.38,
+      "width": 135.91,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Uhlandstraße",
+      "normalizedText": "uhlandstrasse",
+      "x": 4310.3,
+      "y": 3902.39,
+      "width": 265.44,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bartholdy-",
+      "normalizedText": "bartholdy-",
+      "x": 5356.64,
+      "y": 3904.19,
+      "width": 210.92,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Heine-",
+      "normalizedText": "heine-",
+      "x": 6832.14,
+      "y": 3904.91,
+      "width": 129.36,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Checkpoint",
+      "normalizedText": "checkpoint",
+      "x": 6249.79,
+      "y": 3923.02,
+      "width": 139.18,
+      "height": 26.0,
+      "size": 26.0
+    },
+    {
+      "text": "Moritzplatz",
+      "normalizedText": "moritzplatz",
+      "x": 6504.54,
+      "y": 3924.52,
+      "width": 222.89,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Park",
+      "normalizedText": "park",
+      "x": 5484.57,
+      "y": 3940.19,
+      "width": 82.99,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Charlottenburg",
+      "normalizedText": "charlottenburg",
+      "x": 3945.06,
+      "y": 3944.72,
+      "width": 299.5,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Charlie",
+      "normalizedText": "charlie",
+      "x": 6249.79,
+      "y": 3947.02,
+      "width": 88.14,
+      "height": 26.0,
+      "size": 26.0
+    },
+    {
+      "text": "Betriebsbahnhof Rummelsburg",
+      "normalizedText": "betriebsbahnhof rummelsburg",
+      "x": 8280.88,
+      "y": 3956.59,
+      "width": 609.5,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wittenberg- Kurfürsten-",
+      "normalizedText": "wittenberg- kurfürsten-",
+      "x": 4945.76,
+      "y": 3962.24,
+      "width": 501.61,
+      "height": 43.05,
+      "size": 42.0
+    },
+    {
+      "text": "Möckern-",
+      "normalizedText": "möckern-",
+      "x": 5949.35,
+      "y": 3965.39,
+      "width": 186.35,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kurfürstendamm",
+      "normalizedText": "kurfürstendamm",
+      "x": 4346.25,
+      "y": 3969.84,
+      "width": 338.06,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Prinzenstraße",
+      "normalizedText": "prinzenstrasse",
+      "x": 6302.52,
+      "y": 3998.19,
+      "width": 266.24,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "brücke",
+      "normalizedText": "brücke",
+      "x": 5975.26,
+      "y": 4001.38,
+      "width": 134.48,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Karlshorst",
+      "normalizedText": "karlshorst",
+      "x": 8371.93,
+      "y": 4039.46,
+      "width": 206.55,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Adenauerplatz",
+      "normalizedText": "adenauerplatz",
+      "x": 3947.67,
+      "y": 4065.39,
+      "width": 285.81,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schlesisches",
+      "normalizedText": "schlesisches",
+      "x": 7096.7,
+      "y": 4070.89,
+      "width": 245.32,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Halensee",
+      "normalizedText": "halensee",
+      "x": 3682.4,
+      "y": 4095.0,
+      "width": 179.76,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kottbusser",
+      "normalizedText": "kottbusser",
+      "x": 6525.33,
+      "y": 4104.79,
+      "width": 213.78,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hallesches",
+      "normalizedText": "hallesches",
+      "x": 6236.75,
+      "y": 4106.76,
+      "width": 211.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Gleisdreieck",
+      "normalizedText": "gleisdreieck",
+      "x": 5498.81,
+      "y": 4113.23,
+      "width": 242.38,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Görlitzer",
+      "normalizedText": "görlitzer",
+      "x": 6843.99,
+      "y": 4116.84,
+      "width": 177.07,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wuhlheide",
+      "normalizedText": "wuhlheide",
+      "x": 8447.49,
+      "y": 4127.53,
+      "width": 213.4,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Augsburger",
+      "normalizedText": "augsburger",
+      "x": 4784.77,
+      "y": 4137.5,
+      "width": 223.02,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Spichernstraße",
+      "normalizedText": "spichernstrasse",
+      "x": 4361.58,
+      "y": 4148.59,
+      "width": 292.66,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bülow",
+      "normalizedText": "bülow",
+      "x": 5250.63,
+      "y": 4176.02,
+      "width": 121.51,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Friedrichs-",
+      "normalizedText": "friedrichs-",
+      "x": 9000.21,
+      "y": 4183.27,
+      "width": 208.99,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wilhelms-",
+      "normalizedText": "wilhelms-",
+      "x": 9431.47,
+      "y": 4185.28,
+      "width": 205.88,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hohen-",
+      "normalizedText": "hohen-",
+      "x": 4382.7,
+      "y": 4210.12,
+      "width": 145.66,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "-straße",
+      "normalizedText": "-strasse",
+      "x": 5241.86,
+      "y": 4212.01,
+      "width": 139.06,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Treptower",
+      "normalizedText": "treptower",
+      "x": 7570.8,
+      "y": 4217.77,
+      "width": 205.76,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "hagen",
+      "normalizedText": "hagen",
+      "x": 9047.54,
+      "y": 4219.26,
+      "width": 114.32,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Nollendorf-",
+      "normalizedText": "nollendorf-",
+      "x": 4861.29,
+      "y": 4219.53,
+      "width": 235.91,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Köpenick Hirschgarten",
+      "normalizedText": "köpenick hirschgarten",
+      "x": 8540.56,
+      "y": 4224.26,
+      "width": 458.89,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rahnsdorf",
+      "normalizedText": "rahnsdorf",
+      "x": 9217.56,
+      "y": 4225.27,
+      "width": 203.07,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Mehringdamm",
+      "normalizedText": "mehringdamm",
+      "x": 6248.81,
+      "y": 4225.83,
+      "width": 280.94,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "zollern-",
+      "normalizedText": "zollern-",
+      "x": 4374.22,
+      "y": 4246.12,
+      "width": 154.14,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schönleinstraße",
+      "normalizedText": "schönleinstrasse",
+      "x": 6797.62,
+      "y": 4248.85,
+      "width": 314.33,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Yorckstraße",
+      "normalizedText": "yorckstrasse",
+      "x": 5394.61,
+      "y": 4267.45,
+      "width": 229.36,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Konstanzer",
+      "normalizedText": "konstanzer",
+      "x": 4054.05,
+      "y": 4279.25,
+      "width": 219.83,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Fangschleuse",
+      "normalizedText": "fangschleuse",
+      "x": 9755.12,
+      "y": 4287.13,
+      "width": 258.22,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Viktoria-",
+      "normalizedText": "viktoria-",
+      "x": 5150.3,
+      "y": 4290.47,
+      "width": 168.67,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Großgörschenstraße",
+      "normalizedText": "grossgörschenstrasse",
+      "x": 5377.34,
+      "y": 4305.15,
+      "width": 246.84,
+      "height": 26.0,
+      "size": 26.0
+    },
+    {
+      "text": "Güntzelstraße",
+      "normalizedText": "güntzelstrasse",
+      "x": 4710.77,
+      "y": 4312.6,
+      "width": 277.49,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Gneisenaustraße",
+      "normalizedText": "gneisenaustrasse",
+      "x": 6345.24,
+      "y": 4322.93,
+      "width": 326.34,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Luise-",
+      "normalizedText": "luise-",
+      "x": 5150.3,
+      "y": 4326.46,
+      "width": 116.63,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hermannplatz",
+      "normalizedText": "hermannplatz",
+      "x": 6785.19,
+      "y": 4356.28,
+      "width": 277.83,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Platz der",
+      "normalizedText": "platz der",
+      "x": 6007.56,
+      "y": 4372.96,
+      "width": 172.96,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bayerischer",
+      "normalizedText": "bayerischer",
+      "x": 4864.02,
+      "y": 4378.25,
+      "width": 226.09,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Erkner",
+      "normalizedText": "erkner",
+      "x": 9653.23,
+      "y": 4395.28,
+      "width": 130.2,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Marquardt",
+      "normalizedText": "marquardt",
+      "x": 2032.76,
+      "y": 4401.01,
+      "width": 206.39,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kleistpark",
+      "normalizedText": "kleistpark",
+      "x": 5293.98,
+      "y": 4403.36,
+      "width": 198.41,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Fehrbelliner",
+      "normalizedText": "fehrbelliner",
+      "x": 4177.49,
+      "y": 4405.13,
+      "width": 242.09,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Luftbrücke",
+      "normalizedText": "luftbrücke",
+      "x": 5964.26,
+      "y": 4408.95,
+      "width": 216.26,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hohenzollerndamm",
+      "normalizedText": "hohenzollerndamm",
+      "x": 3640.23,
+      "y": 4425.16,
+      "width": 388.75,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Südstern",
+      "normalizedText": "südstern",
+      "x": 6440.45,
+      "y": 4443.26,
+      "width": 175.06,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rathaus Neukölln",
+      "normalizedText": "rathaus neukölln",
+      "x": 7007.75,
+      "y": 4453.81,
+      "width": 348.43,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Frankfurt",
+      "normalizedText": "frankfurt",
+      "x": 9942.55,
+      "y": 4456.64,
+      "width": 209.57,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Berliner",
+      "normalizedText": "berliner",
+      "x": 4699.05,
+      "y": 4496.94,
+      "width": 156.37,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Eisenacher",
+      "normalizedText": "eisenacher",
+      "x": 5171.8,
+      "y": 4499.21,
+      "width": 211.09,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Blisse-",
+      "normalizedText": "blisse-",
+      "x": 4493.88,
+      "y": 4499.88,
+      "width": 128.98,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "(Oder)",
+      "normalizedText": "oder",
+      "x": 10004.95,
+      "y": 4501.62,
+      "width": 147.17,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Boddinstraße",
+      "normalizedText": "boddinstrasse",
+      "x": 6469.26,
+      "y": 4534.91,
+      "width": 257.96,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "und",
+      "normalizedText": "und",
+      "x": 10052.42,
+      "y": 4546.59,
+      "width": 86.4,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Karl-Marx-",
+      "normalizedText": "karl-marx-",
+      "x": 7144.58,
+      "y": 4559.6,
+      "width": 210.71,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Paradestraße",
+      "normalizedText": "paradestrasse",
+      "x": 5927.38,
+      "y": 4580.6,
+      "width": 250.36,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Cottbus",
+      "normalizedText": "cottbus",
+      "x": 9973.41,
+      "y": 4591.57,
+      "width": 178.7,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Julius-",
+      "normalizedText": "julius-",
+      "x": 5507.3,
+      "y": 4595.98,
+      "width": 132.85,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Heidelberger Platz",
+      "normalizedText": "heidelberger platz",
+      "x": 3864.93,
+      "y": 4601.6,
+      "width": 360.11,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Sonnenallee",
+      "normalizedText": "sonnenallee",
+      "x": 7547.74,
+      "y": 4609.79,
+      "width": 240.29,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Plänterwald",
+      "normalizedText": "plänterwald",
+      "x": 7936.73,
+      "y": 4619.56,
+      "width": 236.08,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Leber-",
+      "normalizedText": "leber-",
+      "x": 5507.3,
+      "y": 4631.97,
+      "width": 127.47,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schöneberg",
+      "normalizedText": "schöneberg",
+      "x": 4853.15,
+      "y": 4639.11,
+      "width": 226.51,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Grunewald",
+      "normalizedText": "grunewald",
+      "x": 2825.05,
+      "y": 4663.13,
+      "width": 216.09,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Leinestraße",
+      "normalizedText": "leinestrasse",
+      "x": 6501.18,
+      "y": 4667.08,
+      "width": 226.04,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rüdesheimer Platz",
+      "normalizedText": "rüdesheimer platz",
+      "x": 3754.17,
+      "y": 4686.07,
+      "width": 364.56,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Innsbrucker",
+      "normalizedText": "innsbrucker",
+      "x": 4855.08,
+      "y": 4743.98,
+      "width": 233.35,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Breitenbachplatz",
+      "normalizedText": "breitenbachplatz",
+      "x": 3709.15,
+      "y": 4764.31,
+      "width": 331.34,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Neukölln",
+      "normalizedText": "neukölln",
+      "x": 6962.51,
+      "y": 4778.21,
+      "width": 181.1,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Tempelhof",
+      "normalizedText": "tempelhof",
+      "x": 6233.64,
+      "y": 4781.32,
+      "width": 217.35,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Südkreuz",
+      "normalizedText": "südkreuz",
+      "x": 5596.8,
+      "y": 4782.5,
+      "width": 179.47,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Podbielskiallee",
+      "normalizedText": "podbielskiallee",
+      "x": 3658.67,
+      "y": 4851.71,
+      "width": 294.42,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bundesplatz",
+      "normalizedText": "bundesplatz",
+      "x": 4697.66,
+      "y": 4888.0,
+      "width": 239.4,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Hermannstraße",
+      "normalizedText": "hermannstrasse",
+      "x": 6610.68,
+      "y": 4890.61,
+      "width": 303.2,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Köllnische Heide",
+      "normalizedText": "köllnische heide",
+      "x": 7647.28,
+      "y": 4899.47,
+      "width": 331.38,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Dahlem-Dorf",
+      "normalizedText": "dahlem-dorf",
+      "x": 3614.69,
+      "y": 4931.22,
+      "width": 259.85,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Alt-Tempelhof",
+      "normalizedText": "alt-tempelhof",
+      "x": 6250.23,
+      "y": 4966.67,
+      "width": 293.92,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Baumschulenweg",
+      "normalizedText": "baumschulenweg",
+      "x": 8207.33,
+      "y": 4966.86,
+      "width": 339.65,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Grenzallee",
+      "normalizedText": "grenzallee",
+      "x": 7200.74,
+      "y": 4975.99,
+      "width": 211.13,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Friedrich-Wilhelm-Platz",
+      "normalizedText": "friedrich-wilhelm-platz",
+      "x": 4164.14,
+      "y": 4996.78,
+      "width": 470.86,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Freie Universität",
+      "normalizedText": "freie universität",
+      "x": 3449.51,
+      "y": 5008.04,
+      "width": 324.16,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Spindlersfeld",
+      "normalizedText": "spindlersfeld",
+      "x": 9285.89,
+      "y": 5023.81,
+      "width": 263.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Oberspree",
+      "normalizedText": "oberspree",
+      "x": 8934.73,
+      "y": 5027.59,
+      "width": 209.24,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Friedenau",
+      "normalizedText": "friedenau",
+      "x": 5085.62,
+      "y": 5045.5,
+      "width": 191.44,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Thielplatz",
+      "normalizedText": "thielplatz",
+      "x": 3652.03,
+      "y": 5046.83,
+      "width": 121.65,
+      "height": 26.0,
+      "size": 26.0
+    },
+    {
+      "text": "Priesterweg",
+      "normalizedText": "priesterweg",
+      "x": 5536.11,
+      "y": 5087.63,
+      "width": 229.78,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kaiserin-Augusta-Straße",
+      "normalizedText": "kaiserin-augusta-strasse",
+      "x": 6250.23,
+      "y": 5089.18,
+      "width": 473.26,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Blaschkoallee",
+      "normalizedText": "blaschkoallee",
+      "x": 7200.74,
+      "y": 5095.31,
+      "width": 266.41,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Oskar-Helene-Heim",
+      "normalizedText": "oskar-helene-heim",
+      "x": 3298.94,
+      "y": 5115.68,
+      "width": 390.18,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schöneweide",
+      "normalizedText": "schöneweide",
+      "x": 8450.05,
+      "y": 5128.01,
+      "width": 257.08,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Walther-Schreiber-Platz",
+      "normalizedText": "walther-schreiber-platz",
+      "x": 4161.91,
+      "y": 5172.43,
+      "width": 473.09,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Parchimer Allee",
+      "normalizedText": "parchimer allee",
+      "x": 7256.26,
+      "y": 5200.9,
+      "width": 309.16,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Onkel Toms Hütte",
+      "normalizedText": "onkel toms hütte",
+      "x": 3241.86,
+      "y": 5206.82,
+      "width": 356.12,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ullsteinstraße",
+      "normalizedText": "ullsteinstrasse",
+      "x": 6250.23,
+      "y": 5211.7,
+      "width": 278.5,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Johannisthal",
+      "normalizedText": "johannisthal",
+      "x": 8572.02,
+      "y": 5261.03,
+      "width": 250.24,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Britz-Süd",
+      "normalizedText": "britz-süd",
+      "x": 7359.45,
+      "y": 5306.24,
+      "width": 179.21,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Westphalweg",
+      "normalizedText": "westphalweg",
+      "x": 6308.03,
+      "y": 5334.21,
+      "width": 263.8,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schloßstraße",
+      "normalizedText": "schlossstrasse",
+      "x": 4380.14,
+      "y": 5348.07,
+      "width": 254.86,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Südende",
+      "normalizedText": "südende",
+      "x": 5520.74,
+      "y": 5353.45,
+      "width": 168.46,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Feuerbachstraße",
+      "normalizedText": "feuerbachstrasse",
+      "x": 5092.25,
+      "y": 5362.48,
+      "width": 326.55,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Krumme Lanke",
+      "normalizedText": "krumme lanke",
+      "x": 3562.86,
+      "y": 5371.38,
+      "width": 295.81,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Golm",
+      "normalizedText": "golm",
+      "x": 2037.76,
+      "y": 5375.29,
+      "width": 108.91,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Adlershof",
+      "normalizedText": "adlershof",
+      "x": 8770.93,
+      "y": 5398.45,
+      "width": 196.69,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Johannisthaler Chaussee",
+      "normalizedText": "johannisthaler chaussee",
+      "x": 7465.46,
+      "y": 5411.57,
+      "width": 489.09,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Kablow",
+      "normalizedText": "kablow",
+      "x": 9917.03,
+      "y": 5411.72,
+      "width": 146.87,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Alt-Mariendorf",
+      "normalizedText": "alt-mariendorf",
+      "x": 6437.85,
+      "y": 5456.72,
+      "width": 295.05,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schlachtensee",
+      "normalizedText": "schlachtensee",
+      "x": 3239.34,
+      "y": 5503.43,
+      "width": 281.82,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Lankwitz",
+      "normalizedText": "lankwitz",
+      "x": 5355.97,
+      "y": 5515.4,
+      "width": 171.28,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Lipschitzallee",
+      "normalizedText": "lipschitzallee",
+      "x": 7563.74,
+      "y": 5516.91,
+      "width": 267.2,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Nikolassee",
+      "normalizedText": "nikolassee",
+      "x": 2799.01,
+      "y": 5526.91,
+      "width": 209.41,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Zernsdorf",
+      "normalizedText": "zernsdorf",
+      "x": 9874.69,
+      "y": 5531.42,
+      "width": 197.57,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Attilastraße",
+      "normalizedText": "attilastrasse",
+      "x": 5746.44,
+      "y": 5533.37,
+      "width": 228.9,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Grünau",
+      "normalizedText": "grünau",
+      "x": 9333.23,
+      "y": 5557.84,
+      "width": 145.53,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rathaus Steglitz",
+      "normalizedText": "rathaus steglitz",
+      "x": 4464.18,
+      "y": 5559.08,
+      "width": 312.77,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Mexikoplatz",
+      "normalizedText": "mexikoplatz",
+      "x": 3381.26,
+      "y": 5596.0,
+      "width": 232.3,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wutzkyallee",
+      "normalizedText": "wutzkyallee",
+      "x": 7670.51,
+      "y": 5622.25,
+      "width": 242.01,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Altglienicke",
+      "normalizedText": "altglienicke",
+      "x": 8639.56,
+      "y": 5645.65,
+      "width": 231.55,
+      "height": 42.02,
+      "size": 42.0
+    },
+    {
+      "text": "Sanssouci",
+      "normalizedText": "sanssouci",
+      "x": 2130.83,
+      "y": 5646.06,
+      "width": 189.8,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Eichwalde",
+      "normalizedText": "eichwalde",
+      "x": 9463.6,
+      "y": 5669.31,
+      "width": 198.41,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Babelsberg",
+      "normalizedText": "babelsberg",
+      "x": 2516.81,
+      "y": 5671.97,
+      "width": 212.81,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Niederlehme",
+      "normalizedText": "niederlehme",
+      "x": 9874.69,
+      "y": 5680.19,
+      "width": 255.78,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Marienfelde",
+      "normalizedText": "marienfelde",
+      "x": 5878.2,
+      "y": 5690.66,
+      "width": 236.12,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Zwickauer Damm",
+      "normalizedText": "zwickauer damm",
+      "x": 7778.11,
+      "y": 5727.58,
+      "width": 340.33,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Zehlendorf",
+      "normalizedText": "zehlendorf",
+      "x": 3523.72,
+      "y": 5732.83,
+      "width": 222.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Osdorfer Straße",
+      "normalizedText": "osdorfer strasse",
+      "x": 4975.41,
+      "y": 5750.39,
+      "width": 316.85,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Werder",
+      "normalizedText": "werder",
+      "x": 1756.91,
+      "y": 5751.31,
+      "width": 149.44,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Lichterfelde",
+      "normalizedText": "lichterfelde",
+      "x": 5504.36,
+      "y": 5758.62,
+      "width": 240.95,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Zeuthen",
+      "normalizedText": "zeuthen",
+      "x": 9560.24,
+      "y": 5767.55,
+      "width": 165.82,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Botanischer",
+      "normalizedText": "botanischer",
+      "x": 4432.14,
+      "y": 5788.27,
+      "width": 230.16,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Sundgauer",
+      "normalizedText": "sundgauer",
+      "x": 3841.16,
+      "y": 5789.28,
+      "width": 204.5,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wannsee",
+      "normalizedText": "wannsee",
+      "x": 3027.66,
+      "y": 5802.85,
+      "width": 177.28,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Buckower Chaussee",
+      "normalizedText": "buckower chaussee",
+      "x": 5868.08,
+      "y": 5814.86,
+      "width": 388.33,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rudow",
+      "normalizedText": "rudow",
+      "x": 7887.94,
+      "y": 5832.92,
+      "width": 134.4,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Brandenburg",
+      "normalizedText": "brandenburg",
+      "x": 1612.73,
+      "y": 5861.31,
+      "width": 282.67,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Grünbergallee",
+      "normalizedText": "grünbergallee",
+      "x": 8802.81,
+      "y": 5871.06,
+      "width": 278.76,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wildau",
+      "normalizedText": "wildau",
+      "x": 9672.8,
+      "y": 5887.63,
+      "width": 139.78,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Lichterfelde Süd",
+      "normalizedText": "lichterfelde süd",
+      "x": 4827.86,
+      "y": 5889.83,
+      "width": 324.95,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Griebnitzsee",
+      "normalizedText": "griebnitzsee",
+      "x": 2529.03,
+      "y": 5933.38,
+      "width": 246.54,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Magdeburg",
+      "normalizedText": "magdeburg",
+      "x": 1612.73,
+      "y": 5951.27,
+      "width": 242.35,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Schichauweg",
+      "normalizedText": "schichauweg",
+      "x": 6070.31,
+      "y": 5990.75,
+      "width": 249.69,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Teltow Stadt",
+      "normalizedText": "teltow stadt",
+      "x": 4698.29,
+      "y": 6007.43,
+      "width": 252.29,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Charlot-",
+      "normalizedText": "charlot-",
+      "x": 2165.44,
+      "y": 6039.31,
+      "width": 166.53,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Potsdam",
+      "normalizedText": "potsdam",
+      "x": 2379.64,
+      "y": 6040.65,
+      "width": 168.97,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Medienstadt Babelsberg",
+      "normalizedText": "medienstadt babelsberg",
+      "x": 2764.99,
+      "y": 6058.37,
+      "width": 467.75,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schönefeld",
+      "normalizedText": "schönefeld",
+      "x": 8611.12,
+      "y": 6064.05,
+      "width": 221.51,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "tenhof",
+      "normalizedText": "tenhof",
+      "x": 2181.95,
+      "y": 6075.3,
+      "width": 133.56,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Pirschheide",
+      "normalizedText": "pirschheide",
+      "x": 1770.64,
+      "y": 6088.45,
+      "width": 225.71,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Lichtenrade",
+      "normalizedText": "lichtenrade",
+      "x": 6089.58,
+      "y": 6159.05,
+      "width": 230.41,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Teltow",
+      "normalizedText": "teltow",
+      "x": 4786.87,
+      "y": 6206.55,
+      "width": 137.55,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Waßmannsdorf",
+      "normalizedText": "wassmannsdorf",
+      "x": 8465.13,
+      "y": 6211.72,
+      "width": 301.64,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rehbrücke",
+      "normalizedText": "rehbrücke",
+      "x": 2592.37,
+      "y": 6235.4,
+      "width": 209.16,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Caputh-",
+      "normalizedText": "caputh-",
+      "x": 1778.58,
+      "y": 6236.29,
+      "width": 161.32,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Zeesen",
+      "normalizedText": "zeesen",
+      "x": 9883.43,
+      "y": 6246.89,
+      "width": 140.07,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Königs",
+      "normalizedText": "königs",
+      "x": 9490.6,
+      "y": 6251.98,
+      "width": 130.49,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Geltow",
+      "normalizedText": "geltow",
+      "x": 1797.18,
+      "y": 6272.28,
+      "width": 142.72,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wusterhausen",
+      "normalizedText": "wusterhausen",
+      "x": 9337.93,
+      "y": 6287.97,
+      "width": 283.16,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Mahlow",
+      "normalizedText": "mahlow",
+      "x": 6166.49,
+      "y": 6317.47,
+      "width": 153.51,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Großbeeren",
+      "normalizedText": "grossbeeren",
+      "x": 4542.39,
+      "y": 6350.27,
+      "width": 235.33,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Wilhelmshorst",
+      "normalizedText": "wilhelmshorst",
+      "x": 2434.24,
+      "y": 6391.1,
+      "width": 293.79,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Schwielowsee",
+      "normalizedText": "schwielowsee",
+      "x": 2007.48,
+      "y": 6404.45,
+      "width": 273.55,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Michendorf",
+      "normalizedText": "michendorf",
+      "x": 2314.67,
+      "y": 6508.7,
+      "width": 226.21,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ferch-",
+      "normalizedText": "ferch-",
+      "x": 1812.98,
+      "y": 6539.99,
+      "width": 126.92,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Seddin",
+      "normalizedText": "seddin",
+      "x": 2022.6,
+      "y": 6544.23,
+      "width": 131.33,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Saarmund",
+      "normalizedText": "saarmund",
+      "x": 3118.25,
+      "y": 6569.51,
+      "width": 195.43,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ludwigsfelde-",
+      "normalizedText": "ludwigsfelde-",
+      "x": 3940.23,
+      "y": 6569.51,
+      "width": 276.95,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Lienewitz",
+      "normalizedText": "lienewitz",
+      "x": 1754.26,
+      "y": 6575.98,
+      "width": 185.64,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Flughafen BER",
+      "normalizedText": "flughafen ber",
+      "x": 8134.05,
+      "y": 6578.84,
+      "width": 281.61,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Struveshof",
+      "normalizedText": "struveshof",
+      "x": 3971.9,
+      "y": 6605.51,
+      "width": 213.57,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Lübbenau,",
+      "normalizedText": "lübbenau",
+      "x": 9843.62,
+      "y": 6609.49,
+      "width": 231.6,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Blankenfelde",
+      "normalizedText": "blankenfelde",
+      "x": 6057.58,
+      "y": 6611.39,
+      "width": 258.3,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Birkengrund",
+      "normalizedText": "birkengrund",
+      "x": 4687.12,
+      "y": 6643.77,
+      "width": 237.68,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Cottbus und",
+      "normalizedText": "cottbus und",
+      "x": 9796.82,
+      "y": 6654.47,
+      "width": 278.4,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Senftenberg",
+      "normalizedText": "senftenberg",
+      "x": 9802.44,
+      "y": 6699.44,
+      "width": 272.78,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Dahlewitz",
+      "normalizedText": "dahlewitz",
+      "x": 6505.13,
+      "y": 6733.44,
+      "width": 195.97,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Ludwigsfelde",
+      "normalizedText": "ludwigsfelde",
+      "x": 4562.59,
+      "y": 6771.7,
+      "width": 260.15,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Beelitz Stadt",
+      "normalizedText": "beelitz stadt",
+      "x": 2282.03,
+      "y": 6779.05,
+      "width": 247.3,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Thyrow",
+      "normalizedText": "thyrow",
+      "x": 4236.0,
+      "y": 6802.95,
+      "width": 149.69,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Rangsdorf",
+      "normalizedText": "rangsdorf",
+      "x": 6505.13,
+      "y": 6836.3,
+      "width": 198.87,
+      "height": 42.0,
+      "size": 42.0
+    },
+    {
+      "text": "Bad Belzig",
+      "normalizedText": "bad belzig",
+      "x": 1710.31,
+      "y": 6888.23,
+      "width": 222.67,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Unabhängiges Werk",
+      "normalizedText": "unabhängiges werk",
+      "x": 256.24,
+      "y": 6905.26,
+      "width": 364.4,
+      "height": 40.0,
+      "size": 40.0
+    },
+    {
+      "text": "Stil des U-Bahn-Plans von London.",
+      "normalizedText": "stil des u-bahn-plans von london",
+      "x": 688.24,
+      "y": 6905.26,
+      "width": 638.8,
+      "height": 40.0,
+      "size": 40.0
+    },
+    {
+      "text": "und Dessau",
+      "normalizedText": "und dessau",
+      "x": 1674.45,
+      "y": 6933.2,
+      "width": 258.53,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Nicht mit Transport for London verbunden oder von dieser",
+      "normalizedText": "nicht mit transport for london verbunden oder von dieser",
+      "x": 256.24,
+      "y": 6955.26,
+      "width": 1092.0,
+      "height": 40.0,
+      "size": 40.0
+    },
+    {
+      "text": "Richtung Jüterbog",
+      "normalizedText": "richtung jüterbog",
+      "x": 2358.69,
+      "y": 6961.86,
+      "width": 411.65,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Wittenberg, Jüterbog",
+      "normalizedText": "wittenberg jüterbog",
+      "x": 4474.34,
+      "y": 6981.87,
+      "width": 475.58,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Wünsdorf-Waldstadt",
+      "normalizedText": "wünsdorf-waldstadt",
+      "x": 5892.45,
+      "y": 6988.02,
+      "width": 477.02,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "genehmigt.",
+      "normalizedText": "genehmigt",
+      "x": 256.24,
+      "y": 7005.26,
+      "width": 204.8,
+      "height": 40.0,
+      "size": 40.0
+    },
+    {
+      "text": "und Falkenberg",
+      "normalizedText": "und falkenberg",
+      "x": 4474.34,
+      "y": 7026.85,
+      "width": 340.37,
+      "height": 48.0,
+      "size": 48.0
+    },
+    {
+      "text": "Dieses Werk gilt als Parodie/Pastiches",
+      "normalizedText": "dieses werk gilt als parodie pastiches",
+      "x": 256.24,
+      "y": 7055.26,
+      "width": 690.0,
+      "height": 40.0,
+      "size": 40.0
+    },
+    {
+      "text": "Sinne von Artikel 30A des",
+      "normalizedText": "sinne von artikel 30a des",
+      "x": 1013.84,
+      "y": 7055.26,
+      "width": 464.4,
+      "height": 40.0,
+      "size": 40.0
+    },
+    {
+      "text": "Copyright, Designs and Patents Act",
+      "normalizedText": "copyright designs and patents act",
+      "x": 256.24,
+      "y": 7105.26,
+      "width": 647.2,
+      "height": 40.0,
+      "size": 40.0
+    },
+    {
+      "text": "(Vereinigtes Königreich).",
+      "normalizedText": "vereinigtes königreich",
+      "x": 994.64,
+      "y": 7105.26,
+      "width": 450.8,
+      "height": 40.0,
+      "size": 40.0
+    }
+  ]
+}

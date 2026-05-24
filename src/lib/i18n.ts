@@ -32,6 +32,41 @@ const translations = {
       subtitle: 'Your university companion',
       greeting: 'Hello!',
       welcomeBack: 'Welcome back',
+      greetings: {
+        weather_alert: [
+          { headline: "Weather alert for {campusName}", subline: "Check notifications for details" },
+          { headline: "Stay safe on campus today", subline: "Active weather alerts" }
+        ],
+        urgent_class_upcoming: [
+          { headline: "You have {courseName} soon", subline: "Starts at {classTime}" },
+          { headline: "Next up: {courseName}", subline: "Starting in a bit" }
+        ],
+        class_today: [
+          { headline: "You have {courseName} today", subline: "At {classTime}" },
+          { headline: "Campus day!", subline: "Next up: {courseName}" }
+        ],
+        weather_sunny: [
+          { headline: "Enjoy the sunny weather, {firstName}!", subline: "Beautiful day outside" },
+          { headline: "It's beautiful outside today.", subline: "Perfect campus weather" }
+        ],
+        weather_rainy: [
+          { headline: "Don't forget your umbrella, {firstName}.", subline: "It's raining outside" },
+          { headline: "Stay dry out there today!", subline: "Rainy day on campus" }
+        ],
+        generic_morning: [
+          { headline: "Good morning, {firstName}!", subline: "Morning" },
+          { headline: "Ready for today's classes?", subline: "Morning" },
+          { headline: "Morning, {firstName}! Have a great day.", subline: "Morning" }
+        ],
+        generic_afternoon: [
+          { headline: "Good afternoon, {firstName}!", subline: "Afternoon" },
+          { headline: "Hope your day is going well.", subline: "Afternoon" }
+        ],
+        generic_evening: [
+          { headline: "Good evening, {firstName}.", subline: "Evening" },
+          { headline: "Time to wind down for the day.", subline: "Evening" }
+        ]
+      },
       notifications: 'Notifications',
       searchCampusWeb: 'Search CampusWeb',
       weatherAlerts: 'Weather alerts',
@@ -492,6 +527,41 @@ const translations = {
       subtitle: 'Dein Campus-Begleiter',
       greeting: 'Hallo!',
       welcomeBack: 'Willkommen zurück',
+      greetings: {
+        weather_alert: [
+          { headline: "Wetterwarnung für {campusName}", subline: "Details in den Benachrichtigungen" },
+          { headline: "Bleib heute sicher auf dem Campus", subline: "Aktive Wetterwarnungen" }
+        ],
+        urgent_class_upcoming: [
+          { headline: "Du hast gleich {courseName}", subline: "Beginnt um {classTime} Uhr" },
+          { headline: "Als nächstes: {courseName}", subline: "Startet in Kürze" }
+        ],
+        class_today: [
+          { headline: "Du hast heute {courseName}", subline: "Um {classTime} Uhr" },
+          { headline: "Campus-Tag!", subline: "Als nächstes: {courseName}" }
+        ],
+        weather_sunny: [
+          { headline: "Genieße das sonnige Wetter, {firstName}!", subline: "Ein wunderschöner Tag draußen" },
+          { headline: "Es ist wunderschön draußen heute.", subline: "Perfektes Campus-Wetter" }
+        ],
+        weather_rainy: [
+          { headline: "Vergiss deinen Regenschirm nicht, {firstName}.", subline: "Es regnet draußen" },
+          { headline: "Bleib heute trocken!", subline: "Regnerischer Tag auf dem Campus" }
+        ],
+        generic_morning: [
+          { headline: "Guten Morgen, {firstName}!", subline: "Morgen" },
+          { headline: "Bereit für die heutigen Kurse?", subline: "Morgen" },
+          { headline: "Morgen, {firstName}! Hab einen tollen Tag.", subline: "Morgen" }
+        ],
+        generic_afternoon: [
+          { headline: "Guten Tag, {firstName}!", subline: "Nachmittag" },
+          { headline: "Hoffe, dein Tag verläuft gut.", subline: "Nachmittag" }
+        ],
+        generic_evening: [
+          { headline: "Guten Abend, {firstName}.", subline: "Abend" },
+          { headline: "Zeit, den Tag ausklingen zu lassen.", subline: "Abend" }
+        ]
+      },
       notifications: 'Benachrichtigungen',
       searchCampusWeb: 'CampusWeb suchen',
       weatherAlerts: 'Wetterwarnungen',

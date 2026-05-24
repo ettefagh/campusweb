@@ -474,6 +474,15 @@ export const internalAppLinks: AppLink[] = [
     iframeable: false,
   },
   {
+    id: "berlin-railmap",
+    title: "Berlin Railmap",
+    url: "/railmap",
+    icon: "🗺️",
+    description: "Interactive Berlin rail map with search",
+    category_name: "App Sections",
+    iframeable: false,
+  },
+  {
     id: "calendar-app",
     title: "Calendar",
     url: "/calendar",

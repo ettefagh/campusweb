@@ -445,7 +445,9 @@
         </div>
       {:else}
         <div class="story-ring guide-ring guide-ring--schedule">
-          <div class="guide-icon"><i class="ph-bold ph-calendar-blank"></i></div>
+          <div class="guide-icon">
+            <i class="ph-bold ph-calendar-blank"></i>
+          </div>
         </div>
         <span class="story-label">Schedule</span>
       {/if}
@@ -744,16 +746,16 @@
   }
 
   .story-card-body {
-    padding: 8px 6px 7px;
+    padding: 10px 8px 7px;
     display: flex;
     flex-direction: column;
     gap: 5px;
   }
 
   .story-card-body strong {
-    font-size: 0.98rem;
+    font-size: 0.8rem;
+    font-weight: 600;
     line-height: 1.12;
-    font-weight: 900;
     color: var(--text-color);
   }
 
@@ -1299,25 +1301,44 @@
   }
 
   .guide-card::after {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     z-index: 1;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.4) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(0, 0, 0, 0.4) 100%
+    );
     pointer-events: none;
   }
 
   /* Different gradient colors for each guide card */
   .guide-card--explore {
-    background: linear-gradient(135deg, rgba(29, 78, 216, 0.15) 0%, rgba(30, 64, 175, 0.4) 100%), var(--surface-solid);
+    background: linear-gradient(
+        135deg,
+        rgba(29, 78, 216, 0.15) 0%,
+        rgba(30, 64, 175, 0.4) 100%
+      ),
+      var(--surface-solid);
     border: 1px solid rgba(29, 78, 216, 0.25);
   }
   .guide-card--canteen {
-    background: linear-gradient(135deg, rgba(212, 68, 7, 0.15) 0%, rgba(180, 50, 5, 0.4) 100%), var(--surface-solid);
+    background: linear-gradient(
+        135deg,
+        rgba(212, 68, 7, 0.15) 0%,
+        rgba(180, 50, 5, 0.4) 100%
+      ),
+      var(--surface-solid);
     border: 1px solid rgba(212, 68, 7, 0.25);
   }
   .guide-card--schedule {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(4, 120, 87, 0.4) 100%), var(--surface-solid);
+    background: linear-gradient(
+        135deg,
+        rgba(16, 185, 129, 0.15) 0%,
+        rgba(4, 120, 87, 0.4) 100%
+      ),
+      var(--surface-solid);
     border: 1px solid rgba(16, 185, 129, 0.25);
   }
 
@@ -1381,13 +1402,17 @@
   }
 
   .guide-ring::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: -3px;
     border-radius: 50%;
     padding: 2.5px;
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     mask-composite: xor;
     -webkit-mask-composite: xor;
     pointer-events: none;

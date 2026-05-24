@@ -2,6 +2,7 @@
 	import LinkCard from "$lib/components/LinkCard.svelte";
 	import IdSlider from "$lib/components/IdSlider.svelte";
 	import StoriesSlider from "$lib/components/StoriesSlider.svelte";
+	import WelcomeHeader from "$lib/components/WelcomeHeader.svelte";
 	import StorySuggestionModal from "$lib/components/StorySuggestionModal.svelte";
 	import WeatherNotifications from "$lib/components/WeatherNotifications.svelte";
 	import { cachedStories, getStories, storiesLoading } from "$lib/stores/feedCache";
@@ -17,6 +18,7 @@
 	import { focusTrap } from "$lib/utils/focusTrap";
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
+	import { browser } from "$app/environment";
 	import SectionHeader from "$lib/components/SectionHeader.svelte";
 	import Sortable from 'sortablejs';
 	import ContactModal from "$lib/components/ContactModal.svelte";
@@ -223,12 +225,7 @@
 		locked?: boolean;
 	};
 
-	function getGreeting() {
-		const hour = new Date().getHours();
-		if (hour < 12) return 'Good morning';
-		if (hour < 18) return 'Good afternoon';
-		return 'Good evening';
-	}
+
 
 	onMount(() => {
 		getStories();
@@ -411,6 +408,7 @@
 	let isManagingFavorites = false;
 	let isManagingFavoriteContacts = false;
 	let isArrangingHomeBlocks = false;
+	let hasAutoOpenedAvailableBlocks = false;
 	let isStorySuggestionOpen = false;
 	
 	let isContactModalOpen = false;
@@ -436,6 +434,15 @@
 	$: availableHomeBlocks = $settingsStore.homeSections.filter(
 		(section) => section.id !== "header" && !section.enabled
 	);
+	$: activeHomeBlocks = $settingsStore.homeSections.filter(
+		(section) => section.id !== "header" && section.enabled
+	);
+	$: if (activeHomeBlocks.length > 0) {
+		hasAutoOpenedAvailableBlocks = false;
+	} else if (browser && !isArrangingHomeBlocks && !hasAutoOpenedAvailableBlocks) {
+		isArrangingHomeBlocks = true;
+		hasAutoOpenedAvailableBlocks = true;
+	}
 	$: homeContactDirectory = buildHomeContactDirectory(
 		homeCampusContacts,
 		homePublicContacts,
@@ -744,10 +751,7 @@
 		{#if section.enabled && section.id === "header"}
 			<header class="home-hero" class:compact={$settingsStore.headerSize === 'small'}>
 				<div class="home-hero-top">
-					<div class="home-greeting">
-						<span>{getGreeting()}</span>
-						<h1>{$settingsStore.firstName ? `Hi, ${$settingsStore.firstName}!` : $t.home.welcomeBack}</h1>
-					</div>
+					<WelcomeHeader {upcomingEvents} />
 					<WeatherNotifications campusId={$settingsStore.campusId} />
 				</div>
 				<div class="home-context">

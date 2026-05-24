@@ -71,29 +71,34 @@
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: payload,
-				keepalive: true
+				keepalive: true,
 			}).catch(() => {});
 		}
 	}
 
-
-
-	$: displayTitle = $t.linkTitle?.[link.id as keyof typeof $t.linkTitle] || link.title;
-	$: displayDesc = $t.linkDesc?.[link.id as keyof typeof $t.linkDesc] || link.description;
-	$: displayCategory = link.category_name ? ($t.linkCategory?.[link.category_name as keyof typeof $t.linkCategory] || link.category_name) : undefined;
+	$: displayTitle =
+		$t.linkTitle?.[link.id as keyof typeof $t.linkTitle] || link.title;
+	$: displayDesc =
+		$t.linkDesc?.[link.id as keyof typeof $t.linkDesc] || link.description;
+	$: displayCategory = link.category_name
+		? $t.linkCategory?.[
+				link.category_name as keyof typeof $t.linkCategory
+			] || link.category_name
+		: undefined;
 
 	$: effectiveUrl = customUrl || link.url;
-	$: isInternalLink = effectiveUrl.startsWith('/');
-	$: finalUrl = (useViewer && !isInternalLink && link.iframeable === true)
-		? `/viewer?url=${encodeURIComponent(effectiveUrl)}&title=${encodeURIComponent(displayTitle)}`
-		: effectiveUrl;
+	$: isInternalLink = effectiveUrl.startsWith("/");
+	$: finalUrl =
+		useViewer && !isInternalLink && link.iframeable === true
+			? `/viewer?url=${encodeURIComponent(effectiveUrl)}&title=${encodeURIComponent(displayTitle)}`
+			: effectiveUrl;
 
 	$: ariaLabel = (() => {
 		if (editMode) {
-			return `${displayTitle} — ${isFavorite ? 'Remove from favorites' : 'Add to favorites'}`;
+			return `${displayTitle} — ${isFavorite ? "Remove from favorites" : "Add to favorites"}`;
 		}
 		if ($accessibility.screenReaderHints) {
-			const dest = displayDesc ? `${displayDesc}. ` : '';
+			const dest = displayDesc ? `${displayDesc}. ` : "";
 			const destination = isInternalLink
 				? "Opens in CampusWeb."
 				: useViewer && link.iframeable === true
@@ -111,7 +116,7 @@
 		`--link-icon-border: ${linkIconTheme.border}`,
 		`--link-icon-shadow: ${linkIconTheme.shadow}`,
 		`--link-hover-bg: ${linkIconTheme.hoverBackground}`,
-		`--link-accent: ${linkIconTheme.accent}`
+		`--link-accent: ${linkIconTheme.accent}`,
 	].join("; ");
 </script>
 
@@ -130,8 +135,12 @@
 		href={finalUrl}
 		class="link-card"
 		class:clickable={editMode || reorderMode}
-		target={editMode || reorderMode || link.url.startsWith('/') ? undefined : "_blank"}
-		rel={editMode || reorderMode || link.url.startsWith('/') ? undefined : "noopener noreferrer"}
+		target={editMode || reorderMode || link.url.startsWith("/")
+			? undefined
+			: "_blank"}
+		rel={editMode || reorderMode || link.url.startsWith("/")
+			? undefined
+			: "noopener noreferrer"}
 		on:click={handleClick}
 		on:keydown={handleKeydown}
 		role={editMode || reorderMode ? "button" : undefined}
@@ -141,7 +150,6 @@
 		class:is-favorite={isFavorite}
 		class:compact-list={variant === "compact-list"}
 	>
-
 		<span class="icon" aria-hidden="true">
 			{#if linkIconClass === "ios-accessibility"}
 				<IosAccessibilityIcon />
@@ -159,7 +167,11 @@
 			{/if}
 		</div>
 		{#if editMode}
-			<div class="edit-indicator" class:is-favorite={isFavorite} aria-hidden="true">
+			<div
+				class="edit-indicator"
+				class:is-favorite={isFavorite}
+				aria-hidden="true"
+			>
 				<span class="indicator-icon">{isFavorite ? "⭐" : "☆"}</span>
 			</div>
 		{:else if variant === "compact-list"}
@@ -254,7 +266,12 @@
 		left: 10%;
 		right: 10%;
 		height: 1px;
-		background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgba(255, 255, 255, 0.7),
+			transparent
+		);
 		pointer-events: none;
 	}
 
@@ -275,7 +292,9 @@
 			var(--glass-bg-strong) 20px
 		);
 		border: 1px solid var(--primary-color);
-		box-shadow: 0 0 15px rgba(212, 68, 7, 0.2), var(--glass-shadow);
+		box-shadow:
+			0 0 15px rgba(212, 68, 7, 0.2),
+			var(--glass-shadow);
 	}
 
 	.a11y-patterns .link-card.clickable:not(.is-favorite) {
@@ -325,14 +344,20 @@
 		display: grid;
 		place-items: center;
 		border-radius: 12px;
-		background: var(--link-icon-bg, linear-gradient(135deg, #f7b801, #f18701));
-		border: 1px solid var(--link-icon-border, #ffe1a1);
+		background: var(
+			--link-icon-bg,
+			linear-gradient(135deg, #f7b801, #f18701)
+		);
+		/*border: 1px solid var(--link-icon-border, #ffe1a1);*/
 		flex-shrink: 0;
-		filter: drop-shadow(0 1px 2px var(--link-icon-shadow, rgba(241, 135, 1, 0.24)));
+		filter: drop-shadow(
+			0 1px 2px var(--link-icon-shadow, rgba(241, 135, 1, 0.24))
+		);
 	}
 
 	.icon i,
 	.icon :global(.ios-accessibility-icon) {
+		opacity: 90%;
 		display: block;
 		color: #ffffff;
 		font-size: 27px;
@@ -345,8 +370,11 @@
 		display: grid;
 		place-items: center;
 		border-radius: 13px;
-		background: var(--link-icon-bg, linear-gradient(135deg, #f7b801, #f18701));
-		border: 1px solid var(--link-icon-border, #ffe1a1);
+		background: var(
+			--link-icon-bg,
+			linear-gradient(135deg, #f7b801, #f18701)
+		);
+		/*border: 1px solid var(--link-icon-border, #ffe1a1);*/
 		filter: none;
 		box-shadow: 0 9px 18px var(--link-icon-shadow, rgba(241, 135, 1, 0.24));
 	}
