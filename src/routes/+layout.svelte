@@ -6,17 +6,86 @@
   import WelcomeOnboarding from "$lib/components/WelcomeOnboarding.svelte";
   import { browser } from "$app/environment";
   import { onMount } from "svelte";
-  import { afterNavigate } from "$app/navigation";
+  import { afterNavigate, beforeNavigate, disableScrollHandling } from "$app/navigation";
   import { activeA11yClasses, A11Y_CLASS_MAP } from "$lib/stores/accessibility";
   import { settingsStore } from "$lib/stores/settingsStore";
   import { page } from "$app/stores";
-  import FeedContent from "$lib/components/FeedContent.svelte";
   import { version } from "$app/environment";
+
+  // ── Persistent Tab Content Components ──
+  import HomeContent from "$lib/components/HomeContent.svelte";
+  import ExploreContent from "$lib/components/ExploreContent.svelte";
+  import CalendarContent from "$lib/components/CalendarContent.svelte";
+  import FeedContent from "$lib/components/FeedContent.svelte";
+  import SettingsContent from "$lib/components/SettingsContent.svelte";
 
   const WELCOME_STORAGE_KEY = "campusweb_installed_welcome_seen";
   let showWelcomeOnboarding = false;
   let hasTrackedOpen = false;
   let hasTrackedInstall = false;
+
+  // ── Main tab paths & lazy-then-keep tracking ──
+  const MAIN_TABS = ['/', '/explore', '/calendar', '/feed', '/settings'];
+  let visitedTabs = new Set<string>();
+
+  $: currentPath = $page.url.pathname;
+  $: isMainTab = MAIN_TABS.includes(currentPath);
+
+  // Track visited tabs — once a tab is visited, it stays mounted forever
+  $: {
+    if (browser && MAIN_TABS.includes(currentPath)) {
+      visitedTabs.add(currentPath);
+      visitedTabs = visitedTabs; // trigger Svelte reactivity
+    }
+  }
+
+  // ── Scroll position preservation per tab ──
+  const tabScrollPositions: Record<string, number> = {};
+  if (browser) {
+    (window as any).tabScrollPositions = tabScrollPositions;
+  }
+
+  beforeNavigate(({ from, to }) => {
+    console.log('beforeNavigate called', { from: from?.url?.pathname, to: to?.url?.pathname });
+    if (from && from.url) {
+      const fromPath = from.url.pathname;
+      const container = document.querySelector(".app-container");
+      if (container) {
+        tabScrollPositions[fromPath] = container.scrollTop;
+        console.log(`Saved scroll for ${fromPath}: ${container.scrollTop}`);
+      }
+    }
+  });
+
+  afterNavigate(({ from, to }) => {
+    console.log('afterNavigate called', { from: from?.url?.pathname, to: to?.url?.pathname });
+    const toPath = to?.url?.pathname ?? '';
+    if (MAIN_TABS.includes(toPath)) {
+      disableScrollHandling();
+      const savedScroll = tabScrollPositions[toPath] || 0;
+      console.log(`Restoring scroll for ${toPath} to ${savedScroll}`);
+      
+      let attempts = 0;
+      const interval = setInterval(() => {
+        const container = document.querySelector(".app-container");
+        if (container) {
+          container.scrollTop = savedScroll;
+          if (attempts > 12) {
+            clearInterval(interval);
+            console.log(`Scroll successfully locked to ${container.scrollTop} (target was ${savedScroll}) after ${attempts} attempts`);
+          }
+        } else {
+          clearInterval(interval);
+        }
+        attempts++;
+      }, 25);
+    } else {
+      const container = document.querySelector(".app-container");
+      if (container) {
+        container.scrollTop = 0;
+      }
+    }
+  });
 
   function getDisplayMode() {
     if (window.matchMedia("(display-mode: standalone)").matches) return "standalone";
@@ -101,6 +170,17 @@
 
   // Bridge: sync accessibility store → <html> class list.
   if (browser) {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    window.addEventListener('unhandledrejection', event => {
+      console.error('Unhandled rejection:', event.reason?.message || event.reason, event.reason?.stack);
+    });
+    window.addEventListener('error', event => {
+      console.error('Unhandled error:', event.message, event.error?.stack);
+    });
+
     // Frame Buster: Prevent nested loading of SvelteKit inside iframes
     if (window.top && window.self !== window.top) {
       window.top.location.href = window.location.href;
@@ -141,12 +221,6 @@
       settingsStore.subscribe((s) => applyTheme(s.theme))();
     });
 
-    afterNavigate(() => {
-      const container = document.querySelector(".app-container");
-      if (container) {
-        container.scrollTop = 0;
-      }
-    });
   }
 </script>
 
@@ -155,10 +229,25 @@
 <div class="app-container">
   <GlobalAlert />
   <main id="main" class="content-area">
-    <!-- Persistent Feed Layer (Keep-alive for Social Media Embeds) -->
-    <FeedContent active={$page.url.pathname === '/feed'} />
+    <!-- Persistent Tab Layers (Keep-alive — mounted once, toggled via display) -->
+    {#if visitedTabs.has('/')}
+      <HomeContent active={currentPath === '/'} />
+    {/if}
+    {#if visitedTabs.has('/explore')}
+      <ExploreContent active={currentPath === '/explore'} />
+    {/if}
+    {#if visitedTabs.has('/calendar')}
+      <CalendarContent active={currentPath === '/calendar'} />
+    {/if}
+    {#if visitedTabs.has('/feed')}
+      <FeedContent active={currentPath === '/feed'} />
+    {/if}
+    {#if visitedTabs.has('/settings')}
+      <SettingsContent active={currentPath === '/settings'} />
+    {/if}
 
-    <div class="page-slot" class:hidden={$page.url.pathname === '/feed'}>
+    <!-- Standard slot for non-tab routes (viewer, admin, login, railmap, etc.) -->
+    <div class="page-slot" class:hidden={isMainTab}>
       <slot />
     </div>
   </main>

@@ -376,7 +376,7 @@
 		);
 		/*border: 1px solid var(--link-icon-border, #ffe1a1);*/
 		filter: none;
-		box-shadow: 0 9px 18px var(--link-icon-shadow, rgba(241, 135, 1, 0.24));
+		/*box-shadow: 0 9px 18px var(--link-icon-shadow, rgba(241, 135, 1, 0.24));*/
 	}
 
 	.link-card.compact-list .icon i,

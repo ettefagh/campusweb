@@ -10,6 +10,8 @@
   let greeting: GreetingDecision | null = null;
   let baseCtx: GreetingContext | null = null;
   let isMounted = false;
+  let weatherCtx: any = null;
+  let history: string[] = [];
 
   function getDayPeriod(): "morning" | "afternoon" | "evening" | "night" {
     const hour = new Date().getHours();
@@ -19,10 +21,10 @@
     return "night";
   }
 
-  function getNextClassContext() {
-    if (!upcomingEvents || upcomingEvents.length === 0) return null;
+  function getNextClassContext(events: CalendarEvent[]) {
+    if (!events || events.length === 0) return null;
     const now = Date.now();
-    const nextEvent = upcomingEvents.find(e => e.start.getTime() > now && !e.allDay);
+    const nextEvent = events.find(e => e.start.getTime() > now && !e.allDay);
     if (nextEvent) {
       return {
         courseName: nextEvent.title,
@@ -52,49 +54,49 @@
 
   onMount(async () => {
     isMounted = true;
-    
-    let history: string[] = [];
     try {
       history = JSON.parse(sessionStorage.getItem("srh-greeting-history") || "[]");
     } catch {}
 
+    const res = await fetchWeatherContext();
+    if (res) {
+      weatherCtx = res;
+    }
+  });
+
+  // Rebuild greeting context reactively when any input state changes (mount, settings, events, weather)
+  $: if (isMounted) {
     baseCtx = {
       userId: $settingsStore.deviceId || "unknown",
       firstName: $settingsStore.firstName,
       dayPeriod: getDayPeriod(),
-      nextClass: getNextClassContext(),
-      recentGreetingIds: history
+      nextClass: getNextClassContext(upcomingEvents),
+      recentGreetingIds: history,
+      weather: weatherCtx
     };
+  }
 
-    greeting = evaluateGreeting(baseCtx, $t.home.greetings);
-    
-    // Asynchronously fetch weather and potentially override greeting if priority is higher
-    const weatherCtx = await fetchWeatherContext();
-    if (weatherCtx && baseCtx) {
-      baseCtx = { ...baseCtx, weather: weatherCtx };
-      const newGreeting = evaluateGreeting(baseCtx, $t.home.greetings);
-      
+  // Re-evaluate greeting reactively when context or language translations change
+  $: if (baseCtx && $t.home.greetings && isMounted) {
+    const evaluated = evaluateGreeting(baseCtx, $t.home.greetings);
+    if (evaluated) {
       const currentRule = RULES.find(r => r.id === greeting?.ruleId);
-      const newRule = RULES.find(r => r.id === newGreeting.ruleId);
-      if (newRule && (!currentRule || newRule.priority < currentRule.priority)) {
-        greeting = newGreeting;
+      const newRule = RULES.find(r => r.id === evaluated.ruleId);
+      
+      // Update greeting if higher priority (lower value), same rule (language changed), or no greeting selected yet
+      if (!currentRule || !newRule || newRule.priority < currentRule.priority || newRule.id === currentRule.id) {
+        greeting = evaluated;
+      }
+
+      // Record successfully rendered high priority rule in history
+      if (greeting && !history.includes(greeting.ruleId)) {
+        history.push(greeting.ruleId);
+        if (history.length > 10) history.shift();
+        try {
+          sessionStorage.setItem("srh-greeting-history", JSON.stringify(history));
+        } catch {}
       }
     }
-    
-    if (greeting && !history.includes(greeting.ruleId)) {
-      history.push(greeting.ruleId);
-      if (history.length > 10) history.shift();
-      try {
-        sessionStorage.setItem("srh-greeting-history", JSON.stringify(history));
-      } catch {}
-    }
-  });
-
-  // Re-evaluate greeting if language ($t) changes and context is ready
-  $: if (baseCtx && $t.home.greetings && isMounted) {
-    const reEvaluated = evaluateGreeting(baseCtx, $t.home.greetings);
-    // Keep the same rule if possible, or just take the new one
-    greeting = reEvaluated;
   }
 
   // Fallback function for SSR or before mount

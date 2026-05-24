@@ -12,6 +12,8 @@ export function hasCachedCalendarEvents(isVerified: boolean) {
 }
 
 export async function getCalendarEvents(isVerified: boolean, force = false) {
+  if (!isVerified) return [];
+
   if (!force && hasCachedCalendarEvents(isVerified)) {
     return get(cachedCalendarEvents);
   }

@@ -153,7 +153,7 @@ export const RULES: GreetingRule[] = [
     when: (ctx) => ctx.dayPeriod === "morning",
     templates: [
       { headline: "Good morning, {firstName}!", subline: "Morning" },
-      { headline: "Ready for today's classes?", subline: "Morning" },
+      { headline: "Ready for the day ahead?", subline: "Morning" },
       { headline: "Morning, {firstName}! Have a great day.", subline: "Morning" }
     ]
   },
@@ -201,7 +201,7 @@ export function evaluateGreeting(ctx: GreetingContext, tGreetings?: Record<strin
   const templateCtx = {
     firstName: ctx.firstName || "there",
     courseName: ctx.nextClass?.courseName,
-    classTime: ctx.nextClass ? new Date(ctx.nextClass.startTimeIso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
+    classTime: ctx.nextClass ? new Date(ctx.nextClass.startTimeIso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : "",
     campusName: ctx.weather?.campusName || "campus"
   };
 

@@ -55,7 +55,7 @@ const translations = {
         ],
         generic_morning: [
           { headline: "Good morning, {firstName}!", subline: "Morning" },
-          { headline: "Ready for today's classes?", subline: "Morning" },
+          { headline: "Ready for the day ahead?", subline: "Morning" },
           { headline: "Morning, {firstName}! Have a great day.", subline: "Morning" }
         ],
         generic_afternoon: [
@@ -550,7 +550,7 @@ const translations = {
         ],
         generic_morning: [
           { headline: "Guten Morgen, {firstName}!", subline: "Morgen" },
-          { headline: "Bereit für die heutigen Kurse?", subline: "Morgen" },
+          { headline: "Bereit für den heutigen Tag?", subline: "Morgen" },
           { headline: "Morgen, {firstName}! Hab einen tollen Tag.", subline: "Morgen" }
         ],
         generic_afternoon: [
