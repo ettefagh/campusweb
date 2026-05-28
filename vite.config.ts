@@ -1,12 +1,13 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
-import path from 'path';
+
+const cryptoMockPath = decodeURI(new URL('./src/lib/mocks/cryptoMock.ts', import.meta.url).pathname);
 
 export default defineConfig({
 	plugins: [sveltekit()],
 	resolve: {
 		alias: {
-			crypto: path.resolve(__dirname, './src/lib/mocks/cryptoMock.ts')
+			crypto: cryptoMockPath
 		}
 	}
 });

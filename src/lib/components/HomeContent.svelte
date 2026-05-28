@@ -1269,8 +1269,7 @@
 																class="calendar-preview-aside"
 															>
 																<p
-																	class="calendar-preview-meta"
-																	style="font-weight: 900; color: black;"
+																	class="calendar-preview-meta calendar-preview-location"
 																>
 																	{event
 																		.extendedProps
@@ -2321,6 +2320,11 @@
 		align-items: center;
 		flex-wrap: wrap;
 		gap: 6px;
+	}
+
+	.calendar-preview-location {
+		font-weight: bold;
+		color: var(--text-color);
 	}
 
 	.calendar-preview-empty {

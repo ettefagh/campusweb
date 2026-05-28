@@ -2974,10 +2974,8 @@
   }
   /* --- Search Architecture Styles --- */
   .search-typeahead {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    right: 0;
+    position: relative;
+    margin-top: 8px;
     background: var(--surface-solid, #ffffff);
     border: 1px solid var(--surface-border, rgba(0,0,0,0.1));
     border-radius: 14px;
