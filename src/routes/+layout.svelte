@@ -224,9 +224,17 @@
   }
 </script>
 
+<svelte:head>
+  {#if currentPath === '/railmap'}
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content" />
+  {:else}
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+  {/if}
+</svelte:head>
+
 <a href="#main" class="skip-to-main">Skip to main content</a>
 
-<div class="app-container">
+<div class="app-container" class:no-scroll={currentPath === '/calendar'}>
   <GlobalAlert />
   <main id="main" class="content-area">
     <!-- Persistent Tab Layers (Keep-alive — mounted once, toggled via display) -->
@@ -273,6 +281,11 @@
     padding-bottom: 110px;
   }
 
+  .app-container.no-scroll {
+    overflow-y: hidden;
+    padding-bottom: 0;
+  }
+
   @media (min-width: 1024px) {
     .app-container {
       margin-left: 0;
@@ -284,10 +297,10 @@
   @media (max-width: 1023px) and (orientation: landscape) {
     .app-container {
       padding-bottom: 0;
-      padding-right: 68px;
+      padding-right: calc(68px + env(safe-area-inset-right, 0px));
     }
     .content-area {
-      padding-right: var(--spacing-sm);
+      padding-right: 0;
     }
   }
 </style>

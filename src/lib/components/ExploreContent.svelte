@@ -61,6 +61,8 @@
 
   let searchQuery = $state("");
   let isSearchActive = $state(false);
+  let recentSearches = $state<string[]>([]);
+  let focusedResultIndex = $state<number>(-1);
   let expandedContactEmail = $state<string | null>(null);
   let favoriteContactMessage = $state("");
   let libraryUrl = $state(
@@ -81,6 +83,10 @@
     if ($settingsStore.emailVerified) {
       loadPrivateContacts();
     }
+    try {
+      const stored = localStorage.getItem('campusweb_recent_searches');
+      if (stored) recentSearches = JSON.parse(stored);
+    } catch(e) {}
 
     container = document.querySelector(".app-container");
     const handleScroll = () => {
@@ -94,9 +100,63 @@
     };
   });
 
+  function saveSearchQuery(query: string) {
+    const q = query.trim();
+    if (!q) return;
+    const newSearches = [q, ...recentSearches.filter(s => s !== q)].slice(0, 5);
+    recentSearches = newSearches;
+    try {
+      localStorage.setItem('campusweb_recent_searches', JSON.stringify(newSearches));
+    } catch(e) {}
+  }
+
+  function handleSearchKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      isSearchActive = false;
+      return;
+    }
+    const isShowingRecent = isSearchActive && !searchQuery.trim();
+    const isShowingSuggestions = isSearchActive && searchQuery.trim();
+    
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const max = isShowingRecent ? recentSearches.length : (isShowingSuggestions ? searchSuggestions.length : 0);
+      if (focusedResultIndex < max - 1) focusedResultIndex++;
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (focusedResultIndex > -1) focusedResultIndex--;
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (focusedResultIndex >= 0) {
+        if (isShowingSuggestions && focusedResultIndex < searchSuggestions.length) {
+          const item = searchSuggestions[focusedResultIndex];
+          if (item.type === 'link') {
+            window.open(item.data.url, '_blank');
+          } else {
+            toggleContactDetails(item.data.email);
+            document.getElementById(DIRECTORY_ID)?.scrollIntoView({ behavior: "smooth" });
+          }
+          saveSearchQuery(searchQuery);
+          isSearchActive = false;
+        } else if (isShowingRecent && focusedResultIndex < recentSearches.length) {
+          searchQuery = recentSearches[focusedResultIndex];
+          focusedResultIndex = -1;
+        }
+      } else if (searchQuery.trim()) {
+        saveSearchQuery(searchQuery);
+        // Deselect or blur? Let user keep typing or scrolling
+      }
+    }
+  }
+
   function goToTop() {
     container?.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  $effect(() => {
+    searchQuery;
+    focusedResultIndex = -1;
+  });
 
   $effect(() => {
     if (
@@ -365,6 +425,13 @@
     return filteredContacts.slice(0, 15);
   });
 
+  let searchSuggestions = $derived.by(() => {
+    if (!searchQuery.trim()) return [];
+    const links = filteredLinks.slice(0, 3).map(l => ({ type: 'link', data: l }));
+    const contacts = filteredContacts.slice(0, 3).map(c => ({ type: 'contact', data: c }));
+    return [...links, ...contacts];
+  });
+
   // 3. External Search Sources
   const searchSources = [
     {
@@ -553,8 +620,46 @@
       <SearchBar
         bind:searchQuery
         bind:isSearchActive
-        placeholder={$t.explore.searchPlaceholder}
-      />
+        placeholder="Search by services, directory, or campus..."
+        onkeydown={handleSearchKeydown}
+      >
+        {#if !searchQuery.trim() && recentSearches.length > 0}
+          <div class="search-typeahead recent-searches-box">
+            <h4 class="typeahead-title">Recent Searches</h4>
+            <ul class="typeahead-list">
+              {#each recentSearches as search, i}
+                <li class="typeahead-item" class:focused={focusedResultIndex === i}>
+                  <button type="button" class="typeahead-btn" onclick={() => { searchQuery = search; focusedResultIndex = -1; }}>
+                    <i class="ph ph-clock"></i>
+                    <span>{search}</span>
+                  </button>
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {:else if searchQuery.trim() && searchSuggestions.length > 0}
+          <div class="search-typeahead suggestions-box">
+            <h4 class="typeahead-title">Top Suggestions</h4>
+            <ul class="typeahead-list">
+              {#each searchSuggestions as item, i}
+                <li class="typeahead-item" class:focused={focusedResultIndex === i}>
+                  {#if item.type === 'link'}
+                    <button type="button" class="typeahead-btn" onclick={() => { window.open(item.data.url, '_blank'); saveSearchQuery(searchQuery); isSearchActive = false; }}>
+                      <span class="typeahead-badge link-badge">Link</span>
+                      <span>{item.data.title}</span>
+                    </button>
+                  {:else}
+                    <button type="button" class="typeahead-btn" onclick={() => { toggleContactDetails(item.data.email); document.getElementById(DIRECTORY_ID)?.scrollIntoView({behavior: 'smooth'}); saveSearchQuery(searchQuery); isSearchActive = false; }}>
+                      <span class="typeahead-badge contact-badge">Contact</span>
+                      <span>{item.data.person}</span>
+                    </button>
+                  {/if}
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+      </SearchBar>
     </div>
 
     <div class="category-nav-wrapper">
@@ -675,11 +780,45 @@
     {/if}
 
     {#if searchQuery.trim() && displayCategories.length === 0 && filteredContacts.length === 0}
-      <div class="no-results">
-        <div class="no-results-icon">
-          <i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i>
+      <div class="recovery-protocol no-results-state glass">
+        <div class="no-results-header">
+          <div class="no-results-icon">
+            <i class="ph-bold ph-magnifying-glass" aria-hidden="true"></i>
+          </div>
+          <h3>{$t.explore.noResults} "<strong>{searchQuery}</strong>"</h3>
+          <p>We couldn't find an exact match, but we've got you covered. Try our global search portals or jump to popular categories.</p>
         </div>
-        <p>{$t.explore.noResults} "<strong>{searchQuery}</strong>"</p>
+        
+        <div class="recovery-actions">
+          <div class="recovery-card">
+            <h4><i class="ph-bold ph-globe"></i> Search Globally</h4>
+            <div class="external-search-grid mini-grid">
+              {#each searchSources as source}
+                <button
+                  type="button"
+                  class="external-search-row mini-row"
+                  style={`--source-color: ${source.color}`}
+                  onclick={() => handleExternalSearch(source.id)}
+                >
+                  <span class="external-icon"><i class={source.iconClass}></i></span>
+                  <span class="external-name">{source.name}</span>
+                  <i class="ph-bold ph-arrow-up-right external-arrow"></i>
+                </button>
+              {/each}
+            </div>
+          </div>
+          
+          <div class="recovery-card">
+            <h4><i class="ph-bold ph-star"></i> Popular Destinations</h4>
+            <div class="recovery-links">
+              {#each topLinks.slice(0, 3) as link}
+                <button type="button" class="recovery-link-btn" onclick={() => { window.open(link.url, '_blank'); }}>
+                  {link.title}
+                </button>
+              {/each}
+            </div>
+          </div>
+        </div>
       </div>
     {/if}
 
@@ -2832,5 +2971,146 @@
       align-self: flex-end;
       margin-top: -1.5rem;
     }
+  }
+  /* --- Search Architecture Styles --- */
+  .search-typeahead {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--surface-solid, #ffffff);
+    border: 1px solid var(--surface-border, rgba(0,0,0,0.1));
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+    z-index: 1000;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .typeahead-title {
+    font-size: 0.85rem;
+    color: var(--text-color-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 4px 8px;
+    font-weight: 700;
+  }
+  .typeahead-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .typeahead-item {
+    border-radius: 8px;
+    transition: background-color 0.2s;
+  }
+  .typeahead-item.focused {
+    background: rgba(var(--primary-color-rgb, 212, 68, 7), 0.1);
+    outline: 2px solid var(--primary-color);
+  }
+  .typeahead-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-color);
+  }
+  .typeahead-btn:hover {
+    background: rgba(0,0,0,0.04);
+  }
+  .typeahead-badge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .link-badge {
+    background: rgba(47, 164, 215, 0.15);
+    color: #2FA4D7;
+  }
+  .contact-badge {
+    background: rgba(241, 135, 1, 0.15);
+    color: #f18701;
+  }
+
+  /* Recovery Protocol Styles */
+  .recovery-protocol {
+    padding: 24px;
+    border-radius: 16px;
+    margin-top: 24px;
+    text-align: left;
+    border: 1px solid var(--surface-border);
+  }
+  .no-results-header {
+    margin-bottom: 24px;
+  }
+  .no-results-header h3 {
+    margin-bottom: 8px;
+  }
+  .no-results-header p {
+    color: var(--text-color-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  .recovery-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .recovery-card {
+    background: var(--bg-color-secondary);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--surface-border);
+  }
+  .recovery-card h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+  }
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .mini-row {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--surface-border);
+  }
+  .external-arrow {
+    margin-left: auto;
+    font-size: 1rem;
+    color: var(--text-color-secondary);
+  }
+  .recovery-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .recovery-link-btn {
+    background: var(--surface-solid);
+    border: 1px solid var(--surface-border);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-color);
   }
 </style>

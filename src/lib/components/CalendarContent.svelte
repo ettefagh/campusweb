@@ -89,6 +89,8 @@
   let dismissedEmptyNotice = false;
   let dismissedProtectedNotice = false;
 
+  let isMobileLegendOpen = false;
+
   function handleImportSuggestion() {
     if ($activeDepartment?.icalUrl) {
       calendarStore.addSubscription(
@@ -114,9 +116,9 @@
       if (saved) return saved;
     }
 
-    // Portrait mobile defaults to Day View to fit narrow mobile layouts naturally
-    if (isPortraitMobile) return "timeGridDay";
-    if (isLandscapeMobile) return "dayGridMonth";
+    // Use list view for portrait and week view for landscape as requested
+    if (isPortraitMobile) return "listWeek";
+    if (isLandscapeMobile) return "timeGridWeek";
     return "dayGridMonth";
   }
 
@@ -263,9 +265,13 @@
       const jsEvent = info.jsEvent;
       jsEvent.stopPropagation(); // Prevent immediate dismiss by the window click handler
       popupEvent = info.event;
+      
+      // Prevent popup from being obscured by bottom navigation on portrait mobile
+      const bottomOffset = isPortraitMobile ? 110 : 20;
+      
       popupPosition = {
         x: Math.min(jsEvent.clientX, innerWidth - 280),
-        y: Math.min(jsEvent.clientY, window.innerHeight - 200),
+        y: Math.min(jsEvent.clientY, window.innerHeight - 200 - bottomOffset),
       };
     },
     viewDidMount: () => {
@@ -430,6 +436,41 @@
         });
       }
     }, 120);
+  }
+
+  // ─── Swipe Navigation for Toolbar ─────────────────────────────────
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  function handleTouchStart(event: TouchEvent) {
+    touchStartX = event.touches[0].clientX;
+    touchStartY = event.touches[0].clientY;
+  }
+
+  function handleTouchEnd(event: TouchEvent) {
+    const touchEndX = event.changedTouches[0].clientX;
+    const touchEndY = event.changedTouches[0].clientY;
+
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 45) {
+      if (deltaX < 0) {
+        // Swipe left -> Next period
+        goToNext();
+        triggerHaptic();
+      } else if (deltaX > 0) {
+        // Swipe right -> Previous period
+        goToPrev();
+        triggerHaptic();
+      }
+    }
+  }
+
+  function triggerHaptic() {
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(10);
+    }
   }
 
   function goToPrev() {
@@ -688,36 +729,29 @@
 
 <svelte:window bind:innerWidth bind:innerHeight on:click={handleWindowClick} />
 
-<div class="calendar-page" style:display={active ? 'flex' : 'none'}>
+<div class="calendar-page" style:display={active ? "flex" : "none"}>
   <div class="calendar-page-layout">
     <div class="calendar-main">
-      <header class="calendar-header">
-        <div class="calendar-title-block">
-          <span class="calendar-eyebrow">Plan ahead</span>
-          <h1>{$t.calendar.title || "Calendar"}</h1>
-          <p class="calendar-subtitle">
-            {$t.calendar.subtitle || "University events and your schedule"}
-          </p>
-        </div>
-        <button
-          class="refresh-btn"
-          on:click={handleRefresh}
-          aria-label={$t.calendar.refresh}
-          title={$t.calendar.refresh}
-        >
-          <i
-            class="ph-bold ph-arrows-counter-clockwise"
-            class:spinning={isLoading}
-          ></i>
-        </button>
-      </header>
-
-      <div class="calendar-period-card" aria-live="polite">
-        <span class="period-label">Showing</span>
-        <strong class="toolbar-title">
-          {currentTitleText || $t.calendar.title || "Calendar"}
-        </strong>
-      </div>
+      {#if !isLandscapeMobile}
+        <header class="calendar-header compact-calendar-header">
+          <div class="calendar-title-block">
+            <h1>{$t.calendar.title || "Calendar"}</h1>
+            <div class="calendar-period-inline" aria-live="polite">
+              <span class="period-label">Showing:</span>
+              <strong class="toolbar-title">
+                {currentTitleText || $t.calendar.title || "Calendar"}
+              </strong>
+            </div>
+          </div>
+          <button
+            class="refresh-btn"
+            on:click={handleRefresh}
+            aria-label={$t.calendar.refresh}
+            title={$t.calendar.refresh}
+          >
+            <i class="ph-bold ph-arrows-counter-clockwise" class:spinning={isLoading}></i>
+          </button>
+        </header>
 
       {#if (!isMounted || currentSubs.length === 0) && !dismissedSetupNotice}
         <div class="suggestion-banner link-banner">
@@ -754,13 +788,6 @@
         </div>
       {/if}
 
-      {#if isLoading}
-        <div class="loading-state" aria-live="polite" aria-busy="true">
-          <div class="loading-spinner"></div>
-          <p>Loading calendar events...</p>
-        </div>
-      {/if}
-
       <!-- Empty state banner — shown when no events match the current view -->
       {#if !isLoading && currentEventsCount === 0 && !dismissedEmptyNotice}
         <div class="suggestion-banner">
@@ -781,10 +808,10 @@
           </div>
         </div>
       {/if}
+      {/if}
 
       <div
         class="calendar-container"
-        class:loading={isLoading}
         class:view-week={currentViewLabel === "timeGridWeek"}
         class:view-month={currentViewLabel === "dayGridMonth"}
         class:is-landscape={isLandscapeMobile}
@@ -794,7 +821,7 @@
         </div>
 
         <!-- Calendar Navigation Toolbar -->
-        <div class="calendar-toolbar">
+        <div class="calendar-toolbar" on:touchstart={handleTouchStart} on:touchend={handleTouchEnd}>
           <div class="toolbar-group toolbar-views">
             <button
               class="toolbar-btn"
@@ -820,6 +847,16 @@
               class:active={currentViewLabel === "listWeek"}
               on:click={() => switchView("listWeek")}>{$t.calendar.list}</button
             >
+            {#if isPortraitMobile}
+              <button
+                class="toolbar-btn legend-toggle-btn"
+                class:active={isMobileLegendOpen}
+                on:click={() => (isMobileLegendOpen = true)}
+                aria-label="Open Legend Filters"
+              >
+                <i class="ph-bold ph-faders"></i>
+              </button>
+            {/if}
           </div>
           <div class="toolbar-group toolbar-nav">
             <button
@@ -847,8 +884,36 @@
         </div>
       </div>
 
+      <!-- Mobile Legend Overlay -->
+      {#if isPortraitMobile && isMobileLegendOpen}
+        <div
+          class="mobile-legend-overlay"
+          on:click={() => (isMobileLegendOpen = false)}
+          on:keydown={(e) => e.key === "Escape" && (isMobileLegendOpen = false)}
+          role="button"
+          tabindex="0"
+          aria-label="Close legend"
+        ></div>
+      {/if}
+
       <!-- Calendar Source Legend — toggleable visibility filters -->
-      <section class="calendar-legend-section">
+      {#if !isLandscapeMobile}
+        <section
+          class="calendar-legend-section"
+          class:is-open={isPortraitMobile && isMobileLegendOpen}
+        >
+        {#if isPortraitMobile}
+          <div class="legend-sheet-header">
+            <h3 class="popup-title" style="margin: 0;">Legend</h3>
+            <button
+              class="sheet-close-btn"
+              on:click={() => (isMobileLegendOpen = false)}
+              aria-label="Close legend"
+            >
+              <i class="ph-bold ph-x"></i>
+            </button>
+          </div>
+        {/if}
         {#if !$settingsStore.emailVerified && !dismissedProtectedNotice}
           <div class="suggestion-banner link-banner calendar-auth-banner">
             <div class="suggestion-icon">
@@ -1016,8 +1081,8 @@
             <span class="ql-title">Calendar Enhancer</span>
             <span class="ql-desc">Optimize your iCal feed</span>
           </a>
-        </div>
-      </section>
+        </section>
+      {/if}
     </div>
   </div>
 </div>
@@ -1094,7 +1159,10 @@
         {/if}
       </div>
     {:else if popupEvent.extendedProps?.location || popupEvent.extendedProps?.shortLocation}
-      {@const resolvedRoom = resolveLocationToRoom(popupEvent.extendedProps?.shortLocation || popupEvent.extendedProps?.location)}
+      {@const resolvedRoom = resolveLocationToRoom(
+        popupEvent.extendedProps?.shortLocation ||
+          popupEvent.extendedProps?.location,
+      )}
       <div class="popup-location-section">
         <a
           href="https://maps.google.com/?q={encodeURIComponent(
@@ -1182,15 +1250,6 @@
     min-width: 0;
   }
 
-  .calendar-eyebrow {
-    display: block;
-    color: var(--primary-color);
-    font-size: 1rem;
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 3px;
-  }
-
   h1 {
     color: var(--text-color);
     font-size: clamp(1.9rem, 5vw, 2.4rem);
@@ -1199,23 +1258,16 @@
     letter-spacing: 0;
   }
 
-  .calendar-subtitle {
-    color: var(--text-color-secondary);
-    font-size: 0.95rem;
-    line-height: 1.35;
-    margin: 8px 0 0;
+  .compact-calendar-header {
+    align-items: center;
+    padding-bottom: var(--spacing-sm);
   }
 
-  .calendar-period-card {
+  .calendar-period-inline {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-sm);
-    padding: 14px var(--spacing-md);
-    background: var(--surface-solid);
-    border: 1px solid #e5e5e5;
-    border-radius: 18px;
-    box-shadow: var(--campus-shadow-soft);
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 6px;
   }
 
   .period-label {
@@ -1226,7 +1278,6 @@
     text-transform: uppercase;
   }
 
-  :global([data-theme="dark"]) .calendar-period-card,
   :global([data-theme="dark"]) .suggestion-banner,
   :global([data-theme="dark"]) .calendar-legend,
   :global([data-theme="dark"]) .quick-link-card,
@@ -1504,8 +1555,8 @@
     border-radius: 22px;
     overflow: hidden;
     box-shadow: var(--campus-shadow);
-    height: clamp(440px, calc(100svh - 330px), 720px);
-    min-height: 440px;
+    height: clamp(400px, calc(100svh - 480px), 720px);
+    min-height: 400px;
     min-width: 0; /* Add this to prevent flex child expansion */
     padding-bottom: 67px; /* Reserve space for the absolutely-positioned navigation toolbar */
     transition: opacity 0.3s ease;
@@ -1581,10 +1632,13 @@
   /* Landscape mobile: toolbar repositions to a vertical sidebar on the right */
   .calendar-container.is-landscape {
     flex-direction: row;
+    height: 100%;
+    min-height: 0;
     padding-bottom: 0;
-    padding-right: 68px;
-    height: clamp(430px, calc(100svh - 220px), 680px);
-    min-height: 430px;
+    padding-left: env(safe-area-inset-left, 0px); /* Avoid the notch! */
+    padding-right: 68px; /* For the calendar-toolbar */
+    border-radius: 0; /* Fully fullscreen, no rounded corners */
+    border: none;
   }
 
   .calendar-container.is-landscape .calendar-toolbar {
@@ -1836,7 +1890,11 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: linear-gradient(135deg, rgba(0, 242, 254, 0.12) 0%, rgba(79, 172, 254, 0.12) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(0, 242, 254, 0.12) 0%,
+      rgba(79, 172, 254, 0.12) 100%
+    );
     color: #00d4f0;
     font-weight: 700;
     font-size: 0.82rem;
@@ -1855,9 +1913,15 @@
   }
 
   .popup-directions-btn:hover {
-    background: linear-gradient(135deg, rgba(0, 242, 254, 0.22) 0%, rgba(79, 172, 254, 0.22) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(0, 242, 254, 0.22) 0%,
+      rgba(79, 172, 254, 0.22) 100%
+    );
     border-color: rgba(0, 242, 254, 0.5);
-    box-shadow: 0 4px 16px rgba(0, 212, 240, 0.22), 0 0 0 1px rgba(0, 242, 254, 0.15);
+    box-shadow:
+      0 4px 16px rgba(0, 212, 240, 0.22),
+      0 0 0 1px rgba(0, 242, 254, 0.15);
     transform: translateY(-1.5px);
     color: #00f2fe;
   }
@@ -1887,8 +1951,6 @@
     color: #7ee8fa;
     margin-left: auto;
   }
-
-
 
   .popup-location-badge.online {
     align-self: flex-start;
@@ -2142,6 +2204,8 @@
     color: #3e2c23 !important;
     font-weight: 500;
     opacity: 0.7;
+    white-space: normal;
+    word-break: break-word;
   }
 
   :global(html[data-theme="dark"] .ec-event-loc),
@@ -2175,7 +2239,9 @@
     align-items: flex-end;
     gap: 2px;
     text-align: right;
-    flex-shrink: 0;
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 50%;
   }
 
   :global(.ec-event-time-sub) {
@@ -2537,6 +2603,163 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  .mobile-legend-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 90;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: popupFadeIn 0.3s ease-out;
+  }
+
+  .legend-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    position: relative;
+    padding-bottom: var(--spacing-sm);
+  }
+
+  .sheet-handle {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    height: 5px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+  }
+
+  :global([data-theme="dark"]) .sheet-handle {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .sheet-close-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-color);
+  }
+
+  :global([data-theme="dark"]) .sheet-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  @media (max-width: 1023px) {
+    /* Full Page Calendar Layout on Mobile */
+    :global(body:has(.calendar-page[style*="display: flex"])) {
+      overflow: hidden; /* Lock body scroll when calendar is active */
+    }
+
+    .calendar-page {
+      height: 100dvh;
+      height: 100vh;
+      overflow: hidden;
+      padding-bottom: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .calendar-page-layout {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .calendar-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .calendar-container {
+      flex: 1;
+      height: 100%;
+      min-height: 0;
+      max-height: none;
+      border-radius: 24px 24px 0 0;
+      border-bottom: none;
+      padding-bottom: calc(
+        74px + env(safe-area-inset-bottom, 0px) + 180px
+      ); /* Room for BottomNav + wrapping calendar-toolbar */
+    }
+
+    .calendar-toolbar {
+      position: fixed;
+      bottom: calc(
+        74px + env(safe-area-inset-bottom, 0px)
+      ); /* Rest above BottomNav */
+      padding-bottom: var(--spacing-sm);
+      border-radius: 24px 24px 0 0;
+      z-index: 60;
+    }
+
+    .quick-links-section {
+      display: none; /* Hide quick links on full-page mobile */
+    }
+
+    .calendar-legend-section {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      right: auto;
+      bottom: auto;
+      width: 90%;
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      z-index: 110; /* Above BottomNav (which is 100) */
+      padding: var(--spacing-lg);
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      transform: translate(-50%, -50%) scale(0.95);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+      margin: 0;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    :global([data-theme="dark"]) .calendar-legend-section {
+      background: rgba(20, 20, 30, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .calendar-legend-section.is-open {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .calendar-legend {
+      max-height: 50vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .legend-item {
+      justify-content: flex-start;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 1rem;
     }
   }
 </style>

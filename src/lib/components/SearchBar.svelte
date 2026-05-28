@@ -4,12 +4,14 @@
 		isSearchActive = $bindable(false),
 		placeholder = 'Search...',
 		clearLabel = 'Clear search',
+		onkeydown,
 		children
 	} = $props<{
 		searchQuery: string;
 		isSearchActive?: boolean;
 		placeholder?: string;
 		clearLabel?: string;
+		onkeydown?: (e: KeyboardEvent) => void;
 		children?: import('svelte').Snippet;
 	}>();
 
@@ -53,6 +55,7 @@
 				bind:value={searchQuery}
 				onfocus={onFocus}
 				onblur={onBlur}
+				{onkeydown}
 				class="snap-search-input"
 				aria-label={placeholder}
 			/>

@@ -31,6 +31,57 @@
   let success = false;
   let errorMsg = "";
   let emailStatus: "sent" | "skipped" | "failed" = "skipped";
+  let step = 1;
+
+  function nextStep() {
+    errorMsg = "";
+    if (step === 1) {
+      if (!title.trim()) {
+        errorMsg = "A title is required.";
+        return;
+      }
+      if (!subtitle.trim()) {
+        errorMsg = "A description is required.";
+        return;
+      }
+      step = 2;
+    } else if (step === 2) {
+      let imagePayloads: Array<File | string> = [];
+      if (inputMode === 'file') {
+        imagePayloads = selectedFiles;
+      } else {
+        const urls = storyMode === "sequence"
+          ? imageUrlsText.split(/\r?\n/).map((item) => item.trim()).filter(Boolean)
+          : [imageUrl.trim()].filter(Boolean);
+        imagePayloads = urls;
+      }
+
+      if (imagePayloads.length === 0) {
+        errorMsg = "Please provide an image.";
+        return;
+      }
+
+      if (storyMode === "sequence") {
+        if (imagePayloads.length < MIN_SEQUENCE_SLIDES) {
+          errorMsg = "A tale needs at least two images.";
+          return;
+        }
+        if (imagePayloads.length > MAX_SEQUENCE_SLIDES) {
+          errorMsg = `A tale can have up to ${MAX_SEQUENCE_SLIDES} images.`;
+          return;
+        }
+      } else if (imagePayloads.length !== 1) {
+        errorMsg = "A single story needs exactly one image.";
+        return;
+      }
+      step = 3;
+    }
+  }
+
+  function prevStep() {
+    errorMsg = "";
+    step = Math.max(1, step - 1);
+  }
 
   async function sanitizeImageFile(file: File): Promise<File> {
     const bitmap = await createImageBitmap(file);
@@ -109,12 +160,16 @@
     if (submitting) return;
     isOpen = false;
     setTimeout(() => {
-      title = ""; subtitle = ""; linkUrl = ""; expiresAt = ""; contactEmail = "";
-      storyMode = "single";
-      imageUrl = ""; imageUrlsText = ""; selectedFiles = [];
-      previewSrcs.forEach((src) => URL.revokeObjectURL(src));
-      previewSrcs = [];
-      success = false; errorMsg = ""; inputMode = "file"; emailStatus = "skipped";
+      if (success) {
+        title = ""; subtitle = ""; linkUrl = ""; expiresAt = ""; contactEmail = "";
+        storyMode = "single";
+        imageUrl = ""; imageUrlsText = ""; selectedFiles = [];
+        previewSrcs.forEach((src) => URL.revokeObjectURL(src));
+        previewSrcs = [];
+        inputMode = "file"; emailStatus = "skipped";
+        step = 1;
+      }
+      success = false; errorMsg = "";
     }, 300);
     dispatch("close");
   }
@@ -133,47 +188,16 @@
 
   async function submitStory() {
     errorMsg = "";
-
-    if (!title.trim()) {
-      errorMsg = "A title is required.";
-      return;
-    }
-
-    if (!subtitle.trim()) {
-      errorMsg = "A description is required.";
-      return;
-    }
-
+    
+    // Step 3 final check if needed, but Step 1 & 2 are already validated
     let imagePayloads: Array<File | string> = [];
     if (inputMode === 'file') {
-      if (selectedFiles.length === 0) {
-        errorMsg = "Please select an image to upload.";
-        return;
-      }
       imagePayloads = selectedFiles;
     } else {
       const urls = storyMode === "sequence"
         ? imageUrlsText.split(/\r?\n/).map((item) => item.trim()).filter(Boolean)
         : [imageUrl.trim()].filter(Boolean);
-      if (urls.length === 0) {
-        errorMsg = "Please provide an image URL.";
-        return;
-      }
       imagePayloads = urls;
-    }
-
-    if (storyMode === "sequence") {
-      if (imagePayloads.length < MIN_SEQUENCE_SLIDES) {
-        errorMsg = "A tale needs at least two images.";
-        return;
-      }
-      if (imagePayloads.length > MAX_SEQUENCE_SLIDES) {
-        errorMsg = `A tale can have up to ${MAX_SEQUENCE_SLIDES} images.`;
-        return;
-      }
-    } else if (imagePayloads.length !== 1) {
-      errorMsg = "A single story needs exactly one image.";
-      return;
     }
 
     submitting = true;
@@ -265,125 +289,142 @@
             <div class="error-msg">{errorMsg}</div>
           {/if}
 
-          <div class="input-group">
-            <label for="title">{$t.settings.storyTitleLabel} <span class="req">*</span></label>
-            <input type="text" id="title" bind:value={title} placeholder="e.g., New Semester Welcome!" maxlength="40" disabled={submitting} />
+          <div class="progress-indicator">
+            <div class="step {step >= 1 ? 'active' : ''}">1. Basics</div>
+            <div class="step {step >= 2 ? 'active' : ''}">2. Media</div>
+            <div class="step {step >= 3 ? 'active' : ''}">3. Details</div>
           </div>
 
-          <div class="input-group">
-            <span class="field-label">Story format</span>
-            <div class="tabs full-width">
-              <button class="tab {storyMode==='single'?'active':''}" on:click={() => switchStoryMode('single')} type="button">Single</button>
-              <button class="tab {storyMode==='sequence'?'active':''}" on:click={() => switchStoryMode('sequence')} type="button">Tale</button>
+          {#if step === 1}
+            <div class="input-group">
+              <label for="title">{$t.settings.storyTitleLabel} <span class="req">*</span></label>
+              <input type="text" id="title" bind:value={title} placeholder="e.g., New Semester Welcome!" maxlength="40" disabled={submitting} />
             </div>
-          </div>
 
-          <div class="input-group">
-            <label for="subtitle">{storyMode === "sequence" ? "Shared description" : $t.settings.storySubtitleLabel}</label>
-            <textarea
-              id="subtitle"
-              bind:value={subtitle}
-              placeholder={storyMode === "sequence" ? "One description for the full image sequence..." : "Details, times, location..."}
-              rows="4"
-              disabled={submitting}
-            ></textarea>
-          </div>
-
-          <div class="input-group">
-            <label for="tag">{$t.settings.storyTagLabel}</label>
-            <select id="tag" bind:value={tag} disabled={submitting}>
-              <option value="">No tag</option>
-              {#each STORY_TAG_OPTIONS.slice(1) as option}
-                <option value={option}>{option}</option>
-              {/each}
-            </select>
-          </div>
-
-          <!-- DYNAMIC IMAGE SELECTOR -->
-          <div class="input-group mt-lg">
-            <div class="tab-header">
-              <span class="field-label">Image <span class="req">*</span></span>
-              <div class="tabs">
-                <button class="tab {inputMode==='file'?'active':''}" on:click={() => switchMode('file')} type="button">Upload</button>
-                <button class="tab {inputMode==='url'?'active':''}" on:click={() => switchMode('url')} type="button">Paste URL</button>
+            <div class="input-group">
+              <span class="field-label">Story format</span>
+              <div class="tabs full-width">
+                <button class="tab {storyMode==='single'?'active':''}" on:click={() => switchStoryMode('single')} type="button">Single</button>
+                <button class="tab {storyMode==='sequence'?'active':''}" on:click={() => switchStoryMode('sequence')} type="button">Tale</button>
               </div>
             </div>
 
-            {#if inputMode === 'file'}
-              <label class="file-upload-zone {selectedFiles.length > 0 ? 'has-file' : ''}">
-                <input
-                  type="file"
-                  bind:this={fileInput}
-                  on:change={handleFileChange}
-                  accept="image/*"
-                  multiple={storyMode === "sequence"}
-                  style="display:none;"
-                />
-                
-                {#if previewSrcs.length > 0}
-                  <div class="preview-grid">
-                    {#each previewSrcs as previewSrc, idx}
-                      <img src={previewSrc} class="preview-thumb" alt="Preview {idx + 1}" />
-                    {/each}
-                  </div>
-                  <div class="upload-text overlay">
-                    {storyMode === "sequence" ? `${previewSrcs.length} images selected` : "Tap to Change Photo"}
-                  </div>
-                {:else}
-                  <div class="upload-icon">📷</div>
-                  <div class="upload-text">{storyMode === "sequence" ? "Choose up to 6 Photos" : "Choose from Photo Library"}</div>
-                  <div class="sub-hint">{storyMode === "sequence" ? "At least 2 images for a tale" : "Max size 10MB"}</div>
-                {/if}
-              </label>
-            {:else}
-              {#if storyMode === "sequence"}
-                <textarea
-                  bind:value={imageUrlsText}
-                  placeholder="One image URL per line"
-                  rows="4"
-                  disabled={submitting}
-                ></textarea>
-                <span class="hint">Add 2 to 6 public image URLs, one per line.</span>
+            <div class="input-group">
+              <label for="subtitle">{storyMode === "sequence" ? "Shared description" : $t.settings.storySubtitleLabel}</label>
+              <textarea
+                id="subtitle"
+                bind:value={subtitle}
+                placeholder={storyMode === "sequence" ? "One description for the full image sequence..." : "Details, times, location..."}
+                rows="4"
+                disabled={submitting}
+              ></textarea>
+            </div>
+
+            <div class="input-group">
+              <label for="tag">{$t.settings.storyTagLabel}</label>
+              <select id="tag" bind:value={tag} disabled={submitting}>
+                <option value="">No tag</option>
+                {#each STORY_TAG_OPTIONS.slice(1) as option}
+                  <option value={option}>{option}</option>
+                {/each}
+              </select>
+            </div>
+          {:else if step === 2}
+            <!-- DYNAMIC IMAGE SELECTOR -->
+            <div class="input-group mt-lg">
+              <div class="tab-header">
+                <span class="field-label">Image <span class="req">*</span></span>
+                <div class="tabs">
+                  <button class="tab {inputMode==='file'?'active':''}" on:click={() => switchMode('file')} type="button">Upload</button>
+                  <button class="tab {inputMode==='url'?'active':''}" on:click={() => switchMode('url')} type="button">Paste URL</button>
+                </div>
+              </div>
+
+              {#if inputMode === 'file'}
+                <label class="file-upload-zone {selectedFiles.length > 0 ? 'has-file' : ''}">
+                  <input
+                    type="file"
+                    bind:this={fileInput}
+                    on:change={handleFileChange}
+                    accept="image/*"
+                    multiple={storyMode === "sequence"}
+                    style="display:none;"
+                  />
+                  
+                  {#if previewSrcs.length > 0}
+                    <div class="preview-grid">
+                      {#each previewSrcs as previewSrc, idx}
+                        <img src={previewSrc} class="preview-thumb" alt="Preview {idx + 1}" />
+                      {/each}
+                    </div>
+                    <div class="upload-text overlay">
+                      {storyMode === "sequence" ? `${previewSrcs.length} images selected` : "Tap to Change Photo"}
+                    </div>
+                  {:else}
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">{storyMode === "sequence" ? "Choose up to 6 Photos" : "Choose from Photo Library"}</div>
+                    <div class="sub-hint">{storyMode === "sequence" ? "At least 2 images for a tale" : "Max size 10MB"}</div>
+                  {/if}
+                </label>
               {:else}
-                <input type="url" bind:value={imageUrl} placeholder="https://example.com/myimage.jpg" disabled={submitting} class="url-input" />
-                <span class="hint">Make sure it's a public direct link to an image.</span>
+                {#if storyMode === "sequence"}
+                  <textarea
+                    bind:value={imageUrlsText}
+                    placeholder="One image URL per line"
+                    rows="4"
+                    disabled={submitting}
+                  ></textarea>
+                  <span class="hint">Add 2 to 6 public image URLs, one per line.</span>
+                {:else}
+                  <input type="url" bind:value={imageUrl} placeholder="https://example.com/myimage.jpg" disabled={submitting} class="url-input" />
+                  <span class="hint">Make sure it's a public direct link to an image.</span>
+                {/if}
               {/if}
+            </div>
+
+            <div class="input-group mt-sm">
+              <label for="linkUrl">{$t.settings.storyLinkLabel}</label>
+              <input type="url" id="linkUrl" bind:value={linkUrl} placeholder="https://..." disabled={submitting} />
+            </div>
+          {:else if step === 3}
+            <div class="input-group mt-sm">
+              <label for="storyContactEmail">Contact Email (Optional)</label>
+              <input
+                type="email"
+                id="storyContactEmail"
+                bind:value={contactEmail}
+                placeholder="your@email.com"
+                disabled={submitting}
+              />
+            </div>
+
+            <div class="input-group mt-sm">
+              <label for="expiresAt">{$t.settings.storyExpiresLabel}</label>
+              <div class="date-wrapper">
+                <input type="date" id="expiresAt" bind:value={expiresAt} disabled={submitting} />
+                <div class="quick-dates">
+                  <button type="button" class="quick-btn" on:click={() => addDays(3)}>+3d</button>
+                  <button type="button" class="quick-btn" on:click={() => addDays(7)}>+1w</button>
+                </div>
+              </div>
+            </div>
+          {/if}
+
+          <div class="modal-footer popup-footer-safe">
+            {#if step > 1}
+              <button class="cancel-btn" on:click={prevStep} disabled={submitting}>Back</button>
+            {:else}
+              <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
+            {/if}
+
+            {#if step < 3}
+              <button class="submit-btn" on:click={nextStep} disabled={submitting}>Next</button>
+            {:else}
+              <button class="submit-btn" on:click={submitStory} disabled={submitting}>
+                {submitting ? "Sending..." : "Submit for Review"}
+              </button>
             {/if}
           </div>
-
-          <div class="input-group mt-sm">
-            <label for="linkUrl">{$t.settings.storyLinkLabel}</label>
-            <input type="url" id="linkUrl" bind:value={linkUrl} placeholder="https://..." disabled={submitting} />
-          </div>
-
-          <div class="input-group mt-sm">
-            <label for="storyContactEmail">Contact Email (Optional)</label>
-            <input
-              type="email"
-              id="storyContactEmail"
-              bind:value={contactEmail}
-              placeholder="your@email.com"
-              disabled={submitting}
-            />
-          </div>
-
-          <div class="input-group mt-sm">
-            <label for="expiresAt">{$t.settings.storyExpiresLabel}</label>
-            <div class="date-wrapper">
-              <input type="date" id="expiresAt" bind:value={expiresAt} disabled={submitting} />
-              <div class="quick-dates">
-                <button type="button" class="quick-btn" on:click={() => addDays(3)}>+3d</button>
-                <button type="button" class="quick-btn" on:click={() => addDays(7)}>+1w</button>
-              </div>
-            </div>
-          </div>
-
-        <div class="modal-footer popup-footer-safe">
-          <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
-          <button class="submit-btn" on:click={submitStory} disabled={submitting}>
-            {submitting ? "Sending..." : "Submit for Review"}
-          </button>
-        </div>
         </div>
       {/if}
     </div>
@@ -700,4 +741,26 @@
 
   .mt-lg { margin-top: 6px; }
   .mt-sm { margin-top: 4px; }
+
+  .progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 8px;
+  }
+  .progress-indicator .step {
+    flex: 1;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-muted, #aaa);
+    padding-bottom: 8px;
+    border-bottom: 3px solid var(--border-color, #eee);
+    transition: all 0.3s;
+  }
+  .progress-indicator .step.active {
+    color: var(--primary-color, #e5201e);
+    border-bottom-color: var(--primary-color, #e5201e);
+  }
 </style>

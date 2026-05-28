@@ -117,7 +117,7 @@ function resolveLocation(rawLoc: string) {
         return { key: 'Online', name: 'Online', address: 'Online', coords: '0,0', plusCode: '', notes: '', room: '' };
     }
 
-    const roomMatch = rawLoc.match(/((?:[A-D]|CUBE|SHED|SON|Seminar|HALL)\s*\d+\.\d+|\d+\.\d+)/i);
+    const roomMatch = rawLoc.match(/((?:[A-D]|CUBE|SHED|SON|Seminar|HALL)\s*\d+(?:\.\d+[a-zA-Z]?)?|\d+\.\d+[a-zA-Z]?)/i);
     const roomCode = roomMatch ? roomMatch[1] : '';
 
     let key = '';
@@ -175,9 +175,11 @@ function enhanceEvent(lines: string[]): string[] {
     const event = ['BEGIN:VEVENT'];
     event.push(`SUMMARY:${escapeIcalText(summary)}`);
 
-    let uiLabel = `${enhancedLoc.room || locationRaw} - ${enhancedLoc.name}`;
+    let roomOrRaw = enhancedLoc.room || locationRaw.replace(/\s*\([^)]*\)/g, '').trim();
+    let uiLabel = `${roomOrRaw} - ${enhancedLoc.name}`;
+
     if (enhancedLoc.key === 'CUBE') {
-        let room = (enhancedLoc.room || locationRaw).replace(/CUBE/i, '').trim();
+        let room = roomOrRaw.replace(/CUBE/i, '').trim();
         if (room.toUpperCase().startsWith('HALL ')) {
             uiLabel = room.substring(5).trim() + ' HALL';
         } else if (room.toUpperCase().startsWith('SEMINAR ')) {
@@ -186,10 +188,12 @@ function enhanceEvent(lines: string[]): string[] {
             uiLabel = `${room} - CUBE`;
         }
     } else if (enhancedLoc.key === 'HALL') {
-        let room = (enhancedLoc.room || locationRaw).replace(/HALL/i, '').trim();
+        let room = roomOrRaw.replace(/HALL/i, '').trim();
         uiLabel = `${room} HALL`;
     } else if (enhancedLoc.key === 'Online') {
         uiLabel = 'Online';
+    } else if (enhancedLoc.key !== 'Unrecognized') {
+        uiLabel = roomOrRaw ? `${roomOrRaw} - ${enhancedLoc.name}` : enhancedLoc.name;
     }
 
     if (enhancedLoc.key === 'Unrecognized') {

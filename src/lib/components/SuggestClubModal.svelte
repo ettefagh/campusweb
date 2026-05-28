@@ -21,8 +21,31 @@
   let submitting = false;
   let success = false;
   let errorMsg = "";
+  let step = 1;
 
   const categories = ["sports", "culture", "tech", "business", "arts", "community"];
+
+  function nextStep() {
+    errorMsg = "";
+    if (step === 1) {
+      if (!clubName.trim() || !campusId) {
+        errorMsg = "Club Name and Campus are required.";
+        return;
+      }
+      step = 2;
+    } else if (step === 2) {
+      if (!handleOrUrl.trim()) {
+        errorMsg = "Handle or URL is required.";
+        return;
+      }
+      step = 3;
+    }
+  }
+
+  function prevStep() {
+    errorMsg = "";
+    step = Math.max(1, step - 1);
+  }
 
   async function sanitizeLogoFile(file: File): Promise<string> {
     const bitmap = await createImageBitmap(file);
@@ -58,16 +81,19 @@
     if (submitting) return;
     isOpen = false;
     setTimeout(() => {
-      clubName = ""; 
-      handleOrUrl = ""; 
-      campusId = ""; 
-      category = "";
-      platform = "instagram";
-      contactEmail = ""; 
-      note = ""; 
-      logoDataUrl = "";
-      logoUrl = "";
-      logoFileName = "";
+      if (success) {
+        clubName = ""; 
+        handleOrUrl = ""; 
+        campusId = ""; 
+        category = "";
+        platform = "instagram";
+        contactEmail = ""; 
+        note = ""; 
+        logoDataUrl = "";
+        logoUrl = "";
+        logoFileName = "";
+        step = 1;
+      }
       success = false; 
       errorMsg = "";
     }, 300);
@@ -108,12 +134,6 @@
 
   async function submitClub() {
     errorMsg = "";
-
-    if (!clubName.trim() || !handleOrUrl.trim() || !campusId) {
-      errorMsg = "Please fill in all required fields.";
-      return;
-    }
-
     submitting = true;
 
     try {
@@ -196,95 +216,112 @@
             <div class="error-msg">{errorMsg}</div>
           {/if}
 
-          <div class="input-group">
-            <label for="clubName">Club Name <span class="req">*</span></label>
-            <input type="text" id="clubName" bind:value={clubName} placeholder="e.g. SRH Chess Club" disabled={submitting} />
+          <div class="progress-indicator">
+            <div class="step {step >= 1 ? 'active' : ''}">1. Identity</div>
+            <div class="step {step >= 2 ? 'active' : ''}">2. Presence</div>
+            <div class="step {step >= 3 ? 'active' : ''}">3. Details</div>
           </div>
 
-          <div class="input-group">
-            <label for="platform">Platform <span class="req">*</span></label>
-            <select id="platform" bind:value={platform} disabled={submitting}>
-              <option value="instagram">Instagram</option>
-              <option value="whatsapp">WhatsApp Group</option>
-            </select>
-          </div>
+          {#if step === 1}
+            <div class="input-group">
+              <label for="clubName">Club Name <span class="req">*</span></label>
+              <input type="text" id="clubName" bind:value={clubName} placeholder="e.g. SRH Chess Club" disabled={submitting} />
+            </div>
 
-          <div class="input-group">
-            <label for="handleOrUrl">
-              {platform === 'instagram' ? 'Instagram Handle / URL' : 'WhatsApp Invite Link'} <span class="req">*</span>
-            </label>
-            <input 
-              type="text" 
-              id="handleOrUrl" 
-              bind:value={handleOrUrl} 
-              placeholder={platform === 'instagram' ? 'e.g. @srh_chess' : 'https://chat.whatsapp.com/...'} 
-              disabled={submitting} 
-            />
-          </div>
+            <div class="input-group">
+              <label for="campusId">Campus <span class="req">*</span></label>
+              <select id="campusId" bind:value={campusId} disabled={submitting}>
+                <option value="">Select campus...</option>
+                <option value="all">Global / All</option>
+                {#each CAMPUSES as campus}
+                  <option value={campus.id}>{campus.name}</option>
+                {/each}
+              </select>
+            </div>
 
-          <div class="input-group">
-            <label for="campusId">Campus <span class="req">*</span></label>
-            <select id="campusId" bind:value={campusId} disabled={submitting}>
-              <option value="">Select campus...</option>
-              <option value="all">Global / All</option>
-              {#each CAMPUSES as campus}
-                <option value={campus.id}>{campus.name}</option>
-              {/each}
-            </select>
-          </div>
+            <div class="input-group">
+              <label for="category">Category</label>
+              <select id="category" bind:value={category} disabled={submitting}>
+                <option value="">Select category...</option>
+                {#each categories as cat}
+                  <option value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                {/each}
+              </select>
+            </div>
+          {:else if step === 2}
+            <div class="input-group">
+              <label for="platform">Platform <span class="req">*</span></label>
+              <select id="platform" bind:value={platform} disabled={submitting}>
+                <option value="instagram">Instagram</option>
+                <option value="whatsapp">WhatsApp Group</option>
+              </select>
+            </div>
 
-          <div class="input-group">
-            <label for="category">Category</label>
-            <select id="category" bind:value={category} disabled={submitting}>
-              <option value="">Select category...</option>
-              {#each categories as cat}
-                <option value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-              {/each}
-            </select>
-          </div>
+            <div class="input-group">
+              <label for="handleOrUrl">
+                {platform === 'instagram' ? 'Instagram Handle / URL' : 'WhatsApp Invite Link'} <span class="req">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="handleOrUrl" 
+                bind:value={handleOrUrl} 
+                placeholder={platform === 'instagram' ? 'e.g. @srh_chess' : 'https://chat.whatsapp.com/...'} 
+                disabled={submitting} 
+              />
+            </div>
 
-          <div class="input-group">
-            <label for="contactEmail">Contact Email (Optional)</label>
-            <input type="email" id="contactEmail" bind:value={contactEmail} placeholder="your@email.com" disabled={submitting} />
-          </div>
+            <div class="input-group">
+              <label for="clubLogo">Club Logo / Icon (Optional)</label>
+              <input
+                type="file"
+                id="clubLogo"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                on:change={handleLogoUpload}
+                disabled={submitting}
+              />
+              {#if logoFileName}
+                <p class="file-hint">{logoFileName}</p>
+              {/if}
+              <input
+                type="url"
+                id="clubLogoUrl"
+                bind:value={logoUrl}
+                placeholder="or paste a public logo URL"
+                disabled={submitting}
+              />
+              {#if logoDataUrl || logoUrl}
+                <div class="logo-preview-wrap">
+                  <img src={logoDataUrl || logoUrl} alt="Club logo preview" class="logo-preview" />
+                </div>
+              {/if}
+            </div>
+          {:else if step === 3}
+            <div class="input-group">
+              <label for="contactEmail">Contact Email (Optional)</label>
+              <input type="email" id="contactEmail" bind:value={contactEmail} placeholder="your@email.com" disabled={submitting} />
+            </div>
 
-          <div class="input-group">
-            <label for="clubLogo">Club Logo / Icon (Optional)</label>
-            <input
-              type="file"
-              id="clubLogo"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              on:change={handleLogoUpload}
-              disabled={submitting}
-            />
-            {#if logoFileName}
-              <p class="file-hint">{logoFileName}</p>
-            {/if}
-            <input
-              type="url"
-              id="clubLogoUrl"
-              bind:value={logoUrl}
-              placeholder="or paste a public logo URL"
-              disabled={submitting}
-            />
-            {#if logoDataUrl || logoUrl}
-              <div class="logo-preview-wrap">
-                <img src={logoDataUrl || logoUrl} alt="Club logo preview" class="logo-preview" />
-              </div>
-            {/if}
-          </div>
-
-          <div class="input-group">
-            <label for="note">Note to Admins</label>
-            <textarea id="note" bind:value={note} placeholder="Tell us more about the club..." disabled={submitting}></textarea>
-          </div>
+            <div class="input-group">
+              <label for="note">Note to Admins</label>
+              <textarea id="note" bind:value={note} placeholder="Tell us more about the club..." disabled={submitting}></textarea>
+            </div>
+          {/if}
         </div>
 
         <div class="modal-footer popup-footer-safe">
-          <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
-          <button class="submit-btn" on:click={submitClub} disabled={submitting}>
-            {submitting ? "Submitting..." : "Send Suggestion"}
-          </button>
+          {#if step > 1}
+            <button class="cancel-btn" on:click={prevStep} disabled={submitting}>Back</button>
+          {:else}
+            <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
+          {/if}
+
+          {#if step < 3}
+            <button class="submit-btn" on:click={nextStep} disabled={submitting}>Next</button>
+          {:else}
+            <button class="submit-btn" on:click={submitClub} disabled={submitting}>
+              {submitting ? "Submitting..." : "Send Suggestion"}
+            </button>
+          {/if}
         </div>
       {/if}
     </div>
@@ -472,4 +509,26 @@
   
   @keyframes fadeIn { from {opacity: 0} to {opacity: 1} }
   @keyframes slideUp { from {opacity: 0; transform: translateY(20px)} to {opacity: 1; transform: translateY(0)} }
+
+  .progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    gap: 8px;
+  }
+  .progress-indicator .step {
+    flex: 1;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-color-secondary);
+    padding-bottom: 8px;
+    border-bottom: 3px solid var(--border-color);
+    transition: all 0.3s;
+  }
+  .progress-indicator .step.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+  }
 </style>

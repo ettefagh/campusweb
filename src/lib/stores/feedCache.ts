@@ -1,4 +1,5 @@
 import { writable, get } from "svelte/store";
+import { browser } from "$app/environment";
 import type { Story } from "$lib/components/StoriesSlider.svelte";
 import storiesJson from "$lib/data/stories.json";
 import { settingsStore } from "$lib/stores/settingsStore";
@@ -7,6 +8,19 @@ import { settingsStore } from "$lib/stores/settingsStore";
 export const cachedStories = writable<Story[]>([]);
 export const lastFetchTime = writable<number>(0);
 export const storiesLoading = writable<boolean>(false);
+
+const STORIES_STORAGE_KEY = 'cached_stories_v1';
+
+if (browser) {
+  const stored = localStorage.getItem(STORIES_STORAGE_KEY);
+  if (stored) {
+    try {
+      cachedStories.set(JSON.parse(stored));
+    } catch (e) {
+      console.error("Failed to parse cached stories", e);
+    }
+  }
+}
 
 let stageStoriesRun = 0;
 
@@ -67,6 +81,9 @@ export async function getStories(force = false) {
     if (res.ok) {
       const data = await res.json();
       if (data && Array.isArray(data)) {
+        if (browser) {
+          localStorage.setItem(STORIES_STORAGE_KEY, JSON.stringify(data));
+        }
         stageStories(data);
         return;
       }
@@ -80,3 +97,4 @@ export async function getStories(force = false) {
   }
   storiesLoading.set(false);
 }
+

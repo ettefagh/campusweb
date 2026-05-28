@@ -3,9 +3,19 @@
   import { t } from "$lib/i18n";
   import { goto } from "$app/navigation";
 
-  let navItems: Array<{ path: string; label: string; iconClass: string; ariaLabel: string }> = [];
+  let navItems: Array<{
+    path: string;
+    label: string;
+    iconClass: string;
+    ariaLabel: string;
+  }> = [];
   $: navItems = [
-    { path: "/", label: $t.nav.home, iconClass: "ph-house", ariaLabel: $t.nav.home },
+    {
+      path: "/",
+      label: $t.nav.home,
+      iconClass: "ph-house",
+      ariaLabel: $t.nav.home,
+    },
     {
       path: "/explore",
       label: $t.nav.explore,
@@ -18,8 +28,18 @@
       iconClass: "ph-calendar-blank",
       ariaLabel: $t.nav.calendar,
     },
-    { path: "/feed", label: $t.nav.feed, iconClass: "ph-newspaper", ariaLabel: $t.nav.feed },
-    { path: "/settings", label: $t.nav.settings, iconClass: "ph-gear", ariaLabel: $t.nav.settings },
+    {
+      path: "/feed",
+      label: $t.nav.feed,
+      iconClass: "ph-newspaper",
+      ariaLabel: $t.nav.feed,
+    },
+    {
+      path: "/settings",
+      label: $t.nav.settings,
+      iconClass: "ph-gear",
+      ariaLabel: $t.nav.settings,
+    },
   ];
 
   let touchStartX = 0;
@@ -39,7 +59,9 @@
 
     // Minimum distance threshold of 60px, primarily horizontal movement
     if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 45) {
-      const currentIndex = navItems.findIndex(item => item.path === $page.url.pathname);
+      const currentIndex = navItems.findIndex(
+        (item) => item.path === $page.url.pathname,
+      );
       if (currentIndex !== -1) {
         if (deltaX < 0 && currentIndex < navItems.length - 1) {
           // Swipe left -> Next tab
@@ -78,7 +100,7 @@
     />
     <span class="topbar-title">Campusweb</span>
   </div>
-  
+
   <nav class="topbar-links">
     {#each navItems as item}
       <a
@@ -89,7 +111,11 @@
         aria-current={$page.url.pathname === item.path ? "page" : undefined}
       >
         <span class="icon" aria-hidden="true">
-          <i class={$page.url.pathname === item.path ? `ph-fill ${item.iconClass}` : `ph ${item.iconClass}`}></i>
+          <i
+            class={$page.url.pathname === item.path
+              ? `ph-fill ${item.iconClass}`
+              : `ph ${item.iconClass}`}
+          ></i>
         </span>
         <span class="label">{item.label}</span>
       </a>
@@ -101,7 +127,13 @@
       <span class="crafted">Crafted with ❤️</span>
       <span class="status">Unofficial Project</span>
     </div>
-    <a href="https://github.com/ettefagh/campusweb" target="_blank" rel="noopener noreferrer" class="github-btn" aria-label="GitHub Repository">
+    <a
+      href="https://github.com/ettefagh/campusweb"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="github-btn"
+      aria-label="GitHub Repository"
+    >
       <i class="ph ph-github-logo"></i>
     </a>
   </div>
@@ -123,7 +155,11 @@
       aria-current={$page.url.pathname === item.path ? "page" : undefined}
     >
       <span class="icon" aria-hidden="true">
-        <i class={$page.url.pathname === item.path ? `ph-fill ${item.iconClass}` : `ph ${item.iconClass}`}></i>
+        <i
+          class={$page.url.pathname === item.path
+            ? `ph-fill ${item.iconClass}`
+            : `ph ${item.iconClass}`}
+        ></i>
       </span>
       <span class="label">{item.label}</span>
     </a>
@@ -143,13 +179,17 @@
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: var(--glass-blur-strong);
     -webkit-backdrop-filter: var(--glass-blur-strong);
-    border-top: 1px solid rgba(7, 19, 47, 0.08);
+    border-top: 1px solid var(--glass-border-subtle);
     display: flex;
     justify-content: space-around;
     align-items: center;
     z-index: 100;
-    padding: 8px max(10px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-right));
-    box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.07), 0 -1px 0 rgba(255, 255, 255, 0.8);
+    padding: 8px max(10px, env(safe-area-inset-left))
+      calc(8px + env(safe-area-inset-bottom, 0px))
+      max(10px, env(safe-area-inset-right));
+    box-shadow:
+      0 -10px 32px rgba(15, 23, 42, 0.07),
+      0 -1px 0 rgba(255, 255, 255, 0.8);
   }
 
   :global([data-theme="dark"]) .bottom-nav {
@@ -277,7 +317,9 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 var(--spacing-xl);
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03), inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+      box-shadow:
+        0 4px 30px rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.1);
     }
 
     .topbar-brand {
@@ -341,7 +383,7 @@
     .topbar-item:hover {
       background: rgba(212, 68, 7, 0.08);
       color: var(--primary-color);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
       transform: translateY(-1px);
     }
 

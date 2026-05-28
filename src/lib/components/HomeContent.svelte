@@ -1270,6 +1270,7 @@
 															>
 																<p
 																	class="calendar-preview-meta"
+																	style="font-weight: 900; color: black;"
 																>
 																	{event
 																		.extendedProps
@@ -1385,7 +1386,6 @@
 				</div>
 			{/if}
 		{/each}
-
 	</div>
 
 	{#if isArrangingHomeBlocks}
@@ -1416,10 +1416,7 @@
 									class="available-block-icon"
 									aria-hidden="true"
 								>
-									<i
-										class={getHomeSectionIcon(
-											section.id,
-										)}
+									<i class={getHomeSectionIcon(section.id)}
 									></i>
 								</span>
 								<div class="available-block-copy">
@@ -1427,9 +1424,7 @@
 										{getHomeSectionLabel(section.id)}
 									</h3>
 									<p>
-										{getHomeSectionDescription(
-											section.id,
-										)}
+										{getHomeSectionDescription(section.id)}
 									</p>
 								</div>
 								<button
@@ -1437,10 +1432,7 @@
 									type="button"
 									aria-label={`${$t.home.addBlock}: ${getHomeSectionLabel(section.id)}`}
 									on:click={() =>
-										setHomeBlockEnabled(
-											section.id,
-											true,
-										)}
+										setHomeBlockEnabled(section.id, true)}
 								>
 									<i
 										class="ph-bold ph-plus-circle"
@@ -1622,7 +1614,7 @@
 		max-width: 460px;
 		box-sizing: border-box;
 		margin: 0 auto;
-		padding: 10px 18px calc(var(--bottom-nav-clearance) + 160px);
+		padding: 10px 18px calc(var(--bottom-nav-clearance));
 		display: flex;
 		flex-direction: column;
 		gap: 28px;
@@ -1652,7 +1644,6 @@
 		min-width: 0;
 		padding-right: 50px;
 	}
-
 
 	.home-context {
 		display: none;
@@ -2238,8 +2229,6 @@
 		display: block !important;
 		grid-column: 1 / -1;
 	}
-
-
 
 	.calendar-preview {
 		padding: 8px 16px 16px;
