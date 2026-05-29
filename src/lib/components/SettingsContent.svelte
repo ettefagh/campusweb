@@ -26,42 +26,6 @@
   import { page } from "$app/stores";
   import EmailGate from "$lib/components/EmailGate.svelte";
   import SecureCalendarInput from "$lib/components/SecureCalendarInput.svelte";
-  import Sortable from 'sortablejs';
-
-  function sortableSections(node: HTMLElement) {
-    const sortable = new Sortable(node, {
-      animation: 150,
-      filter: '.is-header',
-      preventOnFilter: false,
-      onMove: (evt) => {
-        if (evt.related.classList.contains('is-header')) {
-          return false;
-        }
-      },
-      onEnd: (evt) => {
-        if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
-          const updated = [...visibleSections];
-          const [moved] = updated.splice(evt.oldIndex, 1);
-          updated.splice(evt.newIndex, 0, moved);
-          
-          const feedSection = $settingsStore.homeSections.find((s: any) => s.id === "feed");
-          const finalSections = feedSection ? [...updated, feedSection] : updated;
-          
-          settingsStore.patch({ homeSections: finalSections });
-        }
-      }
-    });
-
-    return {
-      destroy() {
-        sortable.destroy();
-      }
-    };
-  }
-
-  $: visibleSections = $settingsStore.homeSections.filter(
-    (s: any) => s.id !== "feed",
-  );
   $: activeCampusName =
     CAMPUSES.find((campus) => campus.id === $settingsStore.campusId)?.name ||
     "";
@@ -696,78 +660,13 @@
 	          <p class="section-desc section-desc--spaced">
 	            {$t.settings.homepageLayoutDesc}
 	          </p>
-	          <div class="setting-row setting-row--control">
-	            <div class="setting-info setting-copy">
-	              <span class="setting-label">{$t.settings.calendarWidgetMode}</span>
-	              <span class="setting-desc">{$t.settings.calendarWidgetModeDesc}</span>
-	            </div>
-	            <div class="segment-control segment-control--equal" role="group" aria-label={$t.settings.calendarWidgetMode}>
-	              <button
-	                class="segment-btn"
-	                class:active={$settingsStore.calendarWidgetMode !== "next"}
-	                aria-pressed={$settingsStore.calendarWidgetMode !== "next"}
-	                on:click={() => settingsStore.patch({ calendarWidgetMode: "today" })}
-	              >
-	                {$t.settings.calendarWidgetToday}
-	              </button>
-	              <button
-	                class="segment-btn"
-	                class:active={$settingsStore.calendarWidgetMode === "next"}
-	                aria-pressed={$settingsStore.calendarWidgetMode === "next"}
-	                on:click={() => settingsStore.patch({ calendarWidgetMode: "next" })}
-	              >
-	                {$t.settings.calendarWidgetNext}
-	              </button>
-	            </div>
-	          </div>
-	          <div class="sections-list" use:sortableSections>
-	            {#each visibleSections as sec, i (sec.id)}
-	              <div class="setting-row section-item" class:is-header={sec.id === "header"} style={sec.id !== "header" ? "cursor: grab;" : ""}>
-	                <div class="section-info">
-	                  <span class="setting-label">
-	                    {#if sec.id === "favorites"}<i class="section-label-icon ph-bold ph-star" aria-hidden="true"></i>
-	                    {:else if sec.id === "favoriteContacts"}<i class="section-label-icon ph-bold ph-address-book" aria-hidden="true"></i>
-	                    {:else if sec.id === "calendar"}<i class="section-label-icon ph-bold ph-calendar" aria-hidden="true"></i>
-	                    {:else if sec.id === "cards"}<i class="section-label-icon ph-bold ph-identification-card" aria-hidden="true"></i>
-	                    {:else if sec.id === "header"}<i class="section-label-icon ph-bold ph-house" aria-hidden="true"></i>
-	                    {:else if sec.id === "stories"}<i class="section-label-icon ph-bold ph-circles-three-plus" aria-hidden="true"></i>
-	                    {:else if sec.id === "feed"}<i class="section-label-icon ph-bold ph-newspaper" aria-hidden="true"></i>
-	                    {/if}
-                    {sec.id === "favorites"
-                      ? $t.settings.favoriteLinks
-                      : sec.id === "favoriteContacts"
-                        ? $t.settings.favoriteContacts
-                      : sec.id === "calendar"
-                        ? $t.settings.calendarSchedule
-                        : sec.id === "cards"
-                          ? $t.settings.cards
-                          : sec.id === "header"
-                            ? $t.settings.headerSection
-                            : sec.id === "stories"
-                              ? $t.settings.campusStories
-                              : sec.id === "feed"
-                                ? $t.settings.feedSummary
-                                : sec.id}
-                  </span>
-	                </div>
-	                <div class="section-actions">
-	                  {#if sec.id !== "header"}
-	                    <button
-	                      class="toggle"
-	                      class:on={sec.enabled}
-	                      role="switch"
-	                      aria-checked={sec.enabled}
-	                      aria-label={$t.settings.toggleSection}
-	                      on:click={() => toggleSection(sec.id)}
-	                    >
-	                      <span class="toggle-knob"></span>
-	                    </button>
-	                  {/if}
-	                </div>
-	              </div>
-	            {/each}
-          </div>
-        </div>
+            <div class="setting-row">
+              <a href="/?edit=true" class="secondary-action-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: var(--spacing-sm);">
+                <i class="ph-bold ph-faders" aria-hidden="true"></i>
+                {$t.home ? $t.home.customizeHome || 'Customize Home Screen' : 'Customize Home Screen'}
+              </a>
+            </div>
+	        </div>
 
         <!-- 3. Default Landing Page -->
 	        <div class="setting-group setting-group--landing">

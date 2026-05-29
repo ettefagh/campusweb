@@ -5,10 +5,33 @@
   export let promotion: Promotion;
   export let onDismiss: (id: string) => void;
 
-  function getLabel(label: Promotion["label"]) {
+  function getLabel(label: string) {
     if (label === "Promotion") return $t.feed.promotionLabel;
     if (label === "Student Offer") return $t.feed.studentOfferLabel;
-    return $t.feed.officialOfferLabel;
+    if (label === "Official Offer") return $t.feed.officialOfferLabel;
+    return label;
+  }
+
+  function handlePromoClick() {
+    const storyId = `story-promo-${promotion.id}`;
+    const payload = JSON.stringify({ storyId });
+
+    try {
+      if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon("/api/stats/story-view", blob);
+        return;
+      }
+    } catch (e) {}
+
+    if (typeof fetch !== "undefined") {
+      fetch("/api/stats/story-view", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true,
+      }).catch(() => {});
+    }
   }
 </script>
 
@@ -24,19 +47,21 @@
     </svg>
   </button>
 
-  <a href={promotion.linkUrl} target="_blank" rel="noopener noreferrer" class="promo-content">
+  <a href={promotion.linkUrl} target="_blank" rel="noopener noreferrer" class="promo-content" on:click={handlePromoClick}>
     {#if promotion.imageUrl}
       <img src={promotion.imageUrl} alt={promotion.title} class="promo-image" />
     {/if}
     
     <div class="promo-text">
-      <div class="promo-sponsor">{promotion.sponsorName}</div>
+      {#if promotion.sponsorName}
+        <div class="promo-sponsor">{promotion.sponsorName}</div>
+      {/if}
       <h3 class="promo-title">{promotion.title}</h3>
       <p class="promo-subtitle">{promotion.subtitle}</p>
     </div>
     
     <div class="promo-footer">
-      <span class="promo-cta">{$t.feed.readMore}</span>
+      <span class="promo-cta">{promotion.cta || $t.feed.readMore}</span>
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="9 18 15 12 9 6"></polyline>
       </svg>

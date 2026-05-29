@@ -33,6 +33,7 @@
 	import { focusTrap } from "$lib/utils/focusTrap";
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
+	import { page } from "$app/stores";
 	import { browser } from "$app/environment";
 	import SectionHeader from "$lib/components/SectionHeader.svelte";
 	import Sortable from "sortablejs";
@@ -278,9 +279,6 @@
 		getStories();
 		loadHomePublicContacts();
 		calendarStore.refreshAll();
-		if ($settingsStore.defaultPage === "calendar") {
-			goto("/calendar", { replaceState: true });
-		}
 		container = document.querySelector(".app-container");
 		const handleScroll = () => {
 			if (container) {
@@ -498,6 +496,18 @@
 	let isManagingFavorites = false;
 	let isManagingFavoriteContacts = false;
 	let isArrangingHomeBlocks = false;
+
+	$: {
+		if ($page.url.searchParams.get("edit") === "true") {
+			isArrangingHomeBlocks = true;
+			if (browser) {
+				const url = new URL(window.location.href);
+				url.searchParams.delete("edit");
+				window.history.replaceState({}, "", url);
+			}
+		}
+	}
+
 	let hasAutoOpenedAvailableBlocks = false;
 	let isStorySuggestionOpen = false;
 

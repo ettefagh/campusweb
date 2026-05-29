@@ -739,6 +739,7 @@
   }
 
   .story-card-media img {
+    object-position: top;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -869,10 +870,12 @@
     overflow: visible;
   }
 
-  .story-card .story-tag {
+  .story-card .story-tag,
+  .story-card .story-tag.tag-live {
     border-style: solid;
-    left: 5px;
-    bottom: 4px;
+    left: 8px;
+    top: 8px;
+    bottom: auto;
     transform: none;
     border: none;
     border-radius: 6px;

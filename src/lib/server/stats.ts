@@ -22,6 +22,10 @@ type BotStats = {
     allTime: Record<string, number>;
     daily: Record<string, Record<string, number>>;
   };
+  searches: {
+    allTime: Record<string, number>;
+    daily: Record<string, Record<string, number>>;
+  };
 };
 
 function createDefaultStats(): BotStats {
@@ -30,7 +34,8 @@ function createDefaultStats(): BotStats {
     fields: { hasExpiry: 0, hasUrl: 0 },
     actions: { approved: 0, declined: 0, edited: 0, directCreated: 0 },
     links: { allTime: {}, daily: {} },
-    storyViews: { allTime: {}, daily: {} }
+    storyViews: { allTime: {}, daily: {} },
+    searches: { allTime: {}, daily: {} }
   };
 }
 
@@ -53,6 +58,10 @@ async function readStats(kv: any): Promise<BotStats> {
       storyViews: {
         allTime: { ...stats.storyViews.allTime, ...parsed.storyViews?.allTime },
         daily: { ...stats.storyViews.daily, ...parsed.storyViews?.daily }
+      },
+      searches: {
+        allTime: { ...stats.searches?.allTime, ...parsed.searches?.allTime },
+        daily: { ...stats.searches?.daily, ...parsed.searches?.daily }
       }
     };
   } catch (e) {
@@ -144,5 +153,48 @@ export async function incrementStoryView(kv: any, storyId: string) {
     await kv.put("bot_stats", JSON.stringify(stats));
   } catch (err) {
     console.error("Failed to update story stats", err);
+  }
+}
+
+export async function incrementSearchQuery(kv: any, query: string) {
+  if (!kv || !query) return;
+  const q = query.toLowerCase().trim();
+
+  try {
+    const stats = await readStats(kv);
+    const today = new Date().toISOString().split("T")[0];
+
+    // Ensure searches object exists in older stats
+    if (!stats.searches) stats.searches = { allTime: {}, daily: {} };
+
+    stats.searches.allTime[q] = (stats.searches.allTime[q] || 0) + 1;
+    stats.searches.daily[today] = stats.searches.daily[today] || {};
+    stats.searches.daily[today][q] = (stats.searches.daily[today][q] || 0) + 1;
+
+    await kv.put("bot_stats", JSON.stringify(stats));
+  } catch (err) {
+    console.error("Failed to update search stats", err);
+  }
+}
+
+export async function getPopularSearchStats(kv: any, limit = 5) {
+  if (!kv) return [];
+
+  try {
+    const stats = await readStats(kv);
+    if (!stats.searches) return [];
+    
+    return Object.entries(stats.searches.allTime)
+      .map(([query, total]) => ({
+        query,
+        total: Number(total) || 0,
+      }))
+      .filter((item) => item.total > 0)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, limit)
+      .map((item) => item.query);
+  } catch (err) {
+    console.error("Failed to read popular search stats", err);
+    return [];
   }
 }

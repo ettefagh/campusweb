@@ -62,11 +62,12 @@
   let searchQuery = $state("");
   let isSearchActive = $state(false);
   let recentSearches = $state<string[]>([]);
+  let popularSearches = $state<string[]>([]);
   let focusedResultIndex = $state<number>(-1);
   let expandedContactEmail = $state<string | null>(null);
   let favoriteContactMessage = $state("");
-  let libraryUrl = $state(
-    "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB",
+  let libraryUrl = $derived(
+    $activeCampus?.libraryUrl || "https://webopac.srh-hochschulen.de/vopac/index.asp?DB=BIBB"
   );
 
   let showGoToTop = $state(false);
@@ -76,10 +77,6 @@
   onMount(() => {
     loadPublicContacts();
     loadPopularLinks();
-    // Dynamic library URL based on campus if needed
-    if ($settingsStore.campusId === "berlin") {
-      libraryUrl = "https://login.srh-berlin.idm.oclc.org/menu";
-    }
     if ($settingsStore.emailVerified) {
       loadPrivateContacts();
     }
@@ -108,6 +105,17 @@
     try {
       localStorage.setItem('campusweb_recent_searches', JSON.stringify(newSearches));
     } catch(e) {}
+
+    if (navigator.sendBeacon) {
+      const blob = new Blob([JSON.stringify({ query: q })], { type: "application/json" });
+      navigator.sendBeacon("/api/stats/search", blob);
+    } else {
+      fetch("/api/stats/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q }),
+      }).catch(() => {});
+    }
   }
 
   function handleSearchKeydown(e: KeyboardEvent) {
@@ -144,7 +152,9 @@
         }
       } else if (searchQuery.trim()) {
         saveSearchQuery(searchQuery);
-        // Deselect or blur? Let user keep typing or scrolling
+        if (e.target && 'blur' in e.target && typeof e.target.blur === 'function') {
+          e.target.blur();
+        }
       }
     }
   }
@@ -216,12 +226,28 @@
       const res = await fetch("/api/stats/link-click");
       if (!res.ok) return;
       const data = await res.json();
-      popularLinkIds = Array.isArray(data.popularLinks)
+      let fetchedIds = Array.isArray(data.popularLinks)
         ? data.popularLinks.map((item: any) => item.linkId).filter(Boolean)
         : [];
+      
+      if (fetchedIds.length < 3) {
+        const defaults = ["campusweb", "ecampus", "library-catalogue", "student-handbook"];
+        for (const defaultId of defaults) {
+          if (!fetchedIds.includes(defaultId)) fetchedIds.push(defaultId);
+        }
+      }
+      popularLinkIds = fetchedIds;
     } catch (err) {
-      popularLinkIds = [];
+      popularLinkIds = ["campusweb", "ecampus", "library-catalogue", "student-handbook"];
     }
+
+    try {
+      const res = await fetch("/api/stats/search");
+      if (res.ok) {
+        const data = await res.json();
+        popularSearches = data.popularSearches || [];
+      }
+    } catch (err) {}
   }
 
   // ─── Search Logic ──────────────────────────────────────────
@@ -255,12 +281,21 @@
       );
 
     if (!query) return visibleLinks;
-    return visibleLinks.filter(
-      (link) =>
+    return visibleLinks.filter((link) => {
+      // Get translated strings if available
+      const translatedTitle = ($t.linkTitle && $t.linkTitle[link.id as keyof typeof $t.linkTitle] ? String($t.linkTitle[link.id as keyof typeof $t.linkTitle]) : link.title).toLowerCase();
+      const translatedDesc = ($t.linkDesc && $t.linkDesc[link.id as keyof typeof $t.linkDesc] ? String($t.linkDesc[link.id as keyof typeof $t.linkDesc]) : link.description).toLowerCase();
+      const translatedCategory = ($t.linkCategory && $t.linkCategory[link.category_name as keyof typeof $t.linkCategory] ? String($t.linkCategory[link.category_name as keyof typeof $t.linkCategory]) : link.category_name).toLowerCase();
+
+      return (
         link.title.toLowerCase().includes(query) ||
         link.description.toLowerCase().includes(query) ||
-        link.category_name.toLowerCase().includes(query),
-    );
+        link.category_name.toLowerCase().includes(query) ||
+        translatedTitle.includes(query) ||
+        translatedDesc.includes(query) ||
+        translatedCategory.includes(query)
+      );
+    });
   });
 
   // 2. Filtered Directory Contacts
@@ -616,16 +651,18 @@
   </header>
 
   <div class="search-sticky-wrapper">
-    <div class="search-bar-container">
+    <div class="explore-search-island">
       <SearchBar
         bind:searchQuery
         bind:isSearchActive
         placeholder="Search by services, directory, or campus..."
         onkeydown={handleSearchKeydown}
       >
-        {#if !searchQuery.trim() && recentSearches.length > 0}
-          <div class="search-typeahead recent-searches-box">
-            <h4 class="typeahead-title">Recent Searches</h4>
+        {#if !searchQuery.trim() && (recentSearches.length > 0 || popularSearches.length > 0)}
+          <div class="search-typeahead-container" style="display: flex; flex-direction: column; gap: 1rem;">
+            {#if recentSearches.length > 0}
+              <div class="search-typeahead recent-searches-box">
+                <h4 class="typeahead-title">Recent Searches</h4>
             <ul class="typeahead-list">
               {#each recentSearches as search, i}
                 <li class="typeahead-item" class:focused={focusedResultIndex === i}>
@@ -636,6 +673,23 @@
                 </li>
               {/each}
             </ul>
+          </div>
+            {/if}
+            {#if popularSearches.length > 0}
+              <div class="search-typeahead popular-searches-box">
+                <h4 class="typeahead-title">Popular Searches</h4>
+                <ul class="typeahead-list">
+                  {#each popularSearches as search, i}
+                    <li class="typeahead-item" class:focused={focusedResultIndex === i + recentSearches.length}>
+                      <button type="button" class="typeahead-btn" onclick={() => { searchQuery = search; focusedResultIndex = -1; }}>
+                        <i class="ph-bold ph-trend-up"></i>
+                        <span>{search}</span>
+                      </button>
+                    </li>
+                  {/each}
+                </ul>
+              </div>
+            {/if}
           </div>
         {:else if searchQuery.trim() && searchSuggestions.length > 0}
           <div class="search-typeahead suggestions-box">
@@ -660,29 +714,10 @@
           </div>
         {/if}
       </SearchBar>
-    </div>
 
-    <div class="category-nav-wrapper">
-      <nav class="category-nav" aria-label={$t.explore.sections}>
-        <div class="category-nav-scroll">
-          <button
-            type="button"
-            class="cat-chip"
-            onclick={(e) => {
-              e.currentTarget.scrollIntoView({
-                behavior: "smooth",
-                inline: "center",
-                block: "nearest",
-              });
-              const el = document.getElementById(DIRECTORY_ID);
-              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-          >
-            <i class="ph-bold ph-address-book" aria-hidden="true"></i>
-            <span>{$t.explore.contactList}</span>
-          </button>
-
-          {#each displayCategories as category}
+      <div class="category-nav-wrapper">
+        <nav class="category-nav" aria-label={$t.explore.sections}>
+          <div class="category-nav-scroll">
             <button
               type="button"
               class="cat-chip"
@@ -692,19 +727,38 @@
                   inline: "center",
                   block: "nearest",
                 });
-                const el = document.getElementById(
-                  `category-${category.replace(/\s+/g, "-")}`,
-                );
-                if (el)
-                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+                const el = document.getElementById(DIRECTORY_ID);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
             >
-              <i class={getCategoryIconClass(category)} aria-hidden="true"></i>
-              <span>{getCategoryName(category, $t.linkCategory)}</span>
+              <i class="ph-bold ph-address-book" aria-hidden="true"></i>
+              <span>{$t.explore.contactList}</span>
             </button>
-          {/each}
-        </div>
-      </nav>
+
+            {#each displayCategories as category}
+              <button
+                type="button"
+                class="cat-chip"
+                onclick={(e) => {
+                  e.currentTarget.scrollIntoView({
+                    behavior: "smooth",
+                    inline: "center",
+                    block: "nearest",
+                  });
+                  const el = document.getElementById(
+                    `category-${category.replace(/\s+/g, "-")}`,
+                  );
+                  if (el)
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              >
+                <i class={getCategoryIconClass(category)} aria-hidden="true"></i>
+                <span>{getCategoryName(category, $t.linkCategory)}</span>
+              </button>
+            {/each}
+          </div>
+        </nav>
+      </div>
     </div>
   </div>
 
@@ -1068,7 +1122,7 @@
       {/if}
     </section>
 
-    {#if searchQuery.trim()}
+    {#if searchQuery.trim() && (displayCategories.length > 0 || filteredContacts.length > 0)}
       <section class="category-section external-search-section">
         <div class="explore-section-heading">
           <div>
@@ -1666,15 +1720,17 @@
     gap: 6px;
     overflow-x: auto;
     scrollbar-width: none;
+    mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
   }
   .category-nav-scroll::-webkit-scrollbar {
     display: none;
   }
 
   .cat-chip {
-    padding: 8px 20px;
+    padding: 9px 8px;
     border-radius: 100px;
-    border: 1px solid transparent;
+    border: none;
     background: transparent;
     font-size: 0.9rem;
     font-weight: 700;
@@ -1687,7 +1743,6 @@
   .cat-chip:hover {
     color: var(--primary-color);
     background: var(--bg-color);
-    border-color: var(--border-color);
   }
 
   .view-more-hint {
@@ -1997,44 +2052,46 @@
     background: transparent;
   }
 
-  .search-sticky-wrapper::before {
-    content: "";
-    position: absolute;
-    inset: 0 -18px;
-    z-index: -1;
-    background: transparent;
-    transition:
-      background 0.22s ease,
-      box-shadow 0.22s ease,
-      backdrop-filter 0.22s ease;
-  }
 
-  .explore-page.search-active .search-sticky-wrapper::before,
-  .explore-page.is-searching .search-sticky-wrapper::before {
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    box-shadow: 0 12px 28px rgba(20, 33, 61, 0.08);
-  }
 
   .explore-page.is-searching .search-sticky-wrapper {
     margin-top: 0;
   }
 
-  .search-bar-container {
+  .explore-search-island {
     max-width: 600px;
     margin: 0 auto;
-    padding-inline: 0;
+    background: var(--explore-surface, #ffffff);
+    border: 1px solid var(--explore-border, #e5e5e5);
+    border-radius: 24px;
+    box-shadow: var(--explore-soft-shadow);
+    padding: 8px 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
 
-  .search-bar-container :global(.search-input-wrapper) {
+  .explore-page.search-active .explore-search-island,
+  .explore-page.is-searching .explore-search-island {
+    box-shadow: 0 16px 40px rgba(20, 33, 61, 0.12);
+    border-color: var(--explore-orange);
+  }
+
+  .explore-search-island :global(.search-input-wrapper) {
     height: 52px;
-    border-color: var(--explore-border);
-    border-radius: 14px;
-    box-shadow: var(--explore-soft-shadow);
+    border: none;
+    border-bottom: 1px solid var(--explore-border, #e5e5e5);
+    border-radius: 16px 16px 0 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .explore-search-island :global(.search-input-wrapper:focus-within) {
+    border-bottom-color: var(--explore-orange);
   }
 
   .category-nav-wrapper {
-    margin-top: 8px;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -2045,24 +2102,24 @@
     display: inline-flex;
     width: auto;
     max-width: 100%;
-    padding: 1px;
     margin: 0 auto;
-    background: var(--glass-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 100px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .category-nav-scroll {
     display: flex;
     gap: 6px;
-    padding: 6px 8px;
-    margin: -4px 0;
+    padding: 0 4px;
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
+    mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
   }
 
   .cat-chip {
@@ -2070,10 +2127,10 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 20px;
+    padding: 9px 8px;
     color: var(--text-color-secondary);
-    background: transparent;
-    border: 1px solid transparent;
+    background: var(--bg-color, #f8fafc);
+    border: none;
     border-radius: 999px;
     box-shadow: none;
     font-size: 0.9rem;
@@ -2090,8 +2147,7 @@
   .cat-chip:hover,
   .cat-chip:focus-visible {
     color: var(--explore-orange);
-    background: var(--bg-color);
-    border-color: var(--border-color);
+    background: #fff8ec;
     outline: none;
   }
 

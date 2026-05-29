@@ -7,6 +7,9 @@
   import StoriesSlider from "$lib/components/StoriesSlider.svelte";
   import SectionHeader from "./SectionHeader.svelte";
   import SuggestClubModal from "$lib/components/SuggestClubModal.svelte";
+  import SuggestPromoModal from "$lib/components/SuggestPromoModal.svelte";
+  import Tabs from "$lib/components/ui/Tabs.svelte";
+  import TabContent from "$lib/components/ui/TabContent.svelte";
 
   import PromotionCard from "$lib/components/PromotionCard.svelte";
   import OfficialAccountsSection from "$lib/components/OfficialAccountsSection.svelte";
@@ -18,9 +21,10 @@
     storiesLoading,
   } from "$lib/stores/feedCache";
   import { socialAccounts } from "$lib/data/socialAccounts";
-  import { promotions, isPromotionActive } from "$lib/data/promotions";
+  import { isPromotionActive } from "$lib/data/promotions";
   import { getNormalizedFeed } from "$lib/data/feedItems";
   import { dynamicClubs, fetchClubs } from "$lib/stores/clubStore";
+  import { dynamicPromotions, fetchPromotions } from "$lib/stores/promoStore";
 
   export let active = false;
 
@@ -31,7 +35,47 @@
   let innerWidth = 0;
   let contactSheetOpen = false;
   let clubModalOpen = false;
+  let promoModalOpen = false;
   $: isPortraitMobile = innerWidth < 600;
+
+  // ── Tab navigation state ──────────────────────────────────────
+  let activeTab = "overview";
+  let socialTabVisited = false;
+
+  const feedTabs = [
+    { id: "overview", label: "Overview", icon: "📡" },
+    { id: "social",   label: "Social",   icon: "📸" },
+    { id: "pages",    label: "Pages",    icon: "✓" },
+    { id: "clubs",    label: "Clubs",    icon: "👥" },
+  ];
+
+  function handleTabChange(e: CustomEvent<{ id: string }>) {
+    activeTab = e.detail.id;
+    if (activeTab === "social" && !socialTabVisited) {
+      socialTabVisited = true;
+      loadSocialEmbeds();
+    }
+  }
+
+  function loadSocialEmbeds() {
+    if (typeof window === "undefined") return;
+    const w = window as any;
+    if (w.instgrm) {
+      w.instgrm.Embeds.process();
+    } else {
+      const script = document.createElement("script");
+      script.id = "instagram-embed-script";
+      script.src = "//www.instagram.com/embed.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    if (!document.querySelector('script[src="https://www.tiktok.com/embed.js"]')) {
+      const tiktokScript = document.createElement("script");
+      tiktokScript.src = "https://www.tiktok.com/embed.js";
+      tiktokScript.async = true;
+      document.body.appendChild(tiktokScript);
+    }
+  }
 
   // ── Directory state ──────────────────────────────────────────
 
@@ -70,13 +114,33 @@
   };
 
   let dismissedPromoIds: string[] = [];
-  $: activePromotions = promotions.filter(
+  $: activePromotions = $dynamicPromotions.filter(
     (promo) =>
       isPromotionActive(promo) &&
       !dismissedPromoIds.includes(promo.id) &&
       (promo.campusIds.includes("all") ||
         promo.campusIds.includes(currentCampusId)),
   );
+
+  let interleavedFeed: Array<{ type: 'news' | 'promo'; data: any }> = [];
+  $: interleavedFeed = (() => {
+    let result: Array<{ type: 'news' | 'promo'; data: any }> = [];
+    let promoIndex = 0;
+    newsCards.forEach((card, index) => {
+      result.push({ type: 'news', data: card });
+      // Interleave a promotion card after every 2 news cards
+      if ((index + 1) % 2 === 0 && promoIndex < activePromotions.length) {
+        result.push({ type: 'promo', data: activePromotions[promoIndex] });
+        promoIndex++;
+      }
+    });
+    // Append remaining active promotions
+    while (promoIndex < activePromotions.length) {
+      result.push({ type: 'promo', data: activePromotions[promoIndex] });
+      promoIndex++;
+    }
+    return result;
+  })();
 
   function dismissPromotion(id: string) {
     dismissedPromoIds = [...dismissedPromoIds, id];
@@ -89,6 +153,7 @@
   onMount(() => {
     getStories(); // Only hits network if last load > refreshRate
     fetchClubs(); // Load dynamic clubs from KV
+    fetchPromotions(); // Load dynamic promotions from KV
 
     // Load dismissed promotions
     const stored = localStorage.getItem("dismissed_promotions");
@@ -100,42 +165,12 @@
       }
     }
 
-    // Defer loading of heavy third-party scripts to optimize initial FCP, LCP, and Speed Index
-    if (typeof window !== "undefined") {
-      const deferTimeout = window.requestIdleCallback
-        ? (cb: () => void) => window.requestIdleCallback(cb, { timeout: 2000 })
-        : (cb: () => void) => setTimeout(cb, 1200);
-
-      deferTimeout(() => {
-        // Force reload of Instagram embeds
-        const w = window as any;
-        if (w.instgrm) {
-          w.instgrm.Embeds.process();
-        } else {
-          const script = document.createElement("script");
-          script.id = "instagram-embed-script";
-          script.src = "//www.instagram.com/embed.js";
-          script.async = true;
-          document.body.appendChild(script);
-        }
-
-        // Dynamic TikTok Embed Script loading
-        if (
-          !document.querySelector(
-            'script[src="https://www.tiktok.com/embed.js"]',
-          )
-        ) {
-          const tiktokScript = document.createElement("script");
-          tiktokScript.src = "https://www.tiktok.com/embed.js";
-          tiktokScript.async = true;
-          document.body.appendChild(tiktokScript);
-        }
-      });
-    }
+    // Social media embeds are now deferred until the Social tab is first visited
+    // via handleTabChange → loadSocialEmbeds()
   });
 
-  // Re-process embeds when the component becomes active to ensure visibility
-  $: if (active && typeof window !== "undefined") {
+  // Re-process embeds when the component becomes active and social tab was visited
+  $: if (active && socialTabVisited && typeof window !== "undefined") {
     const w = window as any;
     if (w.instgrm) w.instgrm.Embeds.process();
   }
@@ -232,134 +267,163 @@
     </div>
   </header>
 
-  <nav class="feed-jump-row" aria-label={$t.feed.sections}>
-    <a href="#stories"
-      ><i class="ph-fill ph-play-circle" aria-hidden="true"></i>
-      {$t.feed.campusStories}</a
-    >
-    <a href="#social-media"
-      ><i class="ph-fill ph-instagram-logo" aria-hidden="true"></i>
-      {$t.feed.socialMedia}</a
-    >
-    <a href="#news"
-      ><i class="ph-fill ph-newspaper" aria-hidden="true"></i>
-      {$t.feed.newsTag}</a
-    >
-    <a href="#official-pages"
-      ><i class="ph-fill ph-seal-check" aria-hidden="true"></i>
-      {$t.feed.officialLabel}</a
-    >
-    <a href="#clubs"
-      ><i class="ph-fill ph-users-three" aria-hidden="true"></i>
-      {$t.feed.studentClubs}</a
-    >
-  </nav>
+  <!-- ── Tab Navigation ──────────────────────────────────────── -->
+  <Tabs tabs={feedTabs} bind:activeTab on:change={handleTabChange} />
 
-  <!-- Stories bar -->
-  <section class="feed-stories-section" id="stories">
-    <div class="feed-section-heading">
-      <h2>{$t.feed.campusStories}</h2>
-      <span>{stories.length || 0} {$t.feed.active}</span>
-    </div>
-    <StoriesSlider {stories} loading={isStoriesLoading} variant="rectangular" />
-  </section>
+  <TabContent activeTabId={activeTab} let:renderedTabId>
+    {#if renderedTabId === "overview"}
+      <!-- ── OVERVIEW TAB ── -->
+      <div class="feed-tab-panel">
+        <!-- Stories bar -->
+        <section class="feed-stories-section" id="stories">
+          <div class="feed-section-heading">
+            <h2>{$t.feed.campusStories}</h2>
+            <span>{stories.length || 0} {$t.feed.active}</span>
+          </div>
+          <StoriesSlider {stories} loading={isStoriesLoading} variant="rectangular" />
+        </section>
 
-  <!-- Social Media Embeds -->
-  {#if instagramEmbeds.length > 0 || tiktokFeed}
-    <section
-      class="embed-section social-media-section feed-section"
-      id="social-media"
-    >
-      <SectionHeader title={$t.feed.socialMedia} />
-      <div class="embed-wrapper">
-        {#each instagramEmbeds as acc}
-          <div class="embed-card">
-            <div class="embed-label">@{acc.handle}</div>
-            <blockquote
-              class="instagram-media"
-              data-instgrm-permalink={acc.url}
-              data-instgrm-version="14"
-              style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:8px; width:100%; margin-bottom: -18px;"
-            >
-              <div class="insta-placeholder">
-                <div class="insta-skeleton-header">
-                  <div class="insta-skeleton-avatar"></div>
-                  <div class="insta-skeleton-text"></div>
+        <!-- Campus Updates & Promotions Interleaved -->
+        <section class="feed-section" id="news">
+          <SectionHeader title={$t.feed.campusUpdates} />
+          <div class="news-cards">
+            {#each interleavedFeed as item}
+              {#if item.type === 'news'}
+                <a href={item.data.url} class="news-card" style="--card-accent: {item.data.color}">
+                  <div class="news-card-main">
+                    <span class="news-card-icon" style="background: {item.data.color};">
+                      {#if item.data.iconClass}
+                        <i class="ph-fill {item.data.iconClass}" aria-hidden="true"></i>
+                      {:else}
+                        {item.data.emoji}
+                      {/if}
+                    </span>
+                    <div class="news-card-content">
+                      <h3 class="news-card-title">{item.data.title}</h3>
+                      <p class="news-card-desc">{item.data.desc}</p>
+                    </div>
+                  </div>
+                  <div class="news-card-side">
+                    <span class="news-card-tag">
+                      {item.data.tag}
+                    </span>
+                    <span class="news-card-cta">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </span>
+                  </div>
+                </a>
+              {:else if item.type === 'promo'}
+                <PromotionCard promotion={item.data} onDismiss={dismissPromotion} />
+              {/if}
+            {/each}
+          </div>
+          <div class="suggest-action-wrap" style="margin-top: 24px; display: flex; justify-content: center;">
+            <button class="suggest-btn" on:click={() => (promoModalOpen = true)}>
+              + Suggest Promotion
+            </button>
+          </div>
+        </section>
+      </div>
+
+    {:else if renderedTabId === "social"}
+      <!-- ── SOCIAL TAB ── -->
+      <div class="feed-tab-panel">
+        {#if instagramEmbeds.length > 0 || tiktokFeed}
+          <section class="embed-section social-media-section feed-section" id="social-media">
+            <SectionHeader title={$t.feed.socialMedia} />
+            <div class="embed-wrapper">
+              {#each instagramEmbeds as acc}
+                <div class="embed-card">
+                  <div class="embed-label">@{acc.handle}</div>
+                  <blockquote
+                    class="instagram-media"
+                    data-instgrm-permalink={acc.url}
+                    data-instgrm-version="14"
+                    style="background:#FFF; border:0; border-radius:8px; box-shadow:none; margin: 0; max-width:100%; min-width:280px; padding:8px; width:100%; margin-bottom: -18px;"
+                  >
+                    <div class="insta-placeholder">
+                      <div class="insta-skeleton-header">
+                        <div class="insta-skeleton-avatar"></div>
+                        <div class="insta-skeleton-text"></div>
+                      </div>
+                      <div class="insta-skeleton-image">
+                        <div class="insta-spinner"></div>
+                      </div>
+                    </div>
+                  </blockquote>
                 </div>
-                <div class="insta-skeleton-image">
-                  <div class="insta-spinner"></div>
+              {/each}
+
+              <div class="embed-card tiktok-embed-card">
+                <div class="embed-label">#{tiktokFeed.label}</div>
+                <div class="tiktok-card">
+                  <blockquote
+                    class="tiktok-embed"
+                    cite={tiktokFeed.cite}
+                    data-unique-id="srhuniversity"
+                    data-embed-type="creator"
+                    style="max-width: 780px; min-width: 288px;"
+                  >
+                    <div class="tiktok-placeholder">
+                      <div class="tiktok-skeleton-header">
+                        <div class="tiktok-skeleton-avatar"></div>
+                        <div class="tiktok-skeleton-meta">
+                          <div class="tiktok-skeleton-text title"></div>
+                          <div class="tiktok-skeleton-text subtitle"></div>
+                        </div>
+                      </div>
+                      <div class="tiktok-skeleton-body">
+                        <div class="tiktok-skeleton-stats">
+                          <div class="tiktok-skeleton-stat"></div>
+                          <div class="tiktok-skeleton-stat"></div>
+                          <div class="tiktok-skeleton-stat"></div>
+                        </div>
+                        <div class="tiktok-spinner"></div>
+                      </div>
+                    </div>
+                  </blockquote>
                 </div>
               </div>
-            </blockquote>
-          </div>
-        {/each}
+            </div>
+          </section>
+        {/if}
+      </div>
 
-        <div class="embed-card tiktok-embed-card">
-          <div class="embed-label">#{tiktokFeed.label}</div>
-          <div class="tiktok-card">
-            <blockquote
-              class="tiktok-embed"
-              cite={tiktokFeed.cite}
-              data-unique-id="srhuniversity"
-              data-embed-type="creator"
-              style="max-width: 780px; min-width: 288px;"
-            >
-              <div class="tiktok-placeholder">
-                <div class="tiktok-skeleton-header">
-                  <div class="tiktok-skeleton-avatar"></div>
-                  <div class="tiktok-skeleton-meta">
-                    <div class="tiktok-skeleton-text title"></div>
-                    <div class="tiktok-skeleton-text subtitle"></div>
-                  </div>
-                </div>
-                <div class="tiktok-skeleton-body">
-                  <div class="tiktok-skeleton-stats">
-                    <div class="tiktok-skeleton-stat"></div>
-                    <div class="tiktok-skeleton-stat"></div>
-                    <div class="tiktok-skeleton-stat"></div>
-                  </div>
-                  <div class="tiktok-spinner"></div>
-                </div>
-              </div>
-            </blockquote>
-          </div>
+    {:else if renderedTabId === "pages"}
+      <!-- ── PAGES TAB ── -->
+      <div class="feed-tab-panel">
+        <div id="official-pages" class="feed-section">
+          <OfficialAccountsSection accounts={officialAccounts} />
         </div>
       </div>
-    </section>
-  {/if}
 
-  <!-- Feature 1: News Preview Cards -->
-  <section class="feed-section" id="news">
-    <SectionHeader title={$t.feed.campusUpdates} />
-    <NewsCardGrid cards={newsCards} />
-  </section>
-
-  <!-- Promotions Section -->
-  {#if activePromotions.length > 0}
-    <section class="promotions-section feed-section" id="promotions">
-      <SectionHeader title={$t.feed.offersForStudents} />
-      <div class="promotions-grid">
-        {#each activePromotions as promotion (promotion.id)}
-          <PromotionCard {promotion} onDismiss={dismissPromotion} />
-        {/each}
+    {:else if renderedTabId === "clubs"}
+      <!-- ── CLUBS TAB ── -->
+      <div class="feed-tab-panel">
+        <div id="clubs" class="feed-section">
+          <ClubsSection
+            accounts={clubAccounts}
+            onSuggest={() => (clubModalOpen = true)}
+          />
+        </div>
       </div>
-    </section>
-  {/if}
-
-  <!-- Official Pages Chips -->
-  <div id="official-pages" class="feed-section">
-    <OfficialAccountsSection accounts={officialAccounts} />
-  </div>
-
-  <!-- Student Clubs -->
-  <div id="clubs" class="feed-section">
-    <ClubsSection
-      accounts={clubAccounts}
-      onSuggest={() => (clubModalOpen = true)}
-    />
-  </div>
+    {/if}
+  </TabContent>
 
   <SuggestClubModal bind:isOpen={clubModalOpen} />
+  <SuggestPromoModal bind:isOpen={promoModalOpen} />
 </div>
 
 <style>
@@ -373,6 +437,18 @@
     gap: var(--spacing-lg);
     padding-left: var(--spacing-md);
     padding-right: var(--spacing-md);
+  }
+
+  .feed-tab-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  @media (max-width: 560px) {
+    .feed-tab-panel {
+      gap: var(--spacing-md);
+    }
   }
 
   .feed-hero {
@@ -460,45 +536,7 @@
     line-height: 1.15;
   }
 
-  .feed-jump-row {
-    display: flex;
-    gap: var(--spacing-sm);
-    overflow-x: auto;
-    padding: 1px 0 8px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
 
-  .feed-jump-row::-webkit-scrollbar {
-    display: none;
-  }
-
-  .feed-jump-row a {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    min-height: 42px;
-    padding: 0 13px;
-    background: var(--surface-solid);
-    border: 1px solid #e5e5e5;
-    border-radius: 999px;
-    color: var(--text-color);
-    text-decoration: none;
-    font-size: 0.86rem;
-    font-weight: 800;
-    white-space: nowrap;
-    box-shadow: var(--campus-shadow-soft);
-  }
-
-  .feed-jump-row a i {
-    color: var(--primary-color);
-    font-size: 1.05rem;
-  }
-
-  .feed-jump-row a:hover {
-    border-color: rgba(212, 68, 7, 0.28);
-    color: var(--primary-color);
-  }
 
   .feed-section,
   .feed-stories-section {
@@ -532,14 +570,190 @@
     white-space: nowrap;
   }
 
-  .promotions-grid {
+  .news-cards {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--spacing-md);
+    margin: var(--spacing-sm) 0;
+    align-items: stretch;
   }
 
-  :global([data-theme="dark"]) .feed-status-card,
-  :global([data-theme="dark"]) .feed-jump-row a {
+  @media (max-width: 1024px) {
+    .news-cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .news-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .news-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--surface-solid);
+    border: 1px solid #e5e5e5;
+    border-radius: 18px;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow: hidden;
+    box-shadow: var(--campus-shadow-soft);
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .news-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--card-accent);
+    opacity: 0.8;
+    transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  .news-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--card-accent);
+    box-shadow: var(--campus-shadow);
+    background: #ffffff;
+  }
+
+  .news-card:hover::before {
+    width: 6px;
+  }
+
+  .news-card-main {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    min-width: 0;
+  }
+
+  .news-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: var(--radius-lg);
+    font-size: 1.35rem;
+    color: #ffffff;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .news-card:hover .news-card-icon {
+    transform: scale(1.1) rotate(5deg);
+  }
+
+  .news-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .news-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text-color);
+    margin: 0;
+    transition: color 0.2s ease;
+  }
+
+  .news-card:hover .news-card-title {
+    color: var(--primary-color);
+  }
+
+  .news-card-desc {
+    font-size: 0.85rem;
+    color: var(--text-color-secondary);
+    line-height: 1.5;
+    margin: 0;
+    line-clamp: 3;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .news-card-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    min-width: 92px;
+  }
+
+  .news-card-tag {
+    background: #fff6dc;
+    border: 1px solid #f7b801;
+    color: var(--primary-color);
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .news-card-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    color: var(--card-accent);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  .news-card:hover .news-card-cta {
+    background: var(--card-accent);
+    color: #fff;
+    border-color: var(--card-accent);
+    transform: scale(1.1) translateX(2px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  }
+
+  :global([data-theme="dark"]) .news-card,
+  :global([data-theme="dark"]) .news-card-cta {
+    border-color: rgba(255, 255, 255, 0.11);
+  }
+
+  @media (max-width: 640px) {
+    .news-card {
+      grid-template-columns: 1fr;
+    }
+
+    .news-card-side {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      min-width: 0;
+      padding-left: calc(42px + var(--spacing-md));
+    }
+  }
+
+  :global([data-theme="dark"]) .feed-status-card {
     border-color: rgba(255, 255, 255, 0.11);
   }
 

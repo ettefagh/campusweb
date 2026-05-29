@@ -13,45 +13,54 @@
   let isTransitioning = false;
   let opacity = 1;
 
-  $: if (activeTabId !== renderedTabId && browser && !isTransitioning) {
-    transitionContent(activeTabId);
+  $: if (activeTabId !== renderedTabId && browser) {
+    processTransitions();
   } else if (!browser) {
     renderedTabId = activeTabId;
   }
 
-  async function transitionContent(newTabId: string) {
+  async function processTransitions() {
+    if (isTransitioning) return;
     isTransitioning = true;
     
-    // Fix current height
-    if (contentWrapper) {
-      containerHeight = contentWrapper.offsetHeight;
+    try {
+      while (renderedTabId !== activeTabId) {
+        const targetTabId = activeTabId;
+        
+        // Fix current height
+        if (contentWrapper) {
+          containerHeight = contentWrapper.offsetHeight;
+        }
+
+        // Step 1: Fade out
+        opacity = 0;
+        await new Promise(r => setTimeout(r, 80));
+
+        // Step 2: Swap content
+        renderedTabId = targetTabId;
+        await tick();
+        
+        // Measure new height
+        if (contentWrapper) {
+          containerHeight = contentWrapper.offsetHeight;
+        }
+
+        await new Promise(r => setTimeout(r, 80));
+
+        // Step 3: Fade in
+        opacity = 1;
+        await new Promise(r => setTimeout(r, 80));
+        
+        containerHeight = "auto";
+      }
+    } catch (err) {
+      console.error("Tab transition error:", err);
+      renderedTabId = activeTabId;
+      opacity = 1;
+      containerHeight = "auto";
+    } finally {
+      isTransitioning = false;
     }
-
-    // Step 1: Fade out (80ms)
-    opacity = 0;
-    await new Promise(r => setTimeout(r, 80));
-
-    // Step 2: Pause (80ms) & Swap content
-    renderedTabId = newTabId;
-    
-    // Wait for Svelte to render new content
-    await tick();
-    
-    // Measure new height
-    if (contentWrapper) {
-      const newHeight = contentWrapper.offsetHeight;
-      containerHeight = newHeight;
-    }
-
-    await new Promise(r => setTimeout(r, 80));
-
-    // Step 3: Fade in (80ms)
-    opacity = 1;
-    
-    // Wait for fade in, then set height back to auto to let content breathe
-    await new Promise(r => setTimeout(r, 80));
-    containerHeight = "auto";
-    isTransitioning = false;
   }
 
   onMount(() => {

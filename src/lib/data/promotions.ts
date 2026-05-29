@@ -4,11 +4,12 @@ export interface Promotion {
   subtitle: string;
   imageUrl?: string;
   linkUrl: string;
-  sponsorName: string;
+  sponsorName?: string;
   campusIds: string[]; // ["all"] or specific
   startsAt?: string;
   expiresAt?: string;
-  label: "Promotion" | "Student Offer" | "Official Offer";
+  label: string; // Any string, e.g. "Bestseller", "Student Offer"
+  cta?: string;
   priority: number;
 }
 
@@ -18,15 +19,4 @@ export function isPromotionActive(promotion: Promotion, now = new Date()) {
   return true;
 }
 
-export const promotions: Promotion[] = [
-  {
-    id: "srh-store-2024",
-    title: "Official SRH Merchandise",
-    subtitle: "Get your official university hoodies, shirts and more at the SRH Store.",
-    linkUrl: "https://srh-store.de/employees/bildung.html",
-    sponsorName: "SRH Store",
-    campusIds: ["all"],
-    label: "Official Offer",
-    priority: 10,
-  }
-];
+export const promotions: Promotion[] = [];

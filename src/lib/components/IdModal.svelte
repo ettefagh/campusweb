@@ -1,6 +1,7 @@
 <script lang="ts">
   import { idCardsStore, type IdCardData } from "$lib/stores/idStore";
   import IdCard from "./IdCard.svelte";
+  import { toast } from "$lib/stores/toastStore";
 
   export let cardId: string | null = null; // null means we are adding a card
   export let onClose: () => void;
@@ -215,7 +216,7 @@
   async function handlePDFUpload(file: File) {
     const loaded = await loadPDFJS();
     if (!loaded) {
-      alert("Failed to load PDF processing engine.");
+      toast.error("Failed to load PDF processing engine.");
       return;
     }
     const reader = new FileReader();
@@ -242,7 +243,7 @@
         }
       } catch (err) {
         console.error("PDF rendering error:", err);
-        alert("Failed to render PDF. Please upload a valid PDF file.");
+        toast.error("Failed to render PDF. Please upload a valid PDF file.");
       }
     };
     reader.readAsArrayBuffer(file);
@@ -451,7 +452,7 @@
 
   function handleSave() {
     if (!title) {
-      alert("Please fill out Card Type.");
+      toast.error("Please fill out Card Type.");
       return;
     }
 
@@ -480,14 +481,14 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="modal-overlay" on:click={onClose}>
-  <div class="modal-content glass" on:click|stopPropagation>
+<div class="modal-backdrop" on:click={onClose}>
+  <div class="modal-content" role="dialog" aria-modal="true" on:click|stopPropagation>
     <div class="modal-header">
       <h2>{isEditing ? "✏️ Edit Card" : "✨ Add Digital Card"}</h2>
-      <button class="close-btn" on:click={onClose}>✖</button>
+      <button class="close-btn" on:click={onClose}>✕</button>
     </div>
 
-    <div class="modal-grid">
+    <div class="modal-body">
       <!-- Live Card Preview -->
       <div class="preview-area">
         <span class="preview-label">Live Preview</span>
@@ -517,7 +518,7 @@
         </div>
 
         {#if isFullImageCard}
-          <div class="form-group">
+          <div class="input-group">
             <label for="full-card-upload"
               >Digital Student ID File (Image or PDF)</label
             >
@@ -588,7 +589,7 @@
           {/if}
 
           <!-- Digital ID Simplified Fields -->
-          <div class="form-group">
+          <div class="input-group">
             <label for="card-title-full">Card Type</label>
             <input
               type="text"
@@ -600,7 +601,7 @@
           </div>
 
           <div class="form-row">
-            <div class="form-group">
+            <div class="input-group">
               <label for="id-number-full">Matriculation / ID Number</label>
               <div class="input-with-button">
                 <input
@@ -619,7 +620,7 @@
                 </button>
               </div>
             </div>
-            <div class="form-group">
+            <div class="input-group">
               <label for="valid-until-full">Validity Date</label>
               <input
                 type="text"
@@ -631,7 +632,7 @@
           </div>
         {:else}
           <div class="form-row">
-            <div class="form-group">
+            <div class="input-group">
               <label for="card-title">Card Type</label>
               <input
                 type="text"
@@ -640,7 +641,7 @@
                 placeholder="e.g. Student ID, Library Card"
               />
             </div>
-            <div class="form-group">
+            <div class="input-group">
               <label for="university">University / Issuer</label>
               <input
                 type="text"
@@ -651,7 +652,7 @@
             </div>
           </div>
 
-          <div class="form-group">
+          <div class="input-group">
             <label for="owner-name">Full Student Name</label>
             <input
               type="text"
@@ -662,7 +663,7 @@
           </div>
 
           <div class="form-row">
-            <div class="form-group">
+            <div class="input-group">
               <label for="id-number">Matriculation / ID Number</label>
               <div class="input-with-button">
                 <input
@@ -681,7 +682,7 @@
                 </button>
               </div>
             </div>
-            <div class="form-group">
+            <div class="input-group">
               <label for="dob">Date of Birth</label>
               <input
                 type="text"
@@ -693,7 +694,7 @@
           </div>
 
           <div class="form-row">
-            <div class="form-group">
+            <div class="input-group">
               <label for="valid-until">Validity Date</label>
               <input
                 type="text"
@@ -702,7 +703,7 @@
                 placeholder="e.g. bis 31.03.2026"
               />
             </div>
-            <div class="form-group">
+            <div class="input-group">
               <label for="photo-upload">Profile Picture</label>
               <input
                 type="file"
@@ -757,11 +758,11 @@
           </div>
         {/if}
 
-        <div class="form-actions">
-          <button type="button" class="btn-cancel" on:click={onClose}
+        <div class="modal-footer popup-footer-safe">
+          <button type="button" class="cancel-btn" on:click={onClose}
             >Cancel</button
           >
-          <button type="submit" class="btn-save"
+          <button type="submit" class="submit-btn"
             >{isEditing ? "Save Changes" : "Create Card"}</button
           >
         </div>
@@ -806,93 +807,63 @@
 {/if}
 
 <style>
-  .modal-overlay {
+  .modal-backdrop {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.45);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
-    z-index: 90;
     display: flex;
-    justify-content: center;
     align-items: center;
-    box-sizing: border-box;
-    padding: var(--spacing-md);
-  }
-
-  @media (max-width: 1023px) {
-    .modal-overlay {
-      padding-bottom: 96px; /* Offsets modal contents to stay perfectly clear of mobile bottom tab bar */
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .modal-overlay {
-      padding-left: calc(var(--sidebar-width, 220px) + var(--spacing-md));
-    }
+    justify-content: center;
+    z-index: 10000;
+    padding: 16px;
+    animation: fadeIn 0.2s ease-out;
   }
 
   .modal-content {
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-xl);
-    width: 820px;
-    max-width: 100%;
-    max-height: 100%; /* Adapts dynamically to parent's padding/height clearances */
-    overflow-y: auto;
-    padding: var(--spacing-lg);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-    box-sizing: border-box;
-  }
-
-  @media (max-width: 820px) {
-    .modal-content {
-      width: 440px;
-    }
+    background: var(--card-bg);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: var(--shadow-xl);
+    animation: slideUp 0.3s cubic-bezier(0.2, 0, 0, 1);
+    color: var(--text-color);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
   }
 
   .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--glass-border-subtle);
-    padding-bottom: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .modal-header h2 {
+    margin: 0;
     font-size: 1.25rem;
     font-weight: 800;
-    color: var(--text-color);
-    margin: 0;
   }
 
   .close-btn {
-    background: none;
+    background: var(--bg-secondary);
+    color: var(--text-color);
     border: none;
-    color: var(--text-color-secondary);
-    font-size: 1.1rem;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    font-weight: bold;
     cursor: pointer;
-    padding: var(--spacing-xs);
-    transition: color 0.2s;
+    display: flex; justify-content: center; align-items: center;
   }
 
-  .close-btn:hover {
-    color: var(--primary-color);
-  }
-
-  .modal-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-lg);
-  }
-
-  @media (max-width: 820px) {
-    .modal-grid {
-      grid-template-columns: 1fr;
-    }
+  .modal-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 65vh;
+    overflow-y: auto;
   }
 
   .preview-area {
@@ -900,17 +871,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-right: 1px solid var(--glass-border-subtle);
-    padding-right: var(--spacing-md);
-  }
-
-  @media (max-width: 820px) {
-    .preview-area {
-      border-right: none;
-      padding-right: 0;
-      border-bottom: 1px solid var(--glass-border-subtle);
-      padding-bottom: var(--spacing-md);
-    }
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 16px;
   }
 
   .preview-label {
@@ -919,73 +882,67 @@
     font-weight: 700;
     color: var(--text-color-secondary);
     letter-spacing: 0.5px;
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 8px;
   }
 
   .tap-info {
     font-size: 0.7rem;
     color: var(--text-color-secondary);
     font-style: italic;
-    margin-top: var(--spacing-xs);
+    margin-top: 8px;
   }
 
   .modal-form {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-md);
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    gap: 16px;
   }
 
   .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--spacing-md);
+    gap: 12px;
   }
 
   @media (max-width: 500px) {
     .form-row {
       grid-template-columns: 1fr;
-      gap: var(--spacing-md);
     }
   }
 
-  label,
-  .picker-label {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--text-color);
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
-  input[type="text"],
-  input[type="file"] {
-    padding: 10px 14px;
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    background: rgba(0, 0, 0, 0.04);
+  .input-group label, .picker-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-color-secondary);
+    letter-spacing: 0.05em;
+  }
+
+  .req { color: var(--primary-color); }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: var(--bg-secondary);
     color: var(--text-color);
-    font-size: 0.9rem;
+    transition: all 0.2s;
     box-sizing: border-box;
   }
 
-  :global([data-theme="dark"]) input[type="text"],
-  :global([data-theme="dark"]) input[type="file"] {
-    background: rgba(255, 255, 255, 0.04);
-  }
-
-  input[type="text"]:focus {
+  input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(212, 68, 7, 0.15);
-  }
-
-  input[type="file"] {
-    font-size: 0.75rem;
-    padding: 8px;
+    background: var(--card-bg);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 10%, transparent);
   }
 
   /* Theme color options picker */
@@ -1030,58 +987,42 @@
     background: linear-gradient(135deg, #1d4ed8 0%, #6b21a8 100%);
   }
 
-  .form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-sm);
-    border-top: 1px solid var(--glass-border-subtle);
-    padding-top: var(--spacing-md);
+  .modal-footer {
+    padding: 20px 24px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    display: flex; gap: 12px;
   }
 
-  .btn-cancel {
-    background: transparent;
-    border: 1px solid var(--glass-border);
+  .cancel-btn, .submit-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .cancel-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
     color: var(--text-color);
-    padding: 10px 20px;
-    border-radius: var(--radius-md);
-    font-size: 0.85rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s;
   }
 
-  .btn-cancel:hover {
-    background: rgba(0, 0, 0, 0.04);
-  }
-
-  :global([data-theme="dark"]) .btn-cancel:hover {
-    background: rgba(255, 255, 255, 0.04);
-  }
-
-  .btn-save {
+  .submit-btn {
     background: var(--primary-color);
-    border: none;
     color: white;
-    padding: 10px 20px;
-    border-radius: var(--radius-md);
-    font-size: 0.85rem;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(212, 68, 7, 0.3);
-    transition:
-      transform 0.2s,
-      box-shadow 0.2s;
+    border: none;
   }
 
-  .btn-save:hover {
+  .submit-btn:hover {
+    filter: brightness(1.1);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(212, 68, 7, 0.4);
   }
-
-  .btn-save:active {
-    transform: translateY(0);
-  }
+  
+  @keyframes fadeIn { from {opacity: 0} to {opacity: 1} }
+  @keyframes slideUp { from {opacity: 0; transform: translateY(20px)} to {opacity: 1; transform: translateY(0)} }
 
   /* Form Tab Navigation */
   .form-tabs {

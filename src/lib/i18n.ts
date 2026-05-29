@@ -114,6 +114,7 @@ const translations = {
       feedPrepared: 'Your campus news and events feed is modularly prepared. Navigate to the feed tab to browse global announcements.',
       goToTop: 'Go to top',
       searchExplore: 'Search Explore',
+      customizeHome: 'Customize Home Screen',
     },
 
     // ── Explore page ──
@@ -609,6 +610,7 @@ const translations = {
       feedPrepared: 'Dein Campus-News- und Event-Feed ist modular vorbereitet. Öffne den Feed-Tab, um globale Ankündigungen zu lesen.',
       goToTop: 'Nach oben',
       searchExplore: 'Explore durchsuchen',
+      customizeHome: 'Startseite anpassen',
     },
 
     // ── Explore page ──

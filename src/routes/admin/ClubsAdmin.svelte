@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { CAMPUSES } from "$lib/stores/settingsStore";
   import type { SocialAccount } from "$lib/data/socialAccounts";
+  import { toast } from "$lib/stores/toastStore";
 
   let clubs: SocialAccount[] = [];
   let loading = true;
@@ -101,11 +102,11 @@
         const data = await res.json();
         formLogoUrl = data.url;
       } else {
-        alert("Upload failed. Make sure it is a valid image file.");
+        toast.error("Upload failed. Make sure it is a valid image file.");
       }
     } catch (err) {
       console.error("Logo upload error:", err);
-      alert("Error uploading logo.");
+      toast.error("Error uploading logo.");
     } finally {
       uploadLoading = false;
     }
@@ -159,11 +160,11 @@
         clubs = updatedClubs;
         showModal = false;
       } else {
-        alert("Failed to save club data.");
+        toast.error("Failed to save club data.");
       }
     } catch (err) {
       console.error("Save club error:", err);
-      alert("Error saving club.");
+      toast.error("Error saving club.");
     } finally {
       saveLoading = false;
     }
@@ -184,11 +185,11 @@
       if (res.ok) {
         clubs = updatedClubs;
       } else {
-        alert("Failed to delete club.");
+        toast.error("Failed to delete club.");
       }
     } catch (err) {
       console.error("Delete club error:", err);
-      alert("Error deleting club.");
+      toast.error("Error deleting club.");
     }
   }
 

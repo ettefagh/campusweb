@@ -17,16 +17,16 @@
       ariaLabel: $t.nav.home,
     },
     {
-      path: "/explore",
-      label: $t.nav.explore,
-      iconClass: "ph-compass",
-      ariaLabel: $t.nav.explore,
-    },
-    {
       path: "/calendar",
       label: $t.nav.calendar,
       iconClass: "ph-calendar-blank",
       ariaLabel: $t.nav.calendar,
+    },
+    {
+      path: "/explore",
+      label: $t.nav.explore,
+      iconClass: "ph-compass",
+      ariaLabel: $t.nav.explore,
     },
     {
       path: "/feed",

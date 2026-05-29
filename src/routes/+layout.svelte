@@ -4,9 +4,10 @@
   import UpdatePrompt from "$lib/components/UpdatePrompt.svelte";
   import GlobalAlert from "$lib/components/GlobalAlert.svelte";
   import WelcomeOnboarding from "$lib/components/WelcomeOnboarding.svelte";
+  import ToastContainer from "$lib/components/ToastContainer.svelte";
   import { browser } from "$app/environment";
   import { onMount } from "svelte";
-  import { afterNavigate, beforeNavigate, disableScrollHandling } from "$app/navigation";
+  import { goto, afterNavigate, beforeNavigate, disableScrollHandling } from "$app/navigation";
   import { activeA11yClasses, A11Y_CLASS_MAP } from "$lib/stores/accessibility";
   import { settingsStore } from "$lib/stores/settingsStore";
   import { page } from "$app/stores";
@@ -25,7 +26,7 @@
   let hasTrackedInstall = false;
 
   // ── Main tab paths & lazy-then-keep tracking ──
-  const MAIN_TABS = ['/', '/explore', '/calendar', '/feed', '/settings'];
+  const MAIN_TABS = ['/', '/calendar', '/explore', '/feed', '/settings'];
   let visitedTabs = new Set<string>();
 
   $: currentPath = $page.url.pathname;
@@ -139,6 +140,11 @@
   }
 
   onMount(() => {
+    // Redirect to default page on initial app launch only
+    if (window.location.pathname === '/' && $settingsStore.defaultPage === 'calendar') {
+      goto('/calendar', { replaceState: true });
+    }
+
     showWelcomeOnboarding =
       isInstalledAppLaunch() && !localStorage.getItem(WELCOME_STORAGE_KEY);
 
@@ -263,6 +269,7 @@
 
 <BottomNav />
 <UpdatePrompt />
+<ToastContainer />
 {#if showWelcomeOnboarding}
   <WelcomeOnboarding on:close={closeWelcomeOnboarding} />
 {/if}

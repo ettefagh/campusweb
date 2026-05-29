@@ -1269,15 +1269,19 @@ export async function POST({ request, platform }) {
       action === "action_reject" ||
       action === "club_reject" ||
       action.startsWith("club_reject_") ||
-      action.startsWith("story_reject_")
+      action.startsWith("story_reject_") ||
+      action.startsWith("promo_reject_")
     ) {
       const isClub = action.startsWith("club_reject");
       const isStory = action.startsWith("story_reject_");
+      const isPromo = action.startsWith("promo_reject_");
       const suggestionId = (isClub
         ? action.replace("club_reject_", "")
         : isStory
           ? action.replace("story_reject_", "")
-          : null)?.replace("_confirm", "");
+          : isPromo
+            ? action.replace("promo_reject_", "")
+            : null)?.replace("_confirm", "");
       const adminName = cb.from.first_name || "Admin";
       
       if (!action.includes("_confirm")) {
@@ -1286,7 +1290,9 @@ export async function POST({ request, platform }) {
           ? `club_reset_${suggestionId}`
           : isStory
             ? `story_reset_${suggestionId}`
-            : "action_reset";
+            : isPromo
+              ? `promo_reset_${suggestionId}`
+              : "action_reset";
         
         await fetch(`https://api.telegram.org/bot${botToken}/editMessageReplyMarkup`, {
           method: "POST",
@@ -1315,7 +1321,7 @@ export async function POST({ request, platform }) {
       const kv = runtimeEnv?.STORIES_KV;
       if (kv && !isClub) incrementStat(kv, "actions", "declined").catch(() => {});
       
-      const label = isClub ? "Club Suggestion" : "Suggestion";
+      const label = isClub ? "Club Suggestion" : isPromo ? "Promotion" : "Suggestion";
       const originalText = (message.text || message.caption || "").split("\n---")[0];
       const newText = originalText + `\n\n---\n❌ <b>${label} Rejected</b> by ${adminName}`;
       
@@ -1332,27 +1338,32 @@ export async function POST({ request, platform }) {
             } catch {}
           }
           await kv.delete(`story_suggestion:${suggestionId}`);
+        } else if (isPromo && suggestionId && kv) {
+          await kv.delete(`promo_suggestion:${suggestionId}`);
         }
       }
       
       return json({ success: true });
     }
 
-    if (action.startsWith("club_reset_") || action.startsWith("story_reset_") || action === "action_reset") {
+    if (action.startsWith("club_reset_") || action.startsWith("story_reset_") || action.startsWith("promo_reset_") || action === "action_reset") {
       const isClub = action.startsWith("club_reset_");
       const isStory = action.startsWith("story_reset_");
+      const isPromo = action.startsWith("promo_reset_");
       const suggestionId = isClub
         ? action.replace("club_reset_", "")
         : isStory
           ? action.replace("story_reset_", "")
-          : null;
+          : isPromo
+            ? action.replace("promo_reset_", "")
+            : null;
       
       let keyboard = isClub ? buildClubSuggestionKeyboard(suggestionId || "", "student-run") : {
         inline_keyboard: [
           [
-            { text: "✅ Approve & Publish", callback_data: isStory ? `story_approve_${suggestionId}` : "action_approve" },
+            { text: "✅ Approve & Publish", callback_data: isStory ? `story_approve_${suggestionId}` : isPromo ? `promo_approve_${suggestionId}` : "action_approve" },
             { text: "✏️ Edit Text", callback_data: "action_edit_hint" },
-            { text: "❌ Reject", callback_data: isStory ? `story_reject_${suggestionId}` : "action_reject" }
+            { text: "❌ Reject", callback_data: isStory ? `story_reject_${suggestionId}` : isPromo ? `promo_reject_${suggestionId}` : "action_reject" }
           ]
         ]
       };
@@ -1532,6 +1543,80 @@ export async function POST({ request, platform }) {
       });
       
       await kv.delete(`club_suggestion:${suggestionId}`);
+      
+      return json({ success: true });
+    }
+
+    if (action.startsWith("promo_approve_")) {
+      const suggestionId = action.replace("promo_approve_", "");
+      const kv = runtimeEnv?.STORIES_KV;
+      const adminName = cb.from.first_name || "Admin";
+
+      await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ callback_query_id: cb.id, text: "🚀 Publishing promotion..." })
+      }).catch(() => {});
+
+      if (!kv) {
+        await editTextMessage(`⚠️ <b>Error:</b> STORIES_KV not bound.\n\n` + (message.caption || message.text || ""));
+        return json({ success: true });
+      }
+
+      const suggestionRaw = await kv.get(`promo_suggestion:${suggestionId}`);
+      if (!suggestionRaw) {
+        await editTextMessage(`⚠️ <b>Error:</b> Promotion expired or not found.\n\n` + (message.caption || message.text || ""));
+        return json({ success: true });
+      }
+
+      const suggestion = JSON.parse(suggestionRaw);
+
+      const newPromo = {
+        id: `promo-${suggestionId.substring(0, 8)}`,
+        title: suggestion.promoTitle || "Special Offer",
+        subtitle: suggestion.promoDescription || "",
+        linkUrl: suggestion.targetLink || "#",
+        campusIds: suggestion.campusId ? [suggestion.campusId] : ["all"],
+        expiresAt: suggestion.expirationDate ? new Date(suggestion.expirationDate).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        imageUrl: suggestion.logoDataUrl || suggestion.logoUrl || undefined,
+        label: suggestion.promoBadge || "Promotion",
+        cta: suggestion.ctaText || "",
+        priority: 0
+      };
+
+      const promotionsRaw = await kv.get("promotions");
+      let promotions = [];
+      if (promotionsRaw) {
+        try { promotions = JSON.parse(promotionsRaw); } catch(e) {}
+      }
+      
+      promotions.unshift(newPromo);
+      await kv.put("promotions", JSON.stringify(promotions));
+
+      incrementStat(kv, "actions", "approved").catch(() => {});
+
+      const finalKeyboard = {
+        inline_keyboard: [
+          [{ text: "🌐 View on Website", url: `${siteUrl}/feed` }]
+        ]
+      };
+
+      const isTextReview = !!message.text;
+      const originalText = ((isTextReview ? message.text : message.caption) || "").split("\n---")[0];
+      const timeStr = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+      await fetch(`https://api.telegram.org/bot${botToken}/${isTextReview ? "editMessageText" : "editMessageCaption"}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+          [isTextReview ? "text" : "caption"]: originalText + `\n\n---\n✅ <b>Published</b> by ${adminName} at ${timeStr}`,
+          parse_mode: "HTML",
+          reply_markup: finalKeyboard
+        })
+      });
+      
+      await kv.delete(`promo_suggestion:${suggestionId}`);
       
       return json({ success: true });
     }
