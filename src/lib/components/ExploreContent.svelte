@@ -12,6 +12,7 @@
   import {
     favoriteContacts,
     normalizeContactEmail,
+    MAX_FAVORITE_CONTACTS,
   } from "$lib/stores/favoriteContacts";
   import LinkCard from "$lib/components/LinkCard.svelte";
   import SearchBar from "$lib/components/SearchBar.svelte";
@@ -649,6 +650,24 @@
       </p>
     {/if}
   </header>
+
+  {#if !$settingsStore.campusId}
+    <div class="contextual-setup-card glass" style="margin: 0 1rem 1rem; padding: 1.5rem; border-radius: 16px;">
+      <div class="setup-icon" style="margin-bottom: 0.75rem; color: var(--primary-color);">
+        <i class="ph-bold ph-map-pin" style="font-size: 1.5rem;"></i>
+      </div>
+      <div class="setup-text">
+        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">{$t.explore.campusNotSelected}</h3>
+        <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--text-color-secondary);">
+          Select your campus to see local contacts and filtered links.
+        </p>
+        <button class="setup-btn primary" style="width: 100%; padding: 0.75rem; border-radius: 8px; font-weight: 600; cursor: pointer;" onclick={() => {
+          if (window.top && window.self !== window.top) window.top.location.href = "/settings";
+          else window.location.href = "/settings";
+        }}>Select Campus</button>
+      </div>
+    </div>
+  {/if}
 
   <div class="search-sticky-wrapper">
     <div class="explore-search-island">

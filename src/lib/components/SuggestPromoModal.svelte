@@ -6,6 +6,15 @@
   export let isOpen = false;
 
   const dispatch = createEventDispatcher();
+  let dialog: HTMLDialogElement;
+
+  $: if (dialog) {
+    if (isOpen) {
+      if (!dialog.open) dialog.showModal();
+    } else {
+      if (dialog.open) dialog.close();
+    }
+  }
 
   let promoTitle = "";
   let promoDescription = "";
@@ -49,6 +58,10 @@
     "Get Free Access",
     "Start Coding Free"
   ];
+
+  function onBackdropClick(event: MouseEvent) {
+    if (event.target === dialog) close();
+  }
 
   function nextStep() {
     errorMsg = "";
@@ -210,193 +223,204 @@
   }
 </script>
 
-{#if isOpen}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="modal-backdrop"
-    role="button"
-    tabindex="0"
-    aria-label="Close promotion suggestion dialog"
-    on:click={close}
-    on:keydown={(event) => {
-      if (event.key === "Escape" || event.key === "Enter" || event.key === " ") close();
-    }}
-  >
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-    <div
-      class="modal-content"
-      role="dialog"
-      aria-modal="true"
-      tabindex="-1"
-      on:click|stopPropagation
-      on:keydown|stopPropagation
-    >
-      
-      <div class="modal-header">
-        <h2>Suggest Promotion</h2>
-        <button class="close-btn" on:click={close}>✕</button>
+<dialog
+  bind:this={dialog}
+  class="native-modal"
+  on:close={close}
+  on:click={onBackdropClick}
+>
+  <div class="modal-content" on:click|stopPropagation>
+    <div class="modal-header">
+      <h2>Suggest Promotion</h2>
+      <button class="close-btn" on:click={close}>✕</button>
+    </div>
+
+    {#if success}
+      <div class="success-state">
+        <div class="success-icon">✨</div>
+        <h3>Thank you!</h3>
+        <p>We'll review your promotion suggestion and add it soon.</p>
       </div>
+    {:else}
+      <div class="modal-body">
+        {#if errorMsg}
+          <div class="error-msg">{errorMsg}</div>
+        {/if}
 
-      {#if success}
-        <div class="success-state">
-          <div class="success-icon">✨</div>
-          <h3>Thank you!</h3>
-          <p>We'll review your promotion suggestion and add it soon.</p>
+        <div class="progress-indicator">
+          <div class="step {step >= 1 ? 'active' : ''}">1. Overview</div>
+          <div class="step {step >= 2 ? 'active' : ''}">2. Action</div>
+          <div class="step {step >= 3 ? 'active' : ''}">3. Details</div>
         </div>
-      {:else}
-        <div class="modal-body">
-          {#if errorMsg}
-            <div class="error-msg">{errorMsg}</div>
-          {/if}
 
-          <div class="progress-indicator">
-            <div class="step {step >= 1 ? 'active' : ''}">1. Overview</div>
-            <div class="step {step >= 2 ? 'active' : ''}">2. Action</div>
-            <div class="step {step >= 3 ? 'active' : ''}">3. Details</div>
+        {#if step === 1}
+          <div class="input-group">
+            <label for="promoTitle">Promotion Title <span class="req">*</span></label>
+            <input type="text" id="promoTitle" bind:value={promoTitle} placeholder="e.g. 50% Off Spotify Student" disabled={submitting} required />
           </div>
 
-          {#if step === 1}
-            <div class="input-group">
-              <label for="promoTitle">Promotion Title <span class="req">*</span></label>
-              <input type="text" id="promoTitle" bind:value={promoTitle} placeholder="e.g. 50% Off Spotify Student" disabled={submitting} />
-            </div>
+          <div class="input-group">
+            <label for="promoBadge">Promo Badge <span class="req">*</span></label>
+            <select id="promoBadge" bind:value={promoBadge} disabled={submitting} required>
+              <option value="">Select a badge...</option>
+              {#each badges as badge}
+                <option value={badge}>{badge}</option>
+              {/each}
+            </select>
+          </div>
 
-            <div class="input-group">
-              <label for="promoBadge">Promo Badge <span class="req">*</span></label>
-              <select id="promoBadge" bind:value={promoBadge} disabled={submitting}>
-                <option value="">Select a badge...</option>
-                {#each badges as badge}
-                  <option value={badge}>{badge}</option>
-                {/each}
-              </select>
-            </div>
+          <div class="input-group">
+            <label for="campusId">Target Campus <span class="req">*</span></label>
+            <select id="campusId" bind:value={campusId} disabled={submitting} required>
+              <option value="">Select campus...</option>
+              <option value="all">Global / All</option>
+              {#each CAMPUSES as campus}
+                <option value={campus.id}>{campus.name}</option>
+              {/each}
+            </select>
+          </div>
+        {:else if step === 2}
+          <div class="input-group">
+            <label for="promoDescription">Description</label>
+            <textarea id="promoDescription" bind:value={promoDescription} placeholder="Short description about the promotion..." disabled={submitting}></textarea>
+          </div>
 
-            <div class="input-group">
-              <label for="campusId">Target Campus <span class="req">*</span></label>
-              <select id="campusId" bind:value={campusId} disabled={submitting}>
-                <option value="">Select campus...</option>
-                <option value="all">Global / All</option>
-                {#each CAMPUSES as campus}
-                  <option value={campus.id}>{campus.name}</option>
-                {/each}
-              </select>
-            </div>
-          {:else if step === 2}
-            <div class="input-group">
-              <label for="promoDescription">Description</label>
-              <textarea id="promoDescription" bind:value={promoDescription} placeholder="Short description about the promotion..." disabled={submitting}></textarea>
-            </div>
+          <div class="input-group">
+            <label for="ctaText">Action Text (CTA) <span class="req">*</span></label>
+            <select id="ctaText" bind:value={ctaText} disabled={submitting} required>
+              <option value="">Select CTA...</option>
+              {#each ctas as cta}
+                <option value={cta}>{cta}</option>
+              {/each}
+            </select>
+          </div>
 
-            <div class="input-group">
-              <label for="ctaText">Action Text (CTA) <span class="req">*</span></label>
-              <select id="ctaText" bind:value={ctaText} disabled={submitting}>
-                <option value="">Select CTA...</option>
-                {#each ctas as cta}
-                  <option value={cta}>{cta}</option>
-                {/each}
-              </select>
-            </div>
+          <div class="input-group">
+            <label for="targetLink">Target Link <span class="req">*</span></label>
+            <input 
+              type="url" 
+              id="targetLink" 
+              bind:value={targetLink} 
+              placeholder="https://example.com/promo" 
+              disabled={submitting} 
+              required
+            />
+          </div>
 
-            <div class="input-group">
-              <label for="targetLink">Target Link <span class="req">*</span></label>
-              <input 
-                type="url" 
-                id="targetLink" 
-                bind:value={targetLink} 
-                placeholder="https://example.com/promo" 
-                disabled={submitting} 
-              />
-            </div>
+          <div class="input-group">
+            <label for="expirationDate">Expiration Date (Optional)</label>
+            <input type="date" id="expirationDate" bind:value={expirationDate} disabled={submitting} />
+          </div>
+        {:else if step === 3}
+          <div class="input-group">
+            <label for="promoLogo">Promo Image (Optional)</label>
+            <input
+              type="file"
+              id="promoLogo"
+              accept="image/png,image/jpeg,image/webp"
+              on:change={handleLogoUpload}
+              disabled={submitting}
+            />
+            {#if logoFileName}
+              <p class="file-hint">{logoFileName}</p>
+            {/if}
+            <input
+              type="url"
+              id="promoLogoUrl"
+              bind:value={logoUrl}
+              placeholder="or paste a public image URL"
+              disabled={submitting}
+            />
+            {#if logoDataUrl || logoUrl}
+              <div class="logo-preview-wrap">
+                <img src={logoDataUrl || logoUrl} alt="Preview" class="logo-preview" />
+              </div>
+            {/if}
+          </div>
 
-            <div class="input-group">
-              <label for="expirationDate">Expiration Date (Optional)</label>
-              <input type="date" id="expirationDate" bind:value={expirationDate} disabled={submitting} />
-            </div>
-          {:else if step === 3}
-            <div class="input-group">
-              <label for="promoLogo">Promo Image (Optional)</label>
-              <input
-                type="file"
-                id="promoLogo"
-                accept="image/png,image/jpeg,image/webp"
-                on:change={handleLogoUpload}
-                disabled={submitting}
-              />
-              {#if logoFileName}
-                <p class="file-hint">{logoFileName}</p>
-              {/if}
-              <input
-                type="url"
-                id="promoLogoUrl"
-                bind:value={logoUrl}
-                placeholder="or paste a public image URL"
-                disabled={submitting}
-              />
-              {#if logoDataUrl || logoUrl}
-                <div class="logo-preview-wrap">
-                  <img src={logoDataUrl || logoUrl} alt="Preview" class="logo-preview" />
-                </div>
-              {/if}
-            </div>
+          <div class="input-group">
+            <label for="contactEmail">Contact Email (Optional)</label>
+            <input type="email" id="contactEmail" bind:value={contactEmail} placeholder="your@email.com" disabled={submitting} />
+          </div>
 
-            <div class="input-group">
-              <label for="contactEmail">Contact Email (Optional)</label>
-              <input type="email" id="contactEmail" bind:value={contactEmail} placeholder="your@email.com" disabled={submitting} />
-            </div>
+          <div class="input-group">
+            <label for="note">Note to Admins</label>
+            <textarea id="note" bind:value={note} placeholder="Any additional information..." disabled={submitting}></textarea>
+          </div>
+        {/if}
+      </div>
 
-            <div class="input-group">
-              <label for="note">Note to Admins</label>
-              <textarea id="note" bind:value={note} placeholder="Any additional information..." disabled={submitting}></textarea>
-            </div>
-          {/if}
-        </div>
+      <div class="modal-footer popup-footer-safe">
+        {#if step > 1}
+          <button class="cancel-btn" on:click={prevStep} disabled={submitting}>Back</button>
+        {:else}
+          <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
+        {/if}
 
-        <div class="modal-footer popup-footer-safe">
-          {#if step > 1}
-            <button class="cancel-btn" on:click={prevStep} disabled={submitting}>Back</button>
-          {:else}
-            <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
-          {/if}
-
-          {#if step < 3}
-            <button class="submit-btn" on:click={nextStep} disabled={submitting}>Next</button>
-          {:else}
-            <button class="submit-btn" on:click={submitPromo} disabled={submitting}>
-              {submitting ? "Submitting..." : "Send Suggestion"}
-            </button>
-          {/if}
-        </div>
-      {/if}
-    </div>
+        {#if step < 3}
+          <button class="submit-btn" on:click={nextStep} disabled={submitting}>Next</button>
+        {:else}
+          <button class="submit-btn" on:click={submitPromo} disabled={submitting}>
+            {submitting ? "Submitting..." : "Send Suggestion"}
+          </button>
+        {/if}
+      </div>
+    {/if}
   </div>
-{/if}
+</dialog>
 
 <style>
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
+  .native-modal {
+    background: transparent;
+    border: none;
+    padding: 16px;
+    margin: auto;
+    max-width: 440px;
+    width: 100%;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .native-modal::backdrop {
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    padding: 16px;
-    animation: fadeIn 0.2s ease-out;
+    opacity: 0;
+    transition: opacity 0.3s ease, overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+  }
+
+  .native-modal[open]::backdrop {
+    opacity: 1;
+  }
+
+  @starting-style {
+    .native-modal[open]::backdrop {
+      opacity: 0;
+    }
   }
 
   .modal-content {
     background: var(--card-bg);
     border-radius: 24px;
     width: 100%;
-    max-width: 440px;
     box-shadow: var(--shadow-xl);
-    animation: slideUp 0.3s cubic-bezier(0.2, 0, 0, 1);
     color: var(--text-color);
     overflow: hidden;
     border: 1px solid var(--border-color);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 0, 0, 1), overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+  }
+
+  .native-modal[open] .modal-content {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @starting-style {
+    .native-modal[open] .modal-content {
+      opacity: 0;
+      transform: translateY(20px);
+    }
   }
 
   .modal-header {
@@ -468,9 +492,15 @@
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 10%, transparent);
   }
 
+  input:user-invalid, select:user-invalid, textarea:user-invalid {
+    border-color: #ff4d4f;
+    background: color-mix(in srgb, #ff4d4f 5%, var(--bg-secondary));
+  }
+
   textarea {
     min-height: 80px;
-    resize: vertical;
+    field-sizing: content;
+    resize: none;
   }
 
   input[type="file"] {
@@ -553,9 +583,6 @@
     margin-bottom: 16px;
   }
   
-  @keyframes fadeIn { from {opacity: 0} to {opacity: 1} }
-  @keyframes slideUp { from {opacity: 0; transform: translateY(20px)} to {opacity: 1; transform: translateY(0)} }
-
   .progress-indicator {
     display: flex;
     justify-content: space-between;

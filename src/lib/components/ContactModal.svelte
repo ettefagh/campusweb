@@ -1,15 +1,30 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount } from "svelte";
+	import { createEventDispatcher } from "svelte";
 	import { t } from "$lib/i18n";
 	
 	export let isOpen = false;
 	export let contact: any = null;
 
 	const dispatch = createEventDispatcher();
+	let dialog: HTMLDialogElement;
+
+	$: if (dialog) {
+		if (isOpen) {
+			if (!dialog.open) dialog.showModal();
+		} else {
+			if (dialog.open) dialog.close();
+		}
+	}
 
 	function close() {
 		isOpen = false;
 		dispatch("close");
+	}
+
+	function onBackdropClick(event: MouseEvent) {
+		if (event.target === dialog) {
+			close();
+		}
 	}
 
 	function getTeamsChatUrl(email: string) {
@@ -32,37 +47,16 @@
 			window.open(`https://outlook.office.com/mail/deeplink/compose?to=${email}`, "_blank");
 		}
 	}
-
-	function portal(node: HTMLElement) {
-		document.body.appendChild(node);
-		return {
-			destroy() {
-				if (node.parentNode) node.parentNode.removeChild(node);
-			}
-		};
-	}
 </script>
 
-{#if isOpen && contact}
-	<div
-		class="modal-backdrop"
-		use:portal
-		role="button"
-		tabindex="0"
-		aria-label="Close contact details dialog"
-		on:click={close}
-		on:keydown={(event) => {
-			if (event.key === "Escape" || event.key === "Enter" || event.key === " ") close();
-		}}
-	>
-		<div
-			class="modal-content"
-			role="dialog"
-			aria-modal="true"
-			tabindex="-1"
-			on:click|stopPropagation
-			on:keydown|stopPropagation
-		>
+<dialog
+	bind:this={dialog}
+	class="native-modal"
+	on:close={close}
+	on:click={onBackdropClick}
+>
+	{#if contact}
+		<div class="modal-content" on:click|stopPropagation>
 			<div class="modal-header">
 				<h2>Contact Details</h2>
 				<button class="close-btn" on:click={close}>✕</button>
@@ -151,33 +145,61 @@
 				</div>
 			</div>
 		</div>
-	</div>
-{/if}
+	{/if}
+</dialog>
 
 <style>
-	.modal-backdrop {
-		position: fixed;
-		inset: 0;
+	.native-modal {
+		background: transparent;
+		border: none;
+		padding: 16px;
+		margin: auto;
+		max-width: 440px;
+		width: 100%;
+		outline: none;
+		box-sizing: border-box;
+	}
+
+	.native-modal::backdrop {
 		background: rgba(0, 0, 0, 0.6);
 		backdrop-filter: blur(8px);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 10000;
-		padding: 16px;
-		animation: fadeIn 0.2s ease-out;
+		opacity: 0;
+		transition: opacity 0.3s ease, overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+	}
+
+	.native-modal[open]::backdrop {
+		opacity: 1;
+	}
+
+	@starting-style {
+		.native-modal[open]::backdrop {
+			opacity: 0;
+		}
 	}
 
 	.modal-content {
 		background: var(--card-bg, var(--bg-color));
 		border-radius: 24px;
 		width: 100%;
-		max-width: 440px;
 		box-shadow: var(--shadow-xl, 0 12px 32px rgba(0, 0, 0, 0.15));
-		animation: slideUp 0.3s cubic-bezier(0.2, 0, 0, 1);
 		color: var(--text-color);
 		overflow: hidden;
 		border: 1px solid var(--border-color);
+		opacity: 0;
+		transform: translateY(20px);
+		transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 0, 0, 1), overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+	}
+
+	.native-modal[open] .modal-content {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	@starting-style {
+		.native-modal[open] .modal-content {
+			opacity: 0;
+			transform: translateY(20px);
+		}
 	}
 
 	.modal-header {
@@ -317,7 +339,4 @@
 		color: var(--text-color-secondary);
 		font-weight: 500;
 	}
-
-	@keyframes fadeIn { from {opacity: 0} to {opacity: 1} }
-	@keyframes slideUp { from {opacity: 0; transform: translateY(20px)} to {opacity: 1; transform: translateY(0)} }
 </style>

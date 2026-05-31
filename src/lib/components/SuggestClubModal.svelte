@@ -6,6 +6,15 @@
   export let isOpen = false;
 
   const dispatch = createEventDispatcher();
+  let dialog: HTMLDialogElement;
+
+  $: if (dialog) {
+    if (isOpen) {
+      if (!dialog.open) dialog.showModal();
+    } else {
+      if (dialog.open) dialog.close();
+    }
+  }
 
   let clubName = "";
   let platform = "instagram";
@@ -24,6 +33,10 @@
   let step = 1;
 
   const categories = ["sports", "culture", "tech", "business", "arts", "community"];
+
+  function onBackdropClick(event: MouseEvent) {
+    if (event.target === dialog) close();
+  }
 
   function nextStep() {
     errorMsg = "";
@@ -167,191 +180,196 @@
       submitting = false;
     }
   }
-
-  function portal(node: HTMLElement) {
-    document.body.appendChild(node);
-    return {
-      destroy() {
-        if (node.parentNode) node.parentNode.removeChild(node);
-      }
-    };
-  }
 </script>
 
-{#if isOpen}
-  <div
-    class="modal-backdrop"
-    use:portal
-    role="button"
-    tabindex="0"
-    aria-label="Close club suggestion dialog"
-    on:click={close}
-    on:keydown={(event) => {
-      if (event.key === "Escape" || event.key === "Enter" || event.key === " ") close();
-    }}
-  >
-    <div
-      class="modal-content"
-      role="dialog"
-      aria-modal="true"
-      tabindex="-1"
-      on:click|stopPropagation
-      on:keydown|stopPropagation
-    >
-      
-      <div class="modal-header">
-        <h2>{$t.feed.suggestClub}</h2>
-        <button class="close-btn" on:click={close}>✕</button>
+<dialog
+  bind:this={dialog}
+  class="native-modal"
+  on:close={close}
+  on:click={onBackdropClick}
+>
+  <div class="modal-content" on:click|stopPropagation>
+    <div class="modal-header">
+      <h2>{$t.feed.suggestClub}</h2>
+      <button class="close-btn" on:click={close}>✕</button>
+    </div>
+
+    {#if success}
+      <div class="success-state">
+        <div class="success-icon">✨</div>
+        <h3>{$t.feed.thanks || "Thank you!"}</h3>
+        <p>{$t.feed.clubSuggestionReceived || "We'll review your club suggestion and add it soon."}</p>
       </div>
+    {:else}
+      <div class="modal-body">
+        {#if errorMsg}
+          <div class="error-msg">{errorMsg}</div>
+        {/if}
 
-      {#if success}
-        <div class="success-state">
-          <div class="success-icon">✨</div>
-          <h3>{$t.feed.thanks || "Thank you!"}</h3>
-          <p>{$t.feed.clubSuggestionReceived || "We'll review your club suggestion and add it soon."}</p>
+        <div class="progress-indicator">
+          <div class="step {step >= 1 ? 'active' : ''}">1. Identity</div>
+          <div class="step {step >= 2 ? 'active' : ''}">2. Presence</div>
+          <div class="step {step >= 3 ? 'active' : ''}">3. Details</div>
         </div>
-      {:else}
-        <div class="modal-body">
-          {#if errorMsg}
-            <div class="error-msg">{errorMsg}</div>
-          {/if}
 
-          <div class="progress-indicator">
-            <div class="step {step >= 1 ? 'active' : ''}">1. Identity</div>
-            <div class="step {step >= 2 ? 'active' : ''}">2. Presence</div>
-            <div class="step {step >= 3 ? 'active' : ''}">3. Details</div>
+        {#if step === 1}
+          <div class="input-group">
+            <label for="clubName">Club Name <span class="req">*</span></label>
+            <input type="text" id="clubName" bind:value={clubName} placeholder="e.g. SRH Chess Club" disabled={submitting} required />
           </div>
 
-          {#if step === 1}
-            <div class="input-group">
-              <label for="clubName">Club Name <span class="req">*</span></label>
-              <input type="text" id="clubName" bind:value={clubName} placeholder="e.g. SRH Chess Club" disabled={submitting} />
-            </div>
+          <div class="input-group">
+            <label for="campusId">Campus <span class="req">*</span></label>
+            <select id="campusId" bind:value={campusId} disabled={submitting} required>
+              <option value="">Select campus...</option>
+              <option value="all">Global / All</option>
+              {#each CAMPUSES as campus}
+                <option value={campus.id}>{campus.name}</option>
+              {/each}
+            </select>
+          </div>
 
-            <div class="input-group">
-              <label for="campusId">Campus <span class="req">*</span></label>
-              <select id="campusId" bind:value={campusId} disabled={submitting}>
-                <option value="">Select campus...</option>
-                <option value="all">Global / All</option>
-                {#each CAMPUSES as campus}
-                  <option value={campus.id}>{campus.name}</option>
-                {/each}
-              </select>
-            </div>
+          <div class="input-group">
+            <label for="category">Category</label>
+            <select id="category" bind:value={category} disabled={submitting}>
+              <option value="">Select category...</option>
+              {#each categories as cat}
+                <option value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+              {/each}
+            </select>
+          </div>
+        {:else if step === 2}
+          <div class="input-group">
+            <label for="platform">Platform <span class="req">*</span></label>
+            <select id="platform" bind:value={platform} disabled={submitting} required>
+              <option value="instagram">Instagram</option>
+              <option value="whatsapp">WhatsApp Group</option>
+            </select>
+          </div>
 
-            <div class="input-group">
-              <label for="category">Category</label>
-              <select id="category" bind:value={category} disabled={submitting}>
-                <option value="">Select category...</option>
-                {#each categories as cat}
-                  <option value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-                {/each}
-              </select>
-            </div>
-          {:else if step === 2}
-            <div class="input-group">
-              <label for="platform">Platform <span class="req">*</span></label>
-              <select id="platform" bind:value={platform} disabled={submitting}>
-                <option value="instagram">Instagram</option>
-                <option value="whatsapp">WhatsApp Group</option>
-              </select>
-            </div>
+          <div class="input-group">
+            <label for="handleOrUrl">
+              {platform === 'instagram' ? 'Instagram Handle / URL' : 'WhatsApp Invite Link'} <span class="req">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="handleOrUrl" 
+              bind:value={handleOrUrl} 
+              placeholder={platform === 'instagram' ? 'e.g. @srh_chess' : 'https://chat.whatsapp.com/...'} 
+              disabled={submitting} 
+              required
+            />
+          </div>
 
-            <div class="input-group">
-              <label for="handleOrUrl">
-                {platform === 'instagram' ? 'Instagram Handle / URL' : 'WhatsApp Invite Link'} <span class="req">*</span>
-              </label>
-              <input 
-                type="text" 
-                id="handleOrUrl" 
-                bind:value={handleOrUrl} 
-                placeholder={platform === 'instagram' ? 'e.g. @srh_chess' : 'https://chat.whatsapp.com/...'} 
-                disabled={submitting} 
-              />
-            </div>
+          <div class="input-group">
+            <label for="clubLogo">Club Logo / Icon (Optional)</label>
+            <input
+              type="file"
+              id="clubLogo"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              on:change={handleLogoUpload}
+              disabled={submitting}
+            />
+            {#if logoFileName}
+              <p class="file-hint">{logoFileName}</p>
+            {/if}
+            <input
+              type="url"
+              id="clubLogoUrl"
+              bind:value={logoUrl}
+              placeholder="or paste a public logo URL"
+              disabled={submitting}
+            />
+            {#if logoDataUrl || logoUrl}
+              <div class="logo-preview-wrap">
+                <img src={logoDataUrl || logoUrl} alt="Club logo preview" class="logo-preview" />
+              </div>
+            {/if}
+          </div>
+        {:else if step === 3}
+          <div class="input-group">
+            <label for="contactEmail">Contact Email (Optional)</label>
+            <input type="email" id="contactEmail" bind:value={contactEmail} placeholder="your@email.com" disabled={submitting} />
+          </div>
 
-            <div class="input-group">
-              <label for="clubLogo">Club Logo / Icon (Optional)</label>
-              <input
-                type="file"
-                id="clubLogo"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                on:change={handleLogoUpload}
-                disabled={submitting}
-              />
-              {#if logoFileName}
-                <p class="file-hint">{logoFileName}</p>
-              {/if}
-              <input
-                type="url"
-                id="clubLogoUrl"
-                bind:value={logoUrl}
-                placeholder="or paste a public logo URL"
-                disabled={submitting}
-              />
-              {#if logoDataUrl || logoUrl}
-                <div class="logo-preview-wrap">
-                  <img src={logoDataUrl || logoUrl} alt="Club logo preview" class="logo-preview" />
-                </div>
-              {/if}
-            </div>
-          {:else if step === 3}
-            <div class="input-group">
-              <label for="contactEmail">Contact Email (Optional)</label>
-              <input type="email" id="contactEmail" bind:value={contactEmail} placeholder="your@email.com" disabled={submitting} />
-            </div>
+          <div class="input-group">
+            <label for="note">Note to Admins</label>
+            <textarea id="note" bind:value={note} placeholder="Tell us more about the club..." disabled={submitting}></textarea>
+          </div>
+        {/if}
+      </div>
 
-            <div class="input-group">
-              <label for="note">Note to Admins</label>
-              <textarea id="note" bind:value={note} placeholder="Tell us more about the club..." disabled={submitting}></textarea>
-            </div>
-          {/if}
-        </div>
+      <div class="modal-footer popup-footer-safe">
+        {#if step > 1}
+          <button class="cancel-btn" on:click={prevStep} disabled={submitting}>Back</button>
+        {:else}
+          <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
+        {/if}
 
-        <div class="modal-footer popup-footer-safe">
-          {#if step > 1}
-            <button class="cancel-btn" on:click={prevStep} disabled={submitting}>Back</button>
-          {:else}
-            <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
-          {/if}
-
-          {#if step < 3}
-            <button class="submit-btn" on:click={nextStep} disabled={submitting}>Next</button>
-          {:else}
-            <button class="submit-btn" on:click={submitClub} disabled={submitting}>
-              {submitting ? "Submitting..." : "Send Suggestion"}
-            </button>
-          {/if}
-        </div>
-      {/if}
-    </div>
+        {#if step < 3}
+          <button class="submit-btn" on:click={nextStep} disabled={submitting}>Next</button>
+        {:else}
+          <button class="submit-btn" on:click={submitClub} disabled={submitting}>
+            {submitting ? "Submitting..." : "Send Suggestion"}
+          </button>
+        {/if}
+      </div>
+    {/if}
   </div>
-{/if}
+</dialog>
 
 <style>
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
+  .native-modal {
+    background: transparent;
+    border: none;
+    padding: 16px;
+    margin: auto;
+    max-width: 440px;
+    width: 100%;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .native-modal::backdrop {
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    padding: 16px;
-    animation: fadeIn 0.2s ease-out;
+    opacity: 0;
+    transition: opacity 0.3s ease, overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+  }
+
+  .native-modal[open]::backdrop {
+    opacity: 1;
+  }
+
+  @starting-style {
+    .native-modal[open]::backdrop {
+      opacity: 0;
+    }
   }
 
   .modal-content {
     background: var(--card-bg);
     border-radius: 24px;
     width: 100%;
-    max-width: 440px;
     box-shadow: var(--shadow-xl);
-    animation: slideUp 0.3s cubic-bezier(0.2, 0, 0, 1);
     color: var(--text-color);
     overflow: hidden;
     border: 1px solid var(--border-color);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 0, 0, 1), overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+  }
+
+  .native-modal[open] .modal-content {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @starting-style {
+    .native-modal[open] .modal-content {
+      opacity: 0;
+      transform: translateY(20px);
+    }
   }
 
   .modal-header {
@@ -422,9 +440,16 @@
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 10%, transparent);
   }
 
+  /* User Invalid Validation State */
+  input:user-invalid, select:user-invalid, textarea:user-invalid {
+    border-color: #ff4d4f;
+    background: color-mix(in srgb, #ff4d4f 5%, var(--bg-secondary));
+  }
+
   textarea {
     min-height: 80px;
-    resize: vertical;
+    field-sizing: content;
+    resize: none;
   }
 
   input[type="file"] {
@@ -507,9 +532,6 @@
     margin-bottom: 16px;
   }
   
-  @keyframes fadeIn { from {opacity: 0} to {opacity: 1} }
-  @keyframes slideUp { from {opacity: 0; transform: translateY(20px)} to {opacity: 1; transform: translateY(0)} }
-
   .progress-indicator {
     display: flex;
     justify-content: space-between;

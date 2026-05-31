@@ -66,6 +66,8 @@ export interface AppSettings {
   showSeconds: boolean;
   /** Whether the user has verified their university email */
   emailVerified: boolean;
+  /** Expiration timestamp for the active session, if any */
+  sessionExpiresAt?: number;
   /** Modular homepage sections order and toggle state */
   homeSections: HomeSection[];
   /** Homepage Header Size */
@@ -164,6 +166,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   compactCards: false,
   showSeconds: false,
   emailVerified: false,
+  sessionExpiresAt: undefined,
   headerSize: 'big',
   defaultPage: 'home',
   homeSections: [

@@ -5,6 +5,16 @@
   export let isOpen = false;
 
   const dispatch = createEventDispatcher();
+  let dialog: HTMLDialogElement;
+
+  $: if (dialog) {
+    if (isOpen) {
+      if (!dialog.open) dialog.showModal();
+    } else {
+      if (dialog.open) dialog.close();
+    }
+  }
+
   const MIN_SEQUENCE_SLIDES = 2;
   const MAX_SEQUENCE_SLIDES = 6;
   const STORY_TAG_OPTIONS = ["", "EVENT", "LIVE", "PROMO", "AD", "RENT", "LIVING"] as const;
@@ -32,6 +42,10 @@
   let errorMsg = "";
   let emailStatus: "sent" | "skipped" | "failed" = "skipped";
   let step = 1;
+
+  function onBackdropClick(event: MouseEvent) {
+    if (event.target === dialog) close();
+  }
 
   function nextStep() {
     errorMsg = "";
@@ -174,18 +188,6 @@
     dispatch("close");
   }
 
-  function handleBackdropClick(event: MouseEvent) {
-    if (event.target === event.currentTarget) close();
-  }
-
-  function handleBackdropKeydown(event: KeyboardEvent) {
-    if (event.target !== event.currentTarget) return;
-    if (event.key === "Escape" || event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      close();
-    }
-  }
-
   async function submitStory() {
     errorMsg = "";
     
@@ -243,206 +245,203 @@
       submitting = false;
     }
   }
-
-  // Action to teleport modal to document.body to ensure it floats above all containers
-  function portal(node: HTMLElement) {
-    document.body.appendChild(node);
-    return {
-      destroy() {
-        if (node.parentNode) node.parentNode.removeChild(node);
-      }
-    };
-  }
 </script>
 
-{#if isOpen}
-  <div
-    class="modal-backdrop"
-    use:portal
-    role="button"
-    tabindex="0"
-    aria-label="Close story suggestion modal"
-    on:click={handleBackdropClick}
-    on:keydown={handleBackdropKeydown}
-  >
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="story-suggestion-title">
-      
-      <div class="modal-header">
-        <h2 id="story-suggestion-title">{$t.settings.suggestStoryTitle}</h2>
-        <button class="close-btn" on:click={close}>✕</button>
-      </div>
-
-      {#if success}
-        <div class="success-state">
-          <div class="success-icon">✓</div>
-          <h3>Awesome!</h3>
-          <p>We sent it directly to the curation team.</p>
-          {#if emailStatus === "sent"}
-            <p class="email-status success">Confirmation email sent.</p>
-          {:else if emailStatus === "failed"}
-            <p class="email-status warning">Suggestion received, but the confirmation email could not be sent.</p>
-          {/if}
-        </div>
-      {:else}
-        <div class="modal-body">
-          {#if errorMsg}
-            <div class="error-msg">{errorMsg}</div>
-          {/if}
-
-          <div class="progress-indicator">
-            <div class="step {step >= 1 ? 'active' : ''}">1. Basics</div>
-            <div class="step {step >= 2 ? 'active' : ''}">2. Media</div>
-            <div class="step {step >= 3 ? 'active' : ''}">3. Details</div>
-          </div>
-
-          {#if step === 1}
-            <div class="input-group">
-              <label for="title">{$t.settings.storyTitleLabel} <span class="req">*</span></label>
-              <input type="text" id="title" bind:value={title} placeholder="e.g., New Semester Welcome!" maxlength="40" disabled={submitting} />
-            </div>
-
-            <div class="input-group">
-              <span class="field-label">Story format</span>
-              <div class="tabs full-width">
-                <button class="tab {storyMode==='single'?'active':''}" on:click={() => switchStoryMode('single')} type="button">Single</button>
-                <button class="tab {storyMode==='sequence'?'active':''}" on:click={() => switchStoryMode('sequence')} type="button">Tale</button>
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label for="subtitle">{storyMode === "sequence" ? "Shared description" : $t.settings.storySubtitleLabel}</label>
-              <textarea
-                id="subtitle"
-                bind:value={subtitle}
-                placeholder={storyMode === "sequence" ? "One description for the full image sequence..." : "Details, times, location..."}
-                rows="4"
-                disabled={submitting}
-              ></textarea>
-            </div>
-
-            <div class="input-group">
-              <label for="tag">{$t.settings.storyTagLabel}</label>
-              <select id="tag" bind:value={tag} disabled={submitting}>
-                <option value="">No tag</option>
-                {#each STORY_TAG_OPTIONS.slice(1) as option}
-                  <option value={option}>{option}</option>
-                {/each}
-              </select>
-            </div>
-          {:else if step === 2}
-            <!-- DYNAMIC IMAGE SELECTOR -->
-            <div class="input-group mt-lg">
-              <div class="tab-header">
-                <span class="field-label">Image <span class="req">*</span></span>
-                <div class="tabs">
-                  <button class="tab {inputMode==='file'?'active':''}" on:click={() => switchMode('file')} type="button">Upload</button>
-                  <button class="tab {inputMode==='url'?'active':''}" on:click={() => switchMode('url')} type="button">Paste URL</button>
-                </div>
-              </div>
-
-              {#if inputMode === 'file'}
-                <label class="file-upload-zone {selectedFiles.length > 0 ? 'has-file' : ''}">
-                  <input
-                    type="file"
-                    bind:this={fileInput}
-                    on:change={handleFileChange}
-                    accept="image/*"
-                    multiple={storyMode === "sequence"}
-                    style="display:none;"
-                  />
-                  
-                  {#if previewSrcs.length > 0}
-                    <div class="preview-grid">
-                      {#each previewSrcs as previewSrc, idx}
-                        <img src={previewSrc} class="preview-thumb" alt="Preview {idx + 1}" />
-                      {/each}
-                    </div>
-                    <div class="upload-text overlay">
-                      {storyMode === "sequence" ? `${previewSrcs.length} images selected` : "Tap to Change Photo"}
-                    </div>
-                  {:else}
-                    <div class="upload-icon">📷</div>
-                    <div class="upload-text">{storyMode === "sequence" ? "Choose up to 6 Photos" : "Choose from Photo Library"}</div>
-                    <div class="sub-hint">{storyMode === "sequence" ? "At least 2 images for a tale" : "Max size 10MB"}</div>
-                  {/if}
-                </label>
-              {:else}
-                {#if storyMode === "sequence"}
-                  <textarea
-                    bind:value={imageUrlsText}
-                    placeholder="One image URL per line"
-                    rows="4"
-                    disabled={submitting}
-                  ></textarea>
-                  <span class="hint">Add 2 to 6 public image URLs, one per line.</span>
-                {:else}
-                  <input type="url" bind:value={imageUrl} placeholder="https://example.com/myimage.jpg" disabled={submitting} class="url-input" />
-                  <span class="hint">Make sure it's a public direct link to an image.</span>
-                {/if}
-              {/if}
-            </div>
-
-            <div class="input-group mt-sm">
-              <label for="linkUrl">{$t.settings.storyLinkLabel}</label>
-              <input type="url" id="linkUrl" bind:value={linkUrl} placeholder="https://..." disabled={submitting} />
-            </div>
-          {:else if step === 3}
-            <div class="input-group mt-sm">
-              <label for="storyContactEmail">Contact Email (Optional)</label>
-              <input
-                type="email"
-                id="storyContactEmail"
-                bind:value={contactEmail}
-                placeholder="your@email.com"
-                disabled={submitting}
-              />
-            </div>
-
-            <div class="input-group mt-sm">
-              <label for="expiresAt">{$t.settings.storyExpiresLabel}</label>
-              <div class="date-wrapper">
-                <input type="date" id="expiresAt" bind:value={expiresAt} disabled={submitting} />
-                <div class="quick-dates">
-                  <button type="button" class="quick-btn" on:click={() => addDays(3)}>+3d</button>
-                  <button type="button" class="quick-btn" on:click={() => addDays(7)}>+1w</button>
-                </div>
-              </div>
-            </div>
-          {/if}
-
-          <div class="modal-footer popup-footer-safe">
-            {#if step > 1}
-              <button class="cancel-btn" on:click={prevStep} disabled={submitting}>Back</button>
-            {:else}
-              <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
-            {/if}
-
-            {#if step < 3}
-              <button class="submit-btn" on:click={nextStep} disabled={submitting}>Next</button>
-            {:else}
-              <button class="submit-btn" on:click={submitStory} disabled={submitting}>
-                {submitting ? "Sending..." : "Submit for Review"}
-              </button>
-            {/if}
-          </div>
-        </div>
-      {/if}
+<dialog
+  bind:this={dialog}
+  class="native-modal"
+  on:close={close}
+  on:click={onBackdropClick}
+>
+  <div class="modal-content" on:click|stopPropagation>
+    <div class="modal-header">
+      <h2 id="story-suggestion-title">{$t.settings.suggestStoryTitle}</h2>
+      <button class="close-btn" on:click={close}>✕</button>
     </div>
+
+    {#if success}
+      <div class="success-state">
+        <div class="success-icon">✓</div>
+        <h3>Awesome!</h3>
+        <p>We sent it directly to the curation team.</p>
+        {#if emailStatus === "sent"}
+          <p class="email-status success">Confirmation email sent.</p>
+        {:else if emailStatus === "failed"}
+          <p class="email-status warning">Suggestion received, but the confirmation email could not be sent.</p>
+        {/if}
+      </div>
+    {:else}
+      <div class="modal-body">
+        {#if errorMsg}
+          <div class="error-msg">{errorMsg}</div>
+        {/if}
+
+        <div class="progress-indicator">
+          <div class="step {step >= 1 ? 'active' : ''}">1. Basics</div>
+          <div class="step {step >= 2 ? 'active' : ''}">2. Media</div>
+          <div class="step {step >= 3 ? 'active' : ''}">3. Details</div>
+        </div>
+
+        {#if step === 1}
+          <div class="input-group">
+            <label for="title">{$t.settings.storyTitleLabel} <span class="req">*</span></label>
+            <input type="text" id="title" bind:value={title} placeholder="e.g., New Semester Welcome!" maxlength="40" disabled={submitting} required />
+          </div>
+
+          <div class="input-group">
+            <span class="field-label">Story format</span>
+            <div class="tabs full-width">
+              <button class="tab {storyMode==='single'?'active':''}" on:click={() => switchStoryMode('single')} type="button">Single</button>
+              <button class="tab {storyMode==='sequence'?'active':''}" on:click={() => switchStoryMode('sequence')} type="button">Tale</button>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="subtitle">{storyMode === "sequence" ? "Shared description" : $t.settings.storySubtitleLabel} <span class="req">*</span></label>
+            <textarea
+              id="subtitle"
+              bind:value={subtitle}
+              placeholder={storyMode === "sequence" ? "One description for the full image sequence..." : "Details, times, location..."}
+              disabled={submitting}
+              required
+            ></textarea>
+          </div>
+
+          <div class="input-group">
+            <label for="tag">{$t.settings.storyTagLabel}</label>
+            <select id="tag" bind:value={tag} disabled={submitting}>
+              <option value="">No tag</option>
+              {#each STORY_TAG_OPTIONS.slice(1) as option}
+                <option value={option}>{option}</option>
+              {/each}
+            </select>
+          </div>
+        {:else if step === 2}
+          <div class="input-group mt-lg">
+            <div class="tab-header">
+              <span class="field-label">Image <span class="req">*</span></span>
+              <div class="tabs">
+                <button class="tab {inputMode==='file'?'active':''}" on:click={() => switchMode('file')} type="button">Upload</button>
+                <button class="tab {inputMode==='url'?'active':''}" on:click={() => switchMode('url')} type="button">Paste URL</button>
+              </div>
+            </div>
+
+            {#if inputMode === 'file'}
+              <label class="file-upload-zone {selectedFiles.length > 0 ? 'has-file' : ''}">
+                <input
+                  type="file"
+                  bind:this={fileInput}
+                  on:change={handleFileChange}
+                  accept="image/*"
+                  multiple={storyMode === "sequence"}
+                  style="display:none;"
+                />
+                
+                {#if previewSrcs.length > 0}
+                  <div class="preview-grid">
+                    {#each previewSrcs as previewSrc, idx}
+                      <img src={previewSrc} class="preview-thumb" alt="Preview {idx + 1}" />
+                    {/each}
+                  </div>
+                  <div class="upload-text overlay">
+                    {storyMode === "sequence" ? `${previewSrcs.length} images selected` : "Tap to Change Photo"}
+                  </div>
+                {:else}
+                  <div class="upload-icon">📷</div>
+                  <div class="upload-text">{storyMode === "sequence" ? "Choose up to 6 Photos" : "Choose from Photo Library"}</div>
+                  <div class="sub-hint">{storyMode === "sequence" ? "At least 2 images for a tale" : "Max size 10MB"}</div>
+                {/if}
+              </label>
+            {:else}
+              {#if storyMode === "sequence"}
+                <textarea
+                  bind:value={imageUrlsText}
+                  placeholder="One image URL per line"
+                  disabled={submitting}
+                ></textarea>
+                <span class="hint">Add 2 to 6 public image URLs, one per line.</span>
+              {:else}
+                <input type="url" bind:value={imageUrl} placeholder="https://example.com/myimage.jpg" disabled={submitting} class="url-input" />
+                <span class="hint">Make sure it's a public direct link to an image.</span>
+              {/if}
+            {/if}
+          </div>
+
+          <div class="input-group mt-sm">
+            <label for="linkUrl">{$t.settings.storyLinkLabel}</label>
+            <input type="url" id="linkUrl" bind:value={linkUrl} placeholder="https://..." disabled={submitting} />
+          </div>
+        {:else if step === 3}
+          <div class="input-group mt-sm">
+            <label for="storyContactEmail">Contact Email (Optional)</label>
+            <input
+              type="email"
+              id="storyContactEmail"
+              bind:value={contactEmail}
+              placeholder="your@email.com"
+              disabled={submitting}
+            />
+          </div>
+
+          <div class="input-group mt-sm">
+            <label for="expiresAt">{$t.settings.storyExpiresLabel}</label>
+            <div class="date-wrapper">
+              <input type="date" id="expiresAt" bind:value={expiresAt} disabled={submitting} />
+              <div class="quick-dates">
+                <button type="button" class="quick-btn" on:click={() => addDays(3)}>+3d</button>
+                <button type="button" class="quick-btn" on:click={() => addDays(7)}>+1w</button>
+              </div>
+            </div>
+          </div>
+        {/if}
+
+        <div class="modal-footer popup-footer-safe">
+          {#if step > 1}
+            <button class="cancel-btn" on:click={prevStep} disabled={submitting}>Back</button>
+          {:else}
+            <button class="cancel-btn" on:click={close} disabled={submitting}>Cancel</button>
+          {/if}
+
+          {#if step < 3}
+            <button class="submit-btn" on:click={nextStep} disabled={submitting}>Next</button>
+          {:else}
+            <button class="submit-btn" on:click={submitStory} disabled={submitting}>
+              {submitting ? "Sending..." : "Submit for Review"}
+            </button>
+          {/if}
+        </div>
+      </div>
+    {/if}
   </div>
-{/if}
+</dialog>
 
 <style>
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
+  .native-modal {
+    background: transparent;
+    border: none;
+    padding: 16px;
+    margin: auto;
+    max-width: 440px;
+    width: 100%;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .native-modal::backdrop {
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    padding: 16px;
-    animation: fadeIn 0.2s ease-out;
+    opacity: 0;
+    transition: opacity 0.3s ease, overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+  }
+
+  .native-modal[open]::backdrop {
+    opacity: 1;
+  }
+
+  @starting-style {
+    .native-modal[open]::backdrop {
+      opacity: 0;
+    }
   }
 
   .modal-content {
@@ -456,10 +455,24 @@
     display: flex;
     flex-direction: column;
     box-shadow: var(--glass-shadow-lg, 0 12px 40px rgba(0, 0, 0, 0.25));
-    animation: slideUp 0.3s cubic-bezier(0.19, 1, 0.22, 1);
     color: var(--text-color, #111);
     overflow: hidden;
     border: 1px solid var(--border-color, #eee);
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.19, 1, 0.22, 1), overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+  }
+
+  .native-modal[open] .modal-content {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @starting-style {
+    .native-modal[open] .modal-content {
+      opacity: 0;
+      transform: translateY(30px);
+    }
   }
 
   .modal-header {
@@ -524,14 +537,23 @@
     background: var(--glass-bg-strong, #fafafa);
     color: var(--text-color, #111);
     transition: all 0.2s ease;
+    box-sizing: border-box;
   }
 
   input:focus,
-  select:focus {
+  select:focus,
+  textarea:focus {
     outline: none;
     border-color: var(--primary-color, #e5201e);
     background: var(--card-bg, white);
     box-shadow: 0 0 0 3px rgba(229, 32, 30, 0.1);
+  }
+
+  input:user-invalid,
+  select:user-invalid,
+  textarea:user-invalid {
+    border-color: #ff4d4f;
+    background: color-mix(in srgb, #ff4d4f 5%, var(--glass-bg-strong, #fafafa));
   }
 
   textarea {
@@ -543,16 +565,11 @@
     background: var(--glass-bg-strong, #fafafa);
     color: var(--text-color, #111);
     transition: all 0.2s ease;
-    resize: vertical;
-    min-height: 110px;
+    field-sizing: content;
+    resize: none;
+    min-height: 80px;
     font: inherit;
-  }
-
-  textarea:focus {
-    outline: none;
-    border-color: var(--primary-color, #e5201e);
-    background: var(--card-bg, white);
-    box-shadow: 0 0 0 3px rgba(229, 32, 30, 0.1);
+    box-sizing: border-box;
   }
 
   /* Date Wrapper & Quick Actions */
@@ -645,6 +662,7 @@
     width: 100%;
     height: 100%;
     padding: 8px;
+    box-sizing: border-box;
   }
 
   .file-upload-zone:hover {
@@ -735,8 +753,6 @@
     color: #f59e0b;
   }
   
-  @keyframes fadeIn { from {opacity: 0} to {opacity: 1} }
-  @keyframes slideUp { from {opacity: 0; transform: translateY(30px)} to {opacity: 1; transform: translateY(0)} }
   @keyframes bounceIn { 0% {transform:scale(0.3)} 50% {transform:scale(1.1)} 100% {transform:scale(1)} }
 
   .mt-lg { margin-top: 6px; }

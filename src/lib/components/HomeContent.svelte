@@ -17,6 +17,7 @@
 	import {
 		favoriteContacts,
 		normalizeContactEmail,
+		MAX_FAVORITE_CONTACTS,
 	} from "$lib/stores/favoriteContacts";
 	import { allLinks } from "$lib/data/links";
 	import { t } from "$lib/i18n";
@@ -481,6 +482,10 @@
 		goto("/explore#srh-contact-list");
 	}
 
+	function goToSettingsCampus() {
+		goto("/settings#campus-profile");
+	}
+
 	const blockLayoutConfigs: Record<
 		string,
 		{ minCols: number; fullWidth?: boolean; position?: "left" | "right" }
@@ -897,6 +902,18 @@
 </script>
 
 <div class="home-page" style:display={active ? "flex" : "none"}>
+	{#if !$settingsStore.campusId}
+		<div class="setup-nudge">
+			<div class="setup-nudge-content">
+				<h3>{'Complete your setup'}</h3>
+				<p>{'Choose a campus to personalize your dashboard.'}</p>
+			</div>
+			<button class="setup-nudge-btn" on:click={goToSettingsCampus}>
+				{'Set Up Now'}
+			</button>
+		</div>
+	{/if}
+
 	{#each $settingsStore.homeSections as section, i (section.id)}
 		{#if section.enabled && section.id === "header"}
 			<header
@@ -1054,7 +1071,7 @@
 							}}
 						>
 							<SectionHeader
-								title={$t.home.favoriteContacts}
+								title={`${$t.home.favoriteContacts} (${displayFavoriteContacts.length}/${MAX_FAVORITE_CONTACTS})`}
 								subtitle={$t.home.favoriteContactsDesc}
 							>
 								<div class="favorite-links-actions">
@@ -2129,6 +2146,54 @@
 	.contact-card-btn:focus-visible {
 		background: var(--hover-bg);
 		border-color: rgba(var(--primary-color-rgb), 0.3);
+	}
+
+	.is-arranging .home-block {
+		border: 2px dashed var(--primary-color);
+		background: rgba(var(--primary-color-rgb), 0.05);
+	}
+
+	.setup-nudge {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--spacing-md) var(--spacing-lg);
+		background: linear-gradient(135deg, rgba(var(--primary-color-rgb, 212, 68, 7), 0.1), rgba(var(--primary-color-rgb, 212, 68, 7), 0.05));
+		border: 1px solid rgba(var(--primary-color-rgb, 212, 68, 7), 0.2);
+		border-radius: var(--radius-lg);
+		margin-bottom: var(--spacing-md);
+		gap: var(--spacing-md);
+	}
+
+	.setup-nudge-content h3 {
+		margin: 0 0 4px 0;
+		font-size: 1rem;
+		font-weight: 700;
+		color: var(--primary-color);
+	}
+
+	.setup-nudge-content p {
+		margin: 0;
+		font-size: 0.85rem;
+		color: var(--text-color-secondary);
+	}
+
+	.setup-nudge-btn {
+		background: var(--primary-color);
+		color: white;
+		border: none;
+		padding: 8px 16px;
+		border-radius: 20px;
+		font-weight: 600;
+		font-size: 0.85rem;
+		cursor: pointer;
+		white-space: nowrap;
+		transition: background 0.2s, transform 0.2s;
+	}
+
+	.setup-nudge-btn:hover {
+		background: var(--primary-hover);
+		transform: scale(1.05);
 	}
 
 	.contact-card-btn:active {

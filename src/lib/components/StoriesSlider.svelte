@@ -466,13 +466,16 @@
             <img
               src={getStorySlides(story)[0]?.imageUrl || story.imageUrl}
               alt=""
+                width="106"
+                height="96"
               loading={idx < 5 ? "eager" : "lazy"}
               fetchpriority={idx < 3 ? "high" : "auto"}
+                decoding="async"
               draggable="false"
               on:contextmenu|preventDefault
               on:error={(e) => {
                 const img = e.currentTarget as HTMLImageElement;
-                img.src = "/icon-light.png";
+                  img.src = "/icon-dark.png";
               }}
             />
             {#if story.tag}
@@ -497,13 +500,16 @@
             src={getStorySlides(story)[0]?.imageUrl || story.imageUrl}
             alt=""
             class="story-avatar"
+              width="68"
+              height="68"
             loading={idx < 5 ? "eager" : "lazy"}
             fetchpriority={idx < 3 ? "high" : "auto"}
+              decoding="async"
             draggable="false"
             on:contextmenu|preventDefault
             on:error={(e) => {
               const img = e.currentTarget as HTMLImageElement;
-              img.src = "/icon-light.png";
+                img.src = "/icon-dark.png";
             }}
           />
           {#if story.tag}
@@ -569,7 +575,7 @@
     <!-- Header -->
     <div class="story-header">
       <div class="story-author">
-        <img src="/icon-light.png" alt="SRH" class="story-author-avatar" />
+          <img src="/icon-dark.png" alt="SRH" class="story-author-avatar" width="36" height="36" decoding="async" />
         <div class="story-author-info">
           <div class="story-author-name">SRH University Berlin</div>
           <div class="story-author-time">
@@ -609,10 +615,11 @@
         alt=""
         class="story-blurred-bg {imageLoaded ? 'loaded' : ''}"
         aria-hidden="true"
+          decoding="async"
         draggable="false"
         on:contextmenu|preventDefault
         on:error={(e) => {
-          (e.currentTarget as HTMLImageElement).src = "/icon-light.png";
+            (e.currentTarget as HTMLImageElement).src = "/icon-dark.png";
         }}
       />
 
@@ -620,6 +627,7 @@
         src={currentSlide?.imageUrl || currentStory.imageUrl}
         alt={currentStory.title}
         class="story-image {imageLoaded ? 'loaded' : ''}"
+          decoding="async"
         draggable="false"
         on:contextmenu|preventDefault
         on:load={() => {
@@ -627,7 +635,7 @@
         }}
         on:error={(e) => {
           imageLoaded = true;
-          (e.currentTarget as HTMLImageElement).src = "/icon-light.png";
+            (e.currentTarget as HTMLImageElement).src = "/icon-dark.png";
         }}
       />
     </div>
@@ -1417,7 +1425,7 @@
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
-    mask-composite: xor;
+    mask-composite: exclude;
     -webkit-mask-composite: xor;
     pointer-events: none;
   }

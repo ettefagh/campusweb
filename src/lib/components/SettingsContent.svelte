@@ -26,11 +26,11 @@
   import { page } from "$app/stores";
   import EmailGate from "$lib/components/EmailGate.svelte";
   import SecureCalendarInput from "$lib/components/SecureCalendarInput.svelte";
+
   $: activeCampusName =
     CAMPUSES.find((campus) => campus.id === $settingsStore.campusId)?.name ||
     "";
 
-  // When campus changes, clear department and program selection
   function handleCampusChange(campusId: string) {
     settingsStore.patch({ campusId, departmentId: null, programName: null });
   }
@@ -311,7 +311,12 @@
       </span>
       <span class="status-copy">
         <span class="status-label">{$t.settings.directoryLabel}</span>
-        <strong>{$settingsStore.emailVerified ? $t.settings.verified : $t.settings.locked}</strong>
+        <strong>
+          {$settingsStore.emailVerified ? $t.settings.verified : $t.settings.locked}
+          {#if $settingsStore.emailVerified && $settingsStore.sessionExpiresAt}
+            ({Math.max(1, Math.round(($settingsStore.sessionExpiresAt - Date.now()) / (1000 * 60 * 60)))}h)
+          {/if}
+        </strong>
       </span>
     </a>
     <a href="#appearance" class="status-tile">
@@ -448,6 +453,12 @@
               </div>
               <p class="section-desc">
                 {$t.settings.directoryActiveDesc}
+                {#if $settingsStore.sessionExpiresAt}
+                  <br>
+                  <span class="session-expiry">
+                    Expires in {Math.max(1, Math.round(($settingsStore.sessionExpiresAt - Date.now()) / (1000 * 60 * 60)))} hours
+                  </span>
+                {/if}
               </p>
             </div>
           {/if}
@@ -529,7 +540,7 @@
             </p>
           {:else}
             <div class="class-colors-list">
-              {#each $activeClasses as cls}
+              {#each $activeClasses as cls, i}
                 <div class="setting-row" style="position: relative;">
                   <div class="class-color-info">
                     <span class="setting-label">{cls.title}</span>
@@ -540,39 +551,35 @@
                   <div class="class-color-actions">
                     <button
                       class="active-color-swatch"
-                      style="background-color: {$classColors[cls.id] ||
-                        cls.defaultColor}"
+                      style="background-color: {$classColors[cls.id] || cls.defaultColor}; anchor-name: --color-anchor-{i};"
                       data-texture={getTextureForColor($classColors[cls.id] || cls.defaultColor)}
-                      on:click={() => toggleColorChooser(cls.id)}
+                      popovertarget="color-popover-{i}"
                       aria-label={$t.settings.changeColor}
                     ></button>
 
-                    {#if activeColorChooser === cls.id}
-                      <div
-                        class="color-popup-overlay"
-                        on:click={() => (activeColorChooser = null)}
-                        on:keydown={(e) =>
-                          e.key === "Escape" && (activeColorChooser = null)}
-                        role="button"
-                        tabindex="-1"
-                        aria-label={$t.settings.closeColorChooser}
-                      ></div>
-                      <div class="color-popup">
-                        <div class="color-palette">
-                          {#each EVENT_COLORS as ec}
-                            <button
-                              class="palette-swatch"
-                              class:selected={($classColors[cls.id] ||
-                                cls.defaultColor) === ec.id}
-                              style="background-color: {ec.id}"
-                              data-texture={ec.texture}
-                              on:click={() => selectColor(cls.id, ec.id)}
-                              aria-label={$t.settings.selectColor}
-                            ></button>
-                          {/each}
-                        </div>
+                    <div
+                      id="color-popover-{i}"
+                      class="color-popup-native"
+                      popover="auto"
+                      style="position-anchor: --color-anchor-{i};"
+                    >
+                      <div class="color-palette">
+                        {#each EVENT_COLORS as ec}
+                          <button
+                            class="palette-swatch"
+                            class:selected={($classColors[cls.id] ||
+                              cls.defaultColor) === ec.id}
+                            style="background-color: {ec.id}"
+                            data-texture={ec.texture}
+                            on:click={() => {
+                              selectColor(cls.id, ec.id);
+                              document.getElementById(`color-popover-${i}`)?.hidePopover();
+                            }}
+                            aria-label={$t.settings.selectColor}
+                          ></button>
+                        {/each}
                       </div>
-                    {/if}
+                    </div>
 
                     {#if $classColors[cls.id]}
                       <button
@@ -1604,20 +1611,17 @@
   .active-color-swatch:active {
     transform: scale(0.95);
   }
-  .color-popup {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 8px);
-    z-index: 100;
+  .color-popup-native {
+    margin: 8px 0 0 0;
+    border: none;
+    background: transparent;
+    padding: 0;
+    overflow: visible;
+    position-area: bottom span-left;
+    position-try-fallbacks: flip-block;
   }
-  .color-popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 90;
-    cursor: default;
+  .color-popup-native::backdrop {
+    background: transparent;
   }
   .color-palette {
     display: flex;

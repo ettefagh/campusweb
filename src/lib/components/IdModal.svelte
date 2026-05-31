@@ -2,11 +2,28 @@
   import { idCardsStore, type IdCardData } from "$lib/stores/idStore";
   import IdCard from "./IdCard.svelte";
   import { toast } from "$lib/stores/toastStore";
+  import { onMount, createEventDispatcher } from "svelte";
 
   export let cardId: string | null = null; // null means we are adding a card
   export let onClose: () => void;
 
   const isEditing = cardId !== null;
+  let dialog: HTMLDialogElement;
+  let scannerDialog: HTMLDialogElement;
+
+  onMount(() => {
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+    }
+  });
+
+  function handleClose() {
+    onClose();
+  }
+
+  function onBackdropClick(event: MouseEvent) {
+    if (event.target === dialog) handleClose();
+  }
 
   // Form Fields
   let title = "";
@@ -94,6 +111,7 @@
 
     // Small timeout ensures videoEl is rendered in the DOM before we bind
     setTimeout(async () => {
+      if (scannerDialog && !scannerDialog.open) scannerDialog.showModal();
       if (videoEl) {
         try {
           const ZXing = (window as any).ZXing;
@@ -126,6 +144,7 @@
 
   function stopBarcodeScan() {
     isScanning = false;
+    if (scannerDialog && scannerDialog.open) scannerDialog.close();
     if (codeReader) {
       codeReader.reset();
       codeReader = null;
@@ -475,17 +494,20 @@
       idCardsStore.add(cardData);
     }
 
-    onClose();
+    handleClose();
   }
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="modal-backdrop" on:click={onClose}>
-  <div class="modal-content" role="dialog" aria-modal="true" on:click|stopPropagation>
+<dialog
+  bind:this={dialog}
+  class="native-modal"
+  on:close={handleClose}
+  on:click={onBackdropClick}
+>
+  <div class="modal-content" on:click|stopPropagation>
     <div class="modal-header">
       <h2>{isEditing ? "✏️ Edit Card" : "✨ Add Digital Card"}</h2>
-      <button class="close-btn" on:click={onClose}>✕</button>
+      <button class="close-btn" on:click={handleClose}>✕</button>
     </div>
 
     <div class="modal-body">
@@ -759,7 +781,7 @@
         {/if}
 
         <div class="modal-footer popup-footer-safe">
-          <button type="button" class="cancel-btn" on:click={onClose}
+          <button type="button" class="cancel-btn" on:click={handleClose}
             >Cancel</button
           >
           <button type="submit" class="submit-btn"
@@ -769,12 +791,17 @@
       </form>
     </div>
   </div>
-</div>
+</dialog>
 
 {#if isScanning}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="scanner-viewfinder-overlay" on:click={stopBarcodeScan}>
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <dialog
+    bind:this={scannerDialog}
+    class="native-scanner-modal"
+    on:close={stopBarcodeScan}
+    on:click={(e) => { if (e.target === scannerDialog) stopBarcodeScan(); }}
+  >
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="scanner-viewfinder-box glass" on:click|stopPropagation>
@@ -803,21 +830,36 @@
         </p>
       {/if}
     </div>
-  </div>
+  </dialog>
 {/if}
 
 <style>
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
+  .native-modal {
+    background: transparent;
+    border: none;
+    padding: 16px;
+    margin: auto;
+    max-width: 440px;
+    width: 100%;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .native-modal::backdrop {
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    padding: 16px;
-    animation: fadeIn 0.2s ease-out;
+    opacity: 0;
+    transition: opacity 0.3s ease, overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+  }
+
+  .native-modal[open]::backdrop {
+    opacity: 1;
+  }
+
+  @starting-style {
+    .native-modal[open]::backdrop {
+      opacity: 0;
+    }
   }
 
   .modal-content {
@@ -826,10 +868,24 @@
     width: 100%;
     max-width: 440px;
     box-shadow: var(--shadow-xl);
-    animation: slideUp 0.3s cubic-bezier(0.2, 0, 0, 1);
     color: var(--text-color);
     overflow: hidden;
     border: 1px solid var(--border-color);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 0, 0, 1), overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+  }
+
+  .native-modal[open] .modal-content {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @starting-style {
+    .native-modal[open] .modal-content {
+      opacity: 0;
+      transform: translateY(20px);
+    }
   }
 
   .modal-header {
@@ -943,6 +999,11 @@
     border-color: var(--primary-color);
     background: var(--card-bg);
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary-color) 10%, transparent);
+  }
+
+  input:user-invalid, select:user-invalid, textarea:user-invalid {
+    border-color: #ff4d4f;
+    background: color-mix(in srgb, #ff4d4f 5%, var(--bg-secondary));
   }
 
   /* Theme color options picker */
@@ -1202,21 +1263,36 @@
   }
 
   /* Full Screen / Fixed Scanner view-finder layout */
-  .scanner-viewfinder-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
+  .native-scanner-modal {
+    background: transparent;
+    border: none;
+    padding: var(--spacing-md);
+    margin: auto;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.82);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    z-index: 200;
+    outline: none;
+    box-sizing: border-box;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: var(--spacing-md);
-    box-sizing: border-box;
+  }
+
+  .native-scanner-modal::backdrop {
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    transition: opacity 0.3s ease, overlay 0.3s allow-discrete, display 0.3s allow-discrete;
+  }
+
+  .native-scanner-modal[open]::backdrop {
+    opacity: 1;
+  }
+
+  @starting-style {
+    .native-scanner-modal[open]::backdrop {
+      opacity: 0;
+    }
   }
 
   .scanner-viewfinder-box {

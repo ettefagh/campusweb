@@ -2,7 +2,7 @@ import { env } from '$env/dynamic/private';
 import { jwtVerify, SignJWT } from 'jose';
 
 export const AUTH_COOKIE_NAME = 'campusweb_auth';
-export const AUTH_SESSION_TTL_SECONDS = 60 * 60 * 24;
+export const AUTH_SESSION_TTL_SECONDS = 60 * 60 * 24 * 30 * 8; // 8 months
 export const PIN_TTL_MS = 10 * 60 * 1000;
 export const PIN_LENGTH = 6;
 
@@ -92,14 +92,20 @@ export async function createAnonymousSessionToken(platformEnv?: AuthPlatformEnv)
 }
 
 export async function verifyAnonymousSessionToken(token: string | undefined, platformEnv?: AuthPlatformEnv): Promise<boolean> {
+  const details = await getSessionDetails(token, platformEnv);
+  return details.verified;
+}
+
+export async function getSessionDetails(token: string | undefined, platformEnv?: AuthPlatformEnv): Promise<{ verified: boolean; expiresAt?: number }> {
   if (!token) {
-    return false;
+    return { verified: false };
   }
 
   try {
     const { payload } = await jwtVerify(token, getSecret(platformEnv));
-    return payload.verified === true && payload.role === 'srh_member';
+    const verified = payload.verified === true && payload.role === 'srh_member';
+    return { verified, expiresAt: payload.exp ? payload.exp * 1000 : undefined };
   } catch {
-    return false;
+    return { verified: false };
   }
 }
