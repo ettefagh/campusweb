@@ -19,6 +19,7 @@ const SECURITY_HEADERS = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
 } as const;
 
+
 function applySecurityHeaders(response: Response): Response {
   if (!dev) {
     for (const [key, value] of Object.entries(SECURITY_HEADERS)) {

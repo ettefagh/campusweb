@@ -81,7 +81,7 @@
     updateStatus = "updating";
 
     try {
-      // 1. Refresh calendar data explicitly
+      // 1. Refresh calendar data explicitly (keeps manually imported data)
       await calendarStore.refreshAll(true);
 
       // 2. Clear browser caches to fetch fresh webapp assets on next load
@@ -90,31 +90,20 @@
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map((name) => caches.delete(name)));
       }
+
+      // 3. Completely unregister the service worker to force a clean slate
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          await reg.unregister();
+        }
+      }
     } catch (e) {
       console.error("Update error:", e);
     }
 
-    // 3. Tell the waiting service worker to take over, then reload
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        if (reg?.waiting) {
-          reg.waiting.postMessage({ type: "SKIP_WAITING" });
-          navigator.serviceWorker.addEventListener("controllerchange", () => {
-            window.location.reload();
-          });
-        } else {
-          if (reg) {
-            reg.update().finally(() => {
-              window.location.reload();
-            });
-          } else {
-            window.location.reload();
-          }
-        }
-      });
-    } else {
-      window.location.reload();
-    }
+    // 4. Force reload the page. Adding a cache-buster query ensures the browser doesn't serve stale HTML.
+    window.location.href = window.location.pathname + "?v=" + new Date().getTime() + window.location.hash;
   }
 
   async function handleDirectoryLogout() {

@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { t } from "$lib/i18n";
+  import { page } from "$app/stores";
+  import { browser } from "$app/environment";
   import { settingsStore, CAMPUSES } from "$lib/stores/settingsStore";
   import { getEmailUrl } from "$lib/utils/emailHelper";
   import { getTeamsChatUrl } from "$lib/utils/phoneHelper";
@@ -45,9 +47,21 @@
   const feedTabs = [
     { id: "overview", label: "Overview", icon: "📡" },
     { id: "social",   label: "Social",   icon: "📸" },
-    { id: "pages",    label: "Pages",    icon: "✓" },
     { id: "clubs",    label: "Clubs",    icon: "👥" },
   ];
+
+  $: if (active && browser && $page.url.hash) {
+    const hash = $page.url.hash.replace("#", "");
+    if (feedTabs.some((t) => t.id === hash)) {
+      if (activeTab !== hash) {
+        activeTab = hash;
+        if (activeTab === "social" && !socialTabVisited) {
+          socialTabVisited = true;
+          setTimeout(loadSocialEmbeds, 50);
+        }
+      }
+    }
+  }
 
   function handleTabChange(e: CustomEvent<{ id: string }>) {
     activeTab = e.detail.id;
@@ -85,23 +99,27 @@
     CAMPUSES.find((campus) => campus.id === currentCampusId)?.name ||
     $t.feed.allCampuses;
 
-  $: officialAccounts = socialAccounts
+  $: allAccounts = Array.from(
+    new Map([...socialAccounts, ...$dynamicClubs].map((acc) => [acc.id, acc])).values()
+  );
+
+  $: officialAccounts = allAccounts
     .filter(
       (acc) =>
         acc.type === "official" &&
-        (acc.campusIds.includes("all") ||
-          acc.campusIds.includes(currentCampusId)),
+        (acc.campusIds?.includes("all") ||
+          acc.campusIds?.includes(currentCampusId)),
     )
-    .sort((a, b) => b.priority - a.priority);
+    .sort((a, b) => (b.priority || 0) - (a.priority || 0));
 
-  $: clubAccounts = [...socialAccounts, ...$dynamicClubs]
+  $: clubAccounts = allAccounts
     .filter(
       (acc) =>
         acc.type === "club" &&
-        (acc.campusIds.includes("all") ||
-          acc.campusIds.includes(currentCampusId)),
+        (acc.campusIds?.includes("all") ||
+          acc.campusIds?.includes(currentCampusId)),
     )
-    .sort((a, b) => b.priority - a.priority);
+    .sort((a, b) => (b.priority || 0) - (a.priority || 0));
 
   $: instagramEmbeds = officialAccounts
     .filter((acc) => acc.platform === "instagram")
@@ -399,11 +417,7 @@
             </div>
           </section>
         {/if}
-      </div>
 
-    {:else if renderedTabId === "pages"}
-      <!-- ── PAGES TAB ── -->
-      <div class="feed-tab-panel">
         <div id="official-pages" class="feed-section">
           <OfficialAccountsSection accounts={officialAccounts} />
         </div>
