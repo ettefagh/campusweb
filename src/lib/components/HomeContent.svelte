@@ -913,6 +913,7 @@
 						alt=""
 						class="home-context-logo light-mode"
 						width="32"
+						height="32"
 						loading="eager"
 						fetchpriority="high"
 					/>
@@ -921,6 +922,7 @@
 						alt=""
 						class="home-context-logo dark-mode"
 						width="32"
+						height="32"
 						loading="eager"
 						fetchpriority="high"
 					/>

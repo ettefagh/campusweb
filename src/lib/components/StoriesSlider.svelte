@@ -880,7 +880,7 @@
     border: none;
     border-radius: 6px;
     padding: 4px 8px;
-    font-size: 0.64rem;
+    font-size: 0.68rem;
     letter-spacing: 0;
     box-shadow: 0 5px 12px rgba(15, 23, 42, 0.16);
   }
@@ -905,7 +905,8 @@
   }
 
   .story-tag.tag-promo {
-    background: #1d4ed8;
+    /* Darker blue lifts white-text contrast to pass small-text WCAG AA. */
+    background: #1e3a8a;
     color: #fff;
   }
 

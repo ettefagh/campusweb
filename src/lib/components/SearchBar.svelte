@@ -43,7 +43,7 @@
 
 </script>
 
-<div class="search-snap-container">
+<div class="search-snap-container" role="search">
 	<div class="search-active-content">
 		<div class="search-input-wrapper glass">
 			<i class="ph-bold ph-magnifying-glass search-icon" aria-hidden="true"></i>
@@ -58,11 +58,12 @@
 				{onkeydown}
 				class="snap-search-input"
 				aria-label={placeholder}
+				aria-controls="search-results"
 			/>
 		</div>
 
 		{#if (isSearchActive || searchQuery.trim()) && children}
-			<div class="search-results-container">
+			<div id="search-results" class="search-results-container">
 				{@render children()}
 			</div>
 		{/if}

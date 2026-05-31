@@ -203,7 +203,8 @@
     align-items: center;
     justify-content: center;
     gap: 5px;
-    min-width: var(--touch-target-min);
+    /* Ensure a sensible minimum touch target when variable is not set */
+    min-width: var(--touch-target-min, 48px);
     min-height: 54px;
     padding: 5px 6px;
     color: var(--text-color-secondary);
@@ -228,8 +229,21 @@
   }
 
   .bottom-nav .icon {
-    font-size: 25px;
+    /* Reserve explicit box for icon to avoid CLS when icon font loads */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    font-size: 20px;
     line-height: 1;
+  }
+
+  /* Make keyboard focus visible for accessibility */
+  .nav-item:focus-visible {
+    outline: 3px solid rgba(var(--primary-color-rgb, 212, 68, 7), 0.22);
+    outline-offset: 3px;
+    border-radius: 12px;
   }
 
   .bottom-nav .label {
